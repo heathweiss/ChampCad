@@ -28,3 +28,4 @@ src/Data/scanRawDataWithDegrees.raww
 src/Data/scanImages/*.JPG
 parallelProcess.eventlog
 /.project
+README.md~
