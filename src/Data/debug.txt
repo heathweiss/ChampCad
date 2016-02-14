@@ -1,0 +1,1 @@
+[CubeDebug {errMsg = "strapCube: good"}]

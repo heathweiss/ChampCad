@@ -1,0 +1,106 @@
+name:                ChampCad
+version:             0.1.0.0
+synopsis:            Initial project template from stack
+description:         Please see README.md
+homepage:            http://github.com/githubuser/ChampCad#readme
+license:             BSD3
+license-file:        LICENSE
+author:              Author name here
+maintainer:          example@example.com
+copyright:           2016 Author Here
+category:            Web
+build-type:          Simple
+-- extra-source-files:
+cabal-version:       >=1.10
+
+library
+  hs-source-dirs:      src
+  exposed-modules:     Lib
+                       CornerPoints.Points, CornerPoints.CornerPoints, CornerPoints.Debug,
+                       CornerPoints.Create, CornerPoints.FaceConversions,
+                       CornerPoints.FaceExtraction,  CornerPoints.Transpose,
+                       CornerPoints.VerticalFaces, CornerPoints.HorizontalFaces,
+                       CornerPoints.Radius, CornerPoints.CornerPointsWithDegrees,
+                       CornerPoints.FaceExtractionWithDegrees, CornerPoints.VerticalFacesWithDegrees,
+                       CornerPoints.FaceConversionsWithDegrees, CornerPoints.FaceExtractAndConvert
+                       CornerPoints.Degree, 
+                       --Builder
+                       Builder.Sequence,  Builder.Builder, Builder.List
+                       --math
+                       Math.Trigonometry,
+                       --stl
+                       Stl.StlBase, Stl.StlCornerPoints, Stl.StlFileWriter, Stl.StlCornerPointsWithDegrees
+                       --helpers
+                       Helpers.List, Helpers.DSL,
+                       Helpers.Symmetrical.Sequence, Helpers.Symmetrical.List
+                       -- tests
+                       Tests.CornerPointsDebugTest, Tests.CornerPointsTest, Tests.AllTestsRun,
+                       Tests.MathTest, Tests.MathPolarTest, Tests.HorizontalFacesTest,
+                       Tests.JsonTest, Tests.ListHelpersTest, Tests.RadiusTest,
+                       Tests.VerticalFacesTest, Tests.ParseJuicyTest, Tests.ScanFilterTest,
+                       Tests.CornerPointsWithDegreesTest, Tests.BuilderTest,
+                       Tests.Symmetrical.SequenceTest, Tests.FaceExtractAndConvertTest
+                       --Examples
+                       -- Example ShoeLifts
+                       Examples.ShoeLift.KeenToe, Examples.ShoeLift.KeenHeel,
+                       Examples.ShoeLift.SnowBoardBoot, Examples.ShoeLift.KangarooShoe
+                       --HeelGenerators.SandalsToe, HeelGenerators.SandalsHeel
+                       --HeelGenerators.BlackRunnerHeel,  HeelGenerators.BlackRunnerToe,
+                       --Have not been redone for changes to MathPolar.
+                       --Leave in until sure I will not need them further for printing shoe lifts
+                       -- Sockets
+                       -- scanned shapes
+                       Examples.Scan.WalkerSocket
+                       Examples.Scan.WalkerSocketSquared
+                       -- Misc Shapes
+                       --Examples.MiscShapes.RvVentCaps
+                       --Exlcluded as they have not been updated for the new cylinders.
+                       --Leave in until I have the trailer fixed, to be sure I don't need them.
+                       -- Primitives
+                       Examples.Primitives.Cube
+                       Examples.Primitives.Cylinders
+                       --adaptors
+                       Examples.Adaptors.HockeyStick
+                       --try out removing a cylinder from a cylinder
+                       Examples.Diffs.FirstDiff
+                       --Shapes
+                       Primitives.Cylindrical, Primitives.Cubical
+                       --Scanning
+                       Scan.Filter,
+                       Scan.Json,  Scan.ParseJuicy
+  build-depends:       base >= 4.7 && < 5
+                     , HUnit >=1.2.5.2
+                     , bytestring >= 0.10.4.0
+                     , split >= 0.2.2
+                     , Decimal >= 0.1.0
+                     , aeson >= 0.9.0.0
+                     , text >= 1.1.0.0
+                     , attoparsec >= 0.13.0.1
+                     , JuicyPixels >= 3.2.6.1
+                     , parallel >= 3.2.0.6
+                     , containers >= 0.5.5.1
+                     , lens >= 4.13
+                     , containers >=0.5.5.1
+
+  default-language:    Haskell2010
+
+executable ChampCad-exe
+  hs-source-dirs:      app
+  main-is:             Main.hs
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  build-depends:       base
+                     , ChampCad
+  default-language:    Haskell2010
+
+test-suite ChampCad-test
+  type:                exitcode-stdio-1.0
+  hs-source-dirs:      test
+  main-is:             Spec.hs
+  build-depends:       base
+                     , ChampCad
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  default-language:    Haskell2010
+
+source-repository head
+  type:     git
+  location: https://github.com/githubuser/ChampCad
