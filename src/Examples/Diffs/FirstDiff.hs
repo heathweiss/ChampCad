@@ -5,7 +5,8 @@ import CornerPoints.HorizontalFaces(createBottomFaces, createTopFaces)
 import CornerPoints.Create(Angle(..), flatXSlope, flatYSlope, Origin(..))
 import CornerPoints.CornerPoints((|@+++#@|), (|+++|),  CornerPoints(..), (+++))
 import CornerPoints.Points(Point(..))
-import CornerPoints.CornerPointsWithDegrees(DegreeRange(..), CornerPointsWithDegrees(..), newCornerPointsWithDegreesList )
+--import CornerPoints.CornerPointsWithDegrees(DegreeRange(..), CornerPointsWithDegrees(..), newCornerPointsWithDegreesList )
+import CornerPoints.CornerPointsWithDegrees(DegreeRange(..), newCornerPointsWithDegreesList )
 import CornerPoints.FaceExtraction(extractFrontFace, extractFrontLeftLine, extractFrontRightLine, extractLeftFace,
                                   extractRightFace, extractBackRightLine)
 import CornerPoints.FaceConversions(toBackFace, reverseNormal, toFrontFace, backFaceFromFrontFace)
@@ -20,6 +21,7 @@ import Stl.StlBase (StlShape(..), newStlShape)
 
 import qualified Builder.Sequence as S (newCornerPointsWithDegreesBuilder, (||@~+++^||), (@~+++#@|>), (@~+++@|>))
 import qualified Builder.List as L ((||@~+++^||))
+import Builder.Map(cornerPointsMap, extractMaybeCube, cornerPointsWithDegreesMap)
 
 import Test.HUnit
 
@@ -33,33 +35,15 @@ import Prelude hiding ((.), id)
 import qualified Data.Map as M
 import Control.Lens
 {-------------------------------------- overview ---------------------------------------
-Create a simple radial shape with 40-45-90...360 angles.
-Create at origin.
+Create a large radial shape with 0-45-90...360 angles.
 
-Create as second smaller simple radial shape that is offeset from the origin,
-such that it will be located withing 1 triangle of large shape.
+Create as second similar but smaller radial shape that is offset from the origin,
+such that it will be located within 1 cube of large shape.
 
-Subtract the small shape from the triangle of large shape:
+Subtract the small shape from the triangle of large shape, resulting in the large shape
+having a hole in it where the small shape is.
 
-so far:
-Have removed the faces of large triangle
-Have moved small triangle over to large triangle space, and displayed it as a self contained shape.
-
-next: ??????
 -}
-
-{-
-create a tuple from [CornerPointsWithDegrees], required to make a map with:
-key: DegreeRange
-value: CornerPoints
--}
-cornerPointsMap = map (\(CubesWithStartEndDegrees cube degreeRange) -> (degreeRange,cube))
-
-{-Extract the CornerPoint from the map Maybe result. Gives CornerPointsError on Nothing -}
-extractMaybeCube :: Maybe CornerPoints ->  CornerPoints
-extractMaybeCube (Just a) = a
-extractMaybeCube Nothing = CornerPointsError "error" -- F1 (Point 1 2 3)
-
 
 
 --angles for small/large shapes
@@ -76,10 +60,9 @@ largeShape =
 
 --make the CornerPointsWithDegreesList: 
 largeShapeWithDegrees = newCornerPointsWithDegreesList 45 largeShape
---cornerPointsWithDegreesSeq =  S.newCornerPointsWithDegreesBuilder 45 largeShape
 
 --make a map of the largeShape with DegreeRange as key and CornerPoints as value
-largeShapeMap  = M.fromList $ cornerPointsMap  largeShapeWithDegrees
+largeShapeMap  = cornerPointsWithDegreesMap largeShapeWithDegrees
 
 
 {---------------------------------------- small shape ---------------------------
@@ -94,8 +77,8 @@ smallShape =
 
 smallShapeWithDegrees = newCornerPointsWithDegreesList 45 smallShape
 
-smallShapeMap = M.fromList $ cornerPointsMap smallShapeWithDegrees
-
+--make a map of smallShapeWithDegrees with DegreeRange as key and CornerPoints as value
+smallShapeMap = cornerPointsWithDegreesMap smallShapeWithDegrees
 
   
 {- ========================= the big one ============================

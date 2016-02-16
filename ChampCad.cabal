@@ -25,7 +25,7 @@ library
                        CornerPoints.FaceConversionsWithDegrees, CornerPoints.FaceExtractAndConvert
                        CornerPoints.Degree, 
                        --Builder
-                       Builder.Sequence,  Builder.Builder, Builder.List
+                       Builder.Sequence,  Builder.Builder, Builder.List, Builder.Map
                        --math
                        Math.Trigonometry,
                        --stl
