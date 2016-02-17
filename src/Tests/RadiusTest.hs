@@ -1,15 +1,33 @@
-
+{-# LANGUAGE ParallelListComp #-}
 module Tests.RadiusTest(radisuTestDo) where
 import Test.HUnit
 import CornerPoints.Radius(Radius(..), SingleDegreeRadii(..), Degree(..), MultiDegreeRadii(..), resetMultiDegreeRadiiIfNull,
                           extractSingle, extractList, rotateMDR, setRadiusIfNull,  resetSingleDegreeRadiiIfNull,
                           setRadiusWithPrecedingValueIfNull, resetMultiDegreeRadiiIfNullWithPreviousValue, transposeSDRList,
-                          transposeMDRList)
-import CornerPoints.Transposable(transpose, transposeWithList)
+                          transposeMDRList, extractSDRWithinRange, transformSDRWithList, extractMaybeRadii, extractMaybeSDR,
+                          singleDegreeRadiiListToMap)
+
+import CornerPoints.Transposable(transpose, transposeWithList )
 import Scan.ParseJuicy(averageValueOf)
+
+import qualified Data.Sequence as S
+import qualified Data.Map as M
+import qualified Data.Foldable as F
+
+import qualified Flow as Flw
+
+import Control.Lens
 
 
 radisuTestDo = do
+ runTestTT transposeListOfRadiusWithFlowTest
+ runTestTT transposeSDRWithFlowTest
+ runTestTT transposeMDRWithFlowTest
+ runTestTT createMapOfSingleDegreeRadiiTest
+ runTestTT singleDegreeRadiiListToMapTest
+ runTestTT extractSDRWithRangeTest
+ runTestTT transposeSDRListInRangeTest
+  
  runTestTT extractRadiusFromMultiDegreeRadiiTest
  runTestTT extractRadiusFromMultiDegreeRadiiTest2
  runTestTT extractRadiusFromSinleDegreeRadiiTest
@@ -35,8 +53,131 @@ radisuTestDo = do
  runTestTT resetMultiDegreeRadiiNaNTest
  runTestTT resetMultiDegreeRadiiNullWithPreviousValueTest
 
- 
+-- =============================== work on transposing an mdr using >><<===================
+{-
+(>><<) :: a -> (a -> b) -> b
+a >><< f = f a
+-}
+transposeListOfRadiusWithFlowTest = TestCase $ assertEqual 
+  "transposeListOfRadiusTest"
+  (map Radius [1.0, 4.0, 9.0])
+  (transposeWithList
+     --[(*2), (*2),(*2)]
+     (S.fromList [(*1)]
+     Flw.|> (\seq -> seq S.>< (S.fromList [(*x)| x <-[2,3]]) )
+     Flw.|> (\seq -> F.toList seq)
+     )
+     (map Radius [1.0, 2.0, 3.0])
+  )
 
+transposeSDRWithFlowTest = TestCase $ assertEqual 
+  "transposeSDRWithFlowTest"
+  (SingleDegreeRadii 0.0 (map Radius [1.0, 4.0, 9.0]))
+  (
+    let sdr = SingleDegreeRadii 0.0 (map Radius [1.0, 2.0, 3.0])
+    in
+        S.fromList [(*1)]
+        Flw.|> (\seq -> seq S.>< (S.fromList [(*x)| x <-[2,3]]) )
+        Flw.|> (\seq -> F.toList seq)
+        Flw.|>(\list -> transformSDRWithList sdr list )
+  )
+
+
+{-Create an MultiDegreeRadii.
+  Transpose each SingleDegreeRadii, using a separate transpose function list for each SDR.
+-}
+transposeMDRWithFlowTest = TestCase $ assertEqual 
+  "transposeMDRWithFlowTest"
+  (MultiDegreeRadii "myMDR" [SingleDegreeRadii 0.0 (map Radius [1.0, 4.0, 9.0]),
+                             SingleDegreeRadii 1.0 (map Radius [40.0, 100.0, 180.0])
+                            ])
+  {--}
+  (let mdr = MultiDegreeRadii "myMDR" [
+                                       SingleDegreeRadii 0.0 (map Radius [1.0, 2.0, 3.0]),
+                                       SingleDegreeRadii 1.0 (map Radius [4.0, 5.0, 6.0])
+                                      ]
+       sdrMap = singleDegreeRadiiListToMap $ degrees mdr
+   in
+       --sdr0 transpose 
+       (([(*1)] ++ [(*x)| x <-[2,3]]))
+       Flw.|> (\listFx -> S.fromList $ [transformSDRWithList (extractMaybeSDR (sdrMap^.at 0.0)) listFx])
+       --sdr1 transpose
+       Flw.|> (\seqSDR -> (seqSDR,(([(*10)] ++ [(*x)| x <-[20,30]]))))
+       Flw.|> (\(seqSDR, listFx) -> (seqSDR, transformSDRWithList (extractMaybeSDR (sdrMap^.at 1.0)) listFx) )
+       Flw.|> (\(seqSDR, sdrAtDegree1) -> F.toList (seqSDR S.|> sdrAtDegree1) )
+       --rebuild the mdr
+       Flw.|> (\sdr -> mdr {degrees = sdr})
+  )
+
+
+extractSDRWithRangeTest = TestCase $ assertEqual
+  "extractSDRWithRange"
+  (
+   [(SingleDegreeRadii 0.0 [Radius 0]),
+    (SingleDegreeRadii 1.0 [Radius 1])
+   ]
+  )
+  (let sdrList = [(SingleDegreeRadii 0.0 [Radius 0]),
+                  (SingleDegreeRadii 1.0 [Radius 1]),
+                  (SingleDegreeRadii 2.0 [Radius 2])
+                 ]
+       range = [0.0,1.0]
+   in
+       extractSDRWithinRange range sdrList
+  )
+
+{-
+given a range of degrees [Double],and a list of SDR  [SingleDegreeRadii], and a list of transpose functions  [(Double -> Double)]
+extract the SDR that are in range
+do the transormation on SDR in range
+return the transformed SDR
+-}
+transposeSDRListInRangeTest = TestCase $ assertEqual
+  "transposeSDRListInRangeTest"
+  ([(SingleDegreeRadii 0.0 [Radius 0]),
+    (SingleDegreeRadii 1.0 [Radius 10])
+    
+   ])
+  (let sdrList = [(SingleDegreeRadii 0.0 [Radius 0]),
+                  (SingleDegreeRadii 1.0 [Radius 1]),
+                  (SingleDegreeRadii 2.0 [Radius 2])
+                 ]
+       range = [0.0,1.0]
+       transformFx = [(*10) | x <- [1..]]
+   in
+       transposeSDRList [transformFx | x <- [1..]]  (extractSDRWithinRange range sdrList)
+       
+  )
+
+createMapOfSingleDegreeRadiiTest = TestCase $ assertEqual 
+  "createMapOfSingleDegreeRadiiTest"
+  --(SingleDegreeRadii 0.0 [Radius 0])
+  (SingleDegreeRadii 0.0 [Radius 0])
+  
+  (let sdrList = [(SingleDegreeRadii 0.0 [Radius 0]),
+                  (SingleDegreeRadii 1.0 [Radius 1])
+                 ]
+       sdrMap = singleDegreeRadiiListToMap sdrList
+   in  extractMaybeSDR(sdrMap^.at 0.0) 
+  )
+
+
+
+
+
+
+
+singleDegreeRadiiListToMapTest = TestCase $ assertEqual 
+  "singleDegreeRadiiListToMapTest"
+  (SingleDegreeRadii 0.0 (map Radius [1.0, 2.0, 3.0]))
+  (let sdrList = [
+                  SingleDegreeRadii 0.0 (map Radius [1.0, 2.0, 3.0]),
+                  SingleDegreeRadii 2.0 (map Radius [4.0, 5.0, 6.0])
+                 ]
+       sdrMap = singleDegreeRadiiListToMap sdrList
+   in extractMaybeSDR $ sdrMap^.at (0.0)
+  )
+-- =============================== end: work on transposing an mdr using Flow ===================
 resetMultiDegreeRadiiNaNTest  = TestCase $ assertEqual 
   "resetMultiDegreeRadiiNaNTest"
   (MultiDegreeRadii

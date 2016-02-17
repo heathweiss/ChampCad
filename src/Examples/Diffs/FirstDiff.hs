@@ -21,7 +21,7 @@ import Stl.StlBase (StlShape(..), newStlShape)
 
 import qualified Builder.Sequence as S (newCornerPointsWithDegreesBuilder, (||@~+++^||), (@~+++#@|>), (@~+++@|>))
 import qualified Builder.List as L ((||@~+++^||))
-import Builder.Map(cornerPointsMap, extractMaybeCube, cornerPointsWithDegreesMap)
+import Builder.Map(extractMaybeCube, cornerPointsWithDegreesMap)
 
 import Test.HUnit
 

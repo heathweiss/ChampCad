@@ -1,4 +1,4 @@
-module Builder.Map(cornerPointsMap, extractMaybeCube, cornerPointsWithDegreesMap) where
+module Builder.Map({-cornerPointsMap-} extractMaybeCube, cornerPointsWithDegreesMap) where
 --import CornerPoints.CornerPointsWithDegrees(DegreeRange(..), CornerPointsWithDegrees(..), newCornerPointsWithDegreesList )
 import CornerPoints.CornerPointsWithDegrees(CornerPointsWithDegrees(..))
 import CornerPoints.CornerPoints(CornerPoints(..))
@@ -9,13 +9,7 @@ import qualified Data.Map as M
 Build up complex shapes using Kleisli arrows, maps, and CornerPointsWithDegrees.
 -}
 
-{-
-create a tuple  from [CornerPointsWithDegrees], required to make a map with:
-key: DegreeRange
-value: CornerPoints
--}
-cornerPointsMap :: [CornerPointsWithDegrees] -> [(CornerPoints.CornerPointsWithDegrees.DegreeRange, CornerPoints)]
-cornerPointsMap = map (\(CubesWithStartEndDegrees cube degreeRange) -> (degreeRange,cube))
+
 
 {-Extract the CornerPoint from the map Maybe result. Gives CornerPointsError on Nothing -}
 extractMaybeCube :: Maybe CornerPoints ->  CornerPoints
@@ -28,4 +22,12 @@ key:: DegreeRange
 value:: CornerPoints
 -}
 cornerPointsWithDegreesMap :: [CornerPointsWithDegrees] -> M.Map DegreeRange CornerPoints
-cornerPointsWithDegreesMap cornerPointsWithDegrees = M.fromList $ cornerPointsMap  cornerPointsWithDegrees
+cornerPointsWithDegreesMap cornerPointsWithDegrees =
+  let {-create a tuple  from [CornerPointsWithDegrees], required to make a map with:
+        key: DegreeRange
+        value: CornerPoints-}
+        getKeyValueTuplesFrom :: [CornerPointsWithDegrees] -> [(CornerPoints.CornerPointsWithDegrees.DegreeRange, CornerPoints)]
+        getKeyValueTuplesFrom = map (\(CubesWithStartEndDegrees cube degreeRange) -> (degreeRange,cube))
+
+  in  M.fromList $ getKeyValueTuplesFrom  cornerPointsWithDegrees
+

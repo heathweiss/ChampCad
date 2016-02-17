@@ -43,6 +43,11 @@ import Stl.StlCornerPointsWithDegrees(FacesWithRange(..))
 import Test.HUnit
 
 import qualified Data.Sequence as S
+import qualified Data.Map as M
+import qualified Data.Foldable as F
+
+--import Control.Arrow hiding ((+++))
+--import Control.Category hiding ((.))
 {------------------------------------------------------------- overview ---------------------------------------------------
 The original scan work is in WalkerSocket module.
 ++++++
@@ -97,20 +102,27 @@ loadMDRAndPassToProcessor = do
         putStrLn "File not decoded"
 
 
-{-=========================================================== side mounted quick-release socket ================================================
+{-=========================================================== side mounted quick-release socket ============================================
 Generate the socket with a thicker section of wall, into which a hole can be drilled for a quick coupler.
 -}
+
+
+
+
+      
 sideMountQuickReleaseSocket :: MultiDegreeRadii ->  RowReductionFactor -> PixelsPerMillimeter ->  IO ()
 sideMountQuickReleaseSocket      mainSocketInnerMDR             rowReductionFactor    pixelsPerMillimeter  =
   let
     mainWallThickness = 3
     quickReleaseWallThickness = 10
-    --mainSocketInnerMDR: degrees length == 37
-    --mainSocketInnerMDR: radii length = 19
+    
+    
+     
 
     --transpose mainSocketInnerMDR to create the outer wall, including the wider section for the quick coupler.
     outerMDR =
            transposeMDRList
+                  
                   (
                    -- 0-22
                    [[(+3) | y <- [1..]] | x <- [1..22]]
@@ -127,8 +139,10 @@ sideMountQuickReleaseSocket      mainSocketInnerMDR             rowReductionFact
                    -- 29-end
                    [[(+3) | y <- [1..]] | x <- [29..]]
                   )
+                  
                   mainSocketInnerMDR
 
+    
     
                  
     origin = (Point{x_axis=0, y_axis=0, z_axis=50})

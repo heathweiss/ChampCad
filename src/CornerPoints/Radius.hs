@@ -2,11 +2,13 @@
 module CornerPoints.Radius(Radius(..), SingleDegreeRadii(..), Degree(..), MultiDegreeRadii(..),resetMultiDegreeRadiiIfNull,
                           extractSingle, extractList, rotateMDR, setRadiusIfNull, resetSingleDegreeRadiiIfNull,
                           setRadiusWithPrecedingValueIfNull, resetMultiDegreeRadiiIfNullWithPreviousValue,
-                          buildSymmetricalRadius, transposeSDRList, transposeMDRList) where
+                          buildSymmetricalRadius, transposeSDRList, transposeMDRList, extractSDRWithinRange,
+                          transformSDRWithList, extractMaybeRadii, extractMaybeSDR, singleDegreeRadiiListToMap) where
 import CornerPoints.Transposable( TransposeLength, transpose, TransposeWithList, transposeWithList)
 import Data.List(sortBy)
 import Data.Ord (Ordering(..), comparing)
 import CornerPoints.CornerPoints(CornerPoints(..))
+import qualified Data.Map as M
 
 {-|
 Represents a radius of a circular shape, which is what all shapes in math polar are created from.
@@ -60,6 +62,14 @@ buildSymmetricalRadius :: [Degree] -> Degree -> [Radius]
 buildSymmetricalRadius    halfDegrees centerDegree =
    map Radius $  halfDegrees ++ ( centerDegree : (reverse halfDegrees))
 
+{- |
+When extracting a [Radius] from a Map, the result will be a Maybe [Radius].
+If successful, return the [Radius], otherwise return []
+-}
+extractMaybeRadii :: Maybe [Radius] -> [Radius]
+extractMaybeRadii (Just radii) = radii
+extractMaybeRadii Nothing = []
+
 -- | Reset all Radius Null to a Radius defaultValue
 resetSingleDegreeRadiiIfNull :: Double ->  SingleDegreeRadii -> SingleDegreeRadii
 resetSingleDegreeRadiiIfNull resetValue    (SingleDegreeRadii degree' radii') =
@@ -75,7 +85,7 @@ resetSingleDegreeRadiiIfNullWithPreviousValue resetValue    (SingleDegreeRadii d
   SingleDegreeRadii degree' $ setRadiusWithPrecedingValueIfNull resetValue radii'
 
   -- ===================================== Single Degree Radii ========================================
-{-
+{- |
 Contains the [Radius] associated with a single degree from a vertical scan.
 
 Scan.Json module declares it an instance of ToJSON and FromJSON for the aeson package.
@@ -103,6 +113,49 @@ transposeSDRList    fx                         singleDegreeRadii    =
    | currFx  <- fx
   ]
 
+{- |
+Extract a [SingleDegreeRadii] whose 'degree' is contained in a [Double]
+-}
+extractSDRWithinRange ::  [Double] -> [SingleDegreeRadii] -> [SingleDegreeRadii]
+extractSDRWithinRange range sdr =
+  let isWithinRange :: [Double] -> SingleDegreeRadii -> Bool
+      isWithinRange range sdr = elem (degree sdr) range
+  in
+      filter (isWithinRange range) sdr
+
+{- |
+Transpose the length of the [Radius] contained in a SingleDegreeRadii, using a [(Double -> Double)]
+-}
+transformSDRWithList :: SingleDegreeRadii -> [(Double -> Double)] -> SingleDegreeRadii
+transformSDRWithList sdr transformers =
+  sdr {radii =
+       [ transpose fx radius'
+        | radius' <- radii sdr
+        | fx      <- transformers
+       ]
+      }
+
+{- |
+When extracting a SingleDegreeRadii from a map the result will be a Maybe SingleDegreeRadii.
+If successful, return the SingleDegreeRadii.
+Else return SingleDegreeRadii 0.0 []
+-}
+--ToDo: Look at using a SingleDegreeRadiiNada
+extractMaybeSDR :: Maybe SingleDegreeRadii -> SingleDegreeRadii
+extractMaybeSDR (Just sdr) = sdr
+extractMaybeSDR Nothing    = SingleDegreeRadii 0.0 []
+
+{- |
+Create a map from a [SingleDegreeRadii] with:
+key: degree
+value: SingleDegreeRadii
+-}
+singleDegreeRadiiListToMap :: [SingleDegreeRadii] -> M.Map Degree SingleDegreeRadii
+singleDegreeRadiiListToMap sdrList =
+  let getKeyValueTupe :: [SingleDegreeRadii] -> [(Degree, SingleDegreeRadii)]
+      getKeyValueTupe = map (\(SingleDegreeRadii degree radii) -> (degree, SingleDegreeRadii degree radii))
+  --get map tuple
+  in M.fromList $ getKeyValueTupe sdrList
 
 -- |Degree of a circle.
 type Degree = Double
