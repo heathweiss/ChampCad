@@ -151,33 +151,34 @@ sideMountQuickReleaseSocket      mainSocketInnerMDR             rowReductionFact
       [ newCornerPointsWith10DegreesBuilder currWalls | currWalls <-
            drop 6  (createVerticalWalls  mainSocketInnerMDR outerMDR origin transposeFactors)]
 
-    --todo: Get rid of lots of []. Does there need to be so much nesting.
-    mainSocketFaces = 
-                          [
-                           [[FacesWithRange FacesBackFrontTop (DegreeRange 0 360)]]
-                          ]
-                          ++
-                          [
-                           [[FacesWithRange FacesBackFront (DegreeRange 0 360)]] | x <- [1..10]
-                          ]
-                          ++
-                          [
-                           [[FacesWithRange FacesBackBottomFront (DegreeRange 0 360)]]
-                          ]
-
-                          
-    mainSocketTriangles =    concat
-                             [ currCubes ||@~+++^|| currFaces
-                               | currCubes <- mainSocketWalls
-                               | currFaces <- mainSocketFaces 
-                             ]
+    --ToDo: Reduce the need for so much nesting of lists.
+    mainSocketFaceTriangles = 
+       let processSingleRow currRow faceConstructor =
+              currRow ||@~+++^|| [[FacesWithRange faceConstructor (DegreeRange 0 360)]]
+       in  --top row 1
+           S.fromList [processSingleRow (head mainSocketWalls) FacesBackFrontTop ]
+           --rows 2-11
+           Flw.|> (\facesSeq ->
+                    (
+                     facesSeq S.>< ( S.fromList [ processSingleRow currRow FacesBackFront | currRow <- take 10 (tail mainSocketWalls)])
+                    ,last  mainSocketWalls
+                     )
+                  )
+           --row 12
+           Flw.|> (\(facesSeq, cubes) ->
+                     facesSeq S.|> ( processSingleRow cubes FacesBackBottomFront )
+                  )
+           --turn it back to a list
+           Flw.|> (\faces -> concat $ F.toList faces)
+     
     
   in
-     writeStlToFile $ newStlShape "socket with quick release" $ mainSocketTriangles
+     writeStlToFile $ newStlShape "socket with quick release"  mainSocketFaceTriangles
 
+{-
 test =   [[3 | y <- [1,2]] | x <- [1,2]]
          ++ [[4,4]]
-
+-}
 {-========================================================== socket attached to walker=====================================================
 ===========================================================================================================================================-}
 {-

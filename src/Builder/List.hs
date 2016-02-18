@@ -29,6 +29,9 @@ cornerPointsWithDegreesListList &@~+++#@ f =
 cornerPointsWithDegreesList ||@~+++^|| facesWithRangeList = concat $
   zipWith cornerPointsWithDegreesToTriangles cornerPointsWithDegreesList facesWithRangeList
 
+
+
+
 {- |
 Used by numerous infix functions such as (&@~+++#@) for building up a [[CornerPointsWithDegrees]].
 Each layer of a stl shape is made up of [CornerPointsWithDegrees].
