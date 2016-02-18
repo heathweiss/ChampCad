@@ -3,12 +3,18 @@ module CornerPoints.Radius(Radius(..), SingleDegreeRadii(..), Degree(..), MultiD
                           extractSingle, extractList, rotateMDR, setRadiusIfNull, resetSingleDegreeRadiiIfNull,
                           setRadiusWithPrecedingValueIfNull, resetMultiDegreeRadiiIfNullWithPreviousValue,
                           buildSymmetricalRadius, transposeSDRList, transposeMDRList, extractSDRWithinRange,
-                          transformSDRWithList, extractMaybeRadii, extractMaybeSDR, singleDegreeRadiiListToMap) where
+                          transformSDRWithList, extractMaybeRadii, extractMaybeSDR, singleDegreeRadiiListToMap,
+                          transformRangeOfSDR, transformMaybeSDR) where
+
 import CornerPoints.Transposable( TransposeLength, transpose, TransposeWithList, transposeWithList)
 import Data.List(sortBy)
 import Data.Ord (Ordering(..), comparing)
 import CornerPoints.CornerPoints(CornerPoints(..))
 import qualified Data.Map as M
+import qualified Data.Sequence as S
+
+-- |Degree of a circle.
+type Degree = Double
 
 {-|
 Represents a radius of a circular shape, which is what all shapes in math polar are created from.
@@ -157,9 +163,27 @@ singleDegreeRadiiListToMap sdrList =
   --get map tuple
   in M.fromList $ getKeyValueTupe sdrList
 
--- |Degree of a circle.
-type Degree = Double
+{- |
+Filter a [SingleDegreeRadii] to those whose Degree is an element of [Double].
+Transpose the radii of filtered [SingleDegreeRadii] using a single [(Double-> Double)]
+-}
+transformRangeOfSDR :: [(Double -> Double)] -> [Double] -> [SingleDegreeRadii] -> S.Seq SingleDegreeRadii
+transformRangeOfSDR transformer range sdr =
+            S.fromList
+            (transposeSDRList [transformer | x <- [1..]]  (extractSDRWithinRange range sdr))
 
+{- |
+Transpose the Radii of a Maybe SingleDegreeRadii using a [(Double -> Double)]
+If sdr is Nothing, it will use SingleDegreeRadii 0.0 []
+-}
+transformMaybeSDR :: [(Double -> Double)] -> Maybe SingleDegreeRadii -> SingleDegreeRadii
+transformMaybeSDR  transformer sdr =
+            ( transformSDRWithList
+                          (extractMaybeSDR $ sdr)
+                          transformer
+            )
+          
+-- ======================================== MultiDegreeRadii===========================================
 
 {- |
 Contains all the filtered data from a scan.

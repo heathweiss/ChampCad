@@ -2,7 +2,8 @@
 module Examples.Scan.WalkerSocketSquared(sideMountQuickReleaseSocket) where
 
 import CornerPoints.Radius(MultiDegreeRadii(..), SingleDegreeRadii(..), Radius(..),extractSingle, extractList, rotateMDR, transposeMDRList,
-                          transposeSDRList, extractSDRWithinRange, singleDegreeRadiiListToMap, transformSDRWithList, extractMaybeSDR)
+                          transposeSDRList, extractSDRWithinRange, singleDegreeRadiiListToMap, transformSDRWithList, extractMaybeSDR,
+                          transformRangeOfSDR, transformMaybeSDR)
   
 import CornerPoints.VerticalFaces(createRightFaces, createLeftFaces, createLeftFacesMultiColumns, createVerticalWalls,
                                   createHorizontallyAlignedCubesNoSlope, createHorizontallyAlignedCubes)
@@ -120,90 +121,23 @@ sideMountQuickReleaseSocket      mainSocketInnerMDR             rowReductionFact
     mainWallThickness = 3
     quickReleaseWallThickness = 10
     
-    
-     
-
-    --transpose mainSocketInnerMDR to create the outer wall, including the wider section for the quick coupler.
-    {-The orignal system using pure lists.-}
-    outerMDROrig =
-           transposeMDRList
-                  
-                  (
-                   -- 0-22
-                   [[(+3) | y <- [1..]] | x <- [1..22]]
-                   ++:
-                   -- 23
-                   [(+7) | y <- [1..12]] ++ [(+3) | y <- [1..7]]
-                   ++::
-                   -- 24-27 
-                   [[(+15) | y <- [1..12]] ++ [(+3) | y <- [1..7]] | x <- [24..27]]
-                   ++:
-                   -- 28
-                   [(+9) | y <- [1..12]] ++ [(+3) | y <- [1..7]]
-                    ++::
-                   -- 29-end
-                   [[(+3) | y <- [1..]] | x <- [29..]]
-                  )
-                  
-                  mainSocketInnerMDR
-
-    {-The new system using function composition and maps.-}
+    {-Transpose mainSocketInnerMDR to get thickness of walls, as well as protusion for quick-release attachment.-}
     outerMDR =
-      let transform0To220Fx = [(+3) | y <- [1..]]
-          transform240To270Fx = (
-                                 [(+15) | y <- [1..12]]
-                                 ++
-                                 [(+3) | y <- [1..7]] 
-                                )
-          transform290To360 = [(+3) | y <- [1..]]
-          origSDR = degrees mainSocketInnerMDR 
+      let origSDR = degrees mainSocketInnerMDR 
           sdrMap = singleDegreeRadiiListToMap origSDR
+          
+            
           transposedSDR =
             --0-220 degrees
-            S.fromList
-            (transposeSDRList [transform0To220Fx | x <- [1..]]  (extractSDRWithinRange [0,10..220] origSDR))
+            transformRangeOfSDR [(+3) | y <- [1..]] [0,10..220] origSDR
             --230 degrees
-            Flw.|> (\sdrSeq ->
-                     (sdrSeq S.|>
-                      ( transformSDRWithList
-                          (extractMaybeSDR $ sdrMap^.at (230.0))
-                          ([(+7) | y <- [1..12]] ++ [(+3) | y <- [1..7]])
-                      )
-                     )
-                   )
+            Flw.|> (\sdrSeq -> sdrSeq S.|> (transformMaybeSDR ([(+7) | y <- [1..12]] ++ [(+3) | y <- [1..7]]) (sdrMap^.at 230.0)))
             --240-270 degrees
-            Flw.|>
-             (\sdrSeq ->
-               sdrSeq
-               S.><
-               (S.fromList
-                  (transposeSDRList
-                     ([transform240To270Fx | x <- [1..]])
-                     (extractSDRWithinRange [240,250..270] origSDR)
-                  )
-               )
-             )
+            Flw.|> (\sdrSeq -> sdrSeq S.>< (transformRangeOfSDR ([(+15) | y <- [1..12]] ++ [(+3) | y <- [1..7]]) [240,250..270] origSDR))
             --280 degrees
-            Flw.|> (\sdrSeq ->
-                     (sdrSeq S.|>
-                      ( transformSDRWithList
-                          (extractMaybeSDR $ sdrMap^.at (280.0))
-                          ([(+9) | y <- [1..12]] ++ [(+3) | y <- [1..7]])
-                      )
-                     )
-                   )
+            Flw.|> (\sdrSeq -> sdrSeq S.|> (transformMaybeSDR ([(+9) | y <- [1..12]] ++ [(+3) | y <- [1..7]]) (sdrMap^.at 280.0)))
             --290-360
-            Flw.|>
-             (\sdrSeq ->
-               sdrSeq
-               S.><
-               (S.fromList
-                  (transposeSDRList
-                     ([transform290To360 | x <- [1..]])
-                     (extractSDRWithinRange [290,300..360] origSDR)
-                  )
-               )
-             )
+            Flw.|> (\sdrSeq -> sdrSeq S.>< (transformRangeOfSDR [(+3) | y <- [1..]] [290,300..360] origSDR))
             --convert sdrSeq back into a list
             Flw.|> (\sdrSeq -> F.toList sdrSeq)
       in
