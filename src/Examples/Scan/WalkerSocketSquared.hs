@@ -98,10 +98,10 @@ loadMDRAndPassToProcessor = do
             ---------socket attached to walker       
             --mainSocketStl innerSleeveMDR outerSleeveMDR extensionFaceBuilder extensionHeight rowReductionFactor pixelsPerMM
             --pushPlate plateRadius power lengthenYFactor
-            --hosePlate plateRadius power lengthenYFactor
+            hosePlate plateRadius power lengthenYFactor
 
             ---------socket with sidemount quick releas
-            sideMountQuickReleaseSocket innerSleeveMDRForSideMount rowReductionFactor pixelsPerMM
+            --sideMountQuickReleaseSocket innerSleeveMDRForSideMount rowReductionFactor pixelsPerMM
             
       Nothing                                ->
         putStrLn "File not decoded"
@@ -210,34 +210,67 @@ hosePlate plateRadius power lengthenYFactor =
       
     baseOrigin = Point 0 0 0
     riserOrigin = transposeZ ( + baseHeight) baseOrigin
-      
-    angles = (map (Angle) [0,10..360])
-    stlFile = newStlShape "walker socket hose plate" $
-                [
-                    [FacesBackFrontTop | x <- [1..]],    --hose
-                    [FacesBackFront | x <- [1..]],       --riser
-                    [FaceBottom | x <- [1..]],       --riserBase
-                    [FacesBottomFrontTop | x <- [1..]], --ousideScrews
-                    [FacesBottomTop | x <- [1..]]      --innerHose
-                    
-                ]
-                ||+++^||
-                (
-                 getCornerPoints $
-                  (CornerPointsBuilder
-                   [ 
-                    (cylinderWallsNoSlopeSquaredOffLengthenY  (Radius riserInnerRadius) baseOrigin angles baseHeight riserThickness power lengthenYFactor),--riser base
-                    (cylinderWallsNoSlopeSquaredOffLengthenY  (Radius screwInsideRadius) baseOrigin angles baseHeight screwsThickness power lengthenYFactor),--outer screw ring
-                    (cylinderSolidNoSlopeSquaredOffLengthenY  (Radius hoseOuterRadius)   baseOrigin    angles     baseHeight  power    lengthenYFactor) --innerHose
-                   ]
-                   &+++#@ (|+++|  [extractTopFace x | x <- (cylinderWallsNoSlope (Radius hoseInnerRadius) hoseThickness   riserOrigin angles riserHeight)]) -- riser
-                   &+++#@ (|@+++#@| ((transposeZ (+20)) . extractTopFace) ) --hose
-                  )
+
+    --Build up the cubes, and output the stl triangles
+    buildCubesOutputTriangles =
+      let riserBaseCubes = cylinderWallsNoSlopeSquaredOffLengthenY
+             (Radius riserInnerRadius) baseOrigin angles baseHeight riserThickness power lengthenYFactor
+          
+          addFacesTo faceConstructor =  ([faceConstructor | x <- [1..]] |+++^|)
+          addTrianglesToSeq sequence faceConstructor cubes = sequence S.><
+                                                (S.fromList
+                                                  ([faceConstructor | x <- [1..]] |+++^| cubes)
+                                                )
+      in
+          --riser base cube triangles
+          (S.fromList ( addFacesTo FacesBottomTop riserBaseCubes))
+          --outer screw ring
+          Flw.|> (\trianglesSeq ->
+                    addTrianglesToSeq
+                     trianglesSeq
+                     FacesBottomFrontTop
+                      (cylinderWallsNoSlopeSquaredOffLengthenY
+                        (Radius screwInsideRadius) baseOrigin angles baseHeight screwsThickness power lengthenYFactor)
+                 )
+          --innerHose
+          Flw.|> (\triangleSeq ->
+                   let innerHoseCubes = (cylinderSolidNoSlopeSquaredOffLengthenY
+                                 (Radius hoseOuterRadius)   baseOrigin    angles     baseHeight  power    lengthenYFactor)
+                       triangleSeq' = addTrianglesToSeq
+                                       triangleSeq
+                                       FacesBottomTop
+                                       innerHoseCubes
+                   in (triangleSeq', innerHoseCubes)
+                 )
+          
+          --riser
+          Flw.|>(\(triangleSeq, innerHoseCubes) ->
+                  let riserTopFaces =
+                        [extractTopFace x |
+                          x <- (cylinderWallsNoSlope (Radius hoseInnerRadius) hoseThickness   riserOrigin angles riserHeight)
+                        ]
+                      riserCubes = riserTopFaces |+++| innerHoseCubes
+                      triangleSeq' = addTrianglesToSeq triangleSeq FacesBackFront riserCubes
+                      
+                  in  (triangleSeq', riserCubes)
                 )
+          --hose
+          Flw.|>(\(triangleSeq, riserCubes) ->
+                  let hoseTopFaces = map ((transposeZ (+20)) . extractTopFace) riserCubes
+                      hoseCubes    = hoseTopFaces |+++| riserCubes
+                      
+                  in  addTrianglesToSeq triangleSeq FacesBackFrontTop hoseCubes
+                )
+          --triangle sequence to a list
+          Flw.|>(\triangleSeq -> F.toList triangleSeq)
+
+
+
+    angles = (map (Angle) [0,10..360])
     
   
   in
-    writeStlToFile stlFile      
+    writeStlToFile $ newStlShape "walker socket hose plate" buildCubesOutputTriangles      
   
      
 
