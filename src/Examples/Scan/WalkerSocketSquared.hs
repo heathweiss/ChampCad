@@ -97,8 +97,8 @@ loadMDRAndPassToProcessor = do
         in  ------------------------------------choose the shape to process---------------------------------------------.
             ---------socket attached to walker       
             --mainSocketStl innerSleeveMDR outerSleeveMDR extensionFaceBuilder extensionHeight rowReductionFactor pixelsPerMM
-            --pushPlate plateRadius power lengthenYFactor
-            hosePlate plateRadius power lengthenYFactor
+            pushPlate plateRadius power lengthenYFactor
+            --hosePlate plateRadius power lengthenYFactor
 
             ---------socket with sidemount quick releas
             --sideMountQuickReleaseSocket innerSleeveMDRForSideMount rowReductionFactor pixelsPerMM
@@ -292,25 +292,39 @@ pushPlate    plateRadius    power    lengthenYFactor  =
     --power = 2.5
     riserThickness = 3
     --lengthenFactor = 20
-    
-    stlFile = newStlShape "walker socket push plate" $
-      [
-        [FacesBackBottomTop | x <- [1..]], --center of plate
-        (riserFaceBuilder FacesBottomFront  FacesBottomFront      FacesBottomFrontTop FacesBottomFront       FacesBottomFront), --outer ring
-        (riserFaceBuilder FacesBackFrontTop FacesBackFrontLeftTop FacesNada           FacesBackFrontRightTop FacesBackFrontTop)--riser
-      ]
-      ||+++^||
-      [ --the center of the plate
-        (cylinderSolidNoSlopeSquaredOffLengthenY  (Radius 21)   origin    angles     plateHeight  power    lengthenYFactor),
-        --the outer ring, which has an inner radius = outer radius of riser on socket
-        (cylinderWallsNoSlopeSquaredOffLengthenY  (Radius (plateRadius - riserThickness))  origin angles plateHeight riserThickness power lengthenYFactor),
-        --the riser that takes off from the outer ring
-        (cylinderWallsNoSlopeSquaredOffLengthenY  (Radius (plateRadius - riserThickness))   (transposeZ (+plateHeight)origin)  angles (30 :: Height) riserThickness  power  lengthenYFactor)
-      ]
 
+    --create the cubes and the stl together without the use of builder
+    createCubesStlCompositionally = 
+      let centerPlate = (cylinderSolidNoSlopeSquaredOffLengthenY  (Radius 21)   origin    angles     plateHeight  power    lengthenYFactor)
+          addFacesTo faceConstructor =  ([faceConstructor | x <- [1..]] |+++^|)
+          addTrianglesToSeq sequence faceConstructor cubes = sequence S.><
+                                                (S.fromList
+                                                  ([faceConstructor | x <- [1..]] |+++^| cubes)
+                                                )
+      in  --centerPlate
+          S.fromList(addFacesTo FacesBackBottomTop centerPlate)
+          --the outer ring, which has an inner radius = outer radius of riser on socket
+          Flw.|>(\triangleSeq ->
+                  let cubes = (cylinderWallsNoSlopeSquaredOffLengthenY
+                                (Radius (plateRadius - riserThickness))  origin angles plateHeight riserThickness power lengthenYFactor)
+                      faces = (riserFaceBuilder FacesBottomFront  FacesBottomFront FacesBottomFrontTop FacesBottomFront FacesBottomFront)
+                      triangles = S.fromList (faces |+++^| cubes)
+                  in triangleSeq S.>< triangles
+                )
+          --the riser that takes off from the outer ring
+          Flw.|>(\triangleSeq ->
+                  let cubes = (cylinderWallsNoSlopeSquaredOffLengthenY
+                                (Radius (plateRadius - riserThickness))
+                                (transposeZ (+plateHeight)origin)  angles (30 :: Height) riserThickness  power  lengthenYFactor)
+                      faces = (riserFaceBuilder FacesBackFrontTop FacesBackFrontLeftTop FacesNada FacesBackFrontRightTop FacesBackFrontTop)
+                      triangleSeq' = S.fromList (faces |+++^| cubes)
+                  in  triangleSeq S.>< triangleSeq'
+                )
+          --change back to [Triangles]
+          Flw.|>(\triangleSeq -> F.toList triangleSeq)
     
   in
-    writeStlToFile stlFile
+    writeStlToFile $  newStlShape "walker socket push plate" createCubesStlCompositionally
 
 
 {-
