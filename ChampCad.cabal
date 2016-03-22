@@ -43,7 +43,8 @@ library
                        --Examples
                        -- Example ShoeLifts
                        Examples.ShoeLift.KeenToe, Examples.ShoeLift.KeenHeel,
-                       Examples.ShoeLift.SnowBoardBoot, Examples.ShoeLift.KangarooShoe
+                       Examples.ShoeLift.SnowBoardBoot, Examples.ShoeLift.KangarooShoe,
+                       Examples.ShoeLift.GeoxShoe
                        --HeelGenerators.SandalsToe, HeelGenerators.SandalsHeel
                        --HeelGenerators.BlackRunnerHeel,  HeelGenerators.BlackRunnerToe,
                        --Have not been redone for changes to MathPolar.
