@@ -96,8 +96,8 @@ loadMDRAndPassToProcessor = do
             innerSleeveMDRForSideMount = transpose (+2) $ reduceScan rowReductionFactor $ removeDefectiveTopRow (MultiDegreeRadii name' degrees')
         in  ------------------------------------choose the shape to process---------------------------------------------.
             ---------socket attached to walker       
-            --mainSocketStl innerSleeveMDR outerSleeveMDR extensionFaceBuilder extensionHeight rowReductionFactor pixelsPerMM
-            pushPlate plateRadius power lengthenYFactor
+            socketWithRiser innerSleeveMDR outerSleeveMDR extensionFaceBuilder extensionHeight rowReductionFactor pixelsPerMM
+            --pushPlate plateRadius power lengthenYFactor
             --hosePlate plateRadius power lengthenYFactor
 
             ---------socket with sidemount quick releas
@@ -334,20 +334,63 @@ output to stl
 
 --do not call directly.
 --called via reducedRowsMultiDegreeScanWrapper as it reads the json file-}
-mainSocketStl :: MultiDegreeRadii -> MultiDegreeRadii -> ((Faces) -> (Faces) -> (Faces) -> (Faces) -> [Faces]) ->
+socketWithRiser :: MultiDegreeRadii -> MultiDegreeRadii -> ((Faces) -> (Faces) -> (Faces) -> (Faces) -> [Faces]) ->
                  ExtensionHeight -> RowReductionFactor -> PixelsPerMillimeter ->  IO ()
-mainSocketStl    innerSleeveMDR      outerSleeveMDR      extensionFaceBuilder extensionHeight    rowReductionFactor pixelsPerMM  =
+socketWithRiser    innerSleeveMDR      outerSleeveMDR      extensionFaceBuilder extensionHeight    rowReductionFactor pixelsPerMM  =
   let transposeFactors = [0,heightPerPixel.. ]
       heightPerPixel = 1/pixelsPerMM * (fromIntegral rowReductionFactor)
       origin = (Point{x_axis=0, y_axis=0, z_axis=50})
       angles = (map (Angle) [0,10..360])
 
-      riser = cylinderWallsNoSlopeSquaredOff  (Radius 18)  (transposeX (+0)(transposeY (+(-15))(transposeZ (+(-15))origin)))    angles (20::Height) (3::Thickness) (2.5::Power)
+      riserCubes = cylinderWallsNoSlopeSquaredOff  (Radius 18)  (transposeX (+0)(transposeY (+(-15))(transposeZ (+(-15))origin)))    angles (20::Height) (3::Thickness) (2.5::Power)
+      {-
       riserTriangles =
         (riserFaceBuilder FacesBackFrontTop FacesBackFrontLeftTop FacesNada FacesBackFrontRightTop FacesBackFrontTop)
         |+++^|
-        riser   
-          
+        riser
+      -}
+      --rewrite using Flw.|> to have everything built in 1 pass
+      cubesAndTrianglesWithFunctionComposition =
+        let mainCubes = --main body of the socket, with 1st 6 rows removed removed.
+                drop 6  (createVerticalWalls  innerSleeveMDR outerSleeveMDR origin transposeFactors) 
+        in
+           --top row of scan
+           S.fromList((riserFaceBuilder FacesBackFront FacesBackFront (FacesBackFrontTop) FacesBackFront FacesBackFront)  |+++^| (head mainCubes))
+           --
+           --create faces for row 2-10, which are all the same
+           
+           Flw.|>(\triangleSeq ->
+                   let rows2To10 = take 10 $ tail mainCubes
+                       faceConstructors = [[FacesBackFront | x <- [1..]] | x <- [1..10]]
+                       faces = S.fromList (faceConstructors ||+++^|| rows2To10 )
+                   in  triangleSeq S.>< faces
+                 )
+           --the bottom row
+           Flw.|>(\triangleSeq ->
+                   let bottomCubes = last mainCubes
+                       faceConstructors = [FacesBackBottomFront | x <- [1..]]
+                       faces = S.fromList (faceConstructors |+++^| bottomCubes)
+                   in  triangleSeq S.>< faces
+                 )
+           --add the socket to riser adaptor
+           Flw.|>(\triangleSeq ->
+                   let --mainCubesTopFaces = head mainCubes
+                       riserBtmFacesAsTopFaces = [upperFaceFromLowerFace $ extractBottomFace x | x <- riserCubes ]
+                       faceConstructors = riserFaceBuilder FacesBackFront FacesBackFrontLeft FacesNada FacesBackFrontRight FacesBackFront
+                       adaptorCubes = riserBtmFacesAsTopFaces |+++| (head mainCubes)
+                       adaptorTriangles = S.fromList (faceConstructors |+++^| adaptorCubes)
+                   in triangleSeq S.>< adaptorTriangles
+                       
+                 )
+           --add the riser
+           Flw.|>(\triangleSeq ->
+                   let riserTriangles = (riserFaceBuilder FacesBackFrontTop FacesBackFrontLeftTop FacesNada FacesBackFrontRightTop FacesBackFrontTop) |+++^| riserCubes
+                   in  triangleSeq S.>< (S.fromList riserTriangles)
+                 )
+           --convert triangles seq back to list
+           Flw.|>(\triangleSeq -> F.toList triangleSeq)
+            
+      {-     
       mainBodyCubes =  getCornerPoints $
         (CornerPointsBuilder $
           drop 6  (createVerticalWalls  innerSleeveMDR outerSleeveMDR origin transposeFactors) --main body of the socket, with head removed. 
@@ -374,8 +417,10 @@ mainSocketStl    innerSleeveMDR      outerSleeveMDR      extensionFaceBuilder ex
                   
       
       sleeveStlFile = newStlShape "walker sleeve" $ socketTriangles ++ riserTriangles
+      -}
   in
-      writeStlToFile sleeveStlFile
+      --writeStlToFile sleeveStlFile
+      writeStlToFile $ newStlShape "walker sleeve" cubesAndTrianglesWithFunctionComposition
 
 
 --build the faces for the squared riser and assoc'd layers
