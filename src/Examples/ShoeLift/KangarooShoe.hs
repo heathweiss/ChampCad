@@ -1,4 +1,10 @@
 module Examples.ShoeLift.KangarooShoe where
+{-
+The runners from Wallmart, that use the old treads from his black runners.
+
+Made a very small toe, which allows the runner to be light and flexible but:
+it gives no support in the center, which caused him problems. 
+-}
 
 import Test.HUnit
 
@@ -7,37 +13,112 @@ import CornerPoints.HorizontalFaces(createBottomFaces, createTopFaces)
 import CornerPoints.Points(Point(..))
 import CornerPoints.Create(Angle(..), flatXSlope, flatYSlope, Slope(..))
 import CornerPoints.CornerPointsWithDegrees(CornerPointsWithDegrees(..), (@~+++#@),(@~+++@),(|@~+++@|), (|@~+++#@|), DegreeRange(..))
-import Control.Lens
 
-import CornerPoints.CornerPoints((|@+++#@|), (|+++|))
+
+
+import CornerPoints.CornerPoints((|@+++#@|), (|+++|), CornerPoints(..), (+++))
 import CornerPoints.Transpose(transposeZ, transposeY)
-
 import CornerPoints.FaceExtraction(extractTopFace, extractBottomFace, extractFrontFace)
-
 import CornerPoints.FaceConversions(upperFaceFromLowerFace, backFaceFromFrontFace )
 import CornerPoints.Degree(Degree(..))
 import CornerPoints.Transposable(transpose)
 
-
+import Control.Lens
 
 import Builder.List((&@~+++@), (&@~+++#@), (||@~+++^||), newCornerPointsWith10DegreesBuilder)
 import qualified Builder.Sequence as S (newCornerPointsWith10DegreesBuilder, (||@~+++^||), (@~+++#@|>), (@~+++@|>))
 
-import Stl.StlCornerPoints((|+++^|), (||+++^||), Faces(..))
+import Stl.StlCornerPoints((|+++^|), (||+++^||), Faces(..), (+++^))
 import Stl.StlBase (StlShape(..), newStlShape)
 import Stl.StlFileWriter(writeStlToFile)
 import Stl.StlCornerPointsWithDegrees(FacesWithRange(..))
 
 import Primitives.Cylindrical(cylinderSolidNoSlopeSquaredOff, cylinderWallsNoSlope, cylinderWallsVariableRadiusNoSlope,
-                              cylinderWallsVariableThicknessNoSlope, cylinderWallsVariableThicknessSloped)
+                              cylinderWallsVariableThicknessNoSlope, cylinderWallsVariableThicknessSloped, cylinderSolidVariableRadiusVariableTopSlope )
 
 --make signatures more readable
 type Thickness = Double
 type Height    = Double
 
---origin = Point 0 0 0
+origin = Point 0 0 0
 angles = map Angle [0,10..]
 
+-- ================================================== center piece =========================================
+{-
+Left a large central gap between the toe and the heel. Dom does not like this, so need to add in a central filler between the toe and heel.
+Consists of:
+Slope: Attaches to the shoe with a 15 degree slope. Goes to a common squared riser shape.
+
+Riser: a common riser squared shape.
+
+Tread: Converts from the tread to the common riser.
+-}
+
+--radius where center filler meets the shoe.
+centerTopRadius =
+   map Radius
+   [35.4, --0
+    35.4, --10
+    37.0, --20
+    39.5, --30
+    43.1, --40
+    39.3, --50
+    37.0, --60
+    36.4, --70
+    36.1, --80
+    37.8, --90
+    39.9, --100
+    43.3, --110
+    48.1, --120
+    54.3, --130
+    46.4, --140
+    41.4, --150
+    38.5, --160
+    37.0, --170
+    36.6, --180
+    37.4, --190
+    39.8, --200
+    43.7, --210
+    49.3, --220
+    59.7, --230
+    51.4, --240
+    44.3, --250
+    39.4, --260
+    36.3, --270
+    34.7, --280
+    33.9, --290
+    34.7, --300
+    38.2, --310
+    46.2, --320
+    42.5, --330
+    38.7, --340
+    36.4, --350
+    35.4--360
+   ]
+
+{-Works as both the sloped top piece, and the flat main riser section-}
+writeCenterTopSlope = writeStlToFile $ newStlShape "kangaroo center" $
+                       [FacesBottomFrontTop | x <- [1..]]
+                       |+++^|
+                       cylinderSolidVariableRadiusVariableTopSlope centerTopRadius origin angles [flatXSlope | x <- [1..]] [flatYSlope | x <- [1..]] (30.0::Height)
+                       --the sloped section
+                       --cylinderSolidVariableRadiusVariableTopSlope centerTopRadius origin angles [flatXSlope | x <- [1..]] (map NegYSlope [15,15..]) (20.0::Height)
+
+
+{-The side plates for gluing/attaching the riser.-}
+centerSideAttachments =
+  let btmFace = BottomFace {b1 = Point 0 0 0,
+                            b4 = Point 45 0 0,
+                            f1 = Point 0 70 0,
+                            f4 = Point 23 70 0
+                           }
+      topFace = transposeZ (+1) $ upperFaceFromLowerFace btmFace
+  in
+      writeStlToFile $ newStlShape "kangaroo center sides" $
+      FacesAll
+      +++^
+      (btmFace +++ topFace)
+  
 -- =============================================== toe tread ==============================================
 
 
