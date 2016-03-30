@@ -174,37 +174,37 @@ heel =
         ]
      
       cougarDimensions =
-       [CubeIn (B1(Point 50.0 0 34.1)) 0.0,
-        CubeIn (F1(Point 45.1 1 34.1)) 10.0, 
-        CubeIn (F1(Point 35.0 3 34.1)) 29.9,
-        CubeIn (F1(Point 32.0 5 34.1)) 35.9,
-        CubeIn (F1(Point 26.1 10 33.9)) 47.4,
-        CubeIn (F1(Point 22.3 15 33.4)) 55.5,
-        CubeIn (F1(Point 20.2 20 33.0)) 60.4,
-        CubeIn (F1(Point 18.1 25 32.1)) 64.6,
-        CubeIn (F1(Point 16.7 30 31.5)) 67.7,
-        CubeIn (F1(Point 15.9 35 30.6)) 69.7,
-        CubeIn (F1(Point 15.3 40 29.6)) 71.0,
-        CubeIn (F1(Point 15.1 45 28.5)) 72.0,
-        CubeIn (F1(Point 15.1 50 27.8)) 72.9,
-        CubeIn (F1(Point 15.4 55 26.7)) 73.2,
-        CubeIn (F1(Point 16.0 60 26.0)) 73.2,
-        CubeIn (F1(Point 15.9 65 25.2)) 72.9,
-        CubeIn (F1(Point 16.8 70 24.2)) 72.2,
-        CubeIn (F1(Point 17.0 75 23.4)) 72.3,
-        CubeIn (F1(Point 17.7 80 22.4)) 71.7,
-        CubeIn (F1(Point 18.3 85 21.8)) 72.5,
-        CubeIn (F1(Point 18.8 90 20.8)) 71.3,
-        CubeIn (F1(Point 19.2 95 19.2)) 70.7,
-        CubeIn (F1(Point 19.5 100 18.1)) 70.9,
-        CubeIn (F1(Point 18.8 105 17.0)) 71.9,
-        CubeIn (F1(Point 17.7 110 16.0)) 73.3,
-        CubeIn (F1(Point 17.0 115 15.0)) 74.3,
-        CubeIn (F1(Point 16.2 120 13.8)) 75.8,
-        CubeIn (F1(Point 15.7 125 12.9)) 77.2,
-        CubeIn (F1(Point 14.4 130 12.1)) 78.7,
-        CubeIn (F1(Point 13.9 135 11.8)) 80.4,
-        CubeIn (F1(Point 12.8 140 11.8)) 81.8
+       [CubeIn (B1(Point 46.3 0 34.1)) 0.0,
+        CubeIn (F1(Point 43.5 1 34.1)) 10.0, 
+        CubeIn (F1(Point 36.2 3 34.1)) 28.7,
+        CubeIn (F1(Point 30.5 5 34.1)) 35.7,
+        CubeIn (F1(Point 25.2 10 33.9)) 45.9,
+        CubeIn (F1(Point 22.1 15 33.4)) 53.4,
+        CubeIn (F1(Point 18.9 20 33.0)) 59.8,
+        CubeIn (F1(Point 16.8 25 32.1)) 64.2,
+        CubeIn (F1(Point 15.0 30 31.5)) 66.8,
+        CubeIn (F1(Point 14.3 35 30.6)) 68.7,
+        CubeIn (F1(Point 14.8 40 29.6)) 69.6,
+        CubeIn (F1(Point 14.8 45 28.5)) 70.2,
+        CubeIn (F1(Point 15.0 50 27.8)) 71.3,
+        CubeIn (F1(Point 15.0 55 26.7)) 71.3,
+        CubeIn (F1(Point 15.7 60 26.0)) 71.5,
+        CubeIn (F1(Point 15.9 65 25.2)) 71.4,
+        CubeIn (F1(Point 16.3 70 24.2)) 70.7,
+        CubeIn (F1(Point 16.7 75 23.4)) 70.3,
+        CubeIn (F1(Point 17.3 80 22.4)) 70.3,
+        CubeIn (F1(Point 18.2 85 21.8)) 69.2,
+        CubeIn (F1(Point 18.9 90 20.8)) 68.6,
+        CubeIn (F1(Point 18.7 95 19.2)) 69.4,
+        CubeIn (F1(Point 18.7 100 18.1)) 69.4,
+        CubeIn (F1(Point 18.0 105 17.0)) 70.7,
+        CubeIn (F1(Point 17.3 110 16.0)) 72.4,
+        CubeIn (F1(Point 16.9 115 15.0)) 72.7,
+        CubeIn (F1(Point 15.8 120 13.8)) 74.7,
+        CubeIn (F1(Point 15.2 125 12.9)) 75.8,
+        CubeIn (F1(Point 14.6 130 12.1)) 77.6,
+        CubeIn (F1(Point 13.5 135 11.8)) 79.4,
+        CubeIn (F1(Point 12.4 140 11.8)) 81.4
        ]
 
       
@@ -246,15 +246,15 @@ center =
         ]
 
       cougarDimensions =
-       [CubeIn (B1(Point 13.1 140 11.8)) 81.8,
-        CubeIn (F1(Point 11.7 145 11.7)) 82.8,
-        CubeIn (F1(Point 11.3 150 11.7)) 83.8,
-        CubeIn (F1(Point 11.0 155 11.7)) 84.5,
-        CubeIn (F1(Point 11.0 160 12.2)) 84.5,
-        CubeIn (F1(Point 11.0 165 13.3)) 84.6,
-        CubeIn (F1(Point 11.8 170 14.8)) 83.7,
-        CubeIn (F1(Point 12.2 175 16.0)) 82.5,
-        CubeIn (F1(Point 13.2 180 17.5)) 80.4
+       [CubeIn (B1(Point 12.8 140 11.8)) 81.4,
+        CubeIn (F1(Point 11.1 145 11.7)) 82.4,
+        CubeIn (F1(Point 10.5 150 11.7)) 82.8,
+        CubeIn (F1(Point 10.4 155 11.7)) 83.4,
+        CubeIn (F1(Point 10.4 160 12.2)) 83.4,
+        CubeIn (F1(Point 10.4 165 13.3)) 83.4,
+        CubeIn (F1(Point 10.4 170 14.8)) 81.9,
+        CubeIn (F1(Point 10.8 175 16.0)) 81.2,
+        CubeIn (F1(Point 11.2 180 17.5)) 79.6
        ]
 
       slopeAdjustedGeoxDimensions = 
@@ -296,18 +296,18 @@ toe =
         ]
 
       cougarDimensions =
-       [CubeIn (B1(Point 13.4 180 17.5)) 80.4,
-        CubeIn (F1(Point 14.6 185 18.8)) 75.9,
-        CubeIn (F1(Point 16.4 190 20.4)) 71.3,
-        CubeIn (F1(Point 18.5 195 22.0)) 66.4,
-        CubeIn (F1(Point 20.8 200 23.7)) 61.4,
-        CubeIn (F1(Point 24.3 205 25.7)) 55.0,
-        CubeIn (F1(Point 28.2 210 27.7)) 47.6,
-        CubeIn (F1(Point 33.5 215 29.9)) 37.7,
-        CubeIn (F1(Point 41.6 220 32.0)) 24.3,
-        CubeIn (F1(Point 51.3 223 34.0)) 0.0,
-        CubeIn (F1(Point 51.3 223 34.0)) 0.0,
-        CubeIn (F1(Point 51.3 223 34.0)) 0.0
+       [CubeIn (B1(Point 12.5 180 17.5)) 79.9,
+        CubeIn (F1(Point 12.4 185 18.8)) 77.1,
+        CubeIn (F1(Point 13.6 190 20.4)) 73.3,
+        CubeIn (F1(Point 16.3 195 22.0)) 68.6,
+        CubeIn (F1(Point 18.0 200 23.7)) 64.3,
+        CubeIn (F1(Point 20.2 205 25.7)) 59.1,
+        CubeIn (F1(Point 23.0 210 27.7)) 53.1,
+        CubeIn (F1(Point 26.9 215 29.9)) 45.9,
+        CubeIn (F1(Point 33.1 220 32.0)) 36.3,
+        CubeIn (F1(Point 41.6 223 34.0)) 22.5,
+        CubeIn (F1(Point 45.8 224 34.0)) 9.4,
+        CubeIn (F1(Point 48.5 225 34.0)) 0.0
        ]
 
       slopeAdjustedGeoxDimensions = 
@@ -367,40 +367,41 @@ heel =
          CubeIn (F2(Point 19.1 135 9.9)) 75.6,
          CubeIn (F2(Point 17.7 140 10.3)) 77.7
         ]
-     
+      last one done before new slide rule
       cougarDimensions =
-       [CubeIn (B1(Point 50.0 0 27.5)) 0.0,
-        CubeIn (F1(Point 45.1 1 27.6)) 10.0, 
-        CubeIn (F1(Point 35.0 3 28.4)) 29.9,
-        CubeIn (F1(Point 32.0 5 29.0)) 35.9,
-        CubeIn (F1(Point 26.1 10 28.7)) 47.4,
-        CubeIn (F1(Point 22.3 15 28.7)) 55.5,
-        CubeIn (F1(Point 20.2 20 28.8)) 60.4,
-        CubeIn (F1(Point 18.1 25 28.2)) 64.6,
-        CubeIn (F1(Point 16.7 30 27.3)) 67.7,
-        CubeIn (F1(Point 15.9 35 26.9)) 69.7,
-        CubeIn (F1(Point 15.3 40 25.6)) 71.0,
-        CubeIn (F1(Point 15.1 45 25.0)) 72.0,
-        CubeIn (F1(Point 15.1 50 23.8)) 72.9,
-        CubeIn (F1(Point 15.4 55 22.7)) 73.2,
-        CubeIn (F1(Point 16.0 60 22.2)) 73.2,
-        CubeIn (F1(Point 15.9 65 20.8)) 72.9,
-        CubeIn (F1(Point 16.8 70 19.9)) 72.2,
-        CubeIn (F1(Point 17.0 75 18.2)) 72.3,
-        CubeIn (F1(Point 17.7 80 17.1)) 71.7,
-        CubeIn (F1(Point 18.3 85 15.2)) 72.5,
-        CubeIn (F1(Point 18.8 90 14.1)) 71.3,
-        CubeIn (F1(Point 19.2 95 13.3)) 70.7,
-        CubeIn (F1(Point 19.5 100 12.2)) 70.9,
-        CubeIn (F1(Point 18.8 105 9.9)) 71.9,
-        CubeIn (F1(Point 17.7 110 8.8)) 73.3,
-        CubeIn (F1(Point 17.0 115 7.7)) 74.3,
-        CubeIn (F1(Point 16.2 120 6.9)) 75.8,
-        CubeIn (F1(Point 15.7 125 6.4)) 77.2,
-        CubeIn (F1(Point 14.4 130 5.9)) 78.7,
-        CubeIn (F1(Point 13.9 135 6.0)) 80.4,
-        CubeIn (F1(Point 12.8 140 6.0)) 81.8
+       [CubeIn (B1(Point 50.0 0 34.1)) 0.0,
+        CubeIn (F1(Point 45.1 1 34.1)) 10.0, 
+        CubeIn (F1(Point 35.0 3 34.1)) 29.9,
+        CubeIn (F1(Point 32.0 5 34.1)) 35.9,
+        CubeIn (F1(Point 26.1 10 33.9)) 47.4,
+        CubeIn (F1(Point 22.3 15 33.4)) 55.5,
+        CubeIn (F1(Point 20.2 20 33.0)) 60.4,
+        CubeIn (F1(Point 18.1 25 32.1)) 64.6,
+        CubeIn (F1(Point 16.7 30 31.5)) 67.7,
+        CubeIn (F1(Point 15.9 35 30.6)) 69.7,
+        CubeIn (F1(Point 15.3 40 29.6)) 71.0,
+        CubeIn (F1(Point 15.1 45 28.5)) 72.0,
+        CubeIn (F1(Point 15.1 50 27.8)) 72.9,
+        CubeIn (F1(Point 15.4 55 26.7)) 73.2,
+        CubeIn (F1(Point 16.0 60 26.0)) 73.2,
+        CubeIn (F1(Point 15.9 65 25.2)) 72.9,
+        CubeIn (F1(Point 16.8 70 24.2)) 72.2,
+        CubeIn (F1(Point 17.0 75 23.4)) 72.3,
+        CubeIn (F1(Point 17.7 80 22.4)) 71.7,
+        CubeIn (F1(Point 18.3 85 21.8)) 72.5,
+        CubeIn (F1(Point 18.8 90 20.8)) 71.3,
+        CubeIn (F1(Point 19.2 95 19.2)) 70.7,
+        CubeIn (F1(Point 19.5 100 18.1)) 70.9,
+        CubeIn (F1(Point 18.8 105 17.0)) 71.9,
+        CubeIn (F1(Point 17.7 110 16.0)) 73.3,
+        CubeIn (F1(Point 17.0 115 15.0)) 74.3,
+        CubeIn (F1(Point 16.2 120 13.8)) 75.8,
+        CubeIn (F1(Point 15.7 125 12.9)) 77.2,
+        CubeIn (F1(Point 14.4 130 12.1)) 78.7,
+        CubeIn (F1(Point 13.9 135 11.8)) 80.4,
+        CubeIn (F1(Point 12.8 140 11.8)) 81.8
        ]
+
 
 center =
   let geoxDimensions =
@@ -414,17 +415,17 @@ center =
          CubeIn (F2(Point 12.6 175 17.0)) 80.7,
          CubeIn (F2(Point 12.5 180 18.1)) 79.9
         ]
-
+      last input before slide rule
       cougarDimensions =
-       [CubeIn (B1(Point 13.1 140 6.1)) 81.8,
-        CubeIn (F1(Point 11.7 145 6.3)) 82.8,
-        CubeIn (F1(Point 11.3 150 6.7)) 83.8,
-        CubeIn (F1(Point 11.0 155 7.6)) 84.5,
-        CubeIn (F1(Point 11.0 160 8.2)) 84.5,
-        CubeIn (F1(Point 11.0 165 9.4)) 84.6,
-        CubeIn (F1(Point 11.8 170 10.3)) 83.7,
-        CubeIn (F1(Point 12.2 175 11.8)) 82.5,
-        CubeIn (F1(Point 13.2 180 13.6)) 80.7
+       [CubeIn (B1(Point 13.1 140 11.8)) 81.8,
+        CubeIn (F1(Point 11.7 145 11.7)) 82.8,
+        CubeIn (F1(Point 11.3 150 11.7)) 83.8,
+        CubeIn (F1(Point 11.0 155 11.7)) 84.5,
+        CubeIn (F1(Point 11.0 160 12.2)) 84.5,
+        CubeIn (F1(Point 11.0 165 13.3)) 84.6,
+        CubeIn (F1(Point 11.8 170 14.8)) 83.7,
+        CubeIn (F1(Point 12.2 175 16.0)) 82.5,
+        CubeIn (F1(Point 13.2 180 17.5)) 80.4
        ]
 
 toe =
@@ -442,20 +443,20 @@ toe =
          CubeIn (F2(Point 39.0 230 41.3)) 14.3,
          CubeIn (F2(Point 47.2 231 41.7)) 0.0
         ]
-
+      last input before slide rule
       cougarDimensions =
-       [CubeIn (B1(Point 13.4 180 13.2)) 80.4,
-        CubeIn (F1(Point 14.6 185 14.9)) 75.9,
-        CubeIn (F1(Point 16.4 190 16.5)) 71.3,
-        CubeIn (F1(Point 18.5 195 18.1)) 66.4,
-        CubeIn (F1(Point 20.8 200 19.5)) 61.4,
-        CubeIn (F1(Point 24.3 205 20.7)) 55.0,
-        CubeIn (F1(Point 28.2 210 22.2)) 47.6,
-        CubeIn (F1(Point 33.5 215 24.5)) 37.7,
-        CubeIn (F1(Point 41.6 220 27.5)) 24.3,
-        CubeIn (F1(Point 51.3 223 29.5)) 0.0,
-        CubeIn (F1(Point 51.3 223 29.5)) 0.0,
-        CubeIn (F1(Point 51.3 223 29.5)) 0.0
+       [CubeIn (B1(Point 13.4 180 17.5)) 80.4,
+        CubeIn (F1(Point 14.6 185 18.8)) 75.9,
+        CubeIn (F1(Point 16.4 190 20.4)) 71.3,
+        CubeIn (F1(Point 18.5 195 22.0)) 66.4,
+        CubeIn (F1(Point 20.8 200 23.7)) 61.4,
+        CubeIn (F1(Point 24.3 205 25.7)) 55.0,
+        CubeIn (F1(Point 28.2 210 27.7)) 47.6,
+        CubeIn (F1(Point 33.5 215 29.9)) 37.7,
+        CubeIn (F1(Point 41.6 220 32.0)) 24.3,
+        CubeIn (F1(Point 51.3 223 34.0)) 0.0,
+        CubeIn (F1(Point 51.3 223 34.0)) 0.0,
+        CubeIn (F1(Point 51.3 223 34.0)) 0.0
        ]
 
 -}
