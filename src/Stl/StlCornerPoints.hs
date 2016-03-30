@@ -253,7 +253,6 @@ getTriangles (FacesBackFrontTop) c = concat
 
 getTriangles (FacesBackLeftRightTop) c = concat
  [(getTriangles FaceBack c),
-  (getTriangles FaceFront c),
   (getTriangles FaceLeft c),
   (getTriangles FaceRight c),
   (getTriangles FaceTop c)
