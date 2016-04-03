@@ -118,8 +118,8 @@ getTriangles (FacesAllButFront) c = concat
   (getTriangles FaceLeft c),
   (getTriangles FaceRight c),
   (getTriangles FaceTop c)
-  
  ]
+ 
 
 getTriangles (FacesAllButLeft) c = concat
  [(getTriangles FaceBack c),
@@ -197,6 +197,14 @@ getTriangles (FacesBackBottomLeftRight) c = concat
   (getTriangles FaceRight c),
   (getTriangles FaceBack c),
   (getTriangles FaceBottom c)
+ ]
+
+getTriangles (FacesBackBottomLeftRightTop) c = concat
+ [(getTriangles FaceBack c),
+  (getTriangles FaceBottom c),
+  (getTriangles FaceLeft c),
+  (getTriangles FaceRight c),
+  (getTriangles FaceTop c)
  ]
 
 getTriangles (FacesBackBottomTop) c = concat
@@ -426,6 +434,7 @@ data Faces =
  | FacesBackBottomFrontTop
  | FacesBackBottomLeft
  | FacesBackBottomLeftRight
+ | FacesBackBottomLeftRightTop
  | FacesBackBottomTop
  | FacesBackFrontLeft
  | FacesBackFrontRight
