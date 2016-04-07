@@ -12,7 +12,10 @@ scaleCornerPointsZ,
 CornerPointsBuilder(..),
 ) where
 import CornerPoints.Points (Point(..))
+--,transposeX, transposeY, transposeZ
 import    Control.Applicative
+--import TypeClasses.Transposable(TransposePoint, transposeX, transposeY, transposeZ )
+--import TypeClasses.Transposable(TransposePoint)
 
 
 infix 7 +++
@@ -194,6 +197,16 @@ data CornerPoints =
         }
         deriving (Show)
 
+------------------------------------------------ Transposable---------------------------------------------------
+{-
+instance TransposePoint CornerPoints where
+  transposeZ f (CubePoints f1 f2 f3 f4 b1 b2 b3 b4) = CubePoints (transposeZ f f1) (transposeZ f f2) (transposeZ f f3) (transposeZ f f4)
+                                                                 (transposeZ f b1) (transposeZ f b2) (transposeZ f b3) (transposeZ f b4)
+  transposeY f (CubePoints f1 f2 f3 f4 b1 b2 b3 b4) = CubePoints (transposeY f f1) (transposeY f f2) (transposeY f f3) (transposeY f f4)
+                                                                 (transposeY f b1) (transposeY f b2) (transposeY f b3) (transposeY f b4)
+  transposeX f (CubePoints f1 f2 f3 f4 b1 b2 b3 b4) = CubePoints (transposeX f f1) (transposeX f f2) (transposeX f f3) (transposeX f f4)
+                                                                 (transposeX f b1) (transposeX f b2) (transposeX f b3) (transposeX f b4)
+-}
 --------------------------------------------------- Equal-----------------------------------------------------------
 {-
 Implement as part of Equal class.

@@ -22,7 +22,7 @@ import CornerPoints.Transpose (transposeZ)
 import Helpers.List((++:))
 import Primitives.Cylindrical(cylinderSolidNoSlope)
 import Primitives.Cylindrical(cylinderWallsNoSlope)
-import CornerPoints.Transposable(transpose)
+import TypeClasses.Transposable(transpose)
 import Helpers.DSL (ofThe, forThe, andThen, adjustedFor, andThe,)
 
 {----------------------------------------------------- overview------------------------------------------------------------

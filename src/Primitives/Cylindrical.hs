@@ -32,7 +32,7 @@ import CornerPoints.FaceConversions(lowerFaceFromUpperFace, backBottomLineFromBo
                                     upperFaceFromLowerFace, bottomFrontLineFromBackBottomLine, backFaceFromFrontFace)
 import CornerPoints.Radius(Radius(..))
 import CornerPoints.Transpose (transposeZ)
-import CornerPoints.Transposable(TransposePoint, transposeX, transposeY, transposeZ, TransposeLength, transpose)
+import TypeClasses.Transposable(TransposePoint, transposeX, transposeY, transposeZ, TransposeLength, transpose)
 
 type Thickness = Double
 type Height = Double

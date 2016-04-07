@@ -7,16 +7,16 @@ import CornerPoints.Points(Point(..))
 import CornerPoints.Create(Angle(..), flatXSlope, flatYSlope, Slope(..))
 import CornerPoints.CornerPointsWithDegrees(CornerPointsWithDegrees(..), (@~+++#@),(@~+++@),(|@~+++@|), (|@~+++#@|), DegreeRange(..))
 import CornerPoints.CornerPoints((|@+++#@|), (|+++|), CornerPoints(..), (+++), (+++>))
-import CornerPoints.Transpose(transposeZ, transposeY)
 import CornerPoints.FaceExtraction(extractTopFace, extractBottomFace, extractFrontFace)
 import CornerPoints.FaceConversions(upperFaceFromLowerFace, backFaceFromFrontFace, lowerFaceFromUpperFace )
 import CornerPoints.Degree(Degree(..))
-import CornerPoints.Transposable(transpose, transposeX)
 
---misc
-import Control.Lens
+import TypeClasses.Transposable(transposeZ, transposeY)
+
+--external libraries
 import qualified Flow as Flw
 
+import Cubical.Cubical (CubicalInput(..), createXaxisLine)
 
 import Stl.StlCornerPoints((|+++^|), (||+++^||), Faces(..), (+++^))
 import Stl.StlBase (StlShape(..), newStlShape)
@@ -60,14 +60,7 @@ Same as heel bottom and top.
 
 
 {----------------------------------------------------------- common datatypes, functions and values -------------------------------------}
-{-
-datatype to handle the basic input. Setup to use Lens package.
-leftPoint: A point with represents a CornerPoints(F1,F2,B1,B2).
-width: The X-axis offset from the point. Allows for the creation of a F3,F4,B3,B4
--}
---data CubicalInput = CubeIn {_leftPoint::Point, _width::Double}
-data CubicalInput = CubeIn {_cornerPoint::CornerPoints, _width::Double}
-makeLenses ''CubicalInput
+
 
 {-
 10
@@ -84,60 +77,7 @@ topHeightAdj = 80
 --ring need only have geox dimensions.
 transitionHeight = 80
 
-{-Using the left point, and a width, create a right point-}
-createRightPoint :: CubicalInput -> CornerPoints
-createRightPoint (CubeIn (B1(point')) width'') =
-        (B4
-         (transposeX
-          (+ width'')
-          (point') 
-         )
-       )
 
-createRightPoint (CubeIn (F1(point')) width'') =
-        (F4
-         (transposeX
-          (+ width'')
-          (point') 
-         )
-       )
-
-createRightPoint (CubeIn (B2(point')) width'') =
-        (B3
-         (transposeX
-          (+ width'')
-          (point') 
-         )
-       )
-
-createRightPoint (CubeIn (F2(point')) width'') =
-        (F3
-         (transposeX
-          (+ width'')
-          (point') 
-         )
-       )
-
-createLine :: CubicalInput -> CornerPoints
-createLine (CubeIn (B1(point')) width'') =
-  (B1 point')
-  +++
-  createRightPoint (CubeIn (B1(point')) width'')
-
-createLine (CubeIn (F1(point')) width'') =
-  (F1 point')
-  +++
-  createRightPoint (CubeIn (F1(point')) width'')
-
-createLine (CubeIn (B2(point')) width'') =
-  (B2 point')
-  +++
-  createRightPoint (CubeIn (B2(point')) width'')
-
-createLine (CubeIn (F2(point')) width'') =
-  (F2 point')
-  +++
-  createRightPoint (CubeIn (F2(point')) width'')
 
 ------------ adjust for slope
 {-Use trig to rotate.
@@ -166,15 +106,7 @@ setGeoxZaxisToConstantValue :: CubicalInput -> CubicalInput
 setGeoxZaxisToConstantValue (CubeIn (B2(Point x y z)) width) = (CubeIn (B2(Point x y transitionHeight)) width)
 setGeoxZaxisToConstantValue (CubeIn (F2(Point x y z)) width) = (CubeIn (F2(Point x y transitionHeight)) width)
 
-transposeZofCubicalInput  ::  (Double -> Double) -> CubicalInput -> CubicalInput
-transposeZofCubicalInput zAdj (CubeIn (B1(Point x y z)) width'')  =
-  CubeIn (B1 (Point x y (zAdj z)) ) width''
-transposeZofCubicalInput zAdj (CubeIn (F1(Point x y z)) width'')  =
-  CubeIn (F1 (Point x y (zAdj z)) ) width''
-transposeZofCubicalInput zAdj (CubeIn (B2(Point x y z)) width'')  =
-  CubeIn (B2 (Point x y (zAdj z)) ) width''
-transposeZofCubicalInput zAdj (CubeIn (F2(Point x y z)) width'')  =
-  CubeIn (F2 (Point x y (zAdj z)) ) width''
+
 
 --widen a CubicalInput
 widen :: (Double -> Double) -> CubicalInput -> CubicalInput
@@ -238,12 +170,12 @@ ankleBrace =
       geoxDimsWidened = map (widen (+18.0)) geoxFirst60Degrees
 
       --give it a flat bottom, with height adjusted
-      geoxDimsWidenedAndFlatened = map (transposeZofCubicalInput (\z -> (45))) geoxDimsWidened
+      geoxDimsWidenedAndFlatened = map (transposeZ (\z -> (45))) geoxDimsWidened
 
       topOfBtmLayerFaces =
-        (createLine (head geoxDimsWidenedAndFlatened))
+        (createXaxisLine (head geoxDimsWidenedAndFlatened))
         +++>
-        (map (createLine) (tail geoxDimsWidenedAndFlatened))
+        (map (createXaxisLine) (tail geoxDimsWidenedAndFlatened))
 
       
 
@@ -286,7 +218,7 @@ ankleBrace =
 
 {-Attachment ring that goes over the geoxHeelAttachmentRing to fill out to the diameter required for the anlkle brace..
 Is the same shape as the bottom of the ankle brace.-}
-geoxHeelRearHalfAttachmentRing =
+geoxHeelRearHalfAttachmentRing = 
   let geoxDims =
         [CubeIn (B2(Point 50.2 0 28.1)) 0.0,
          CubeIn (F2(Point 37.5 1 27.7)) 20.4, 
@@ -328,22 +260,22 @@ geoxHeelRearHalfAttachmentRing =
       geoxDimsWidened = map (widen (+8.0)) geoxFirst60Degrees
 
       --give it a flat bottom, with height adjusted
-      geoxDimsWidenedAndFlatened = map (transposeZofCubicalInput (\z -> (-10))) geoxDimsWidened
+      geoxDimsWidenedAndFlatened = map (transposeZ (\z -> (-10))) geoxDimsWidened
 
 
       btmGeoxFacesBeforeConversionFromTopFaces = 
-        (createLine (head geoxDimsWidenedAndFlatened))
+        (createXaxisLine (head geoxDimsWidenedAndFlatened))
         +++>
-        (map (createLine) (tail geoxDimsWidenedAndFlatened))
+        (map (createXaxisLine) (tail geoxDimsWidenedAndFlatened))
 
       btmGeoxFaces = map (lowerFaceFromUpperFace) btmGeoxFacesBeforeConversionFromTopFaces
 
       topGeoxSlopedDims = map (adjustTop topSlope geoxOrigin) geoxDimsWidened
 
       topGeoxFaces =
-        (createLine (head topGeoxSlopedDims))
+        (createXaxisLine (head topGeoxSlopedDims))
         +++>
-        (map (createLine) (tail topGeoxSlopedDims))
+        (map (createXaxisLine) (tail topGeoxSlopedDims))
 
       geoxCubes = btmGeoxFaces |+++| topGeoxFaces
 
@@ -389,21 +321,21 @@ geoxHeelAttachmentRing =
         ]
 
       geoxDimsWidened = map (widen (+4.0)) geoxDims
-      geoxDimsWidenedAndFlatened = map (transposeZofCubicalInput (\z -> (-30))) geoxDimsWidened
+      geoxDimsWidenedAndFlatened = map (transposeZ (\z -> (-30))) geoxDimsWidened
 
       btmGeoxFacesBeforeConversionFromTopFaces = 
-        (createLine (head geoxDimsWidenedAndFlatened))
+        (createXaxisLine (head geoxDimsWidenedAndFlatened))
             +++>
-            (map (createLine) (tail geoxDimsWidenedAndFlatened))
+            (map (createXaxisLine) (tail geoxDimsWidenedAndFlatened))
       
       btmGeoxFaces = map (lowerFaceFromUpperFace) btmGeoxFacesBeforeConversionFromTopFaces
 
       topGeoxSlopedDims = map (adjustTop topSlope geoxOrigin) geoxDimsWidened
 
       topGeoxFaces =
-        (createLine (head topGeoxSlopedDims))
+        (createXaxisLine (head topGeoxSlopedDims))
         +++>
-        (map (createLine) (tail topGeoxSlopedDims))
+        (map (createXaxisLine) (tail topGeoxSlopedDims))
 
       geoxCubes = btmGeoxFaces |+++| topGeoxFaces
 
@@ -457,18 +389,18 @@ cougarHeelAttachmentRing =
 
     cougarDimensionsWidened = map (widen (+4)) cougarDimensions
     
-    btmFaces = (createLine (head cougarDimensionsWidened))
+    btmFaces = (createXaxisLine (head cougarDimensionsWidened))
             +++>
-            (map (createLine) (tail cougarDimensionsWidened))
+            (map (createXaxisLine) (tail cougarDimensionsWidened))
     
     
       
     topDimensionsWithFlatTop = map (flattenTop 88) cougarDimensionsWidened
 
     topFacesBeforeConversionFromBottomFaces =
-      (createLine (head topDimensionsWithFlatTop))
+      (createXaxisLine (head topDimensionsWithFlatTop))
       +++>
-      (map (createLine) (tail topDimensionsWithFlatTop))
+      (map (createXaxisLine) (tail topDimensionsWithFlatTop))
 
     topFaces = map (upperFaceFromLowerFace) topFacesBeforeConversionFromBottomFaces
 
@@ -556,9 +488,9 @@ heelRiser =
       attachmentSlopeAdjustedTopGeoxDimensions = 
         map (adjustTop topSlope geoxOrigin) geoxDimensions
       
-      attachmentTopSlopeAdjustedGeoxFaces = (createLine (head attachmentSlopeAdjustedTopGeoxDimensions))
+      attachmentTopSlopeAdjustedGeoxFaces = (createXaxisLine (head attachmentSlopeAdjustedTopGeoxDimensions))
             +++>
-            (map (createLine) (tail attachmentSlopeAdjustedTopGeoxDimensions))
+            (map (createXaxisLine) (tail attachmentSlopeAdjustedTopGeoxDimensions))
             
       
       --The top faces that meet the geox tread. Adjusted for height and slope.
@@ -572,9 +504,9 @@ heelRiser =
       Transitions from the dimensions of the cougar tread to the geox tread
       -}
       
-      transitionBtmCougarFaces = (createLine (head cougarDimensions))
+      transitionBtmCougarFaces = (createXaxisLine (head cougarDimensions))
             +++>
-            (map (createLine) (tail cougarDimensions))
+            (map (createXaxisLine) (tail cougarDimensions))
 
 
       {-Has same slope top as goex tread. This is a slope on a constant z-value
@@ -586,9 +518,9 @@ heelRiser =
       transitionTopGeoxDimensionsSloped = map (adjustTop topSlope geoxOrigin) transitionTopGeoxDimensions
       --create a set of top faces from them
       transitionSlopedTopGeoxDimensions =
-            (createLine (head transitionTopGeoxDimensionsSloped))
+            (createXaxisLine (head transitionTopGeoxDimensionsSloped))
             +++>
-            (map (createLine) (tail transitionTopGeoxDimensionsSloped)) 
+            (map (createXaxisLine) (tail transitionTopGeoxDimensionsSloped)) 
 
 
       transitionCubes = transitionBtmCougarFaces |+++| transitionSlopedTopGeoxDimensions
@@ -619,18 +551,18 @@ centerCougarAttachmentRing =
       
       cougarDimensionsWidened = map (widen (+4)) cougarDimensions
       
-      btmFaces = (createLine (head cougarDimensionsWidened))
+      btmFaces = (createXaxisLine (head cougarDimensionsWidened))
             +++>
-            (map (createLine) (tail cougarDimensionsWidened))
+            (map (createXaxisLine) (tail cougarDimensionsWidened))
       
       
       
       topDimensionsWithFlatTop = map (flattenTop 88) cougarDimensionsWidened
 
       topFacesBeforeConversionFromBottomFaces =
-       (createLine (head topDimensionsWithFlatTop))
+       (createXaxisLine (head topDimensionsWithFlatTop))
        +++>
-       (map (createLine) (tail topDimensionsWithFlatTop))
+       (map (createXaxisLine) (tail topDimensionsWithFlatTop))
       
       topFaces = map (upperFaceFromLowerFace) topFacesBeforeConversionFromBottomFaces
       
@@ -677,9 +609,9 @@ centerRiser =
       attachmentSlopeAdjustedTopGeoxDimensions = 
         map (adjustTop topSlope geoxOrigin) geoxDimensions
       
-      attachmentTopSlopeAdjustedGeoxFaces = (createLine (head attachmentSlopeAdjustedTopGeoxDimensions))
+      attachmentTopSlopeAdjustedGeoxFaces = (createXaxisLine (head attachmentSlopeAdjustedTopGeoxDimensions))
             +++>
-            (map (createLine) (tail attachmentSlopeAdjustedTopGeoxDimensions))
+            (map (createXaxisLine) (tail attachmentSlopeAdjustedTopGeoxDimensions))
             
       
       --The top faces that meet the geox tread. Adjusted for height and slope.
@@ -691,9 +623,9 @@ centerRiser =
 
       {------------------------------------------ transition ----------------------------}
 
-      transitionBtmCougarFaces = (createLine (head cougarDimensions))
+      transitionBtmCougarFaces = (createXaxisLine (head cougarDimensions))
             +++>
-            (map (createLine) (tail cougarDimensions))
+            (map (createXaxisLine) (tail cougarDimensions))
 
       {-Has same slope top as goex tread. This is a slope on a constant z-value
         instead of the z as captured to match cougar/geox treads.
@@ -704,9 +636,9 @@ centerRiser =
       transitionTopGeoxDimensionsSloped = map (adjustTop topSlope geoxOrigin) transitionTopGeoxDimensions
       --create a set of top faces from them
       transitionSlopedTopGeoxDimensions =
-            (createLine (head transitionTopGeoxDimensionsSloped))
+            (createXaxisLine (head transitionTopGeoxDimensionsSloped))
             +++>
-            (map (createLine) (tail transitionTopGeoxDimensionsSloped)) 
+            (map (createXaxisLine) (tail transitionTopGeoxDimensionsSloped)) 
 
 
       transitionCubes = transitionBtmCougarFaces |+++| transitionSlopedTopGeoxDimensions
@@ -758,9 +690,9 @@ toeRiser =
       attachmentSlopeAdjustedTopGeoxDimensions = 
         map (adjustTop topSlope geoxOrigin) geoxDimensions
       
-      attachmentTopSlopeAdjustedGeoxFaces = (createLine (head attachmentSlopeAdjustedTopGeoxDimensions))
+      attachmentTopSlopeAdjustedGeoxFaces = (createXaxisLine (head attachmentSlopeAdjustedTopGeoxDimensions))
             +++>
-            (map (createLine) (tail attachmentSlopeAdjustedTopGeoxDimensions))
+            (map (createXaxisLine) (tail attachmentSlopeAdjustedTopGeoxDimensions))
             
       
       --The top faces that meet the geox tread. Adjusted for height and slope.
@@ -774,9 +706,9 @@ toeRiser =
       Transition from the cougar tread dimensions, up to the geox tread dimensions which have been sloped to keep the toe down a bit.
       -}
 
-      transitionBtmCougarFaces = (createLine (head cougarDimensions))
+      transitionBtmCougarFaces = (createXaxisLine (head cougarDimensions))
             +++>
-            (map (createLine) (tail cougarDimensions))
+            (map (createXaxisLine) (tail cougarDimensions))
 
       {-Has same slope top as goex tread. This is a slope on a constant z-value
         instead of the z as captured to match cougar/geox treads.
@@ -787,9 +719,9 @@ toeRiser =
       transitionSlopedGeoxDimensions = map (adjustTop topSlope geoxOrigin) transitionTopGeoxDimensions
       --create a set of top faces from them
       transitionSlopedGeoxTopFaces =
-            (createLine (head transitionSlopedGeoxDimensions))
+            (createXaxisLine (head transitionSlopedGeoxDimensions))
             +++>
-            (map (createLine) (tail transitionSlopedGeoxDimensions)) 
+            (map (createXaxisLine) (tail transitionSlopedGeoxDimensions)) 
 
 
       transitionCubes = transitionBtmCougarFaces |+++| transitionSlopedGeoxTopFaces
@@ -819,12 +751,12 @@ toeTopAttachment =
       --widen cougar dim's to fit around the shoe/riser
       geoxDimensionsWidened = map (widen (+4.0)) geoxDimensions
 
-      geoxDimensionsWidenedAndFlattened = map (transposeZofCubicalInput (\z -> 40.0)) geoxDimensionsWidened
+      geoxDimensionsWidenedAndFlattened = map (transposeZ (\z -> 40.0)) geoxDimensionsWidened
 
       geoxTopFaces =
-        (createLine (head geoxDimensionsWidenedAndFlattened))
+        (createXaxisLine (head geoxDimensionsWidenedAndFlattened))
         +++>
-        (map (createLine) (tail geoxDimensionsWidenedAndFlattened))
+        (map (createXaxisLine) (tail geoxDimensionsWidenedAndFlattened))
 
        
 
@@ -877,18 +809,18 @@ toeBtmAttachment =
       cougarDimensionsWidened = map (widen (+4.0)) cougarDimensions
       
       --reduce the height of the cougar dimensions
-      cougarDimensionsWidenedAndLowered = map (transposeZofCubicalInput (\z -> z - 6.5)) cougarDimensionsWidened
+      cougarDimensionsWidenedAndLowered = map (transposeZ (\z -> z - 6.5)) cougarDimensionsWidened
       --build a set of bottom faces from them
       btmCougarFaces =
-            (createLine (head cougarDimensionsWidenedAndLowered))
+            (createXaxisLine (head cougarDimensionsWidenedAndLowered))
             +++>
-            (map (createLine) (tail cougarDimensionsWidenedAndLowered))
+            (map (createXaxisLine) (tail cougarDimensionsWidenedAndLowered))
 
       --build a set of top faces from the original dimensions
       topCougarFacesAsBtmFaces =
-            (createLine (head cougarDimensionsWidened))
+            (createXaxisLine (head cougarDimensionsWidened))
             +++>
-            (map (createLine) (tail cougarDimensionsWidened))
+            (map (createXaxisLine) (tail cougarDimensionsWidened))
 
       topCougarFaces = map (upperFaceFromLowerFace) topCougarFacesAsBtmFaces
       --add them to the new bottoms
@@ -903,13 +835,12 @@ toeBtmAttachment =
                                | widthAdj <- ([(+4.0) | x <- [1,2..11]] ++ [(+0.0)])
                                | cubeIn   <- geoxDimensions
                               ]
-      --geoxDimensionsWidenedAndFlattened = map ((transposeZofCubicalInput (\z -> 37.5 )) . (widen (+4))) geoxDimensions
-      geoxDimensionsWidenedAndFlattened = map (transposeZofCubicalInput (\z -> 47.5 ))  geoxDimensionsWidened
+      geoxDimensionsWidenedAndFlattened = map (transposeZ (\z -> 47.5 ))  geoxDimensionsWidened
 
       --create top faces
-      geoxTopFaces = (createLine (head geoxDimensionsWidenedAndFlattened))
+      geoxTopFaces = (createXaxisLine (head geoxDimensionsWidenedAndFlattened))
             +++>
-            (map (createLine) (tail geoxDimensionsWidenedAndFlattened))
+            (map (createXaxisLine) (tail geoxDimensionsWidenedAndFlattened))
       
       geoxCubes = geoxTopFaces |+++| (map (lowerFaceFromUpperFace) topCougarFaces)
 

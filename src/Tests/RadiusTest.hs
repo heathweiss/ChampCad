@@ -7,7 +7,7 @@ import CornerPoints.Radius(Radius(..), SingleDegreeRadii(..), Degree(..), MultiD
                           transposeMDRList, extractSDRWithinRange, transformSDRWithList, extractMaybeRadii, extractMaybeSDR,
                           singleDegreeRadiiListToMap)
 
-import CornerPoints.Transposable(transpose, transposeWithList )
+import TypeClasses.Transposable(transpose, transposeWithList )
 import Scan.ParseJuicy(averageValueOf)
 
 import qualified Data.Sequence as S

@@ -21,7 +21,7 @@ import CornerPoints.Transpose(transposeZ, transposeY)
 import CornerPoints.FaceExtraction(extractTopFace, extractBottomFace, extractFrontFace)
 import CornerPoints.FaceConversions(upperFaceFromLowerFace, backFaceFromFrontFace )
 import CornerPoints.Degree(Degree(..))
-import CornerPoints.Transposable(transpose)
+import TypeClasses.Transposable(transpose)
 
 import Control.Lens
 

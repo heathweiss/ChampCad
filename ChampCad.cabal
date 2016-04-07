@@ -24,6 +24,10 @@ library
                        CornerPoints.FaceExtractionWithDegrees, CornerPoints.VerticalFacesWithDegrees,
                        CornerPoints.FaceConversionsWithDegrees, CornerPoints.FaceExtractAndConvert
                        CornerPoints.Degree, 
+                       --TypeClasses
+                       TypeClasses.Transposable
+                       --Cubical
+                       Cubical.Cubical
                        --Builder
                        Builder.Sequence,  Builder.Builder, Builder.List, Builder.Map
                        --math

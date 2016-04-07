@@ -10,7 +10,7 @@ import CornerPoints.CornerPoints(CornerPoints(..), (+++>), (+++), (|+++|))
 import CornerPoints.Transpose (transposeZ)
 import CornerPoints.Points(Point(..))
 import CornerPoints.Radius(Radius(..), SingleDegreeRadii(..), Degree(..), MultiDegreeRadii(..))
-import CornerPoints.Transposable( TransposeLength, transpose)
+import TypeClasses.Transposable( TransposeLength, transpose)
 import CornerPoints.FaceExtraction (extractFrontFace, extractTopFace,extractBottomFace)
 import CornerPoints.FaceConversions(backFaceFromFrontFace)                           
 

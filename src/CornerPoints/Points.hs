@@ -1,5 +1,5 @@
 module CornerPoints.Points (Point(..), transposeZ) where
-import CornerPoints.Transposable(TransposePoint, transposeX, transposeY, transposeZ)
+import TypeClasses.Transposable(TransposePoint, transposeX, transposeY, transposeZ)
 {-------------------------- Point------------------------------
 Points in 3D geometry.
 

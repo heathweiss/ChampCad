@@ -6,7 +6,7 @@ module CornerPoints.Radius(Radius(..), SingleDegreeRadii(..), Degree(..), MultiD
                           transformSDRWithList, extractMaybeRadii, extractMaybeSDR, singleDegreeRadiiListToMap,
                           transformRangeOfSDR, transformMaybeSDR) where
 
-import CornerPoints.Transposable( TransposeLength, transpose, TransposeWithList, transposeWithList)
+import TypeClasses.Transposable( TransposeLength, transpose, TransposeWithList, transposeWithList)
 import Data.List(sortBy)
 import Data.Ord (Ordering(..), comparing)
 import CornerPoints.CornerPoints(CornerPoints(..))

@@ -13,7 +13,7 @@ import CornerPoints.Create(Slope(..), flatXSlope, flatYSlope, Angle(..), Origin(
 import CornerPoints.FaceExtraction (extractFrontFace, extractTopFace,extractBottomFace, extractBackFace)
 import CornerPoints.FaceConversions(backFaceFromFrontFace, upperFaceFromLowerFace, lowerFaceFromUpperFace )
 import CornerPoints.Transpose (transposeZ, transposeY, transposeX)
-import CornerPoints.Transposable(transpose)
+import TypeClasses.Transposable(transpose)
 import CornerPoints.CornerPointsWithDegrees(CornerPointsWithDegrees(..), (@~+++#@),(@~+++@),(|@~+++@|), (|@~+++#@|), DegreeRange(..))
 
 
