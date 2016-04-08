@@ -16,7 +16,7 @@ import TypeClasses.Transposable(transposeZ, transposeY)
 --external libraries
 import qualified Flow as Flw
 
-import Cubical.Cubical (CubicalInput(..), createXaxisLine)
+import Cubical.Cubical (CubicalInput(..), createXaxisLine, zDownSlope, adjustWidth)
 
 import Stl.StlCornerPoints((|+++^|), (||+++^||), Faces(..), (+++^))
 import Stl.StlBase (StlShape(..), newStlShape)
@@ -34,16 +34,15 @@ The lift has no gaps between the heel and the toe. It is done in 3 sections:
 2: The center section which needs to flex while walking. This is made of ninjaflex filament.
 3: The toe, which is made of solid filament such as pla.
 
-Lift doesn't use the radial input system because it has to have a variable z-slope, so that the resulting lift requires no vertical shaping to fit.
-The radial system did not allow for this as the would not be flat on the y-axis, even though the slope is only meant for the x-axis.
-Is input as a series of cubes running from back to front of the lift.
-These cubes are split into 3 groups to correspond with the 3 printable section: solid heel, flexible middle, solid toe
+This is the 1st use of the new Cubical.Cubical module, which was developed with this lift.
 
-Input for the cubes requires a new datatype that takes a single point and a width. There is 2 arrays of these, 1 for top faces(geox), 1 for bottom faces(cougar).
-Much like the radial system, starts with a single back(top/bottom) face, which is then merged into remainder of list for front(top/bottom) faces.
-Then zip together the top and bottom to create the lift.
+Post-printing note:
+The toe did not flex well. Fixed this by:
+Glued the center riser section to the toe riser, then unglued the center from the shoe.
+This allowed a greater section of flex for the shoe.
+In the future, make a 2 piece lift, with only the forward section of the toe glued to the shoe.
 
-When this is all done, need to move much of this to its own module for reuse.
+10% infill was much more than required for strength, and added too much weight. Should try 7% next time.
 -}
 
 {------------------------------------------------ printing notes: ----------------------------------------------------
@@ -75,56 +74,13 @@ topHeightAdj = 80
 --the height from the cougar tread, to the bottom of the attachment section.
 --This will leave a section which has geox dimensions from top to bottom so attachment
 --ring need only have geox dimensions.
-transitionHeight = 80
+transitionHeight = (\z -> 80)
 
 
 
------------- adjust for slope
-{-Use trig to rotate.
-        z' = z - (sin theta y)
-        y' = y-origin + (cos theta y)
-      -}
-adjustTopBase :: Point -> Point -> Double -> Point
-adjustTopBase    point    origin   angle  =
-        let z = (z_axis point) - (sinDegrees angle * (y_axis point))
-            y = (y_axis origin) + (cosDegrees angle * (y_axis point))
-        in   Point (x_axis point) y z
-        
-adjustTop :: Double -> Point ->   CubicalInput   -> CubicalInput
-adjustTop    angle     origin    (CubeIn (B2(point')) width')  =
-        CubeIn (B2 (adjustTopBase point' origin angle )) width'
-adjustTop    angle origin (CubeIn (F2(point')) width')   =
-        CubeIn (F2 (adjustTopBase point' origin angle )) width'
-
-{-Set the z-axis of the geox dimensions to a constant value.
-This is used to create the faces where the transition and attachment cubes meet.
-
-Should get rid of it in favor of transposeZofCubicalInput.
-Then transitionHeight would become a (Double -> Double) that ignores the input.
--}
-setGeoxZaxisToConstantValue :: CubicalInput -> CubicalInput
-setGeoxZaxisToConstantValue (CubeIn (B2(Point x y z)) width) = (CubeIn (B2(Point x y transitionHeight)) width)
-setGeoxZaxisToConstantValue (CubeIn (F2(Point x y z)) width) = (CubeIn (F2(Point x y transitionHeight)) width)
 
 
 
---widen a CubicalInput
-widen :: (Double -> Double) -> CubicalInput -> CubicalInput
-widen widenX (CubeIn (B1(Point x y z)) width'')  =
-        CubeIn (B1 (Point x y z) ) (widenX width'')
-widen widenX  (CubeIn (F1(Point x y z)) width'')  =
-        CubeIn (F1 (Point x y z)) (widenX width'')
-widen widenX (CubeIn (B2(Point x y z)) width'')  =
-        CubeIn (B2 (Point x y z) ) (widenX width'')
-widen widenX  (CubeIn (F2(Point x y z)) width'')  =
-        CubeIn (F2 (Point x y z)) (widenX width'')
-
---flatten the z-axis of a CubicalInput
-flattenTop :: Double -> CubicalInput -> CubicalInput
-flattenTop zValue (CubeIn (B1(Point x y _)) width'')  =
-      CubeIn (B1 (Point x y zValue) ) width''
-flattenTop zValue (CubeIn (F1(Point x y _)) width'')  =
-      CubeIn (F1 (Point x y zValue)) width''
 
 
 {--------------------------------------------------------------- Heel section -------------------------------------------------}
@@ -167,7 +123,7 @@ ankleBrace =
       geoxFirst60Degrees = take 18 geoxDims
 
       --8 for the inside attachment rings + plus 10 for this 5 perimenter piece.
-      geoxDimsWidened = map (widen (+18.0)) geoxFirst60Degrees
+      geoxDimsWidened = map (adjustWidth (+18.0)) geoxFirst60Degrees
 
       --give it a flat bottom, with height adjusted
       geoxDimsWidenedAndFlatened = map (transposeZ (\z -> (45))) geoxDimsWidened
@@ -257,7 +213,7 @@ geoxHeelRearHalfAttachmentRing =
       geoxFirst60Degrees = take 18 geoxDims
 
       --4 for the inside attachment ring + plus 2 for this 2 perimenter piece.
-      geoxDimsWidened = map (widen (+8.0)) geoxFirst60Degrees
+      geoxDimsWidened = map (adjustWidth (+8.0)) geoxFirst60Degrees
 
       --give it a flat bottom, with height adjusted
       geoxDimsWidenedAndFlatened = map (transposeZ (\z -> (-10))) geoxDimsWidened
@@ -270,7 +226,7 @@ geoxHeelRearHalfAttachmentRing =
 
       btmGeoxFaces = map (lowerFaceFromUpperFace) btmGeoxFacesBeforeConversionFromTopFaces
 
-      topGeoxSlopedDims = map (adjustTop topSlope geoxOrigin) geoxDimsWidened
+      topGeoxSlopedDims = map (zDownSlope topSlope geoxOrigin) geoxDimsWidened
 
       topGeoxFaces =
         (createXaxisLine (head topGeoxSlopedDims))
@@ -320,7 +276,7 @@ geoxHeelAttachmentRing =
          CubeIn (F2(Point 17.7 140 10.7)) 77.7
         ]
 
-      geoxDimsWidened = map (widen (+4.0)) geoxDims
+      geoxDimsWidened = map (adjustWidth (+4.0)) geoxDims
       geoxDimsWidenedAndFlatened = map (transposeZ (\z -> (-30))) geoxDimsWidened
 
       btmGeoxFacesBeforeConversionFromTopFaces = 
@@ -330,7 +286,7 @@ geoxHeelAttachmentRing =
       
       btmGeoxFaces = map (lowerFaceFromUpperFace) btmGeoxFacesBeforeConversionFromTopFaces
 
-      topGeoxSlopedDims = map (adjustTop topSlope geoxOrigin) geoxDimsWidened
+      topGeoxSlopedDims = map (zDownSlope topSlope geoxOrigin) geoxDimsWidened
 
       topGeoxFaces =
         (createXaxisLine (head topGeoxSlopedDims))
@@ -387,7 +343,7 @@ cougarHeelAttachmentRing =
 
     
 
-    cougarDimensionsWidened = map (widen (+4)) cougarDimensions
+    cougarDimensionsWidened = map (adjustWidth (+4)) cougarDimensions
     
     btmFaces = (createXaxisLine (head cougarDimensionsWidened))
             +++>
@@ -395,7 +351,7 @@ cougarHeelAttachmentRing =
     
     
       
-    topDimensionsWithFlatTop = map (flattenTop 88) cougarDimensionsWidened
+    topDimensionsWithFlatTop = map (transposeZ (\z -> 88)) cougarDimensionsWidened
 
     topFacesBeforeConversionFromBottomFaces =
       (createXaxisLine (head topDimensionsWithFlatTop))
@@ -486,7 +442,7 @@ heelRiser =
       -}
 
       attachmentSlopeAdjustedTopGeoxDimensions = 
-        map (adjustTop topSlope geoxOrigin) geoxDimensions
+        map (zDownSlope topSlope geoxOrigin) geoxDimensions
       
       attachmentTopSlopeAdjustedGeoxFaces = (createXaxisLine (head attachmentSlopeAdjustedTopGeoxDimensions))
             +++>
@@ -513,9 +469,9 @@ heelRiser =
         instead of the z as captured to match cougar/geox treads.
         This will give the attachment ring a flat bottom.
       -}
-      transitionTopGeoxDimensions = map (setGeoxZaxisToConstantValue) geoxDimensions
+      transitionTopGeoxDimensions = map (transposeZ transitionHeight) geoxDimensions
       --now add a slope to them
-      transitionTopGeoxDimensionsSloped = map (adjustTop topSlope geoxOrigin) transitionTopGeoxDimensions
+      transitionTopGeoxDimensionsSloped = map (zDownSlope topSlope geoxOrigin) transitionTopGeoxDimensions
       --create a set of top faces from them
       transitionSlopedTopGeoxDimensions =
             (createXaxisLine (head transitionTopGeoxDimensionsSloped))
@@ -549,7 +505,7 @@ centerCougarAttachmentRing =
       
       
       
-      cougarDimensionsWidened = map (widen (+4)) cougarDimensions
+      cougarDimensionsWidened = map (adjustWidth (+4)) cougarDimensions
       
       btmFaces = (createXaxisLine (head cougarDimensionsWidened))
             +++>
@@ -557,7 +513,7 @@ centerCougarAttachmentRing =
       
       
       
-      topDimensionsWithFlatTop = map (flattenTop 88) cougarDimensionsWidened
+      topDimensionsWithFlatTop = map (transposeZ (\z -> 88)) cougarDimensionsWidened
 
       topFacesBeforeConversionFromBottomFaces =
        (createXaxisLine (head topDimensionsWithFlatTop))
@@ -607,7 +563,7 @@ centerRiser =
       -}
 
       attachmentSlopeAdjustedTopGeoxDimensions = 
-        map (adjustTop topSlope geoxOrigin) geoxDimensions
+        map (zDownSlope topSlope geoxOrigin) geoxDimensions
       
       attachmentTopSlopeAdjustedGeoxFaces = (createXaxisLine (head attachmentSlopeAdjustedTopGeoxDimensions))
             +++>
@@ -631,9 +587,10 @@ centerRiser =
         instead of the z as captured to match cougar/geox treads.
         This will give the attachment ring a flat bottom.
       -}
-      transitionTopGeoxDimensions = map (setGeoxZaxisToConstantValue) geoxDimensions
+      transitionTopGeoxDimensions = map (transposeZ transitionHeight) geoxDimensions
+      
       --now add a slope to them
-      transitionTopGeoxDimensionsSloped = map (adjustTop topSlope geoxOrigin) transitionTopGeoxDimensions
+      transitionTopGeoxDimensionsSloped = map (zDownSlope topSlope geoxOrigin) transitionTopGeoxDimensions
       --create a set of top faces from them
       transitionSlopedTopGeoxDimensions =
             (createXaxisLine (head transitionTopGeoxDimensionsSloped))
@@ -688,7 +645,7 @@ toeRiser =
       -}
 
       attachmentSlopeAdjustedTopGeoxDimensions = 
-        map (adjustTop topSlope geoxOrigin) geoxDimensions
+        map (zDownSlope topSlope geoxOrigin) geoxDimensions
       
       attachmentTopSlopeAdjustedGeoxFaces = (createXaxisLine (head attachmentSlopeAdjustedTopGeoxDimensions))
             +++>
@@ -714,9 +671,9 @@ toeRiser =
         instead of the z as captured to match cougar/geox treads.
         This will give the attachment ring a flat bottom.
       -}
-      transitionTopGeoxDimensions = map (setGeoxZaxisToConstantValue) geoxDimensions
+      transitionTopGeoxDimensions = map (transposeZ transitionHeight) geoxDimensions
       --now add a slope to them
-      transitionSlopedGeoxDimensions = map (adjustTop topSlope geoxOrigin) transitionTopGeoxDimensions
+      transitionSlopedGeoxDimensions = map (zDownSlope topSlope geoxOrigin) transitionTopGeoxDimensions
       --create a set of top faces from them
       transitionSlopedGeoxTopFaces =
             (createXaxisLine (head transitionSlopedGeoxDimensions))
@@ -749,7 +706,7 @@ toeTopAttachment =
         ]
       
       --widen cougar dim's to fit around the shoe/riser
-      geoxDimensionsWidened = map (widen (+4.0)) geoxDimensions
+      geoxDimensionsWidened = map (adjustWidth (+4.0)) geoxDimensions
 
       geoxDimensionsWidenedAndFlattened = map (transposeZ (\z -> 40.0)) geoxDimensionsWidened
 
@@ -806,7 +763,7 @@ toeBtmAttachment =
       Bottom sections that fits to the cougar tread
       -}
       --widen cougar dim's to fit around the shoe/riser
-      cougarDimensionsWidened = map (widen (+4.0)) cougarDimensions
+      cougarDimensionsWidened = map (adjustWidth (+4.0)) cougarDimensions
       
       --reduce the height of the cougar dimensions
       cougarDimensionsWidenedAndLowered = map (transposeZ (\z -> z - 6.5)) cougarDimensionsWidened
@@ -831,7 +788,7 @@ toeBtmAttachment =
       top section that fits to the riser. Transitions from cougar to geox.
       -}
       --adjust dimensions for width and flattened out for 1 cm height above bottom section
-      geoxDimensionsWidened = [widen widthAdj cubeIn
+      geoxDimensionsWidened = [adjustWidth widthAdj cubeIn
                                | widthAdj <- ([(+4.0) | x <- [1,2..11]] ++ [(+0.0)])
                                | cubeIn   <- geoxDimensions
                               ]

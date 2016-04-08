@@ -1,15 +1,22 @@
-{-# LANGUAGE TemplateHaskell #-}
-{- |A cube which runs along the y-axis.
-The x,y,z axis are directly input along with the width. The width supplies an offset along the x-axis.-}
-module Cubical.Cubical (CubicalInput(..), createXaxisLine) where
+
+{- |
+A cube which runs along the y-axis.
+The x,y,z axis are directly input along with the width. The width supplies an offset along the x-axis.
+Tyically used for a series of cubes running along the x-axis.
+
+ToDo:
+Should not be limited to running along the x-axis. 
+-}
+module Cubical.Cubical (CubicalInput(..), createXaxisLine, zDownSlope, adjustWidth) where
 
 import CornerPoints.CornerPoints(CornerPoints(..), (+++))
 import CornerPoints.Points(Point(..))
 
 import TypeClasses.Transposable(transposeX, transposeY, transposeZ, TransposePoint)
 
---external libraries
-import Control.Lens
+import Math.Trigonometry (sinDegrees, cosDegrees)
+
+
 
 {-
 datatype to handle the basic input in cubical format.. Setup to use Lens package.
@@ -17,8 +24,8 @@ leftPoint: A point with represents one of  CornerPoint(F1,F2,B1,B2).
 width: The X-axis offset from the point. Allows for the creation of a F3,F4,B3,B4
 -}
 data CubicalInput = CubeIn {_cornerPoint::CornerPoints, _width::Double}
---data CubicalInput = CubeIn {_cornerPoint::Point, _width::Double}
-makeLenses ''CubicalInput
+
+
 
 
 {- | Creates a line along the x-axis, given a left point(B1, B2, F1. F2) and a width.
@@ -81,7 +88,7 @@ createRightPoint (CubeIn (F2(point')) width'') =
          )
        )
 
-
+------------------------------------------- transposePoint -------------------------------------------------
 
 instance TransposePoint CubicalInput where
   transposeZ f (CubeIn (CubePoints f1 f2 f3 f4 b1 b2 b3 b4) width) = CubeIn (CubePoints (transposeZ f f1)
@@ -380,3 +387,54 @@ instance TransposePoint CubicalInput where
   
 
 
+------------------------------ adjust for slope ---------------------------------------
+
+zSlopeBase :: Point -> Point -> Double -> (Double -> Double -> Double) -> Point
+zSlopeBase    point    origin   angle polarity  =
+        let z = (z_axis point) `polarity` (sinDegrees angle * (y_axis point))
+            y = (y_axis origin) + (cosDegrees angle * (y_axis point))
+        in   Point (x_axis point) y z
+
+{- |
+Rotate a point down, along the z-axis and y-axis, a given degrees of rotation from an origin.
+
+        z' = z - (sin theta y)
+        y' = y-origin + (cos theta y)
+
+Known uses:
+Given a series of points along the y-axis, which make up a straight line, all with the same z-axis, slope them down,
+while maintaining a straight line. You would map zDownSlope over the series of points. The origin would typically
+be the 1st point in the series.
+      -}
+
+--ToDo: zDownSlope and zUpSlope could be much more DRY.
+zDownSlope :: Double -> Point ->   CubicalInput   -> CubicalInput
+zDownSlope    angle     origin    (CubeIn (B2(point')) width')  =
+        CubeIn (B2 (zSlopeBase point' origin angle (-) )) width'
+zDownSlope    angle origin (CubeIn (F2(point')) width')   =
+        CubeIn (F2 (zSlopeBase point' origin angle (-) )) width'
+
+{- |
+Same as zDownSlope, but in a upwards direction along the z-axis.
+-}
+zUpSlope :: Double -> Point ->   CubicalInput   -> CubicalInput
+zUpSlope    angle     origin    (CubeIn (B2(point')) width')  =
+        CubeIn (B2 (zSlopeBase point' origin angle (-) )) width'
+zUpSlope    angle origin (CubeIn (F2(point')) width')   =
+        CubeIn (F2 (zSlopeBase point' origin angle (-) )) width'
+
+
+
+{- |
+Adjust the width of a CubicalInput.
+
+-}
+adjustWidth :: (Double -> Double) -> CubicalInput -> CubicalInput
+adjustWidth widenX (CubeIn (B1(Point x y z)) width'')  =
+        CubeIn (B1 (Point x y z) ) (widenX width'')
+adjustWidth widenX  (CubeIn (F1(Point x y z)) width'')  =
+        CubeIn (F1 (Point x y z)) (widenX width'')
+adjustWidth widenX (CubeIn (B2(Point x y z)) width'')  =
+        CubeIn (B2 (Point x y z) ) (widenX width'')
+adjustWidth widenX  (CubeIn (F2(Point x y z)) width'')  =
+        CubeIn (F2 (Point x y z)) (widenX width'')
