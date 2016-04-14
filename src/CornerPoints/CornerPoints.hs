@@ -229,22 +229,37 @@ to make sure they are withing 0.01 of each othere
 
 instance Eq CornerPoints where
     -------------------------- points -------------------
+    B1 b1 == B1 b1a
+       |  b1 == b1a = True
+       | otherwise = False
+  
+    B2 b2 == B2 b2a
+       |  b2 == b2a = True
+       | otherwise = False
+
+    B3 b3 == B3 b3a
+       |  b3 == b3a = True
+       | otherwise = False
+  
     B4 b4 == B4 b4a
        |  b4 == b4a = True
        | otherwise = False
 
     F1 f1 == F1 f1a  
        | f1 == f1a = True 
-       | otherwise = False 
+       | otherwise = False
 
-    F4 f4  == F4 f4a  
-      | f4 == f4a = True
-      | otherwise = False
+    F2 f2 == F2 f2a  
+       | f2 == f2a = True 
+       | otherwise = False 
 
     F3 f3  == F3 f3a  
       | f3 == f3a = True
       | otherwise = False
 
+    F4 f4  == F4 f4a  
+      | f4 == f4a = True
+      | otherwise = False
     --------------------------- lines ----------------------
     BackBottomLine b1 b4 == BackBottomLine b1a b4a
       | (b1 == b1a) && (b4 == b4a) = True
@@ -377,6 +392,9 @@ but
   CubePoints {f1=f1, f2=f2, f3=f3, f4=f4, b1=b1, b2=b2, b3=b3, b4=b4}
 
 (BackFace b1 b2 b3 b4) +++ (FrontFace f1 f2 f3 f4) =
+    CubePoints {b1=b1, b2=b2, b3=b3, b4=b4, f1=f1, f2=f2, f3=f3, f4=f4}
+
+(FrontFace f1 f2 f3 f4)  +++ (BackFace b1 b2 b3 b4)  =
     CubePoints {b1=b1, b2=b2, b3=b3, b4=b4, f1=f1, f2=f2, f3=f3, f4=f4}
 
 (LeftFace b1 b2 f1 f2) +++ (RightFace b3 b4 f3 f4) =
