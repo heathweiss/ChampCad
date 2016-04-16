@@ -11,6 +11,7 @@ module Cubical.Cubical (CubicalInput(..), createXaxisLine, zDownSlope, adjustWid
 
 import CornerPoints.CornerPoints(CornerPoints(..), (+++))
 import CornerPoints.Points(Point(..))
+import CornerPoints.Transpose  as T (transposeX, transposeY, transposeZ)
 
 import TypeClasses.Transposable(transposeX, transposeY, transposeZ, TransposePoint)
 
@@ -24,9 +25,13 @@ leftPoint: A point with represents one of  CornerPoint(F1,F2,B1,B2).
 width: The X-axis offset from the point. Allows for the creation of a F3,F4,B3,B4
 -}
 data CubicalInput = CubeIn {_cornerPoint::CornerPoints, _width::Double}
+                    deriving (Show)
 
 
-
+instance Eq CubicalInput where
+  (CubeIn cornerPoint width) == (CubeIn cornerPoint' width') =
+     cornerPoint == cornerPoint' && width == width'
+    
 
 {- | Creates a line along the x-axis, given a left point(B1, B2, F1. F2) and a width.
 Used to give the cube its width.-}
@@ -89,7 +94,11 @@ createRightPoint (CubeIn (F2(point')) width'') =
        )
 
 ------------------------------------------- transposePoint -------------------------------------------------
-
+instance TransposePoint CubicalInput where
+  transposeX f (CubeIn cpoint width) = CubeIn (T.transposeX f cpoint) width
+  transposeY f (CubeIn cornerpoint width) = CubeIn (T.transposeY f cornerpoint) width
+  transposeZ f (CubeIn cornerpoint width) = CubeIn (T.transposeZ f cornerpoint) width
+{-
 instance TransposePoint CubicalInput where
   transposeZ f (CubeIn (CubePoints f1 f2 f3 f4 b1 b2 b3 b4) width) = CubeIn (CubePoints (transposeZ f f1)
                                                                                         (transposeZ f f2)
@@ -385,7 +394,7 @@ instance TransposePoint CubicalInput where
   transposeX f (CubeIn (F3 f3) width) = CubeIn ( (F3(transposeX f f3))) width
   transposeX f (CubeIn (F4 f4) width) = CubeIn ( (F4(transposeX f f4))) width
   
-
+-}
 
 ------------------------------ adjust for slope ---------------------------------------
 
