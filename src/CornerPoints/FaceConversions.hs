@@ -10,7 +10,10 @@ module CornerPoints.FaceConversions(
     backFaceFromFrontFace,
   toBackFace,
   toFrontFace,
+  rigthtFaceFromLeftFace,
+  leftFaceFromRigthFace,
   reverseNormal,
+  frontFaceFromBackFace,
   
 ) where
 import CornerPoints.CornerPoints (CornerPoints(..))
@@ -36,6 +39,12 @@ EG: To extend a cube by adding another BackFace to it. First get the existing Ba
 with the normals inverted, the add the new BackFace to it.-}
 backFaceFromFrontFace :: CornerPoints -> CornerPoints
 backFaceFromFrontFace (FrontFace f1 f2 f3 f4) = BackFace f1 f2 f3 f4
+
+leftFaceFromRigthFace :: CornerPoints -> CornerPoints
+leftFaceFromRigthFace (RightFace b3 b4 f3 f4)  =  LeftFace b4 b3 f4 f3
+
+rigthtFaceFromLeftFace :: CornerPoints -> CornerPoints
+rigthtFaceFromLeftFace (LeftFace b1 b2 f1 f2) = RightFace b2 b1 f2 f1
 
 {- |
 Rotate the face or line to the back of cube. Maintain normals so they still face outwards from the original cube..
@@ -67,6 +76,9 @@ backTopLineFromFrontTopLine (FrontTopLine f2 f3) = BackTopLine f2 f3
 
 lowerFaceFromUpperFace :: CornerPoints -> CornerPoints
 lowerFaceFromUpperFace (TopFace b2 f2 b3 f3) = BottomFace b2 f2 b3 f3
+
+frontFaceFromBackFace :: CornerPoints -> CornerPoints
+frontFaceFromBackFace (BackFace b1 b2 b3 b4) = FrontFace b1 b2 b3 b4
 
 backBottomLineFromBottomFrontLine :: CornerPoints -> CornerPoints
 backBottomLineFromBottomFrontLine (BottomFrontLine f1 f4) = BackBottomLine f1 f4
