@@ -44,6 +44,7 @@ library
                        Tests.VerticalFacesTest, Tests.ParseJuicyTest, Tests.ScanFilterTest,
                        Tests.CornerPointsWithDegreesTest, Tests.BuilderTest,
                        Tests.Symmetrical.SequenceTest, Tests.FaceExtractAndConvertTest
+                       Tests.CubicalTest,
                        --Examples
                        -- Example ShoeLifts
                        Examples.ShoeLift.KeenToe, Examples.ShoeLift.KeenHeel,
@@ -68,8 +69,11 @@ library
                        Examples.Adaptors.HockeyStick
                        --try out removing a cylinder from a cylinder
                        Examples.Diffs.FirstDiff
+                       --cubical
+                       Examples.Cubical.CubicalWalls
                        --Shapes
                        Primitives.Cylindrical, Primitives.Cubical
+                       
                        --Scanning
                        Scan.Filter,
                        Scan.Json,  Scan.ParseJuicy
