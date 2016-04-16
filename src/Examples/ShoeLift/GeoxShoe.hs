@@ -7,8 +7,9 @@ import CornerPoints.Points(Point(..))
 import CornerPoints.Create(Angle(..), flatXSlope, flatYSlope, Slope(..))
 import CornerPoints.CornerPointsWithDegrees(CornerPointsWithDegrees(..), (@~+++#@),(@~+++@),(|@~+++@|), (|@~+++#@|), DegreeRange(..))
 import CornerPoints.CornerPoints((|@+++#@|), (|+++|), CornerPoints(..), (+++), (+++>))
-import CornerPoints.FaceExtraction(extractTopFace, extractBottomFace, extractFrontFace)
-import CornerPoints.FaceConversions(upperFaceFromLowerFace, backFaceFromFrontFace, lowerFaceFromUpperFace )
+import CornerPoints.FaceExtraction(extractTopFace, extractBottomFace, extractFrontFace, extractBackFace, extractLeftFace, extractRightFace)
+import CornerPoints.FaceConversions(upperFaceFromLowerFace, backFaceFromFrontFace, lowerFaceFromUpperFace, rigthtFaceFromLeftFace, leftFaceFromRigthFace,
+                                   frontFaceFromBackFace)
 import CornerPoints.Degree(Degree(..))
 
 import TypeClasses.Transposable(transposeZ, transposeY)
@@ -24,6 +25,8 @@ import Stl.StlFileWriter(writeStlToFile)
 import Stl.StlCornerPointsWithDegrees(FacesWithRange(..))
 
 import Math.Trigonometry (sinDegrees, cosDegrees)
+
+import Test.HUnit
 {-
 Shoe lift for the geox running shoes. Refering to the shoe tread will be done with 'geox'
 The bottom tread is of a Cougar shoe. Refering to the bottom tread from the Cougar shoe is done with 'cougar'.
@@ -80,10 +83,239 @@ transitionHeight = (\z -> 80)
 
 
 
+widenAndCenter :: Double -> CornerPoints -> CornerPoints
+widenAndCenter adjuster (BackTopLine
+                         (Point x' y' z'   ) --B2
+                         (Point x'' y'' z'') --B3
+                        ) =
+  let halfAdjuster = adjuster/2
+  in  BackTopLine    (Point(x' - halfAdjuster ) y' z'  ) --B2
+                     (Point(x'' + halfAdjuster) y'' z'') --B3
 
+widenAndCenter adjuster (FrontTopLine
+                         (Point x' y' z'   ) --F2
+                         (Point x'' y'' z'') --F3
+                        ) =
+  let halfAdjuster = adjuster/2
+  in  FrontTopLine
+                     (Point(x' - halfAdjuster ) y' z'  ) --F2
+                     (Point(x'' + halfAdjuster) y'' z'') --F3
 
-
+setBack :: Double -> CornerPoints -> CornerPoints
+setBack adjuster (BackTopLine
+                         (Point x' y' z'   ) --B2
+                         (Point x'' y'' z'') --B3
+                 ) =
+  (BackTopLine
+                         (Point x' (y' - adjuster) z'   ) --B2
+                         (Point x'' (y'' - adjuster) z'') --B3
+  ) 
 {--------------------------------------------------------------- Heel section -------------------------------------------------}
+{-Builds on ankleBraceNoInput. Uses only CornerPoints.
+Will try to use a trig system to build the walls.-}
+ankleBraceTrigWidener =
+  let
+    geoxDims =
+        --BackTopLine B2 B3
+        --FrontTopLine F2 F3
+        [BackTopLine (Point 50.2 0 28.1) (Point 50.2 0 28.1),
+         FrontTopLine (Point 37.5 1 27.7) (Point 57.9 1 27.3),
+         FrontTopLine (Point 35.0 3 27.3) (Point 64.7 3 27.3),
+         FrontTopLine (Point 31.5 5 26.9) (Point 67.1 5 26.9),
+         FrontTopLine (Point 26.4 10 26.0) (Point 71.9 10 26.0),
+         FrontTopLine (Point 22.8 15 24.8) (Point 75.8 15 24.8),
+         FrontTopLine (Point 19.9 20 23.8) (Point 78.6 20 23.8),
+         FrontTopLine (Point 18.4 25 22.7) (Point 80.2 25 22.7),
+         FrontTopLine (Point 17.4 30 21.7) (Point 82.2 30 21.7),
+         FrontTopLine (Point 16.8 35 21.0) (Point 83.1 35 21.0),
+         FrontTopLine (Point 16.7 40 20.2) (Point 83.8 40 20.2),
+         FrontTopLine (Point 17.0 45 19.6) (Point 83.6 45 19.6),
+         FrontTopLine (Point 17.4 50 18.6) (Point 83.9 50 18.6),
+         FrontTopLine (Point 18.6 55 18.2) (Point 84.1 55 18.2),
+         FrontTopLine (Point 20.3 60 18.4) (Point 83.4 60 18.4),
+         FrontTopLine (Point 22.0 65 18.5) (Point 81.7 65 18.5),
+         FrontTopLine (Point 23.8 70 18.8) (Point 81.2 70 18.8),
+         FrontTopLine (Point 25.2 75 18.6) (Point 80.9 75 18.6),
+         FrontTopLine (Point 26.6 80 18.7) (Point 81.2 80 18.7),
+         FrontTopLine (Point 27.7 85 19.1) (Point 81.9 85 19.1),
+         FrontTopLine (Point 28.0 90 19.7) (Point 82.7 90 19.7),
+         FrontTopLine (Point 28.0 95 19.0) (Point 84.5 95 19.0),
+         FrontTopLine (Point 27.9 100 17.9) (Point 86.6 100 17.9),
+         FrontTopLine (Point 27.4 105 16.4) (Point 88.6 105 16.4),
+         FrontTopLine (Point 26.4 110 15.1) (Point 89.6 110 15.1),
+         FrontTopLine (Point 24.6 115 13.3) (Point 90.1 115 13.3),
+         FrontTopLine (Point 23.7 120 12.3) (Point 91.7 120 12.3),
+         FrontTopLine (Point 22.3 125 11.8) (Point 92.9 125 11.8),
+         FrontTopLine (Point 20.7 130 11.3) (Point 94.0 130 11.3),
+         FrontTopLine (Point 19.1 135 11.0) (Point 94.7 135 11.0),
+         FrontTopLine (Point 17.7 140 10.7) (Point 95.4 140 10.7)
+        ]
+    
+    wallThickness = 9.0
+    height = 10.0
+        
+    --build the back cube
+    first2Lines = take 2 geoxDims
+    firstCube =
+      let
+         topFace = head ((head first2Lines) +++> (tail first2Lines))
+      in topFace
+         +++
+         (transposeZ (\z -> z - height) $ lowerFaceFromUpperFace topFace)
+         
+    firstTriangles = FacesAll +++^ firstCube
+
+    firstCubeTest = TestCase $ assertEqual
+        "innerFrontFaceTest"
+        (F1 (Point 1 2 3))
+        (firstCube)
+
+    ankleBraceTestDo = do
+        runTestTT firstCubeTest
+  in
+    writeStlToFile $ newStlShape "geox" firstTriangles
+    --ankleBraceTestDo
+
+{-Creates the ankle brace using on CornerPoints, with no CubicalInput.
+The widener system is very lacking. Will continue with ankleBraceTrigWidener
+to try a better system for wall creation.-}
+ankleBraceNoInput =
+  let geoxDims =
+        --BackTopLine B2 B3
+        --FrontTopLine F2 F3
+        [BackTopLine (Point 50.2 0 28.1) (Point 50.2 0 28.1),
+         FrontTopLine (Point 37.5 1 27.7) (Point 57.9 1 27.3),
+         FrontTopLine (Point 35.0 3 27.3) (Point 64.7 3 27.3),
+         FrontTopLine (Point 31.5 5 26.9) (Point 67.1 5 26.9),
+         FrontTopLine (Point 26.4 10 26.0) (Point 71.9 10 26.0),
+         FrontTopLine (Point 22.8 15 24.8) (Point 75.8 15 24.8),
+         FrontTopLine (Point 19.9 20 23.8) (Point 78.6 20 23.8),
+         FrontTopLine (Point 18.4 25 22.7) (Point 80.2 25 22.7),
+         FrontTopLine (Point 17.4 30 21.7) (Point 82.2 30 21.7),
+         FrontTopLine (Point 16.8 35 21.0) (Point 83.1 35 21.0),
+         FrontTopLine (Point 16.7 40 20.2) (Point 83.8 40 20.2),
+         FrontTopLine (Point 17.0 45 19.6) (Point 83.6 45 19.6),
+         FrontTopLine (Point 17.4 50 18.6) (Point 83.9 50 18.6),
+         FrontTopLine (Point 18.6 55 18.2) (Point 84.1 55 18.2),
+         FrontTopLine (Point 20.3 60 18.4) (Point 83.4 60 18.4),
+         FrontTopLine (Point 22.0 65 18.5) (Point 81.7 65 18.5),
+         FrontTopLine (Point 23.8 70 18.8) (Point 81.2 70 18.8),
+         FrontTopLine (Point 25.2 75 18.6) (Point 80.9 75 18.6),
+         FrontTopLine (Point 26.6 80 18.7) (Point 81.2 80 18.7),
+         FrontTopLine (Point 27.7 85 19.1) (Point 81.9 85 19.1),
+         FrontTopLine (Point 28.0 90 19.7) (Point 82.7 90 19.7),
+         FrontTopLine (Point 28.0 95 19.0) (Point 84.5 95 19.0),
+         FrontTopLine (Point 27.9 100 17.9) (Point 86.6 100 17.9),
+         FrontTopLine (Point 27.4 105 16.4) (Point 88.6 105 16.4),
+         FrontTopLine (Point 26.4 110 15.1) (Point 89.6 110 15.1),
+         FrontTopLine (Point 24.6 115 13.3) (Point 90.1 115 13.3),
+         FrontTopLine (Point 23.7 120 12.3) (Point 91.7 120 12.3),
+         FrontTopLine (Point 22.3 125 11.8) (Point 92.9 125 11.8),
+         FrontTopLine (Point 20.7 130 11.3) (Point 94.0 130 11.3),
+         FrontTopLine (Point 19.1 135 11.0) (Point 94.7 135 11.0),
+         FrontTopLine (Point 17.7 140 10.7) (Point 95.4 140 10.7)
+        ]
+
+      wallThickness = 9.0  
+        
+      --keep only the 1st 60(ish) degrees
+      first60mm = take 18 geoxDims
+
+      --adjust the y-axis so the outer walls are aligned radially,
+      --resulting in a more uniform thichness around the curve at the start..
+      first60MaintainThickness =
+        [ transposeY (+ yAdjust) dim
+         | yAdjust <- [(-wallThickness), (-6), (-4), (-2), (-1)] ++ [0,0..]
+         | dim <- first60mm
+         ]
+
+      --8 for the inside attachment rings + plus 10 for this 5 perimenter piece.
+      first60Widened = map (widenAndCenter (wallThickness * 2)) first60MaintainThickness --first60mm
+
+      
+
+      --first60WidenedAndSetBackHead =
+      --  setBack wallThickness (head first60Widened) : tail first60Widened
+
+      innerTopFaces = (head first60mm) +++> (tail first60mm)
+      innerCubes =
+          (map (lowerFaceFromUpperFace . (transposeZ (\z -> z - 5.0))) innerTopFaces)
+          |+++|
+          innerTopFaces
+
+      innerTriangles = [FacesAll | x <- [1..]] |+++^| innerCubes
+
+      outerTopFaces = (head first60Widened) +++> (tail first60Widened)
+      outerCubes =
+          (map (lowerFaceFromUpperFace . (transposeZ (\z -> z - 5.0))) outerTopFaces)
+          |+++|
+          outerTopFaces
+
+      outerTriangles = [FacesAll | x <- [1..]] |+++^| outerCubes
+
+      
+      
+      backTriangle =
+        [FacesBackBottomFrontTop]
+         |+++^|
+        [ (
+          --(extractFrontFace (head innerCubes))
+          ((frontFaceFromBackFace . extractBackFace) (head innerCubes))
+          +++
+          (extractBackFace (head outerCubes))
+         )
+        ]
+
+      armFaces = ( [FacesBottomLeftRightTop | x <- [1..16]] ++ [FacesBottomFrontLeftRightTop])
+
+      leftCubes =
+        --extract left face of outer tail
+        (map (extractLeftFace) (outerCubes) )
+        |+++|
+        (map (rigthtFaceFromLeftFace . extractLeftFace) (innerCubes))
+        --extract left face of inner tail
+          --convert to right faces
+        --add them together
+      leftTriangles = armFaces  |+++^| leftCubes
+
+      rightCubes =
+        --extract right faces of outer tail
+        (map (extractRightFace) (outerCubes))
+        |+++|
+        --extract left faces and covert to left faces, inner tail
+        (map (leftFaceFromRigthFace . extractRightFace) (innerCubes))
+
+      rightTriangles = armFaces |+++^| rightCubes
+      
+      innerFrontFaceTest = TestCase $ assertEqual
+        "innerFrontFaceTest"
+        (F1 (Point 1 2 3))
+        (extractFrontFace (head innerCubes))
+
+      outerBackFaceTest = TestCase $ assertEqual
+        "outerBackFaceTest"
+        (F1 (Point 1 2 3))
+        (extractBackFace (head outerCubes))
+
+      backCubeTest = TestCase $ assertEqual
+        "backCubeTest"
+        (F1 (Point 1 2 3))
+        ((extractFrontFace (head innerCubes))
+         +++
+         (extractBackFace (head outerCubes))
+        )
+
+      ankleBraceNoInputTestDo = do
+        --runTestTT innerFrontFaceTest
+        --runTestTT outerBackFaceTest
+        runTestTT backCubeTest
+     
+  in writeStlToFile $ newStlShape "geox" $ backTriangle  ++ leftTriangles ++ rightTriangles
+     --ankleBraceNoInputTestDo
+
+
+
+  
 ankleBrace =
   let geoxDims =
         [CubeIn (B2(Point 50.2 0 28.1)) 0.0,
