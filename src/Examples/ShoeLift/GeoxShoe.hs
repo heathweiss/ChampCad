@@ -82,7 +82,8 @@ transitionHeight = (\z -> 80)
 
 
 
-
+{-Should be replaced with a trig version for creating thickness of the walls.
+Keep it around as it could be handy for other thins.-}
 widenAndCenter :: Double -> CornerPoints -> CornerPoints
 widenAndCenter adjuster (BackTopLine
                          (Point x' y' z'   ) --B2
@@ -101,6 +102,8 @@ widenAndCenter adjuster (FrontTopLine
                      (Point(x' - halfAdjuster ) y' z'  ) --F2
                      (Point(x'' + halfAdjuster) y'' z'') --F3
 
+{-For setting back the BackTopLine.
+Why not just use transposeY?-}
 setBack :: Double -> CornerPoints -> CornerPoints
 setBack adjuster (BackTopLine
                          (Point x' y' z'   ) --B2
@@ -109,7 +112,74 @@ setBack adjuster (BackTopLine
   (BackTopLine
                          (Point x' (y' - adjuster) z'   ) --B2
                          (Point x'' (y'' - adjuster) z'') --B3
-  ) 
+  )
+
+---------------------------------- trig widener ----------------------------------------------------------
+{-Get the distance of each axis.
+Should take 2 points instead?-}
+absDistanceEachAxis :: CornerPoints -> Point
+absDistanceEachAxis (TopLeftLine (Point x y z) (Point x' y' z')) =
+  let
+     xDelta = abs $ x - x'
+     yDelta = abs $ y - y'
+     zDelta = abs $ z - z'
+  in Point xDelta yDelta zDelta
+
+absDistance :: CornerPoints -> Double
+absDistance (TopLeftLine (Point x y z) (Point x' y' z')) =
+  let delta = absDistanceEachAxis (TopLeftLine (Point x y z) (Point x' y' z'))
+      
+  in  sqrt ((x_axis delta)*2 + (y_axis delta)*2)
+
+{-The angle of the x axis of the line-}
+theta :: CornerPoints  -> Double
+theta (TopLeftLine (Point x y z) (Point x' y' z')) =
+  let  absDistanceEachAxis' = absDistanceEachAxis (TopLeftLine (Point x y z) (Point x' y' z'))
+  in
+       ((y_axis absDistanceEachAxis')
+        /
+        ((x_axis absDistanceEachAxis') + (y_axis absDistanceEachAxis') + (y_axis absDistanceEachAxis'))
+       )
+       *
+       180
+
+beta :: Double -> Double
+beta  theta' = 180 - theta'
+
+angleOfSetback :: Double -> Double
+angleOfSetback beta' = beta' - 90
+
+yDelta :: Double -> Double -> Double
+yDelta    wallThickness angleOfSetback' =
+  (sinDegrees angleOfSetback') * wallThickness
+
+xDelta :: Double -> Double -> Double
+xDelta    wallThickness angleOfSetback' =
+  (cosDegrees angleOfSetback') * wallThickness
+
+{-
+Left off before trip to whitelaw:
+Will move the back line of first cube straight back for now.
+Ready to try transposeLine to move a left/right line except for the problem
+as listed in function notes.
+-}
+{-
+ToDo:
+The y_axis needs to take into consideration the alignment of F2 and B2.
+For a left line:
+If B2 is right of F2 on x-axis then move y neg, else move it pos.
+For a right line:
+Should be opposite of left line
+-}
+transposeLine :: CornerPoints -> Double -> CornerPoints
+transposeLine (TopLeftLine (Point x y z) (Point x' y' z')) wallThickness =
+  let angleOfSetback' = angleOfSetback (beta (theta (TopLeftLine (Point x y z) (Point x' y' z')) ))
+      xDelta' = xDelta wallThickness angleOfSetback'
+      yDelta' = yDelta wallThickness angleOfSetback'
+  in  
+      (TopLeftLine (Point (x - xDelta') (y - yDelta') z) (Point (x' - xDelta') (y' - yDelta') z'))
+  
+
 {--------------------------------------------------------------- Heel section -------------------------------------------------}
 {-Builds on ankleBraceNoInput. Uses only CornerPoints.
 Will try to use a trig system to build the walls.-}
@@ -118,7 +188,9 @@ ankleBraceTrigWidener =
     geoxDims =
         --BackTopLine B2 B3
         --FrontTopLine F2 F3
-        [BackTopLine (Point 50.2 0 28.1) (Point 50.2 0 28.1),
+        --added a width to BackTopLine so trig will work.
+        --If no width, should default to -y adjustment?
+        [BackTopLine (Point 50.2 0 28.1) (Point 51.2 0 28.1),
          FrontTopLine (Point 37.5 1 27.7) (Point 57.9 1 27.3),
          FrontTopLine (Point 35.0 3 27.3) (Point 64.7 3 27.3),
          FrontTopLine (Point 31.5 5 26.9) (Point 67.1 5 26.9),
@@ -162,6 +234,13 @@ ankleBraceTrigWidener =
       in topFace
          +++
          (transposeZ (\z -> z - height) $ lowerFaceFromUpperFace topFace)
+
+    --make back wall
+    {-
+    backWall =
+      let backTopLineIn = head geoxDims
+          f2XWide =
+    -}
          
     firstTriangles = FacesAll +++^ firstCube
 
