@@ -1,3 +1,5 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 module Builder.Builder(CornerPointsBuilder(..),(&+++#@),{- (@~+++^),-} {-(|@~?+++^|),-} {-FacesWithRange(..), (||@~?+++^||), processCornerPointsWithDegreesAndStl-}
                        {-, (&@~+++@),(&@~+++#@), (||@~+++^||),
                        , newCornerPointsWith10DegreesBuilder-}) where
@@ -7,6 +9,10 @@ import CornerPoints.CornerPointsWithDegrees(DegreeRange(..), CornerPointsWithDeg
 import Stl.StlBase(Triangle(..))
 import Stl.StlCornerPoints((+++^), Faces(..))
 import CornerPoints.Degree(Degree(..))
+
+-- for Builder, which may be removed.
+import Control.Lens
+import Test.HUnit hiding (State)
 
 -- ======================================= CornerPointsBuilder ===============================
 {-Should be able to delete later on, to be replaced by CornerPointsWithDegrees.
@@ -30,3 +36,27 @@ data CornerPointsBuilder   = CornerPointsBuilder {getCornerPoints :: [[CornerPoi
 (CornerPointsBuilder cornerPoints) &+++#@ f = CornerPointsBuilder ( (f $ head cornerPoints) : cornerPoints)
 
 
+-----------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------
+--Have not tried this out yet. First see if I can get a mondad builder working.
+
+data Builder = Builder {_cornerPoints :: [CornerPoints], _triangles :: [Triangle] }
+
+makeLenses ''Builder
+
+(++&) :: Builder -> ([CornerPoints] -> Builder ) -> Builder
+(Builder c t) ++& f =
+  let Builder c' t'  = f c
+      
+  in  Builder c' (t ++ t')  
+
+runBuilder :: Builder -> [Triangle]
+runBuilder builder = builder^.triangles
+
+
+builderTest = do
+  let testing = TestCase $ assertEqual
+        "testing"
+        False
+        True
+  runTestTT testing
