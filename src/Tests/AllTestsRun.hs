@@ -12,7 +12,6 @@ import Tests.ScanFilterTest (scanFilterTestDo)
 import Tests.ListHelpersTest(listHelperTestDo)
 import Tests.CornerPointsCreateTest(cornerPointsCreateTestDo )
 import Tests.RadiusTest(radisuTestDo)
-import Tests.BuilderTest(builderTestDo )
 import Tests.CornerPointsWithDegreesTest(cornerPointsWithDegreesTest)
 import Tests.Symmetrical.SequenceTest(sequenceTestDo)
 import Tests.FaceExtractAndConvertTest(faceExtractAndConvertTestDo)
@@ -43,8 +42,6 @@ runAllTestsDo = do
   cornerPointsCreateTestDo
   putStrLn "radius tests"
   radisuTestDo
-  putStrLn "builderTestDo"
-  builderTestDo
   putStrLn "cornerPointsWithDegreesTest"
   cornerPointsWithDegreesTest
   putStrLn "sequenceTestDo"

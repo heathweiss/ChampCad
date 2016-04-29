@@ -39,7 +39,6 @@ import Helpers.List((++:),(++::))
 
 import Builder.Sequence((@~+++@|>))
 import Builder.List (newCornerPointsWith10DegreesBuilder, (||@~+++^||))
-import Builder.Builder(CornerPointsBuilder(..),(&+++#@))
 
 import Stl.StlCornerPointsWithDegrees(FacesWithRange(..))
 
