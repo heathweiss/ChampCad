@@ -29,7 +29,7 @@ library
                        --Cubical
                        Cubical.Cubical
                        --Builder
-                       Builder.Sequence,  Builder.Builder, Builder.List, Builder.Map, Builder.Monad
+                       Builder.Sequence, Builder.List, Builder.Map, Builder.Monad
                        --math
                        Math.Trigonometry,
                        --stl
