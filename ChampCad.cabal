@@ -42,9 +42,9 @@ library
                        Tests.MathTest, Tests.MathPolarTest, Tests.HorizontalFacesTest,
                        Tests.JsonTest, Tests.ListHelpersTest, Tests.RadiusTest,
                        Tests.VerticalFacesTest, Tests.ParseJuicyTest, Tests.ScanFilterTest,
-                       Tests.CornerPointsWithDegreesTest, Tests.BuilderTest,
+                       Tests.CornerPointsWithDegreesTest, Tests.BuilderMonadTest,
                        Tests.Symmetrical.SequenceTest, Tests.FaceExtractAndConvertTest
-                       Tests.CubicalTest,
+                       Tests.CubicalTest, Tests.StlAutoGenerateTest
                        --Examples
                        -- Example ShoeLifts
                        Examples.ShoeLift.KeenToe, Examples.ShoeLift.KeenHeel,
@@ -92,6 +92,11 @@ library
                      , containers >=0.5.5.1
                      , flow >= 1.0.2
                      , mtl >= 2.2.1
+                     , transformers >= 0.4.2.0
+                     , random >= 1.1
+                     -- next 2 for examples
+                     , directory >= 1.2.2.0
+                     , filepath  >= 1.4.0.0
 
   default-language:    Haskell2010
 
