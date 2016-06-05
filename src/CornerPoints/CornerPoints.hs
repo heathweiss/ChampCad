@@ -325,6 +325,8 @@ instance Eq CornerPoints where
       | (f1 == f1a) && (f2 == f2a) && (f3 == f3a) && (f4 == f4a) && (b1 == b1a) && ( b2 == b2a) && (b3 == b3a) && (b4 == b4a) = True
       | otherwise = False
 
+    CornerPointsError errMessage' == CornerPointsError errMessage'' =
+      errMessage' == errMessage''
     a == b = False
 --------------------------------------------------- add cubes +++ ---------------------------------------------------
 ----------------------------------------------------------------------------------------------------------------------
