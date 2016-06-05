@@ -1,111 +1,152 @@
 {-# LANGUAGE TemplateHaskell #-}
-module Builder.Monad() where
+{-ToDo:
+Get rid of the custom state stuff.
+
+Do a module for extensible-effects
+-https://hackage.haskell.org/package/extensible-effects
+
+Do a module for layers
+-https://hackage.haskell.org/package/layers
+-}
+ 
+
+module Builder.Monad ( BuilderData(..), combine, combine', combine'',
+                      cornerPointsContainError, cornerPointsContainError',
+                      eitherCornerPointsContainError',
+                      CornerPointsErrorForMonad(..)) where
+{- |
+
+
+Tests are in Tests.BuilderMonadTest
+-}
 {-
 ToDo:
-Move this all over to Builder.hs, as it did not work out as a monad.
 
-Create some tests.
 -}
 
-import CornerPoints.CornerPoints((|@+++#@|), (|+++|), CornerPoints(..), (+++), (+++>))
-import CornerPoints.Points(Point(..))
-import CornerPoints.Transpose (transposeZ, transposeY)
-import CornerPoints.FaceConversions(upperFaceFromLowerFace, backFaceFromFrontFace )
-import CornerPoints.FaceExtraction(extractFrontFace, extractTopFace)
+import CornerPoints.CornerPoints(CornerPoints(..))
 
-import Control.Lens
+import Stl.StlBase(Triangle(..))
 
-import Stl.StlBase(Triangle(..), newStlShape)
-import Stl.StlCornerPoints((|+++^|), Faces(..) )
-import Stl.StlFileWriter(writeStlToFile)
+import Data.List(find)
+
+import Control.Monad (ap)
+
+{------------------------------------------ A monad for building up triangles as the CornerPoints are being made.-------------------------
+May end up depracted, if the new StlAutoGenerator works out.
+Has been tested in Tests.BuilderMonadTest, but not used anywhere yet.
+-}
 
 
-import Test.HUnit hiding (State)
-
---have not used this yet. Might not need it.
-newtype CornerPointsList = CornerPointsList [CornerPoints]
-
-data Builder a = Builder {_cornerpoints :: a, _triangles :: [Triangle]}
-makeLenses ''Builder
-{-
-instance (Eq) (Builder a) where
-  Builder xs' triangles' == Builder xs'' triangles''
-    | xs' == xs'' = True
-    | otherwise = False
--}              
-
-instance Functor Builder where
-  fmap fx (Builder cornerpoints' triangles') = Builder (fx cornerpoints') triangles'
-
-instance Applicative Builder where
-  pure a = Builder a []
+data TriangleBuilder a =
+  TriangleBuilder {_cornerPoints :: a, _triangles :: [Triangle]}
+  
+instance Functor TriangleBuilder where
+  fmap fx (TriangleBuilder cornerpoints' triangles') = TriangleBuilder (fx cornerpoints') triangles'
+  
+instance Applicative TriangleBuilder where
+  pure a = TriangleBuilder a []
   --warning: No explicit implementation for ‘<*>’
+  --use as a default to avoid above warning
+  (<*>) = ap
 
 
-instance Monad Builder  where
-  return a = Builder a []
-  (Builder cornerpoints' triangles') >>= fx = let (Builder cornerpoints'' triangles'')  = fx cornerpoints'
+instance Monad TriangleBuilder  where
+  return a = TriangleBuilder a []
+  
+  (TriangleBuilder cornerpoints' triangles') >>= fx = let (TriangleBuilder cornerpoints'' triangles'')  = fx cornerpoints'
                                               in
-                                                  Builder cornerpoints'' (triangles' ++ triangles'' )
+                                                  TriangleBuilder cornerpoints'' (triangles' ++ triangles'' )
+  
+  
+                                                 
+  
+{- ---------------------------------------------- CornerPointsBuilder-------------------------------------------------
+
+Monad to build up a list of all CornerPoints, as the CornerPoints are being generated.
+
+-}
+data BuilderData = CornerPointsData {_cPointsCurr :: [CornerPoints], _cPointsAll :: [CornerPoints]}
+                 | CornerPointsErrorData {_err :: String, _cPointsAllPriorToError :: [CornerPoints] }
+  deriving (Show, Eq)
+
+{-should this have the cPointsPriorToError?
+This seems to be something more related State.
+-}
+data CornerPointsErrorForMonad = CornerPointsErrorForMonad
+                                   { msg :: String
+                                     --cPointsPriorToError :: [CornerPoints]
+                                   }
+     deriving Show
+
+  
+--Used for the builder Monad. Should be deleted if State works
+cornerPointsContainError :: [CornerPoints] -> Either String [CornerPoints]
+cornerPointsContainError cPoints =
+  let isError :: CornerPoints -> Bool
+      isError (CornerPointsError _) = True
+      isError _                     = False
+
+      hasError = find (isError) cPoints
+  in  case hasError of
+        Nothing  -> Right cPoints
+        Just err -> Left $ errMessage err
+
+--this version is for working with the State monad
+ 
+cornerPointsContainError' :: [CornerPoints] -> Bool
+cornerPointsContainError' cPoints =
+  let isError :: CornerPoints -> Bool
+      isError (CornerPointsError _) = True
+      isError _                     = False
+
+      hasError = find (isError) cPoints
+  in  case hasError of
+        Nothing  -> False
+        Just err -> True
 
 
-builderTest = do
-  let btmFace = BottomFace (Point 0 0 0) (Point 0 1 0) (Point 1 0 0) (Point 1 1 0 )
-      cube = btmFace +++ (upperFaceFromLowerFace $ transposeZ (+1) btmFace )
-      
-  let inlineTest = TestCase $ assertEqual
-        "inlineTest"
-        ([CubePoints {f1 = Point {x_axis = 0.0, y_axis = 1.0, z_axis = 0.0}, f2 = Point {x_axis = 0.0, y_axis = 1.0, z_axis = 1.0}, f3 = Point {x_axis = 1.0, y_axis = 1.0, z_axis = 1.0}, f4 = Point {x_axis = 1.0, y_axis = 1.0, z_axis = 0.0}, b1 = Point {x_axis = 0.0, y_axis = 0.0, z_axis = 0.0}, b2 = Point {x_axis = 0.0, y_axis = 0.0, z_axis = 1.0}, b3 = Point {x_axis = 1.0, y_axis = 0.0, z_axis = 1.0}, b4 = Point {x_axis = 1.0, y_axis = 0.0, z_axis = 0.0}}]
-        ) 
-        ( let cubeBuilder = 
-               return [cube] >>=
-                 (\cubes -> Builder cubes ( [FacesAll] |+++^| cubes ) )
-                 
-          in  cubeBuilder^.cornerpoints
-
-              
-        )
-  runTestTT inlineTest
-
-  let doTrianglesTest = TestCase $ assertEqual
-        "doTest"
-        ([CubePoints {f1 = Point {x_axis = 0.0, y_axis = 2.0, z_axis = 0.0}, f2 = Point {x_axis = 0.0, y_axis = 2.0, z_axis = 1.0}, f3 = Point {x_axis = 1.0, y_axis = 2.0, z_axis = 1.0}, f4 = Point {x_axis = 1.0, y_axis = 2.0, z_axis = 0.0}, b1 = Point {x_axis = 0.0, y_axis = 1.0, z_axis = 0.0}, b2 = Point {x_axis = 0.0, y_axis = 1.0, z_axis = 1.0}, b3 = Point {x_axis = 1.0, y_axis = 1.0, z_axis = 1.0}, b4 = Point {x_axis = 1.0, y_axis = 1.0, z_axis = 0.0}}]
-        ) 
-        ( let cubeBuilder :: Builder [CornerPoints]
-              cubeBuilder = do
-                builder1 <- Builder [cube] ( [FacesAll] |+++^| [cube] )
-                builder2 <- (let lclCubes = builder1
-                                         |+++|
-                                         (map ((transposeY (+1)) . extractFrontFace)  builder1)
-                                           
-                          in  Builder lclCubes ([FacesAll] |+++^| lclCubes) 
-                         )
-                return builder2
-                 
-                 
-          in  cubeBuilder^.cornerpoints
-        )
-  runTestTT doTrianglesTest
 
 
-lookAtStlShape =
-  let btmFace = BottomFace (Point 0 0 0) (Point 0 1 0) (Point 1 0 0) (Point 1 1 0 )
-      cube = btmFace +++ (upperFaceFromLowerFace $ transposeZ (+1) btmFace )
-      cubeBuilder :: Builder [CornerPoints]
-      cubeBuilder = do
-                builder1 <- Builder [cube] ( [FacesBackBottomLeftRightTop] |+++^| [cube] )
-                builder2 <- (let lclCubes = builder1
-                                         |+++|
-                                         (map ((transposeY (+1)) . extractFrontFace)  builder1)
-                                           
-                          in  Builder lclCubes ([FacesBottomFrontLeftRight] |+++^| lclCubes) 
-                         )
-                builder3 <-
-                  (let lclCubes = builder2
-                                  |+++|
-                                  (map ((transposeZ (+1)) . extractTopFace)  builder2)
-                   in  Builder lclCubes ([FacesBackFrontLeftRightTop] |+++^| lclCubes)
-                  )
-                return builder3
-  in
-    writeStlToFile $ newStlShape "builder monad test" (cubeBuilder^.triangles)
+{-If [CornerPoints] contains an error, return the Left error msg.
+If no error, return Right [CornerPoints]-}
+eitherCornerPointsContainError' :: [CornerPoints] -> Either CornerPointsErrorForMonad [CornerPoints]
+eitherCornerPointsContainError' cPoints =
+  let isError :: CornerPoints -> Bool
+      isError (CornerPointsError _) = True
+      isError _                     = False
+
+      hasError = find (isError) cPoints
+  in  case hasError of
+        Nothing  -> Right cPoints
+        Just err -> Left $ CornerPointsErrorForMonad (errMessage err) 
+
+--Used with the Builder monad. Delete if State works.
+combine :: BuilderData -> BuilderData -> BuilderData 
+combine ((CornerPointsData curr all)) ((CornerPointsData curr' all')) =
+  case (cornerPointsContainError curr') of
+     Right _ ->  CornerPointsData (curr') (all' ++ all)
+     Left err' -> combine (CornerPointsData curr all) (CornerPointsErrorData err' all')
+ 
+combine ((CornerPointsData curr all)) (CornerPointsErrorData err' cPointsAll') =
+  CornerPointsErrorData err' all
+
+{- used for State monad.
+If the new cpoints have no error, add them to the cPoints all.
+Else return the cPointsAll without the new cPoints.
+-}
+combine' :: [CornerPoints] -> [CornerPoints] -> [CornerPoints]
+combine' cPointsNew cPointsAll =
+  if cornerPointsContainError' cPointsNew
+     then cPointsAll
+     else cPointsNew ++ cPointsAll
+
+{-combine the [CornerPoints] without any checking for error.
+That will be left to Except Monad.-}
+combine'' :: [CornerPoints] -> [CornerPoints] -> [CornerPoints]
+combine'' cPointsNew cPointsAll =
+  cPointsNew ++ cPointsAll
+
+
+
+
