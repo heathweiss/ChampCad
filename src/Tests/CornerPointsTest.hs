@@ -1,6 +1,7 @@
 module Tests.CornerPointsTest(cornerPointsTestDo ) where
 import Test.HUnit
-import CornerPoints.CornerPoints(CornerPoints(..), (+++), (+++>), (|+++|), CornerPointsBuilder(..), (&+++#@), (|@+++#@|), (@+++#@))
+import CornerPoints.CornerPoints(CornerPoints(..), (+++), (+++>), (|+++|), CornerPointsBuilder(..), (&+++#@), (|@+++#@|), (@+++#@),
+                                cornerPointsError, isCubePoints, isCubePointsList)
 import CornerPoints.Points (Point(..))
 import CornerPoints.FaceConversions(backFaceFromFrontFace, upperFaceFromLowerFace, lowerFaceFromUpperFace )
 import CornerPoints.Transpose (transposeZ)
@@ -43,6 +44,55 @@ cornerPointsTestDo = do
   -- equality tests
   runTestTT shouldBeEqualF3
   runTestTT shouldBeEqualPoints
+  
+  --isCubePoints and isCubePointsList tests
+  runTestTT isCubePointsTest
+  runTestTT isNotCubePointsTest
+  runTestTT isCubePointsListTest
+  runTestTT isNotCubePointsListTest
+
+  --error tests
+  runTestTT isCornerPointsErrorTest
+  runTestTT isNotCornerPointsErrorTest
+
+
+-------------------- isCubePoints tests-------
+isCubePointsTest = TestCase $ assertEqual
+  "isCubePointsTest"
+  True
+  (isCubePoints (CubePoints (Point 1 1 1) (Point 1 1 1) (Point 1 1 1) (Point 1 1 1)
+                                (Point 1 1 1) (Point 1 1 1) (Point 1 1 1) (Point 1 1 1)))
+
+isNotCubePointsTest = TestCase $ assertEqual
+  "isNotCubePointsTest"
+  False
+  (isCubePoints (LeftFace  (Point 0 0 0)  (Point 0 0 1)  (Point 0 1 0) (Point 0 1 1) ))
+
+isCubePointsListTest = TestCase $ assertEqual
+  "isCubePointsListTest"
+  True
+  (isCubePointsList [CubePoints (Point 1 1 1) (Point 1 1 1) (Point 1 1 1) (Point 1 1 1)
+                                (Point 1 1 1) (Point 1 1 1) (Point 1 1 1) (Point 1 1 1)])
+
+isNotCubePointsListTest = TestCase $ assertEqual
+  "isNotCubePointsListTest"
+  False
+  (isCubePointsList [CubePoints (Point 1 1 1) (Point 1 1 1) (Point 1 1 1) (Point 1 1 1)
+                                (Point 1 1 1) (Point 1 1 1) (Point 1 1 1) (Point 1 1 1),
+                     LeftFace  (Point 0 0 0)  (Point 0 0 1)  (Point 0 1 0) (Point 0 1 1)]
+  )
+
+------------------- errors tests-------------  
+isCornerPointsErrorTest = TestCase $ assertEqual
+  "isCornerPointsError"
+  (True)
+  (cornerPointsError $ CornerPointsError "this is an error.")
+
+isNotCornerPointsErrorTest = TestCase $ assertEqual
+  "isNotCornerPointsError"
+  (False)
+  (cornerPointsError $ F1 (Point 1 2 3))
+
 
   ------------------------ equality tests ------------------------------
 shouldBeEqualPoints = TestCase $ assertEqual

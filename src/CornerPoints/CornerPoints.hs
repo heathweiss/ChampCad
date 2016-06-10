@@ -10,12 +10,16 @@ CornerPoints(..),
 scaleCornerPoints,
 scaleCornerPointsZ,
 CornerPointsBuilder(..),
+cornerPointsError, findCornerPointsError,
+isCubePoints, isCubePointsList
 ) where
+
 import CornerPoints.Points (Point(..))
---,transposeX, transposeY, transposeZ
+
 import    Control.Applicative
---import TypeClasses.Transposable(TransposePoint, transposeX, transposeY, transposeZ )
---import TypeClasses.Transposable(TransposePoint)
+
+import Data.List(find)
+
 
 
 infix 7 +++
@@ -29,6 +33,8 @@ data CornerPoints =
         {
                errMessage :: String
         }
+        |
+               CornerPointsId
         |
                CubePoints 
 
@@ -197,6 +203,41 @@ data CornerPoints =
         }
         deriving (Show)
 
+
+{-
+True if CornerPointsError otherwise false.
+CornerPointsError is the CornerPoints constructor for an error message.
+-}
+cornerPointsError :: CornerPoints -> Bool
+cornerPointsError (CornerPointsError _) = True
+cornerPointsError _                     = False
+
+{-
+Use it with Data.List(find) to search a [CornerPoints] for a CornerPointsError.
+-}
+findCornerPointsError :: [CornerPoints] -> Maybe CornerPoints
+findCornerPointsError cornerPoints = find cornerPointsError cornerPoints
+
+-- | True if CubePoints, otherwise false.
+isCubePoints :: CornerPoints -> Bool
+isCubePoints (CubePoints _ _ _ _ _ _ _ _) = True
+isCubePoints _ = False
+
+
+
+{- |
+True if the [CornerPoints] only contains CubePoints, otherwise false.
+-}
+isCubePointsList :: [CornerPoints] -> Bool
+isCubePointsList cpoints =
+  let isNotCubePoints :: CornerPoints -> Bool
+      isNotCubePoints (CubePoints _ _ _ _ _ _ _ _)  = False
+      isNotCubePoints _ = True
+  in
+   
+  case find (isNotCubePoints) cpoints of
+    Nothing -> True
+    Just _  -> False
 ------------------------------------------------ Transposable---------------------------------------------------
 {-
 instance TransposePoint CornerPoints where
@@ -386,6 +427,9 @@ Ex: FrontFace can be added to BackFace
 but
     FrontFace can't be added to a TopFace.-}
 (+++) :: CornerPoints -> CornerPoints -> CornerPoints
+
+(CornerPointsId) +++ anyCornerPoint = anyCornerPoint
+anyCornerPoint +++ (CornerPointsId) = anyCornerPoint
 
 (BottomFace b1 f1 b4 f4) +++ (TopFace b2 f2 b3 f3) = 
   CubePoints {f1=f1, f2=f2, f3=f3, f4=f4, b1=b1, b2=b2, b3=b3, b4=b4}
