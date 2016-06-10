@@ -10,143 +10,112 @@ Do a module for layers
 -}
  
 
-module Builder.Monad ( BuilderData(..), combine, combine', combine'',
-                      cornerPointsContainError, cornerPointsContainError',
-                      eitherCornerPointsContainError',
-                      CornerPointsErrorForMonad(..)) where
+module Builder.Monad (BuilderError(..), cornerPointsErrorHandler, buildCornerPointsList, buildCubePointsList,
+                      CpointsStack, CpointsList) where
 {- |
+Build up a shape from [CornerPoints].
+Do it using the State monad inside of the ExceptT monad transformer.
 
-
-Tests are in Tests.BuilderMonadTest
+Tests and example are in Tests.BuilderMonadTest
 -}
 {-
 ToDo:
-
+Add an IO layer in the bottom to have something like Persist read in values for building up shapes.
+This would allow shapes to be tweaked live, by editing a file or database, and not have to recompile
+in order to change simple values.
 -}
 
-import CornerPoints.CornerPoints(CornerPoints(..))
+import CornerPoints.CornerPoints((|@+++#@|), (|+++|), CornerPoints(..), (+++), (+++>),
+                                 cornerPointsError, findCornerPointsError, isCubePointsList)
 
 import Stl.StlBase(Triangle(..))
 
-import Data.List(find)
+import Control.Monad.Trans.Except
+import Control.Monad.Except
 
-import Control.Monad (ap)
+import Control.Monad.State.Lazy
 
-{------------------------------------------ A monad for building up triangles as the CornerPoints are being made.-------------------------
-May end up depracted, if the new StlAutoGenerator works out.
-Has been tested in Tests.BuilderMonadTest, but not used anywhere yet.
+-- | type to clarify code.
+type CpointsStack = [CornerPoints]
+-- | type to clarify code.
+type CpointsList = [CornerPoints] 
+  
+-- | data type for an exception as required for the Except monad.
+data BuilderError  = BuilderError {errMsg :: String }
+
+--common pattern to show the exception
+instance Show BuilderError where
+  show (BuilderError errMsg') = show errMsg' 
+
+{- |
+Handles a CornerPoints error in ExceptT catchError calls.
+At this time, can be replaced with throwE in the code, as that is all it does.
 -}
+cornerPointsErrorHandler :: BuilderError -> ExceptT BuilderError (State CpointsStack ) CpointsList
+cornerPointsErrorHandler error = do
+  throwE error
 
 
-data TriangleBuilder a =
-  TriangleBuilder {_cornerPoints :: a, _triangles :: [Triangle]}
-  
-instance Functor TriangleBuilder where
-  fmap fx (TriangleBuilder cornerpoints' triangles') = TriangleBuilder (fx cornerpoints') triangles'
-  
-instance Applicative TriangleBuilder where
-  pure a = TriangleBuilder a []
-  --warning: No explicit implementation for ‘<*>’
-  --use as a default to avoid above warning
-  (<*>) = ap
+{- |
+A wrapper around buildCornerPointsListOrFail, using the ExceptT `catchError` error handling system. 
+-}
+buildCornerPointsList :: String -> CpointsList -> CpointsList -> ExceptT BuilderError (State CpointsStack ) CpointsList
+buildCornerPointsList extraMsg cPoints cPoints' = 
+  (buildCornerPointsListOrFail extraMsg cPoints cPoints') `catchError` cornerPointsErrorHandler
 
 
-instance Monad TriangleBuilder  where
-  return a = TriangleBuilder a []
-  
-  (TriangleBuilder cornerpoints' triangles') >>= fx = let (TriangleBuilder cornerpoints'' triangles'')  = fx cornerpoints'
-                                              in
-                                                  TriangleBuilder cornerpoints'' (triangles' ++ triangles'' )
-  
-  
-                                                 
-  
-{- ---------------------------------------------- CornerPointsBuilder-------------------------------------------------
+{- |
+Check for error in the [CornerPoints].
 
-Monad to build up a list of all CornerPoints, as the CornerPoints are being generated.
+If no error, push it onto the stack. Return it as the current state value, in case it is needed for the next compution.
+
+Else throw an error with error message from the |+++| computation, with the extraMsg prepended to it.
+Typical extraMsg would be the location in the Do notation, where the error occurred.
+
+See buildCornerPointsList, which is a wrapper around this with catchError
 
 -}
-data BuilderData = CornerPointsData {_cPointsCurr :: [CornerPoints], _cPointsAll :: [CornerPoints]}
-                 | CornerPointsErrorData {_err :: String, _cPointsAllPriorToError :: [CornerPoints] }
-  deriving (Show, Eq)
+{-
+ToDo:
+Should it only push onto the stack if it is a CubePoints, which is a fully formed cube.
 
-{-should this have the cPointsPriorToError?
-This seems to be something more related State.
+If partial cubes allowed:
+The stl shape will possibly not be closed.
+The partial cube would still be set as the current value, so it could be used in the next computation.
+It would be up to the user to ensure all shapes get closed off.
+
+Or:
+
+Only CubePoints allowed (fully formed cubes).
+Would (help) ensure that stl shape is closed.
+Throw an error if it is not a CubePoints, and force the user to add only complete cubes.
+Will have to build up a complete cube in each line of Do notaion.
+Seems like the safest option.
 -}
-data CornerPointsErrorForMonad = CornerPointsErrorForMonad
-                                   { msg :: String
-                                     --cPointsPriorToError :: [CornerPoints]
-                                   }
-     deriving Show
+buildCornerPointsListOrFail :: String -> CpointsList -> CpointsList -> ExceptT BuilderError (State CpointsStack ) CpointsList
+buildCornerPointsListOrFail extraMsg cPoints cPoints' =
+  let cubeList = cPoints |+++| cPoints'
+  in  case findCornerPointsError cubeList of
+        Nothing -> lift $ state $ \cubeStack -> (cubeList, cubeList ++ cubeStack)
+        Just err -> throwE (BuilderError (extraMsg ++ " " ++ (errMessage err)) {-cube-})
 
-  
---Used for the builder Monad. Should be deleted if State works
-cornerPointsContainError :: [CornerPoints] -> Either String [CornerPoints]
-cornerPointsContainError cPoints =
-  let isError :: CornerPoints -> Bool
-      isError (CornerPointsError _) = True
-      isError _                     = False
+buildCubePointsList :: String -> CpointsList -> CpointsList -> ExceptT BuilderError (State CpointsStack ) CpointsList
+buildCubePointsList extraMsg cPoints cPoints' = 
+  (buildCubePointsListOrFail extraMsg cPoints cPoints') `catchError` cornerPointsErrorHandler
+{- |
+Same as buildCornerPointsListOrFail, but only pushes list onto the stack if all the elements are CubePoints.
+If any of the [CornerPoints] that are not CubePoints, they are still returned as the current value, so they can
+be used in the next computation.
 
-      hasError = find (isError) cPoints
-  in  case hasError of
-        Nothing  -> Right cPoints
-        Just err -> Left $ errMessage err
-
---this version is for working with the State monad
- 
-cornerPointsContainError' :: [CornerPoints] -> Bool
-cornerPointsContainError' cPoints =
-  let isError :: CornerPoints -> Bool
-      isError (CornerPointsError _) = True
-      isError _                     = False
-
-      hasError = find (isError) cPoints
-  in  case hasError of
-        Nothing  -> False
-        Just err -> True
-
-
-
-
-{-If [CornerPoints] contains an error, return the Left error msg.
-If no error, return Right [CornerPoints]-}
-eitherCornerPointsContainError' :: [CornerPoints] -> Either CornerPointsErrorForMonad [CornerPoints]
-eitherCornerPointsContainError' cPoints =
-  let isError :: CornerPoints -> Bool
-      isError (CornerPointsError _) = True
-      isError _                     = False
-
-      hasError = find (isError) cPoints
-  in  case hasError of
-        Nothing  -> Right cPoints
-        Just err -> Left $ CornerPointsErrorForMonad (errMessage err) 
-
---Used with the Builder monad. Delete if State works.
-combine :: BuilderData -> BuilderData -> BuilderData 
-combine ((CornerPointsData curr all)) ((CornerPointsData curr' all')) =
-  case (cornerPointsContainError curr') of
-     Right _ ->  CornerPointsData (curr') (all' ++ all)
-     Left err' -> combine (CornerPointsData curr all) (CornerPointsErrorData err' all')
- 
-combine ((CornerPointsData curr all)) (CornerPointsErrorData err' cPointsAll') =
-  CornerPointsErrorData err' all
-
-{- used for State monad.
-If the new cpoints have no error, add them to the cPoints all.
-Else return the cPointsAll without the new cPoints.
+If the work is done right, all elements will be CubePoints or none of them will be. If it is a mixture, then
+that will not work with the whole monad builder system.
 -}
-combine' :: [CornerPoints] -> [CornerPoints] -> [CornerPoints]
-combine' cPointsNew cPointsAll =
-  if cornerPointsContainError' cPointsNew
-     then cPointsAll
-     else cPointsNew ++ cPointsAll
-
-{-combine the [CornerPoints] without any checking for error.
-That will be left to Except Monad.-}
-combine'' :: [CornerPoints] -> [CornerPoints] -> [CornerPoints]
-combine'' cPointsNew cPointsAll =
-  cPointsNew ++ cPointsAll
-
-
-
-
+buildCubePointsListOrFail :: String -> CpointsList -> CpointsList -> ExceptT BuilderError (State CpointsStack ) CpointsList
+buildCubePointsListOrFail  extraMsg cPoints cPoints' =
+  let  cubeList = cPoints |+++| cPoints'
+  in   case findCornerPointsError cubeList of
+        Nothing ->
+          if isCubePointsList cubeList 
+             then lift $ state $ \cubeStack -> (cubeList, cubeList ++ cubeStack)
+             else lift $ state $ \cubeStack -> (cubeList, cubeStack)
+        Just err -> throwE (BuilderError (extraMsg ++ " " ++ (errMessage err)) {-cube-})
