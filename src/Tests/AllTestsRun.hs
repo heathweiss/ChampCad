@@ -17,7 +17,7 @@ import Tests.Symmetrical.SequenceTest(sequenceTestDo)
 import Tests.FaceExtractAndConvertTest(faceExtractAndConvertTestDo)
 import Tests.CubicalTest(cubicalTestDo)
 import Tests.BuilderMonadTest(builderMonadTest)
-import Tests.StlAutoGenerateTest(stlAutoGenerateTest)
+import Tests.MeshGenerationTest(meshGenerationTest)
 
 runAllTestsDo = do
   putStrLn "corner points debug test"
@@ -54,5 +54,5 @@ runAllTestsDo = do
   cubicalTestDo
   putStrLn "builderMonadTest"
   builderMonadTest
-  putStrLn "stlAutoGenerateTest"
-  stlAutoGenerateTest
+  putStrLn "meshGenerationTest"
+  meshGenerationTest
