@@ -87,6 +87,33 @@ getTriangles (FaceTop)  (CubePoints _ f2 f3 _ _ b2 b3 _) =
   (Triangle (newVertex b3) (newVertex b2) (newVertex f2))
  ]
 
+{-
+try adding in other cube constructors for autogenerate.
+This will allow a [FacesAll] to be |+++^| to [CornerPoints] even thougth they may be made up of Faces.
+
+Should look at doing this in a better way.
+-}
+
+
+getTriangles (FacesAll) (BackFace b1 b2 b3 b4)   =
+  getTriangles (FaceBack) (CubePoints b1 b2 b3 b4 b1 b2 b3 b4 )
+
+getTriangles (FacesAll) (FrontFace f1 f2 f3 f4)   =
+  getTriangles (FaceFront) (CubePoints f1 f2 f3 f4 f1 f2 f3 f4 )
+
+getTriangles (FacesAll) (TopFace b2 f2 b3 f3)   =
+  getTriangles (FaceTop) (CubePoints f2 f2 f3 f3 b2 b2 b3 b3 )
+getTriangles (FacesAll) (BottomFace b1 f1 b4 f4)   =
+  getTriangles (FaceBottom) (CubePoints f1 f1 f1 f4 b1 b1 b1 b4)
+
+getTriangles (FacesAll) (LeftFace b1 b2 f1 f2)   =
+  getTriangles (FaceLeft) (CubePoints f1 f2 f2 f2 b1 b2 b2 b2)
+
+getTriangles (FacesAll) (RightFace b3 b4 f3 f4)   =
+  getTriangles (FaceRight) (CubePoints f3 f3 f3 f4 b3 b3 b3 b4)
+--end autogenerate
+
+--this is the original that handled a full CubePoints
 getTriangles (FacesAll) c = concat
  [(getTriangles FaceBack c),
   (getTriangles FaceBottom c),
@@ -94,7 +121,9 @@ getTriangles (FacesAll) c = concat
   (getTriangles FaceLeft c),
   (getTriangles FaceRight c),
   (getTriangles FaceTop c)
- ] 
+ ]
+
+
 
 getTriangles (FacesAllButBack) c = concat
  [(getTriangles FaceBottom c),
