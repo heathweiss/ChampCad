@@ -99,9 +99,11 @@ buildCornerPointsListOrFail extraMsg cPoints cPoints' =
         Nothing -> lift $ state $ \cubeStack -> (cubeList, cubeList ++ cubeStack)
         Just err -> throwE (BuilderError (extraMsg ++ " " ++ (errMessage err)) {-cube-})
 
-buildCubePointsList :: String -> CpointsList -> CpointsList -> ExceptT BuilderError (State CpointsStack ) CpointsList
-buildCubePointsList extraMsg cPoints cPoints' = 
-  (buildCubePointsListOrFail extraMsg cPoints cPoints') `catchError` cornerPointsErrorHandler
+
+buildCubePointsList :: (CpointsList -> CpointsStack -> CpointsStack) -> String -> CpointsList -> CpointsList ->
+                       ExceptT BuilderError (State CpointsStack ) CpointsList
+buildCubePointsList pushToStack extraMsg cPoints cPoints' = 
+  (buildCubePointsListOrFail pushToStack extraMsg cPoints cPoints') `catchError` cornerPointsErrorHandler
 {- |
 Same as buildCornerPointsListOrFail, but only pushes list onto the stack if all the elements are CubePoints.
 If any of the [CornerPoints] that are not CubePoints, they are still returned as the current value, so they can
@@ -109,13 +111,21 @@ be used in the next computation.
 
 If the work is done right, all elements will be CubePoints or none of them will be. If it is a mixture, then
 that will not work with the whole monad builder system.
+
+pushToStack:
+The function to push onto the stack.
+For now ++ is the only option. Once stl autogenerate module is done, then that system can be used.
 -}
-buildCubePointsListOrFail :: String -> CpointsList -> CpointsList -> ExceptT BuilderError (State CpointsStack ) CpointsList
-buildCubePointsListOrFail  extraMsg cPoints cPoints' =
+buildCubePointsListOrFail :: (CpointsList -> CpointsStack -> CpointsStack) -> String -> CpointsList -> CpointsList ->
+                             ExceptT BuilderError (State CpointsStack ) CpointsList
+buildCubePointsListOrFail pushToStack  extraMsg cPoints cPoints' =
   let  cubeList = cPoints |+++| cPoints'
   in   case findCornerPointsError cubeList of
         Nothing ->
           if isCubePointsList cubeList 
-             then lift $ state $ \cubeStack -> (cubeList, cubeList ++ cubeStack)
+             then lift $ state $ \cubeStack -> (cubeList, cubeList `pushToStack` cubeStack)
              else lift $ state $ \cubeStack -> (cubeList, cubeStack)
         Just err -> throwE (BuilderError (extraMsg ++ " " ++ (errMessage err)) {-cube-})
+
+
+
