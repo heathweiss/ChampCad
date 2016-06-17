@@ -10,7 +10,7 @@ Do a module for layers
 -}
  
 
-module Builder.Monad (BuilderError(..), cornerPointsErrorHandler, buildCornerPointsList, buildCubePointsList,
+module Builder.Monad (BuilderError(..), cornerPointsErrorHandler, buildCubePointsList,
                       CpointsStack, CpointsList) where
 {- |
 Build up a shape from [CornerPoints].
@@ -18,6 +18,7 @@ Do it using the State monad inside of the ExceptT monad transformer.
 
 Tests and example are in Tests.BuilderMonadTest
 -}
+
 {-
 ToDo:
 Add an IO layer in the bottom to have something like Persist read in values for building up shapes.
@@ -43,62 +44,18 @@ type CpointsList = [CornerPoints]
 -- | data type for an exception as required for the Except monad.
 data BuilderError  = BuilderError {errMsg :: String }
 
---common pattern to show the exception
+-- | common pattern to show the exception
 instance Show BuilderError where
   show (BuilderError errMsg') = show errMsg' 
 
 {- |
 Handles a CornerPoints error in ExceptT catchError calls.
 At this time, can be replaced with throwE in the code, as that is all it does.
+Suggest using it in case error handling changes.
 -}
 cornerPointsErrorHandler :: BuilderError -> ExceptT BuilderError (State CpointsStack ) CpointsList
 cornerPointsErrorHandler error = do
   throwE error
-
-
-{- |
-A wrapper around buildCornerPointsListOrFail, using the ExceptT `catchError` error handling system. 
--}
-buildCornerPointsList :: String -> CpointsList -> CpointsList -> ExceptT BuilderError (State CpointsStack ) CpointsList
-buildCornerPointsList extraMsg cPoints cPoints' = 
-  (buildCornerPointsListOrFail extraMsg cPoints cPoints') `catchError` cornerPointsErrorHandler
-
-
-{- |
-Check for error in the [CornerPoints].
-
-If no error, push it onto the stack. Return it as the current state value, in case it is needed for the next compution.
-
-Else throw an error with error message from the |+++| computation, with the extraMsg prepended to it.
-Typical extraMsg would be the location in the Do notation, where the error occurred.
-
-See buildCornerPointsList, which is a wrapper around this with catchError
-
--}
-{-
-ToDo:
-Should it only push onto the stack if it is a CubePoints, which is a fully formed cube.
-
-If partial cubes allowed:
-The stl shape will possibly not be closed.
-The partial cube would still be set as the current value, so it could be used in the next computation.
-It would be up to the user to ensure all shapes get closed off.
-
-Or:
-
-Only CubePoints allowed (fully formed cubes).
-Would (help) ensure that stl shape is closed.
-Throw an error if it is not a CubePoints, and force the user to add only complete cubes.
-Will have to build up a complete cube in each line of Do notaion.
-Seems like the safest option.
--}
-buildCornerPointsListOrFail :: String -> CpointsList -> CpointsList -> ExceptT BuilderError (State CpointsStack ) CpointsList
-buildCornerPointsListOrFail extraMsg cPoints cPoints' =
-  let cubeList = cPoints |+++| cPoints'
-  in  case findCornerPointsError cubeList of
-        Nothing -> lift $ state $ \cubeStack -> (cubeList, cubeList ++ cubeStack)
-        Just err -> throwE (BuilderError (extraMsg ++ " " ++ (errMessage err)) {-cube-})
-
 
 buildCubePointsList :: (CpointsList -> CpointsStack -> CpointsStack) -> String -> CpointsList -> CpointsList ->
                        ExceptT BuilderError (State CpointsStack ) CpointsList
