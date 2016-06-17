@@ -10,7 +10,7 @@ Try out a StateT example, then implement it for the Except work with CornerPoint
 -}
 module Tests.BuilderMonadTest(builderMonadTest) where
 
-import Builder.Monad(BuilderError(..), cornerPointsErrorHandler, buildCornerPointsList, buildCubePointsList,
+import Builder.Monad(BuilderError(..), cornerPointsErrorHandler, buildCubePointsList,
                      CpointsStack, CpointsList)
 
 --import Tests.StlAutoGenerateTest(extractFaces)
@@ -19,7 +19,7 @@ import CornerPoints.CornerPoints((|@+++#@|), (|+++|), CornerPoints(..), (+++), (
                                  cornerPointsError, findCornerPointsError)
 import CornerPoints.Points(Point(..))
 import CornerPoints.FaceConversions(upperFaceFromLowerFace, backFaceFromFrontFace )
-import CornerPoints.FaceExtraction(extractFrontFace, extractTopFace, extractBottomFace)
+import CornerPoints.FaceExtraction(extractFrontFace, extractTopFace, extractBottomFace, extractRightFace)
 import CornerPoints.Transpose(transposeX, transposeY, transposeZ)
 import CornerPoints.MeshGeneration(autoGenerateEachCube, autoGenerateEachFace)
 
@@ -51,8 +51,8 @@ import Control.Monad.Except
 import Control.Monad.Writer (WriterT, tell, execWriterT)
 import Control.Monad.Reader
 
---create a test cube
-btmFace = BottomFace (Point 0 0 0) (Point 0 1 0) (Point 1 0 0) (Point 1 1 0 )
+--create a test cube b1            f1            b4            f4
+btmFace = BottomFace (Point 0 0 0) (Point 0 5 0) (Point 5 0 0) (Point 5 5 0 )
 cube = btmFace +++ (upperFaceFromLowerFace $ transposeZ (+1) btmFace )
 
 
@@ -64,32 +64,8 @@ builderMonadTest = do
 
   runTestTT testPlaceHolder
   
-{------------------------------- CornerPoints with ExceptT State---------------------------------}
 
-
-
-
-
-
-reportCornerPointsExceptTStateA :: IO ()
-reportCornerPointsExceptTStateA = do
-  print $ show $ (evalState $ runExceptT cornerPointsWithExceptTStateTest )  []
-
-reportCornerPointsExceptTStateS :: IO ()
-reportCornerPointsExceptTStateS = do
-  print $ show $ (execState $ runExceptT cornerPointsWithExceptTStateTest )  []
-
---run in repl with: reportCornerPointsExceptTStateA(S)
-cornerPointsWithExceptTStateTest :: ExceptT BuilderError (State CpointsStack ) CpointsList
-cornerPointsWithExceptTStateTest = do
-  list1 <- buildCornerPointsList "list 1" [btmFace] [(upperFaceFromLowerFace $ transposeZ (+1) btmFace )] --good cube
-  list2 <- buildCornerPointsList "list 2" list1 (map (extractTopFace . (transposeZ (+1))) list1 ) --good cube
-  list3 <- buildCornerPointsList "list 3" list2 [cube] --bad cube
-  return list3
-
-
-
-{------------------------------- CubePoints with ExceptT State---------------------------------}
+{------------------------------- simple stack of cubes ---------------------------------}
 
 --curry in the stack pushing function
 buildCubePointsList' = buildCubePointsList (++)
@@ -126,22 +102,29 @@ generateStl =
   let faces = runAutoGenerateEachCube []
       triangles' = [FacesAll | x <- [1..]] |+++^| faces
   in
-  writeStlToFile $ newStlShape "BlackRunnerHeel" triangles'
+  writeStlToFile $ newStlShape "stack of cubes" triangles'
   
 
 
-{-
-Tests.StlAutoGenerateTest:
- 
+{----------------------------------- give me an H------------------------------------------}
 
+buildHShape :: ExceptT BuilderError (State CpointsStack ) CpointsList
+buildHShape = do
+  btmLeftLeg1  <- buildCubePointsList' "btmLeftLeg1"  [btmFace] [CornerPointsId]
+  btmLeftLeg <- buildCubePointsList' "btmLeftLeg" btmLeftLeg1  (map (upperFaceFromLowerFace . (transposeZ (+10))) btmLeftLeg1)
+  centerLeftLeg  <- buildCubePointsList' "centerLeftLeg"  btmLeftLeg    (map (extractTopFace . (transposeZ (+5))) btmLeftLeg )
+  topLeftLeg  <- buildCubePointsList' "topLeftLeg"  centerLeftLeg    (map (extractTopFace . (transposeZ (+10))) centerLeftLeg )
+  center  <- buildCubePointsList' "center"  centerLeftLeg (map (extractRightFace . (transposeX (+15))) centerLeftLeg )
+  centerRightLeg <- buildCubePointsList' "centerRightLeg" center (map (extractRightFace . (transposeX (+5))) center)
+  btmRightLeg <- buildCubePointsList' "btmRightLeg" centerRightLeg (map (extractBottomFace . (transposeZ ((-)10))) centerRightLeg)
+  topRightLeg <- buildCubePointsList' "topRightLeg" centerRightLeg (map (extractTopFace . (transposeZ (+10))) centerRightLeg)
+  return topRightLeg
 
-Tests.BuilderMonadTest
-autoGenerateEachCube
-autoGenerateEachFace
+runH inState =
+  autoGenerateEachCube [] ((execState $ runExceptT buildHShape ) inState)
 
-CornerPoints.MeshGeneration. Testing in StlAutoGenerate
-doesOpposingFaceExistInList
-doesSameFaceExistInList
-pushToList,
-extractFaces
--}
+generateHStl =
+  let faces = runH []
+      triangles' = [FacesAll | x <- [1..]] |+++^| faces
+  in
+  writeStlToFile $ newStlShape "stack of cubes" triangles'
