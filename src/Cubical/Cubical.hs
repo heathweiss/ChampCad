@@ -24,8 +24,9 @@ datatype to handle the basic input in cubical format.. Setup to use Lens package
 leftPoint: A point with represents one of  CornerPoint(F1,F2,B1,B2).
 width: The X-axis offset from the point. Allows for the creation of a F3,F4,B3,B4
 -}
-data CubicalInput = CubeIn {_cornerPoint::CornerPoints, _width::Double}
-                    deriving (Show)
+data CubicalInput =
+  CubeIn {_cornerPoint::CornerPoints, _width::Double}
+  deriving (Show)
 
 
 instance Eq CubicalInput where
