@@ -8,16 +8,16 @@ Do a module for extensible-effects
 Do a module for layers
 -https://hackage.haskell.org/package/layers
 -}
- 
-
-module Builder.Monad (BuilderError(..), cornerPointsErrorHandler, buildCubePointsList,
-                      CpointsStack, CpointsList) where
 {- |
 Build up a shape from [CornerPoints].
 Do it using the State monad inside of the ExceptT monad transformer.
 
 Tests and example are in Tests.BuilderMonadTest
--}
+-} 
+
+module Builder.Monad (BuilderError(..), cornerPointsErrorHandler, buildCubePointsList,
+                      CpointsStack, CpointsList) where
+
 
 {-
 ToDo:
