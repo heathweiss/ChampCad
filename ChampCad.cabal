@@ -23,7 +23,7 @@ library
                        CornerPoints.Radius, CornerPoints.CornerPointsWithDegrees,
                        CornerPoints.FaceExtractionWithDegrees, CornerPoints.VerticalFacesWithDegrees,
                        CornerPoints.FaceConversionsWithDegrees, CornerPoints.FaceExtractAndConvert
-                       CornerPoints.Degree, CornerPoints.MeshGeneration
+                       CornerPoints.Degree, CornerPoints.MeshGeneration, CornerPoints.Slicer
                        --TypeClasses
                        TypeClasses.Transposable
                        --Cubical
@@ -44,12 +44,14 @@ library
                        Tests.VerticalFacesTest, Tests.ParseJuicyTest, Tests.ScanFilterTest,
                        Tests.CornerPointsWithDegreesTest, Tests.BuilderMonadTest,
                        Tests.Symmetrical.SequenceTest, Tests.FaceExtractAndConvertTest
-                       Tests.CubicalTest, Tests.MeshGenerationTest
+                       Tests.CubicalTest, Tests.MeshGenerationTest,
+                       Tests.CornerPointsSlicerTest
                        --Examples
                        -- Example ShoeLifts
                        Examples.ShoeLift.KeenToe, Examples.ShoeLift.KeenHeel,
                        Examples.ShoeLift.SnowBoardBoot, Examples.ShoeLift.KangarooShoe,
-                       Examples.ShoeLift.GeoxShoe
+                       Examples.ShoeLift.GeoxShoe,
+                       Examples.ShoeLift.SandalsAFO,
                        --HeelGenerators.SandalsToe, HeelGenerators.SandalsHeel
                        --HeelGenerators.BlackRunnerHeel,  HeelGenerators.BlackRunnerToe,
                        --Have not been redone for changes to MathPolar.
