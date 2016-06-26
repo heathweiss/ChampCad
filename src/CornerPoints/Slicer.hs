@@ -6,6 +6,15 @@ import CornerPoints.Points (Point(..))
 
 import Test.HUnit
 
+{-
+ToDo:
+Move much of the testing to external test.
+
+ToDo:
+Figure out why the slicing for AFO sandal did not work out.
+Seems like x for sure, and possibly y, are out.
+-}
+
 {- | Distance along x axis, between 2 points-}
 data DeltaX = DeltaX {_deltaX :: Double}
   deriving (Eq, Show)
@@ -53,11 +62,19 @@ deltaY (F3 (Point  _ y _)) (F4 (Point  _ y' _)) =
 deltaZ :: CornerPoints -> CornerPoints -> DeltaZ
 deltaZ (B2 (Point  _ _ z)) (B1 (Point  _ _ z')) =
   DeltaZ $ z - z'
+deltaZ  (B1 (Point  _ _ z')) (B2 (Point  _ _ z)) =
+  DeltaZ $ z - z'
 deltaZ (B3 (Point  _ _ z)) (B4 (Point  _ _ z')) =
+  DeltaZ $ z - z'
+deltaZ  (B4 (Point  _ _ z')) (B3 (Point  _ _ z)) =
   DeltaZ $ z - z'
 deltaZ (F2 (Point  _ _ z)) (F1 (Point  _ _ z')) =
   DeltaZ $ z - z'
+deltaZ  (F1 (Point  _ _ z')) (F2 (Point  _ _ z)) =
+  DeltaZ $ z - z'
 deltaZ (F3 (Point  _ _ z)) (F4 (Point  _ _ z')) =
+  DeltaZ $ z - z'
+deltaZ  (F4 (Point  _ _ z')) (F3 (Point  _ _ z)) =
   DeltaZ $ z - z'
 
 -- | Distance along each axis
@@ -90,6 +107,20 @@ slice zValue (B2 topPoint) (B1 btmPoint) =
   in
   B2 (Point xTop yTop zValue)
 
+--reverse it. Not tested or sure about this.
+slice zValue  (B1 btmPoint) (B2 topPoint) =
+  let totalXDelta = _deltaX $ deltaX (B2 topPoint) (B1 btmPoint)
+      totalYDelta = _deltaY $ deltaY (B2 topPoint) (B1 btmPoint)
+      zValueAsTopPoint = B1 (Point 0 0 zValue)
+      --Should this be B1. Was B2 for heel/arch of afo sandal
+      btmZdelta = _deltaZ $ deltaZ zValueAsTopPoint (B2 topPoint)
+      totalZDelta = _deltaZ $ deltaZ (B2 topPoint) (B1 btmPoint)
+      zRatio = btmZdelta / totalZDelta
+      xTop = (zRatio * totalXDelta) + (x_axis btmPoint)
+      yTop = (zRatio * totalYDelta) + (y_axis btmPoint)
+  in
+  B1 (Point xTop yTop zValue)
+
 slice zValue (B3 topPoint) (B4 btmPoint) =
   let totalXDelta = _deltaX $ deltaX (B3 topPoint) (B4 btmPoint)
       totalYDelta = _deltaY $ deltaY (B3 topPoint) (B4 btmPoint)
@@ -101,6 +132,21 @@ slice zValue (B3 topPoint) (B4 btmPoint) =
       yTop = (zRatio * totalYDelta) + (y_axis btmPoint)
   in
   B3 (Point xTop yTop zValue)
+
+--reverse it. Not tested or sure about this.
+slice zValue  (B4 btmPoint) (B3 topPoint) =
+  let totalXDelta = _deltaX $ deltaX (B3 topPoint) (B4 btmPoint)
+      totalYDelta = _deltaY $ deltaY (B3 topPoint) (B4 btmPoint)
+      --Was B4. Changed so will work with btmZDelta
+      zValueAsTopPoint = B4 (Point 0 0 zValue)
+      --Should this be B4. Was B3 for heel/arch of afo sandal
+      btmZdelta = _deltaZ $ deltaZ zValueAsTopPoint (B3 topPoint)
+      totalZDelta = _deltaZ $ deltaZ (B3 topPoint) (B4 btmPoint)
+      zRatio = btmZdelta / totalZDelta
+      xTop = (zRatio * totalXDelta) + (x_axis btmPoint)
+      yTop = (zRatio * totalYDelta) + (y_axis btmPoint)
+  in
+  B4 (Point xTop yTop zValue)
 
 slice zValue (F2 topPoint) (F1 btmPoint) =
   let totalXDelta = _deltaX $ deltaX (F2 topPoint) (F1 btmPoint)
@@ -114,6 +160,20 @@ slice zValue (F2 topPoint) (F1 btmPoint) =
   in
   F2 (Point xTop yTop zValue)
 
+--reverse it. Not tested or sure about this.
+slice zValue  (F1 btmPoint) (F2 topPoint) =
+  let totalXDelta = _deltaX $ deltaX (F2 topPoint) (F1 btmPoint)
+      totalYDelta = _deltaY $ deltaY (F2 topPoint) (F1 btmPoint)
+      zValueAsTopPoint = F1 (Point 0 0 zValue)
+      --Should this be F1. Was F2 for heel/arch of afo sandal
+      btmZdelta = _deltaZ $ deltaZ zValueAsTopPoint (F2 topPoint)
+      totalZDelta = _deltaZ $ deltaZ (F2 topPoint) (F1 btmPoint)
+      zRatio = btmZdelta / totalZDelta
+      xTop = (zRatio * totalXDelta) + (x_axis btmPoint)
+      yTop = (zRatio * totalYDelta) + (y_axis btmPoint)
+  in
+  F1 (Point xTop yTop zValue)
+
 slice zValue (F3 topPoint) (F4 btmPoint) =
   let totalXDelta = _deltaX $ deltaX (F3 topPoint) (F4 btmPoint)
       totalYDelta = _deltaY $ deltaY (F3 topPoint) (F4 btmPoint)
@@ -126,11 +186,32 @@ slice zValue (F3 topPoint) (F4 btmPoint) =
   in
   F3 (Point xTop yTop zValue)
 
+--reverse it. Not tested or sure about this.
+slice zValue  (F4 btmPoint) (F3 topPoint) =
+  let totalXDelta = _deltaX $ deltaX (F3 topPoint) (F4 btmPoint)
+      totalYDelta = _deltaY $ deltaY (F3 topPoint) (F4 btmPoint)
+      zValueAsTopPoint = F4 (Point 0 0 zValue)
+      --Should this be F4. Was F3 for heel/arch of afo sandal
+      btmZdelta = _deltaZ $ deltaZ zValueAsTopPoint (F3 topPoint)
+      totalZDelta = _deltaZ $ deltaZ (F3 topPoint) (F4 btmPoint)
+      zRatio = btmZdelta / totalZDelta
+      xTop = (zRatio * totalXDelta) + (x_axis btmPoint)
+      yTop = (zRatio * totalYDelta) + (y_axis btmPoint)
+  in
+  F4 (Point xTop yTop zValue)
+
 slice zValue (BackTopLine (b2point) (b3point)) (BackBottomLine (b1point) (b4point)) =
   let newB2point = b2 $ slice zValue (B2 b2point) (B1 b1point)
       newB3point = b3 $ slice zValue (B3 b3point) (B4 b4point)
   in
   BackTopLine newB2point newB3point
+
+--reverse it
+slice zValue  (BackBottomLine (b1point) (b4point)) (BackTopLine (b2point) (b3point)) =
+  let newB1point = b1 $ slice zValue (B1 b1point) (B2 b2point)
+      newB4point = b4 $ slice zValue (B4 b3point) (B3 b4point)
+  in
+  BackBottomLine newB1point newB4point
 
 slice zValue (FrontTopLine f2point f3point) (BottomFrontLine f1point f4point) =
   let newF2point = f2 $ slice zValue (F2 f2point) (F1 f1point)
@@ -138,11 +219,25 @@ slice zValue (FrontTopLine f2point f3point) (BottomFrontLine f1point f4point) =
   in
   FrontTopLine newF2point newF3point
 
+--reverse it
+slice zValue (BottomFrontLine f1point f4point) (FrontTopLine f2point f3point) =
+  let newF1point = f1 $ slice zValue  (F1 f1point) (F2 f2point)
+      newF4point = f4 $ slice zValue  (F4 f4point) (F3 f3point)
+  in
+  BottomFrontLine newF1point newF4point
+
 slice zValue (TopFace b2point f2point b3point f3point) (BottomFace b1point f1point b4point f4point)  =
   let newBackTopLine = slice zValue (BackTopLine b2point b3point) (BackBottomLine b1point b4point)
       newFrontTopLine = slice zValue (FrontTopLine f2point f3point) (BottomFrontLine f1point f4point)
   in
-  newFrontTopLine +++ newBackTopLine 
+  newFrontTopLine +++ newBackTopLine
+
+--reverse it
+slice zValue  (BottomFace b1point f1point b4point f4point) (TopFace b2point f2point b3point f3point)  =
+  let newBackBottomLine = slice zValue  (BackBottomLine b1point b4point) (BackTopLine b2point b3point)
+      newBottomFrontLine = slice zValue  (BottomFrontLine f1point f4point) (FrontTopLine f2point f3point)
+  in
+  newBottomFrontLine +++ newBackBottomLine 
   
 
 --next
@@ -205,11 +300,20 @@ testLocalFunctions = do
 
   runTestTT putFlatTopOnB1B2
 
-  let putFlatTopOnB4B3 = TestCase $ assertEqual
-        "putFlatTopOnB4B3"
+  let putFlatTopOnB3B4 = TestCase $ assertEqual
+        "putFlatTopOnB3B4"
         (B3 (Point 1 2 5))
         (
           slice 5 (B3 (Point 2 4 10)) (B4 (Point 0 0 0))
+        )
+
+  runTestTT putFlatTopOnB3B4
+
+  let putFlatTopOnB4B3 = TestCase $ assertEqual
+        "putFlatTopOnB4B3"
+        (B4 (Point 1 2 5))
+        (
+          slice 7 (B4 (Point 0 0 0)) (B3 (Point 2 4 10))
         )
 
   runTestTT putFlatTopOnB4B3
