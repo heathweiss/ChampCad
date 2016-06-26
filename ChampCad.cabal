@@ -23,7 +23,8 @@ library
                        CornerPoints.Radius, CornerPoints.CornerPointsWithDegrees,
                        CornerPoints.FaceExtractionWithDegrees, CornerPoints.VerticalFacesWithDegrees,
                        CornerPoints.FaceConversionsWithDegrees, CornerPoints.FaceExtractAndConvert
-                       CornerPoints.Degree, CornerPoints.MeshGeneration, CornerPoints.Slicer
+                       CornerPoints.Degree, CornerPoints.MeshGeneration, CornerPoints.Slicer,
+                       CornerPoints.Rotations
                        --TypeClasses
                        TypeClasses.Transposable
                        --Cubical
@@ -45,7 +46,7 @@ library
                        Tests.CornerPointsWithDegreesTest, Tests.BuilderMonadTest,
                        Tests.Symmetrical.SequenceTest, Tests.FaceExtractAndConvertTest
                        Tests.CubicalTest, Tests.MeshGenerationTest,
-                       Tests.CornerPointsSlicerTest
+                       Tests.CornerPointsSlicerTest, Tests.RotationsTest,
                        --Examples
                        -- Example ShoeLifts
                        Examples.ShoeLift.KeenToe, Examples.ShoeLift.KeenHeel,
