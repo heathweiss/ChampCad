@@ -107,19 +107,10 @@ slice zValue (B2 topPoint) (B1 btmPoint) =
   in
   B2 (Point xTop yTop zValue)
 
---reverse it. Not tested or sure about this.
 slice zValue  (B1 btmPoint) (B2 topPoint) =
-  let totalXDelta = _deltaX $ deltaX (B2 topPoint) (B1 btmPoint)
-      totalYDelta = _deltaY $ deltaY (B2 topPoint) (B1 btmPoint)
-      zValueAsTopPoint = B1 (Point 0 0 zValue)
-      --Should this be B1. Was B2 for heel/arch of afo sandal
-      btmZdelta = _deltaZ $ deltaZ zValueAsTopPoint (B2 topPoint)
-      totalZDelta = _deltaZ $ deltaZ (B2 topPoint) (B1 btmPoint)
-      zRatio = btmZdelta / totalZDelta
-      xTop = (zRatio * totalXDelta) + (x_axis btmPoint)
-      yTop = (zRatio * totalYDelta) + (y_axis btmPoint)
+  let b2' = slice zValue (B2 topPoint) (B1 btmPoint)
   in
-  B1 (Point xTop yTop zValue)
+  B1 (b2 b2')
 
 slice zValue (B3 topPoint) (B4 btmPoint) =
   let totalXDelta = _deltaX $ deltaX (B3 topPoint) (B4 btmPoint)
@@ -133,20 +124,11 @@ slice zValue (B3 topPoint) (B4 btmPoint) =
   in
   B3 (Point xTop yTop zValue)
 
---reverse it. Not tested or sure about this.
 slice zValue  (B4 btmPoint) (B3 topPoint) =
-  let totalXDelta = _deltaX $ deltaX (B3 topPoint) (B4 btmPoint)
-      totalYDelta = _deltaY $ deltaY (B3 topPoint) (B4 btmPoint)
-      --Was B4. Changed so will work with btmZDelta
-      zValueAsTopPoint = B4 (Point 0 0 zValue)
-      --Should this be B4. Was B3 for heel/arch of afo sandal
-      btmZdelta = _deltaZ $ deltaZ zValueAsTopPoint (B3 topPoint)
-      totalZDelta = _deltaZ $ deltaZ (B3 topPoint) (B4 btmPoint)
-      zRatio = btmZdelta / totalZDelta
-      xTop = (zRatio * totalXDelta) + (x_axis btmPoint)
-      yTop = (zRatio * totalYDelta) + (y_axis btmPoint)
+  let b3' = slice zValue (B3 topPoint) (B4 btmPoint)
   in
-  B4 (Point xTop yTop zValue)
+  B4 $ b3 b3'
+
 
 slice zValue (F2 topPoint) (F1 btmPoint) =
   let totalXDelta = _deltaX $ deltaX (F2 topPoint) (F1 btmPoint)
@@ -162,17 +144,9 @@ slice zValue (F2 topPoint) (F1 btmPoint) =
 
 --reverse it. Not tested or sure about this.
 slice zValue  (F1 btmPoint) (F2 topPoint) =
-  let totalXDelta = _deltaX $ deltaX (F2 topPoint) (F1 btmPoint)
-      totalYDelta = _deltaY $ deltaY (F2 topPoint) (F1 btmPoint)
-      zValueAsTopPoint = F1 (Point 0 0 zValue)
-      --Should this be F1. Was F2 for heel/arch of afo sandal
-      btmZdelta = _deltaZ $ deltaZ zValueAsTopPoint (F2 topPoint)
-      totalZDelta = _deltaZ $ deltaZ (F2 topPoint) (F1 btmPoint)
-      zRatio = btmZdelta / totalZDelta
-      xTop = (zRatio * totalXDelta) + (x_axis btmPoint)
-      yTop = (zRatio * totalYDelta) + (y_axis btmPoint)
+  let f2' = slice zValue (F2 topPoint) (F1 btmPoint)
   in
-  F1 (Point xTop yTop zValue)
+  F1 (f2 f2')
 
 slice zValue (F3 topPoint) (F4 btmPoint) =
   let totalXDelta = _deltaX $ deltaX (F3 topPoint) (F4 btmPoint)
@@ -188,18 +162,10 @@ slice zValue (F3 topPoint) (F4 btmPoint) =
 
 --reverse it. Not tested or sure about this.
 slice zValue  (F4 btmPoint) (F3 topPoint) =
-  let totalXDelta = _deltaX $ deltaX (F3 topPoint) (F4 btmPoint)
-      totalYDelta = _deltaY $ deltaY (F3 topPoint) (F4 btmPoint)
-      zValueAsTopPoint = F4 (Point 0 0 zValue)
-      --Should this be F4. Was F3 for heel/arch of afo sandal
-      btmZdelta = _deltaZ $ deltaZ zValueAsTopPoint (F3 topPoint)
-      totalZDelta = _deltaZ $ deltaZ (F3 topPoint) (F4 btmPoint)
-      zRatio = btmZdelta / totalZDelta
-      xTop = (zRatio * totalXDelta) + (x_axis btmPoint)
-      yTop = (zRatio * totalYDelta) + (y_axis btmPoint)
+  let f3' = slice zValue (F3 topPoint) (F4 btmPoint)
   in
-  F4 (Point xTop yTop zValue)
-
+  F4 (f3 f3')
+  
 slice zValue (BackTopLine (b2point) (b3point)) (BackBottomLine (b1point) (b4point)) =
   let newB2point = b2 $ slice zValue (B2 b2point) (B1 b1point)
       newB3point = b3 $ slice zValue (B3 b3point) (B4 b4point)
@@ -277,7 +243,17 @@ testLocalFunctions = do
           slice 5 frontTopLine btmFrontLine
         )
 
-  runTestTT putFlatTopOnFrontLines
+  let putFlatBottomOnFrontLines = TestCase $ assertEqual
+        "putFlatBottomOnFrontLines"
+        (BottomFrontLine (Point 1.4 2.8 7) (Point 11.4 2.8 7))
+        (
+          let frontTopLine = FrontTopLine    (Point 2 4 10) (Point 12 4 10)
+              btmFrontLine = BottomFrontLine (Point 0 0 0)  (Point 10 0 0)
+          in
+          slice 7 btmFrontLine frontTopLine
+        )
+
+  runTestTT putFlatBottomOnFrontLines
 
   let putFlatTopOnBackLines = TestCase $ assertEqual
         "putFlatTopOnBackLines"
@@ -290,33 +266,90 @@ testLocalFunctions = do
         )
 
   runTestTT putFlatTopOnBackLines
-  
-  let putFlatTopOnB1B2 = TestCase $ assertEqual
-        "putFlatTopOnB1B2"
-        (B2 (Point 1 2 5))
+
+  let putFlatBottomOnBackLines = TestCase $ assertEqual
+        "putFlatBottomOnBackLines"
+        (BackBottomLine (Point 1.4 2.8 7) (Point 11.4 2.8 7))
         (
-          slice 5 (B2 (Point 2 4 10)) (B1 (Point 0 0 0))
+          let backTopLine = BackTopLine    (Point 2 4 10) (Point 12 4 10)
+              backBottomLine = BackBottomLine (Point 0 0 0)  (Point 10 0 0)
+          in
+          slice 7 backBottomLine backTopLine
         )
 
-  runTestTT putFlatTopOnB1B2
+  runTestTT putFlatBottomOnBackLines
+
+  let putFlatTopOnF2F1 = TestCase $ assertEqual
+        "putFlatTopOnF2F1"
+        (F2 (Point 1.4 2.8 7))
+        (
+          slice 7 (F2 (Point 2 4 10)) (F1 (Point 0 0 0))
+        )
+
+  runTestTT putFlatTopOnF2F1
+
+  let putFlatBottomOnF1F2 = TestCase $ assertEqual
+        "putFlatBottomOnF1F2"
+        (F1 (Point 1.4 2.8 7))
+        (
+          slice 7 (F1 (Point 2 4 10)) (F2 (Point 0 0 0))
+        )
+
+  runTestTT putFlatBottomOnF1F2
+
+  let putFlatTopOnF3F4 = TestCase $ assertEqual
+        "putFlatTopOnF3F4"
+        (F3 (Point 1.4 2.8 7))
+        (
+          slice 7 (F3 (Point 2 4 10)) (F4 (Point 0 0 0))
+        )
+
+  runTestTT putFlatTopOnF3F4
+
+  let putFlatTBottomOnF4F3 = TestCase $ assertEqual
+        "putFlatTBottomOnF4F3"
+        (F4 (Point 1.4 2.8 7))
+        (
+          slice 7 (F4 (Point 2 4 10)) (F3 (Point 0 0 0))
+        )
+
+  runTestTT putFlatTBottomOnF4F3
+  
+  let putFlatTopOnB2B1 = TestCase $ assertEqual
+        "putFlatTopOnB2B1"
+        (B2 (Point 1.4 2.8 7))
+        (
+          slice 7 (B2 (Point 2 4 10)) (B1 (Point 0 0 0))
+        )
+
+  runTestTT putFlatTopOnB2B1
+
+  let putFlatBtmOnB1B2 = TestCase $ assertEqual
+        "putFlatBtmOnB1B2"
+        (B1 (Point 1.4 2.8 7))
+        (
+          slice 7 (B1 (Point 2 4 10)) (B2 (Point 0 0 0))
+        )
+
+  runTestTT putFlatBtmOnB1B2
 
   let putFlatTopOnB3B4 = TestCase $ assertEqual
         "putFlatTopOnB3B4"
-        (B3 (Point 1 2 5))
+        (B3 (Point 1.4 2.8 7))
         (
-          slice 5 (B3 (Point 2 4 10)) (B4 (Point 0 0 0))
+          slice 7 (B3 (Point 2 4 10)) (B4 (Point 0 0 0))
         )
 
   runTestTT putFlatTopOnB3B4
 
-  let putFlatTopOnB4B3 = TestCase $ assertEqual
-        "putFlatTopOnB4B3"
-        (B4 (Point 1 2 5))
+  let putFlatBtmOnB4B3 = TestCase $ assertEqual
+        "putFlatBtmOnB4B3"
+        (B4 (Point 1.4 2.8 7))
         (
           slice 7 (B4 (Point 0 0 0)) (B3 (Point 2 4 10))
         )
 
-  runTestTT putFlatTopOnB4B3
+  runTestTT putFlatBtmOnB4B3
   
   let deltaXB2B1  = TestCase $ assertEqual
         "deltaXB2B1"
