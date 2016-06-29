@@ -1,5 +1,5 @@
 {-# LANGUAGE ParallelListComp #-}
-module Tests.MathPolarTest (mathPolarTestDo) where
+module MathPolarTest (mathPolarTestDo) where
 import Test.HUnit
 import CornerPoints.CornerPoints(CornerPoints(..), (+++))
 import CornerPoints.Points(Point(..))

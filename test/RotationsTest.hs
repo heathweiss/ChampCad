@@ -1,10 +1,14 @@
-module Tests.RotationsTest where
+module RotationsTest(rotationsTestDo) where
 
 import Test.HUnit
 
 import CornerPoints.CornerPoints(CornerPoints(..))
 import CornerPoints.Rotations(rotateAlongYaxis90, rotateAlongYaxis180)
 import CornerPoints.Points (Point(..))
+
+{-
+The Rotations module does not work.
+-}
 
 rotationsTestDo = do
   let rotate90Test = TestCase $ assertEqual

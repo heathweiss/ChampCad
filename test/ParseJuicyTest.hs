@@ -1,10 +1,14 @@
-module Tests.ParseJuicyTest (parseJuicyTestDo) where
+module ParseJuicyTest (parseJuicyTestDo) where
 import Test.HUnit
 import Scan.ParseJuicy( getThePixelsRightOfCenter, convertPixelsToMillmeters, calculateRadiusFrom, averageValueOf,
                        removeLeftOfCenterPixels, TargetValueIndex(..), calculatePixelsPerMillmeter )
 import CornerPoints.Radius(Radius(..))
 import  Helpers.DSL (ofThe, forThe, andThen, adjustedFor, andThe,)
 import qualified Data.Map as Map
+
+{-
+This is part of the orignal radial scanner which was not moved over from Tricad yet. Do I still need it?
+-}
 
 parseJuicyTestDo = do
   runTestTT calculateRadiusFromPixelsRightOfCenterTest

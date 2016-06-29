@@ -1,4 +1,4 @@
-module Tests.CornerPointsTest(cornerPointsTestDo ) where
+module CornerPointsTest(cornerPointsTestDo ) where
 import Test.HUnit
 import CornerPoints.CornerPoints(CornerPoints(..), (+++), (+++>), (|+++|), CornerPointsBuilder(..), (&+++#@), (|@+++#@|), (@+++#@),
                                 cornerPointsError, isCubePoints, isCubePointsList)

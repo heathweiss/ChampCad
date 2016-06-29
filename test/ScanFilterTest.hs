@@ -1,4 +1,4 @@
-module Tests.ScanFilterTest (scanFilterTestDo) where
+module ScanFilterTest (scanFilterTestDo) where
 import Test.HUnit
 import Scan.Filter(runningAverage, averageValueOf)
 import CornerPoints.Radius(Radius(..))

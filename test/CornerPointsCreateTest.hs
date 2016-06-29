@@ -1,4 +1,4 @@
-module Tests.CornerPointsCreateTest(cornerPointsCreateTestDo ) where
+module CornerPointsCreateTest(cornerPointsCreateTestDo ) where
 import Test.HUnit
 import  CornerPoints.Create(
   slopeAdjustedForVerticalAngle,

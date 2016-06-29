@@ -1,4 +1,4 @@
-module Tests.ListHelpersTest(listHelperTestDo) where
+module ListHelpersTest(listHelperTestDo) where
 import Test.HUnit
 import Helpers.List((++:))
 

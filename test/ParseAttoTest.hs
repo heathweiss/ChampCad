@@ -1,4 +1,4 @@
-module Tests.ParseAttoTest(parseAttoTestDo) where
+module ParseAttoTest(parseAttoTestDo) where
 import Test.HUnit
 import Scan.ParseAtto(SingleDegreePixelValues(..), MultiDegreePixelValues(..), parseCSVPixelValues)
 import qualified Data.ByteString as B
@@ -12,6 +12,11 @@ import qualified  Data.ByteString.Internal as BI (unpackBytes)
 import qualified  Data.ByteString.Char8 as BC (pack) 
 import GHC.Word (Word8)
 import Scan.Transform(pixelIndicesOfPixelValuesLTE, pixelIndicesAverageToRadius, reduceRows, reduceScanRows, multiDegreePixelValuesToMultiDegreeRadii)
+
+{-
+This is not being tested at this time. It is for the radial scanner which did not get moved over from Tricad, though still exists in github/Tricad.
+Keep it around until I see if it is required.
+-}
 
 --create a [Word8] for: Right(B.pack $ strToWord8s)
 --which gets a bytstring of word8.

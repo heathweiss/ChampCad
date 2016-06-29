@@ -6,6 +6,8 @@ is returned. This module is for collecting/viewing the errors that are generated
 
 See Tests.CornerPointsDebugTest for testing/examples of use.
 
+ToDo:
+Can this be deleted. Has it's functionality been replaced with the new Builder Monad.
 -}
 module CornerPoints.Debug((+++^?), (++^?), CubeName(..), CubeDebug(..), CubeDebugs(..), showDebugMsg) where
 import CornerPoints.CornerPoints (CornerPoints(..))

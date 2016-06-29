@@ -1,4 +1,4 @@
-module Tests.FaceExtractAndConvertTest(faceExtractAndConvertTestDo) where
+module FaceExtractAndConvertTest(faceExtractAndConvertTestDo) where
 import Test.HUnit
 import CornerPoints.CornerPoints(CornerPoints(..), (+++))
 import CornerPoints.Points(Point(..))

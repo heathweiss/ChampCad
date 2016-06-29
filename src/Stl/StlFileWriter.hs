@@ -37,3 +37,4 @@ BlackRunnerHeel uses this to write of the stl file.
 -}
 writeStlDebugToFile :: [CubeDebug] -> IO()
 writeStlDebugToFile debugs = writeFile "src/Data/debug.txt" $ show debugs
+

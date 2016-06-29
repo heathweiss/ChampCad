@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Tests.JsonTest where
+module JsonTest(jsonTestDo) where
 import Test.HUnit
 import CornerPoints.Radius(SingleDegreeRadii(..), Radius(..), MultiDegreeRadii(..))
 import Scan.Json

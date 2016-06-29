@@ -1,4 +1,4 @@
-module Tests.VerticalFacesTest(verticalFacesTestDo)where
+module VerticalFacesTest(verticalFacesTestDo)where
 
 import Test.HUnit
 import CornerPoints.VerticalFaces(createRightFaces, createRightFacesNoSlope, createLeftFaces, createLeftFacesNoSlope, createHorizontallyAlignedCubes, createHorizontallyAlignedCubesNoSlope , createLeftFacesMultiColumns, createLeftFacesMultiColumnsNoSlope,TransposeFactor)

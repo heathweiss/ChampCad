@@ -23,6 +23,8 @@ import CornerPoints.CornerPoints (CornerPoints(..))
 
      Used for adding cubes together.
      Used to embed a cube inside 1 or more other cubes.
+
+     ToDo: Write tests.
 -}
 
 

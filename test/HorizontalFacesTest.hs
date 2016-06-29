@@ -1,5 +1,5 @@
 {-# LANGUAGE ParallelListComp #-}
-module Tests.HorizontalFacesTest (horizontalFacesTestDo) where
+module HorizontalFacesTest (horizontalFacesTestDo) where
 import Test.HUnit
 import CornerPoints.HorizontalFaces(createBottomFaces, createBottomFacesWithVariableSlope, createTopFaces,)
 import CornerPoints.CornerPoints(CornerPoints(..), (+++))

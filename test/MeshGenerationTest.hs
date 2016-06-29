@@ -1,4 +1,4 @@
-module Tests.MeshGenerationTest(meshGenerationTest, ) where
+module MeshGenerationTest(meshGenerationTest) where
 
 import Test.HUnit
 

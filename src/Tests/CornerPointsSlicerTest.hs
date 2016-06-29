@@ -1,3 +1,0 @@
-module Tests.CornerPointsSlicerTest() where
-
-

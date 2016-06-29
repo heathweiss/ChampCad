@@ -1,4 +1,4 @@
-module Tests.CubicalTest(cubicalTestDo) where
+module CubicalTest(cubicalTestDo) where
 
 import Test.HUnit
 

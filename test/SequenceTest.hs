@@ -4,7 +4,7 @@ Used for building symmetrical sequences from one half of the symmetrical shape.
 Eg: An oval can be described by giving the radius of the first 180 degrees, then reversing these first 180 degrees, and adding them on to the tail.
 Note though, that the 180th degree would be there twice, which has to be handled. 
 -}
-module Tests.Symmetrical.SequenceTest where
+module SequenceTest(sequenceTestDo) where
 import qualified Data.Sequence as S
 import qualified Data.Foldable as F
 import Test.HUnit

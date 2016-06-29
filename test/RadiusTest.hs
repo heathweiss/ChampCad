@@ -1,5 +1,5 @@
 {-# LANGUAGE ParallelListComp #-}
-module Tests.RadiusTest(radisuTestDo) where
+module RadiusTest(radisuTestDo) where
 import Test.HUnit
 import CornerPoints.Radius(Radius(..), SingleDegreeRadii(..), Degree(..), MultiDegreeRadii(..), resetMultiDegreeRadiiIfNull,
                           extractSingle, extractList, rotateMDR, setRadiusIfNull,  resetSingleDegreeRadiiIfNull,

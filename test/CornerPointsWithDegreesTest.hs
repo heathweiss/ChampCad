@@ -1,4 +1,4 @@
-module Tests.CornerPointsWithDegreesTest(cornerPointsWithDegreesTest) where
+module CornerPointsWithDegreesTest(cornerPointsWithDegreesTest) where
 import Test.HUnit
 import CornerPoints.CornerPointsWithDegrees(CornerPointsWithDegrees(..), (+++~), (+++~>), (|+++~|), (@~+++#@), DegreeRange(..), cornerPointsWithDegreesWithinRange )
 import CornerPoints.CornerPoints(CornerPoints(..),(@+++#@),(+++), (+++>))
