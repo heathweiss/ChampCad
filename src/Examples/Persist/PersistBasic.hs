@@ -21,6 +21,10 @@ import           Database.Persist.TH
 import Stl.StlBase(Triangle(..), newStlShape)
 import Stl.StlCornerPoints((|+++^|), Faces(..) )
 import Stl.StlFileWriter(writeStlToFile)
+{-------------------------------------------------------------------- overview--------------------------------------------------------
+sqlite db is in heath/3D/sqlLiteFiles/PersistBasic.db
+-}
+
 {-
 Create the th for 2 points, that would make up a line.
 
