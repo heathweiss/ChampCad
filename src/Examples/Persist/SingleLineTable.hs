@@ -40,7 +40,19 @@ import Control.Monad.Except
 import Control.Monad.Writer (WriterT, tell, execWriterT)
 import Control.Monad.Reader
 {-------------------------------------------------------------------- overview--------------------------------------------------------
-sqlite db is in heath/3D/sqlLiteFiles/PersistBasic.db
+sqlite db is in heath/3D/sqlLiteFiles/PersistBasic.sql
+
+First attempt at using persist to incorporate a database for storing CornerPoints.
+Creates a simple cube.
+
+Mapping to CornerPoints consisted of creating a single table which contains a Line.
+This line in turn gets converted to various CornerPoints lines such as BackBottomLine or BackTopLine.
+Problem with this, it is hard to go into the db, and edit values as it gets confusing.
+
+Each Line entry referces the Surface table, which allows Lines to be grouped by a name, such as "BottomFace".
+This table is not a mapping to any particular Data type.
+
+Will create another version in which a table will be created for each type of CornerPoints Line. See MappedToCornerPoints.hs example.
 -}
 
 
