@@ -638,15 +638,13 @@ scaleCornerPoints scaleFactor (CubePoints f1 f2 f3 f4 b1 b2 b3 b4)  =
             b4=scalePoint b4 scaleFactor
         }
 
-{------------ scale internal support functions -------------}
+{------------ scale internal support functions ------------}
 scalePoint :: Point -> Double -> Point
 scalePoint (Point x y z) scaleFactor = Point {x_axis=x*scaleFactor, y_axis=y*scaleFactor, z_axis=z*scaleFactor}
 
 --used to change just the z axis of a Point
 scalePointZ :: Point -> Double -> Point
 scalePointZ (Point x y z) scaleFactor = Point {x_axis=x, y_axis=y, z_axis=z*scaleFactor}
-
-
 
 
 

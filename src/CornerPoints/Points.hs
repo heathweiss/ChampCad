@@ -1,5 +1,17 @@
+{-# LANGUAGE EmptyDataDecls             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
 module CornerPoints.Points (Point(..), transposeZ) where
 import TypeClasses.Transposable(TransposePoint, transposeX, transposeY, transposeZ)
+
+import Database.Persist.Sqlite
+import Database.Persist.TH
 {-------------------------- Point------------------------------
 Points in 3D geometry.
 
