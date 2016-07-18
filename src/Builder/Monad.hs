@@ -15,7 +15,9 @@ Do it using the State monad inside of the ExceptT monad transformer.
 Tests and example are in Tests.BuilderMonadTest
 -} 
 
-module Builder.Monad (BuilderError(..), cornerPointsErrorHandler, buildCubePointsList,
+module Builder.Monad (BuilderError(..),
+                      cornerPointsErrorHandler, buildCubePointsList,
+                       buildCubePointsListWithIOCpointsListBase,
                       CpointsStack, CpointsList) where
 
 
@@ -31,15 +33,30 @@ import CornerPoints.CornerPoints((|@+++#@|), (|+++|), CornerPoints(..), (+++), (
 
 import Stl.StlBase(Triangle(..))
 
+--import Control.Monad.Trans.Except
+--import Control.Monad.Except
+--import Control.Monad.State.Lazy
 import Control.Monad.Trans.Except
-import Control.Monad.Except
-
+import Control.Monad.Trans.Maybe
+import Control.Monad
+import Control.Monad.Trans
 import Control.Monad.State.Lazy
+import Control.Monad.State
+import Control.Monad.Except
+import Control.Monad.Writer (WriterT, tell, execWriterT)
+import Control.Monad.Reader
+
+import           Control.Monad.IO.Class  (liftIO)
+import           Database.Persist
+import           Database.Persist.Sqlite
+import           Database.Persist.TH
 
 -- | type to clarify code.
 type CpointsStack = [CornerPoints]
 -- | type to clarify code.
-type CpointsList = [CornerPoints] 
+type CpointsList = [CornerPoints]
+
+
   
 -- | data type for an exception as required for the Except monad.
 data BuilderError  = BuilderError {errMsg :: String }
@@ -86,3 +103,26 @@ buildCubePointsListOrFail pushToStack  extraMsg cPoints cPoints' =
 
 
 
+{----------------------------------------------------------------------------------------------
+create versions which have IO (CpointsList) as the base monad
+-}
+
+cornerPointsErrorHandlerWithIOCpointsListBase :: BuilderError -> ExceptT BuilderError (StateT CpointsStack (IO) ) CpointsList
+cornerPointsErrorHandlerWithIOCpointsListBase error = do
+  throwE error
+
+buildCubePointsListWithIOCpointsListBase :: (CpointsList -> CpointsStack -> CpointsStack) -> String -> CpointsList -> CpointsList ->
+                       ExceptT BuilderError (StateT CpointsStack (IO) ) CpointsList
+buildCubePointsListWithIOCpointsListBase pushToStack extraMsg cPoints cPoints' = 
+  (buildCubePointsListOrFailWithIOCpointsListBase pushToStack extraMsg cPoints cPoints') `catchError` cornerPointsErrorHandlerWithIOCpointsListBase
+
+buildCubePointsListOrFailWithIOCpointsListBase :: (CpointsList -> CpointsStack -> CpointsStack) -> String -> CpointsList -> CpointsList ->
+                             ExceptT BuilderError (StateT CpointsStack (IO) ) CpointsList
+buildCubePointsListOrFailWithIOCpointsListBase pushToStack  extraMsg cPoints cPoints' =
+  let  cubeList = cPoints |+++| cPoints'
+  in   case findCornerPointsError cubeList of
+        Nothing ->
+          if isCubePointsList cubeList 
+             then lift $ state $ \cubeStack -> (cubeList, cubeList `pushToStack` cubeStack)
+             else lift $ state $ \cubeStack -> (cubeList, cubeStack)
+        Just err -> throwE (BuilderError (extraMsg ++ " " ++ (errMessage err)) {-cube-})
