@@ -44,7 +44,7 @@ library
                        Examples.ShoeLift.SnowBoardBoot, Examples.ShoeLift.KangarooShoe,
                        Examples.ShoeLift.GeoxShoe,
                        Examples.ShoeLift.SandalsAFO,
-                       Examples.Persist.PersistBasic,
+                       Examples.Persist.SingleLineTable,
                        --HeelGenerators.SandalsToe, HeelGenerators.SandalsHeel
                        --HeelGenerators.BlackRunnerHeel,  HeelGenerators.BlackRunnerToe,
                        --Have not been redone for changes to MathPolar.
