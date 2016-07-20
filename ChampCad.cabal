@@ -38,6 +38,8 @@ library
                        --helpers
                        Helpers.List, Helpers.DSL,
                        Helpers.Symmetrical.Sequence, Helpers.Symmetrical.List
+                       --database
+                       Persistable.Mapping
                        --Examples
                        -- Example ShoeLifts
                        Examples.ShoeLift.KeenToe, Examples.ShoeLift.KeenHeel,
