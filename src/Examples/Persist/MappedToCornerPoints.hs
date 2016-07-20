@@ -40,64 +40,21 @@ import Control.Monad.Except
 import Control.Monad.Writer (WriterT, tell, execWriterT)
 import Control.Monad.Reader
 
-share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
-Surface
-   NameUnique name
-   name String
-  
-  
-  deriving Show
+import Persistable.Mapping (Surface(..), BackBottomLineP(..), BackTopLineP(..), BottomFrontLineP(..), FrontTopLineP(..),
+                            nameUnique', backBottomLinePSurfaceId', bottomFrontLinePSurfaceId', backTopLinePSurfaceId', frontTopLinePSurfaceId',
+                            extractSurfaceId, getBackBottomLine, getBackTopLine, getBottomFrontLine, getFrontTopLine) 
 
-BackBottomLineP
-    b1x Double
-    b1y Double
-    b1z Double
-    b4x Double
-    b4y Double
-    b4z Double
-    surfaceId SurfaceId
-    deriving Show
-
-BackTopLineP
-    b2x Double
-    b2y Double
-    b2z Double
-    b3x Double
-    b3y Double
-    b3z Double
-    surfaceId SurfaceId
-    deriving Show
-
-BottomFrontLineP
-    f1x Double
-    f1y Double
-    f1z Double
-    f4x Double
-    f4y Double
-    f4z Double
-    surfaceId SurfaceId
-    deriving Show
-
-FrontTopLineP
-    f2x Double
-    f2y Double
-    f2z Double
-    f3x Double
-    f3y Double
-    f3z Double
-    surfaceId SurfaceId
-    deriving Show
-|]
 
 --connection string
 databaseName = "MappedToCornerPoints.sql"
 
+{-
 initializeDatabase :: IO ()
 initializeDatabase = runSqlite databaseName $ do
        
     runMigration migrateAll
     liftIO $ putStrLn "db initializes"
-
+-}
 initializeSurfaces :: IO ()
 initializeSurfaces  = runSqlite databaseName $ do
   insert $ Surface "top"
@@ -106,7 +63,7 @@ initializeSurfaces  = runSqlite databaseName $ do
 
 insertTopLines :: IO ()
 insertTopLines = runSqlite databaseName $ do
-  topId <- getBy $ NameUnique "top"
+  topId <- getBy $ nameUnique' "top"
 
   insert $ BackTopLineP  0 0 1 1 0 1 $ extractSurfaceId topId
   insert $ FrontTopLineP 0 1 1 1 1 1 $ extractSurfaceId topId
@@ -115,7 +72,7 @@ insertTopLines = runSqlite databaseName $ do
 
 insertBottomLines :: IO ()
 insertBottomLines = runSqlite databaseName $ do
-  bottomId <- getBy $ NameUnique "bottom"
+  bottomId <- getBy $ nameUnique' "bottom"
 
   insert $ BackBottomLineP 0 0 0 1 0 0 $ extractSurfaceId bottomId
   insert $ BottomFrontLineP 0 1 0 1 1 0 $ extractSurfaceId bottomId
@@ -124,18 +81,18 @@ insertBottomLines = runSqlite databaseName $ do
 
 createBottomFaceFromDB :: IO (CpointsList)
 createBottomFaceFromDB  = runSqlite databaseName $ do
-  btmId <- getBy $ NameUnique "bottom"
-  listOfBackBtmPoints <- selectList [ BackBottomLinePSurfaceId ==. (extractSurfaceId btmId)] []
-  listOfBtmFrontPoints <- selectList [ BottomFrontLinePSurfaceId ==. (extractSurfaceId btmId)] []
+  btmId <- getBy $ nameUnique' "bottom"
+  listOfBackBtmPoints <- selectList [ backBottomLinePSurfaceId' ==. (extractSurfaceId btmId)] []
+  listOfBtmFrontPoints <- selectList [ bottomFrontLinePSurfaceId' ==. (extractSurfaceId btmId)] []
   let backBtmLine = getBackBottomLine (head listOfBackBtmPoints)
       btmFace = backBtmLine +++> (map getBottomFrontLine listOfBtmFrontPoints)
   return btmFace
 
 createTopFaceFromDB :: IO (CpointsList)
 createTopFaceFromDB  = runSqlite databaseName $ do
-  topId <- getBy $ NameUnique "top"
-  listOfBackTopPoints <- selectList [ BackTopLinePSurfaceId ==. (extractSurfaceId topId)] []
-  listOfFrontTopPoints <- selectList [ FrontTopLinePSurfaceId ==. (extractSurfaceId topId)] []
+  topId <- getBy $ nameUnique' "top"
+  listOfBackTopPoints <- selectList [ backTopLinePSurfaceId' ==. (extractSurfaceId topId)] []
+  listOfFrontTopPoints <- selectList [ frontTopLinePSurfaceId' ==. (extractSurfaceId topId)] []
   let backTopLine = getBackTopLine (head listOfBackTopPoints)
       topFace = backTopLine +++> (map getFrontTopLine listOfFrontTopPoints)
   return topFace
@@ -156,22 +113,3 @@ createCubeWithBuilderMonadWithIOBase = do
 runCreateCubeWithBuilderMonadWithIOBase = do
   (runStateT $  runExceptT  createCubeWithBuilderMonadWithIOBase )  []
 
-extractSurfaceId :: Maybe (Entity Surface) -> Key Surface
-extractSurfaceId (Just (Entity key val))  = key
-
-getBackBottomLine :: (Entity BackBottomLineP) -> CornerPoints
-getBackBottomLine (Entity _ (BackBottomLineP b1x b1y b1z b4x b4y b4z  _)) =
-  BackBottomLine (Point b1x b1y b1z) (Point b4x b4y b4z)
-
-
-getBackTopLine :: (Entity BackTopLineP) -> CornerPoints
-getBackTopLine (Entity _ (BackTopLineP b2x b2y b2z b3x b3y b3z  _)) =
-  BackTopLine (Point b2x b2y b2z) (Point b3x b3y b3z)
-
-getBottomFrontLine :: (Entity BottomFrontLineP) -> CornerPoints
-getBottomFrontLine (Entity _ (BottomFrontLineP f1x f1y f1z f4x f4y f4z  _)) =
-  BottomFrontLine (Point f1x f1y f1z) (Point f4x f4y f4z)
-
-getFrontTopLine :: (Entity FrontTopLineP) -> CornerPoints
-getFrontTopLine (Entity _ (FrontTopLineP f2x f2y f2z f3x f3y f3z  _)) =
-  FrontTopLine (Point f2x f2y f2z) (Point f3x f3y f3z)
