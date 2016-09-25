@@ -68,7 +68,8 @@ data KeyState =
 data KeywayDimensions = KeyDimensions {x1::Double, x2::Double}
 
 --And use the set of recursive functions that will pattern match on the KeyState constructors
+{-will need more work before it can compile
 buildCubicalKeyway :: KeyState -> 
 buildCubicalKeyway
   (InitialState left right) 
-
+-}
