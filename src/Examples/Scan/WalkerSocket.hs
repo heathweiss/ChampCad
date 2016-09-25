@@ -25,7 +25,17 @@ import TypeClasses.Transposable(transpose)
 import Helpers.DSL (ofThe, forThe, andThen, adjustedFor, andThe,)
 
 {----------------------------------------------------- overview------------------------------------------------------------
-This the scanning work for the WalkerSocket. The design work is done in WalkerSocketSquared.
+This module does the scanning work for the WalkerSocket. It processes the raw data into json files.
+
+The 1st json file processed the scanner images into pixel values.
+--Stored in: Home/Dropbox/3D/MDRfiles/walkerSocketRaw.json
+
+The 2nd json file is the result of converting pixels into millimeters.
+-Stored in: Home/Dropbox/3D/MDRfiles/walkerSocketProcessed.json
+          : src/Data/scanFullData.json which is also pushed to github.
+
+The design work is done in WalkerSocketSquared. It used the processed json version.
+
 -}
 
 writeStlFileFromRawScanWrapper :: IO ()

@@ -53,19 +53,25 @@ import Control.Lens
 --import Control.Arrow hiding ((+++))
 --import Control.Category hiding ((.))
 {------------------------------------------------------------- overview ---------------------------------------------------
-The original scan work is in WalkerSocket module.
+
 ++++++
 ***********************************    important *******************************************************
 ********************************************************************************************************
-Remember to use WalkerSocket.processMultiDegreeRadii if I have to get the json file from storage(Dropbox/3D/MDRFiles/walkerSocket.json
-The one in storage is in pixels, rather than millimeters.
+The original scan work is in Examples/Scan/WalkerSocket module, the result of which is a json file as required by this module.
+There is a json processed version stored in: Dropbox/3D/MDRFiles/walkerSocketProcessed.json which is in millimeters. This is the version required for this module.
+This is the same file as src/Data/scanFullData.json" which is pushed to github.
+
 -}
 
 {-
-read in the Multidegree json file, which has valid Radii,
+read in the Multidegree json file, which has valid Radii in millimeters,
 and process it into stl using whatever function required for the current shape.
 I have this master function, as the individual shapes all have common requirements that can be passed in. Keep it DRY.
-For example: The top row is bad, and has to be removed. Use a rowReductionFactor of 100 for all shapes.-}
+For example: The top row is bad, and has to be removed. Use a rowReductionFactor of 100 for all shapes.
+
+I just comment out the stl producing functions that are not required. Should clean that up by wrapping loadMDRAndPassToProcessor in a function which
+would take the required function (with parameters), as a parameter. Or just a function for each required stl shape.
+-}
 loadMDRAndPassToProcessor :: IO ()
 loadMDRAndPassToProcessor = do
   contents <- BL.readFile "src/Data/scanFullData.json"
@@ -99,7 +105,7 @@ loadMDRAndPassToProcessor = do
             --pushPlate plateRadius power lengthenYFactor
             --hosePlate plateRadius power lengthenYFactor
 
-            ---------socket with sidemount quick releas
+            ---------socket with sidemount quick release
             --sideMountQuickReleaseSocket innerSleeveMDRForSideMount rowReductionFactor pixelsPerMM
             
       Nothing                                ->
