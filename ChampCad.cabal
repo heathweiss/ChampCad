@@ -69,6 +69,8 @@ library
                        Examples.Diffs.FirstDiff
                        --cubical
                        Examples.Cubical.CubicalWalls
+                       Examples.Cubical.CubicalKey
+                       
                        --Shapes
                        Primitives.Cylindrical, Primitives.Cubical
                        

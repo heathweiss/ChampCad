@@ -43,6 +43,7 @@ Use Slicr module to cut and rotate, instead of doing with Slicr3r
 The new 3D capture system gave both sides as X cood's instead of 1 X cood and a width.
 This does not need to get converted to a width system so it works with Cubical, as I can directly use CornerPoints
 Maybe Cubical should have both systems?
+Cubical should have full xyz values for each side, instead of x1,x2,y,z.
 
 ------------------------ printing notes:----------------------
 -----heel btm slice:
