@@ -54,8 +54,8 @@ library
                        --Leave in until sure I will not need them further for printing shoe lifts
                        -- Sockets
                        -- scanned shapes
-                       Examples.Scan.WalkerSocket
-                       Examples.Scan.WalkerSocketSquared
+                       Examples.Scan.WalkerSocketProcessScan
+                       Examples.Scan.WalkerSocketDesignWork
                        -- Misc Shapes
                        --Examples.MiscShapes.RvVentCaps
                        --Exlcluded as they have not been updated for the new cylinders.
