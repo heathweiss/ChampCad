@@ -1,10 +1,16 @@
 {-# LANGUAGE ParallelListComp #-}
+{------------- to do------------------
+Get rid of the MultiDegreeRadii, and use a [SingleDegreeRadii], as the only thing it does it add a name, which never gets used.
+Adds a layer of complexity for nothing.
+It is built in at a low level, and will be quite a bit of work to refactor out.
+-}
+
 module CornerPoints.Radius(Radius(..), SingleDegreeRadii(..), Degree(..), MultiDegreeRadii(..),resetMultiDegreeRadiiIfNull,
                           extractSingle, extractList, rotateMDR, setRadiusIfNull, resetSingleDegreeRadiiIfNull,
                           setRadiusWithPrecedingValueIfNull, resetMultiDegreeRadiiIfNullWithPreviousValue,
                           buildSymmetricalRadius, transposeSDRList, transposeMDRList, extractSDRWithinRange,
                           transformSDRWithList, extractMaybeRadii, extractMaybeSDR, singleDegreeRadiiListToMap,
-                          transformRangeOfSDR, transformMaybeSDR) where
+                          transformRangeOfSDR, transformMaybeSDR, transformMaybeSDRDegree, transformSDRDegree) where
 
 import TypeClasses.Transposable( TransposeLength, transpose, TransposeWithList, transposeWithList)
 import Data.List(sortBy)
@@ -182,7 +188,25 @@ transformMaybeSDR  transformer sdr =
                           (extractMaybeSDR $ sdr)
                           transformer
             )
-          
+
+{- |
+Change the degree of a Maybe SingleDegreeRadii using a [(Double -> Double)]
+If sdr is Nothing, it will use SingleDegreeRadii 0.0 []
+-}
+transformMaybeSDRDegree :: (Double -> Double) -> Maybe SingleDegreeRadii -> SingleDegreeRadii
+transformMaybeSDRDegree transformer sdr =
+  case sdr of
+    Nothing -> SingleDegreeRadii 0.0 []
+    Just (SingleDegreeRadii degree' radii') -> SingleDegreeRadii (transformer degree') radii'
+
+
+{- |
+Change the degree of a SingleDegreeRadii using a [(Double -> Double)]
+If sdr is Nothing, it will use SingleDegreeRadii 0.0 []
+-}
+transformSDRDegree :: (Double -> Double) -> SingleDegreeRadii -> SingleDegreeRadii
+transformSDRDegree transformer (SingleDegreeRadii degree' radii') =
+    SingleDegreeRadii (transformer degree') radii'
 -- ======================================== MultiDegreeRadii===========================================
 
 {- |
