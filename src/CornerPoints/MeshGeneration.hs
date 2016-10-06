@@ -97,6 +97,7 @@ RightFace _ _ _ _ >==< BackFace _ _ _ _ = False
 RightFace _ _ _ _ >==< TopFace _ _ _ _ = False
 RightFace _ _ _ _ >==< BottomFace _ _ _ _ = False
 
+_ >==< _ = False
 
 {-
 If the opposing face is present in the list, remove it. Do not put in the new face.
