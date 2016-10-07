@@ -139,17 +139,20 @@ swimSocketWithFinBothSides :: [SingleDegreeRadii] ->  RowReductionFactor -> Pixe
 swimSocketWithFinBothSides originalSDR           rowReductionFactor    pixelsPerMillimeter  = do
   let
     mainWallThickness = 3
-    quickReleaseWallThickness = 10
-    --start/end degrees of the base of 1st fin
+    --start/end degrees of the base of fin1/2
     fin1BaseStartDegree = 60
     fin1BaseThicknessInDegrees   = 4
-    --start/end degrees of the tip of 1st fin
+    fin2BaseStartDegree = 250
+    fin2BaseThicknessInDegrees   = 5
+    --start/end degrees of the tip of fin1/2
     fin1TipStartDegree = 60
     fin1TipThicknessInDegrees   = 2
+    fin2TipStartDegree = 250
+    fin2TipThicknessInDegrees   = 3
     
     --finExtrusionTranposeValues = [(\r -> 65),(\r -> 75),(\r -> 80),(\r -> 80),(\r -> 80),(\r -> 80),(\r -> 80),(\r -> 80),(\r -> 80),(\r -> 80),(\r -> 80),(\r -> 80),(\r -> 80)]
-    fin2ExtrusionTranposeValues = [(\r -> 35) | y <- [1..]]
     fin1ExtrusionTranposeValues = [(\r -> 65) | y <- [1..]]
+    fin2ExtrusionTranposeValues = [(\r -> 45) | y <- [1..]]
     
     origSDR = originalSDR -- degrees mainSocketInnerMDR 
     sdrMap = singleDegreeRadiiListToMap origSDR
@@ -180,13 +183,21 @@ swimSocketWithFinBothSides originalSDR           rowReductionFactor    pixelsPer
             Flw.|> (\sdrSeq -> sdrSeq S.|> (transformMaybeSDRDegree (+3) (sdrMap^.at 80.0)) )
             -}
             --140-220 degrees
-            Flw.|> (\sdrSeq -> sdrSeq S.>< transformRangeOfSDR [(+0) | y <- [1..]] [70,80..240] origSDR)
+            Flw.|> (\sdrSeq -> sdrSeq S.>< transformRangeOfSDR [(+0) | y <- [1..]] [70,80..250] origSDR)
+            {- This is old fin2 system. Delete when new system made
             --add in the 251 sdr
             Flw.|> (\sdrSeq -> sdrSeq S.|> (transformMaybeSDRDegree (+1) (sdrMap^.at 250.0)) )
             --add in the 252 sdr
             Flw.|> (\sdrSeq -> sdrSeq S.|> (transformMaybeSDRDegree (+2) (sdrMap^.at 250.0)) )
             --add in the 253 sdr
             Flw.|> (\sdrSeq -> sdrSeq S.|> (transformMaybeSDRDegree (+3) (sdrMap^.at 250.0)) )
+            -}
+            --add in the fin tip ending degree
+            Flw.|> (\sdrSeq -> sdrSeq S.|> (transformMaybeSDRDegree (+fin2TipThicknessInDegrees) (sdrMap^.at fin2BaseStartDegree)) )
+            --add in the fin base ending degree
+            Flw.|> (\sdrSeq -> sdrSeq S.|> (transformMaybeSDRDegree (+fin2BaseThicknessInDegrees) (sdrMap^.at fin2BaseStartDegree)) )
+
+
             --add on the rest of the origSDR
             Flw.|> (\sdrSeq -> sdrSeq S.>< transformRangeOfSDR [(+0) | y <- [1..]] [260,270..360] origSDR)
             --convert back into a list
@@ -203,7 +214,13 @@ swimSocketWithFinBothSides originalSDR           rowReductionFactor    pixelsPer
           transposedSDR =
             --0-83 degrees
             --transformRangeOfSDR [(+3) | y <- [1..]] [0,10..80] innerSDRWithExtraFinDegrees
-            transformRangeOfSDR [(+3) | y <- [1..]] ([0,10..60] ++ [(fin1BaseStartDegree + fin1TipThicknessInDegrees),(fin1BaseStartDegree + fin1BaseThicknessInDegrees)]) innerSDRWithExtraFinDegrees
+            --transformRangeOfSDR [(+3) | y <- [1..]] ([0,10..60] ++ [(fin1BaseStartDegree + fin1TipThicknessInDegrees),(fin1BaseStartDegree + fin1BaseThicknessInDegrees)]) innerSDRWithExtraFinDegrees
+            transformRangeOfSDR [(+3) | y <- [1..]] ([0,10..60] ++
+                                                     [(fin1BaseStartDegree + fin1TipThicknessInDegrees),(fin1BaseStartDegree + fin1BaseThicknessInDegrees)] ++
+                                                     [70,80..250] ++
+                                                     [(fin2BaseStartDegree + fin2TipThicknessInDegrees),(fin2BaseStartDegree + fin2BaseThicknessInDegrees)] ++
+                                                     [260,270..360]
+                                                    ) innerSDRWithExtraFinDegrees
             {-
             Don't bother transposing them out beyond the thickness of the socket wall.
             Instead, add on outer cubes by adding a front face. This should eliminate the diff in thickness of the fin.
@@ -223,8 +240,9 @@ swimSocketWithFinBothSides originalSDR           rowReductionFactor    pixelsPer
                                                                              ++ [(+3) | y <- [16..]])
                                                                              (innerSDRWithExtraFinDegreesMap^.at 83.0)))
             -}
-            --0-220 degrees
-            Flw.|> (\sdrSeq -> sdrSeq S.>< transformRangeOfSDR [(+3) | y <- [1..]] [70,80..250] innerSDRWithExtraFinDegrees)
+            --0-250 degrees
+            --Flw.|> (\sdrSeq -> sdrSeq S.>< transformRangeOfSDR [(+3) | y <- [1..]] [70,80..250] innerSDRWithExtraFinDegrees)
+            {-Old fin 2 section. Delete.
             --bring out 251 vertical section
             Flw.|> (\sdrSeq -> sdrSeq S.|> (transformMaybeSDR ([(+15) | y <- [1..6]]
                                                                              ++ fin2ExtrusionTranposeValues
@@ -235,8 +253,9 @@ swimSocketWithFinBothSides originalSDR           rowReductionFactor    pixelsPer
                                                                              ++ fin2ExtrusionTranposeValues
                                                                              ++ [(+3) | y <- [16..]]) --make sure have enough.
                                                                              (innerSDRWithExtraFinDegreesMap^.at 252.0)))
-            --253-360
-            Flw.|> (\sdrSeq -> sdrSeq S.>< (transformRangeOfSDR [(+3) | y <- [1..]] (253: [260,270..360]) innerSDRWithExtraFinDegrees))
+            -}
+            --253-360. Need to take out the 253
+            --Flw.|> (\sdrSeq -> sdrSeq S.>< (transformRangeOfSDR [(+3) | y <- [1..]] ({- 253: -} [260,270..360]) innerSDRWithExtraFinDegrees))
             --convert sdrSeq back into a list
             Flw.|> (\sdrSeq -> F.toList sdrSeq)
       in
@@ -278,17 +297,29 @@ swimSocketWithFinBothSides originalSDR           rowReductionFactor    pixelsPer
                            (createVerticalWalls  (MultiDegreeRadii "a useless name" fin1FrontOfSocketSdr) (MultiDegreeRadii "a useless name" fin1FrontOfFinSdr) origin transposeFactors)
       
   fin1BackFaces <- buildCubePointsList' "create back faces of fin 1" fin1BackFaces' [CornerPointsId | x <-[1..]]
-  {-This is where I need to build the new fin1 front faces
-    1) Create start and end degrees seq of base by transforming the base degrees pair by thickness of socket. This will be the back faces.
-    2) Create start and end degrees seq of tip by transforming the tip degrees pair by extrusion value. This will be the front faces.
-    3) Create cubes from step 1 & 2 sdr's
-    4) Add them via the builder
-  -}
-
   fin1Cubes     <- buildCubePointsList' "create fin 1 cubes" fin1BackFaces fin1FrontFaces
   
+  {-Now copy over fin1-}
+  let
+      {-Get the sdr for the fin. Create [CornerPoints] from them.-}
+      fin2BackOfSocketSdr =  F.toList $ transformRangeOfSDR [(+0) | y <- [1..]] [fin2BaseStartDegree, fin2BaseStartDegree + fin2BaseThicknessInDegrees] innerSDRWithExtraFinDegrees
+      fin2FrontOfSocketSdr =  F.toList $ transformRangeOfSDR [(+3) | y <- [1..]] [fin2BaseStartDegree, fin2BaseStartDegree + fin2BaseThicknessInDegrees] innerSDRWithExtraFinDegrees
+      fin2FrontOfFinSdr         =  F.toList $ transformRangeOfSDR fin2ExtrusionTranposeValues [fin2BaseStartDegree, fin2BaseStartDegree + fin2TipThicknessInDegrees] innerSDRWithExtraFinDegrees
+      --Faces from front of socket, coverted to the back faces of the fin.
+      fin2BackFaces' = map (backFaceFromFrontFace . extractFrontFace) $
+                          concat $
+                          dropTopScanLayers
+                          (createVerticalWalls  (MultiDegreeRadii "a useless name" fin2BackOfSocketSdr) (MultiDegreeRadii "a useless name" fin2FrontOfSocketSdr) origin transposeFactors)
+      --
+      fin2FrontFaces = map (extractFrontFace) $
+                           concat $
+                           dropTopScanLayers
+                           (createVerticalWalls  (MultiDegreeRadii "a useless name" fin2FrontOfSocketSdr) (MultiDegreeRadii "a useless name" fin2FrontOfFinSdr) origin transposeFactors)
   
-  return fin1Cubes
+  fin2BackFaces <- buildCubePointsList' "create back faces of fin 2" fin2BackFaces' [CornerPointsId | x <-[1..]]
+  fin2Cubes     <- buildCubePointsList' "create fin 2 cubes" fin2BackFaces fin2FrontFaces
+
+  return fin2Cubes
 
 --output the stl
 generateSwimFinStl :: [SingleDegreeRadii] ->  RowReductionFactor -> PixelsPerMillimeter -> CpointsStack -> IO () --[CornerPoints]
