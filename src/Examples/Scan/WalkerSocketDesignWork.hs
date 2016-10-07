@@ -140,8 +140,12 @@ swimSocketWithFinBothSides originalSDR           rowReductionFactor    pixelsPer
   let
     mainWallThickness = 3
     quickReleaseWallThickness = 10
-    fin1StartDegree = 60
-    fin1ThicknessInDegrees   = 2
+    --start/end degrees of the base of 1st fin
+    fin1BaseStartDegree = 60
+    fin1BaseThicknessInDegrees   = 4
+    --start/end degrees of the tip of 1st fin
+    fin1TipStartDegree = 60
+    fin1TipThicknessInDegrees   = 2
     
     --finExtrusionTranposeValues = [(\r -> 65),(\r -> 75),(\r -> 80),(\r -> 80),(\r -> 80),(\r -> 80),(\r -> 80),(\r -> 80),(\r -> 80),(\r -> 80),(\r -> 80),(\r -> 80),(\r -> 80)]
     fin2ExtrusionTranposeValues = [(\r -> 35) | y <- [1..]]
@@ -150,22 +154,24 @@ swimSocketWithFinBothSides originalSDR           rowReductionFactor    pixelsPer
     origSDR = originalSDR -- degrees mainSocketInnerMDR 
     sdrMap = singleDegreeRadiiListToMap origSDR
 
+    --how many of the 10mm layers to drop of top off scan
+    dropTopScanLayers = drop 3
+
     {-------------------------------------------------- left off----------------------------------------
     For the new fin at 60 degrees:
-    Only added in a single degree.
-    Did not transpose the out SDR beyond the thickness of socket wall.
-    Next:
-    Get the single 60-61 degree cube and extract front face as back face.
-    Transpose the 60 and 61 degree, make a cube a cube of this.
-    Extract the front face, and add it to the back face from above.
-    Creating/adding this list of cubes is done as a monad step.
+    Need to have an extra degree so that tip can be made same thichkness as base of fin.
+    Add and use: fin1TipThicknessInDegrees
+    -will have a thinner thickness than base, as the tip thickens as it is transposed
+    --So this degree will have to be added before the base thickness, as it must be thinner.
     -}
     
     innerSDRWithExtraFinDegrees =
             --0-60 degrees. Leading up to the outer fin(1st fin)
             transformRangeOfSDR [(+0) | y <- [1..]] [0,10..60] origSDR
-            --add in the 61 degree
-            Flw.|> (\sdrSeq -> sdrSeq S.|> (transformMaybeSDRDegree (+fin1ThicknessInDegrees) (sdrMap^.at fin1StartDegree)) )
+            --add in the fin tip ending degree
+            Flw.|> (\sdrSeq -> sdrSeq S.|> (transformMaybeSDRDegree (+fin1TipThicknessInDegrees) (sdrMap^.at fin1BaseStartDegree)) )
+            --add in the fin base ending degree
+            Flw.|> (\sdrSeq -> sdrSeq S.|> (transformMaybeSDRDegree (+fin1BaseThicknessInDegrees) (sdrMap^.at fin1BaseStartDegree)) )
             {-Leave them out as will try to add a transposed front face(and thus an outer layer of cubes) instead of directly transposing the main socket layer.
             This means I only need a single skinny set of cubes.
             --add in the 132 sdr
@@ -197,7 +203,7 @@ swimSocketWithFinBothSides originalSDR           rowReductionFactor    pixelsPer
           transposedSDR =
             --0-83 degrees
             --transformRangeOfSDR [(+3) | y <- [1..]] [0,10..80] innerSDRWithExtraFinDegrees
-            transformRangeOfSDR [(+3) | y <- [1..]] ([0,10..60] ++ [fin1StartDegree + fin1ThicknessInDegrees]) innerSDRWithExtraFinDegrees
+            transformRangeOfSDR [(+3) | y <- [1..]] ([0,10..60] ++ [(fin1BaseStartDegree + fin1TipThicknessInDegrees),(fin1BaseStartDegree + fin1BaseThicknessInDegrees)]) innerSDRWithExtraFinDegrees
             {-
             Don't bother transposing them out beyond the thickness of the socket wall.
             Instead, add on outer cubes by adding a front face. This should eliminate the diff in thickness of the fin.
@@ -247,28 +253,38 @@ swimSocketWithFinBothSides originalSDR           rowReductionFactor    pixelsPer
     -}
     mainSocketWalls = concat $ 
       --drop 6  (createVerticalWalls  (mainSocketInnerMDR {degrees = innerSDRWithExtraFinDegrees} ) outerMDR origin transposeFactors)
-      drop 6  (createVerticalWalls  (MultiDegreeRadii "a useless name" innerSDRWithExtraFinDegrees) outerMDR origin transposeFactors)
+      dropTopScanLayers  (createVerticalWalls  (MultiDegreeRadii "a useless name" innerSDRWithExtraFinDegrees) outerMDR origin transposeFactors)
 
-  
+  {-The main socket, with extra degrees inserted for the attachement points of fin1/fin2.
+    Fin1: Transposed the same thickness as the socket walls. Will use diff system for projecting out the front face.
+    Fin2: Transposed out to fin2ExtrusionTranposeValues. Should change it later to be same system as fin1, if it works out good.
+  -}
   mainSocketCubes <- buildCubePointsList' "create socket cubes" mainSocketWalls [CornerPointsId | x <-[1..]]
 
-  let 
-      fin1InnerLocationSdr =  F.toList $ transformRangeOfSDR [(+0) | y <- [1..]] [fin1StartDegree, fin1StartDegree + fin1ThicknessInDegrees] innerSDRWithExtraFinDegrees
-      fin1OuterLocationSdr =  F.toList $ transformRangeOfSDR [(+3) | y <- [1..]] [fin1StartDegree, fin1StartDegree + fin1ThicknessInDegrees] innerSDRWithExtraFinDegrees
-      --fin1OuterSdr         =  F.toList $ transformRangeOfSDR [(+23) | y <- [1..]] [fin1StartDegree, fin1StartDegree + fin1ThicknessInDegrees] innerSDRWithExtraFinDegrees
-      fin1OuterSdr         =  F.toList $ transformRangeOfSDR fin1ExtrusionTranposeValues [fin1StartDegree, fin1StartDegree + fin1ThicknessInDegrees] innerSDRWithExtraFinDegrees
-      --finExtrusionTranposeValues
-      fin1BackFaces = map (backFaceFromFrontFace . extractFrontFace) $
+  let
+      {-Get the sdr for the fin. Create [CornerPoints] from them.-}
+      fin1BackOfSocketSdr =  F.toList $ transformRangeOfSDR [(+0) | y <- [1..]] [fin1BaseStartDegree, fin1BaseStartDegree + fin1BaseThicknessInDegrees] innerSDRWithExtraFinDegrees
+      fin1FrontOfSocketSdr =  F.toList $ transformRangeOfSDR [(+3) | y <- [1..]] [fin1BaseStartDegree, fin1BaseStartDegree + fin1BaseThicknessInDegrees] innerSDRWithExtraFinDegrees
+      fin1FrontOfFinSdr         =  F.toList $ transformRangeOfSDR fin1ExtrusionTranposeValues [fin1BaseStartDegree, fin1BaseStartDegree + fin1TipThicknessInDegrees] innerSDRWithExtraFinDegrees
+      --Faces from front of socket, coverted to the back faces of the fin.
+      fin1BackFaces' = map (backFaceFromFrontFace . extractFrontFace) $
                           concat $
-                          drop 6
-                          (createVerticalWalls  (MultiDegreeRadii "a useless name" fin1InnerLocationSdr) (MultiDegreeRadii "a useless name" fin1OuterLocationSdr) origin transposeFactors)
+                          dropTopScanLayers
+                          (createVerticalWalls  (MultiDegreeRadii "a useless name" fin1BackOfSocketSdr) (MultiDegreeRadii "a useless name" fin1FrontOfSocketSdr) origin transposeFactors)
+      --
       fin1FrontFaces = map (extractFrontFace) $
                            concat $
-                           drop 6
-                           (createVerticalWalls  (MultiDegreeRadii "a useless name" fin1OuterLocationSdr) (MultiDegreeRadii "a useless name" fin1OuterSdr) origin transposeFactors)
+                           dropTopScanLayers
+                           (createVerticalWalls  (MultiDegreeRadii "a useless name" fin1FrontOfSocketSdr) (MultiDegreeRadii "a useless name" fin1FrontOfFinSdr) origin transposeFactors)
       
+  fin1BackFaces <- buildCubePointsList' "create back faces of fin 1" fin1BackFaces' [CornerPointsId | x <-[1..]]
+  {-This is where I need to build the new fin1 front faces
+    1) Create start and end degrees seq of base by transforming the base degrees pair by thickness of socket. This will be the back faces.
+    2) Create start and end degrees seq of tip by transforming the tip degrees pair by extrusion value. This will be the front faces.
+    3) Create cubes from step 1 & 2 sdr's
+    4) Add them via the builder
+  -}
 
-  fin1BackFaces <- buildCubePointsList' "create back faces of fin 1" fin1BackFaces [CornerPointsId | x <-[1..]]
   fin1Cubes     <- buildCubePointsList' "create fin 1 cubes" fin1BackFaces fin1FrontFaces
   
   
