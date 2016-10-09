@@ -79,7 +79,7 @@ transposeSDRWithFlowTest = TestCase $ assertEqual
         S.fromList [(*1)]
         Flw.|> (\seq -> seq S.>< (S.fromList [(*x)| x <-[2,3]]) )
         Flw.|> (\seq -> F.toList seq)
-        Flw.|>(\list -> transformSDRWithList sdr list )
+        Flw.|>(\list -> transformSDRWithList list sdr  )
   )
 
 
@@ -100,10 +100,10 @@ transposeMDRWithFlowTest = TestCase $ assertEqual
    in
        --sdr0 transpose 
        (([(*1)] ++ [(*x)| x <-[2,3]]))
-       Flw.|> (\listFx -> S.fromList $ [transformSDRWithList (extractMaybeSDR (sdrMap^.at 0.0)) listFx])
+       Flw.|> (\listFx -> S.fromList $ [transformSDRWithList listFx (extractMaybeSDR (sdrMap^.at 0.0)) ])
        --sdr1 transpose
        Flw.|> (\seqSDR -> (seqSDR,(([(*10)] ++ [(*x)| x <-[20,30]]))))
-       Flw.|> (\(seqSDR, listFx) -> (seqSDR, transformSDRWithList (extractMaybeSDR (sdrMap^.at 1.0)) listFx) )
+       Flw.|> (\(seqSDR, listFx) -> (seqSDR, transformSDRWithList listFx (extractMaybeSDR (sdrMap^.at 1.0)) ) )
        Flw.|> (\(seqSDR, sdrAtDegree1) -> F.toList (seqSDR S.|> sdrAtDegree1) )
        --rebuild the mdr
        Flw.|> (\sdr -> mdr {degrees = sdr})

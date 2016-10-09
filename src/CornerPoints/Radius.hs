@@ -137,9 +137,18 @@ extractSDRWithinRange range sdr =
 
 {- |
 Transpose the length of the [Radius] contained in a SingleDegreeRadii, using a [(Double -> Double)]
--}
+
 transformSDRWithList :: SingleDegreeRadii -> [(Double -> Double)] -> SingleDegreeRadii
 transformSDRWithList sdr transformers =
+  sdr {radii =
+       [ transpose fx radius'
+        | radius' <- radii sdr
+        | fx      <- transformers
+       ]
+      }
+-}
+transformSDRWithList ::  [(Double -> Double)] -> SingleDegreeRadii -> SingleDegreeRadii
+transformSDRWithList  transformers sdr =
   sdr {radii =
        [ transpose fx radius'
         | radius' <- radii sdr
@@ -185,8 +194,9 @@ If sdr is Nothing, it will use SingleDegreeRadii 0.0 []
 transformMaybeSDR :: [(Double -> Double)] -> Maybe SingleDegreeRadii -> SingleDegreeRadii
 transformMaybeSDR  transformer sdr =
             ( transformSDRWithList
-                          (extractMaybeSDR $ sdr)
                           transformer
+                          (extractMaybeSDR $ sdr)
+                          
             )
 
 {- |
