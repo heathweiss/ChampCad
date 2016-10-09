@@ -1,6 +1,8 @@
 module Main where
 
-import Lib
+--import Lib
+import Examples.Scan.WalkerSocketDesignWork(loadMDRAndPassToProcessor)
 
 main :: IO ()
-main = someFunc
+main = --someFunc
+ loadMDRAndPassToProcessor 
