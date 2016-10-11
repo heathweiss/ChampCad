@@ -1,4 +1,8 @@
 {-# LANGUAGE ParallelListComp #-}
+{- |
+This module does not seem to be used anywhere. Should it be removed?
+It seems to be a copy of CornerPoints.VerticalFaces.
+-}
 module CornerPoints.VerticalFacesWithDegrees where
 import qualified  CornerPoints.VerticalFaces  as Vertical (
   createRightFaces, createRightFacesNoSlope, createVerticalFaces,
