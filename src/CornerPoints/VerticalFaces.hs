@@ -174,17 +174,23 @@ createHorizontallyAlignedCubesNoSlope origin (MultiDegreeRadii name' degrees') t
       rightFaces = createRightFacesNoSlope origin (head degrees' )  transposeFactors
   in  createHorizontallyAlignedCubes rightFaces leftFaces
 
+{-
+create version that takes [[CornerPoints]]
+-}
+createHorizontallyAlignedCubesNoSlope' :: Origin -> [SingleDegreeRadii] -> [TransposeFactor] -> [[CornerPoints]]
+createHorizontallyAlignedCubesNoSlope' origin cpoints transposeFactors =
+  let leftFaces = createLeftFacesMultiColumnsNoSlope origin (tail cpoints) transposeFactors
+      rightFaces = createRightFacesNoSlope origin (head cpoints )  transposeFactors
+  in  createHorizontallyAlignedCubes rightFaces leftFaces
 
-{- |Create a vertical shape with walls based on an inner and outer MultiDegreeRadii-}
-createVerticalWalls ::  MultiDegreeRadii ->   MultiDegreeRadii ->      Origin -> [TransposeFactor] -> [[CornerPoints]]
-createVerticalWalls     multiDegreeRadiiInner    multiDegreeRadiiOuter origin    transposeFactors =
-       [
-        currBackFace |+++| currFrontFace
-        | currFrontFace <- [map (extractFrontFace) currRow  | currRow  <- createHorizontallyAlignedCubesNoSlope origin multiDegreeRadiiOuter transposeFactors] 
-        | currBackFace <- [ map (backFaceFromFrontFace . extractFrontFace) currRow | currRow  <- (createHorizontallyAlignedCubesNoSlope origin multiDegreeRadiiInner transposeFactors ) ]
-       ]
-
-
+{- |Create a radial shape with walls based on adding together, an inner and outer [SingleDegreeRadii]
+The resulting [[CornerPoints]] are horizontal rings(x y axis) of [CornerPoints] which start at the top(highest z axis).
+-}
+createVerticalWalls ::  [SingleDegreeRadii] ->   [SingleDegreeRadii] ->      Origin -> [TransposeFactor] -> [[CornerPoints]]
+createVerticalWalls     innerSDR    outerSDR origin    transposeFactors =
+  zipWith (|+++|)
+          (map (map (extractFrontFace)) (createHorizontallyAlignedCubesNoSlope' origin outerSDR transposeFactors))
+          (map (map(backFaceFromFrontFace . extractFrontFace)) (createHorizontallyAlignedCubesNoSlope' origin innerSDR transposeFactors ))
 -- Amount used to transpose a point
 type TransposeFactor = Double
 

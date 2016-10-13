@@ -1,11 +1,14 @@
 {-# LANGUAGE ParallelListComp #-}
 module Examples.Scan.WalkerSocketDesignWork(loadMDRAndPassToProcessor) where
+{------------------------------ ToDo------------------------------------
+Use the autogenerate stl in all functions.
+-}
 
 import CornerPoints.Radius(MultiDegreeRadii(..), SingleDegreeRadii(..), Radius(..),extractSingle, extractList, rotateMDR, transposeMDRList,
                           transposeSDRList, extractSDRWithinRange, singleDegreeRadiiListToMap, transformSDRWithList, extractMaybeSDR,
                           transformRangeOfSDR, transformMaybeSDR, transformMaybeSDRDegree, transformSDRDegree)
   
-import CornerPoints.VerticalFaces(createRightFaces, createLeftFaces, createLeftFacesMultiColumns, createVerticalWalls,
+import CornerPoints.VerticalFaces(createRightFaces, createLeftFaces, createLeftFacesMultiColumns,  createVerticalWalls,
                                   createHorizontallyAlignedCubesNoSlope, createHorizontallyAlignedCubes)
 import CornerPoints.Points(Point(..))
 import CornerPoints.CornerPoints(CornerPoints(..), (+++), (|+++|), (|@+++#@|))
@@ -41,8 +44,6 @@ import Builder.Sequence((@~+++@|>))
 import Builder.List (newCornerPointsWith10DegreesBuilder, (||@~+++^||))
 
 import Stl.StlCornerPointsWithDegrees(FacesWithRange(..))
-
---import Test.HUnit
 
 import qualified Data.Sequence as S
 import qualified Data.Map as M
@@ -113,16 +114,16 @@ loadMDRAndPassToProcessor = do
             innerSleeveMDRForSideMount = transpose (+2) $ reduceScan rowReductionFactor $ removeDefectiveTopRow (MultiDegreeRadii name' degrees')
         in  ------------------------------------choose the shape to process---------------------------------------------.
             ---------socket attached to walker       
-            --socketWithRiser innerSleeveMDR outerSleeveMDR extensionFaceBuilder extensionHeight rowReductionFactor pixelsPerMM
+            socketWithRiser (degrees innerSleeveMDR) (degrees outerSleeveMDR) extensionFaceBuilder extensionHeight rowReductionFactor pixelsPerMM
             --pushPlate plateRadius power lengthenYFactor
             --hosePlate plateRadius power lengthenYFactor
 
             ---------socket with sidemount quick release------------
-            --sideMountQuickReleaseSocket innerSleeveMDRForSideMount rowReductionFactor pixelsPerMM
+            --sideMountQuickReleaseSocket (degrees innerSleeveMDRForSideMount) rowReductionFactor pixelsPerMM
 
             ----------------- swim fin---------------------
             --swimFinSocketOnlyInsideFin (degrees innerSleeveMDRForSideMount) rowReductionFactor pixelsPerMM
-            generateSwimFinStl (degrees innerSleeveMDRForSideMount) rowReductionFactor pixelsPerMM []
+            --generateSwimFinStl (degrees innerSleeveMDRForSideMount) rowReductionFactor pixelsPerMM []
             --showSwimFinCumulativeCornerPoints (degrees innerSleeveMDRForSideMount) rowReductionFactor pixelsPerMM []
             
             
@@ -157,7 +158,7 @@ swimSocketWithFinBothSides originalSDR           rowReductionFactor    pixelsPer
     origSDR = originalSDR -- degrees mainSocketInnerMDR 
     sdrMap = singleDegreeRadiiListToMap origSDR
 
-    --how many of the 10mm layers to drop of top off scan
+    --how many of the 10mm layers to drop of top off scan.
     dropTopScanLayers = drop 4
     origin = (Point{x_axis=0, y_axis=0, z_axis=50})
     transposeFactors = [0,heightPerPixel.. ]
@@ -175,6 +176,7 @@ swimSocketWithFinBothSides originalSDR           rowReductionFactor    pixelsPer
     
     {-Transpose mainSocketInnerMDR to get thickness of walls, as well as protusion for quick-release attachment.-}
     outerMDR = MultiDegreeRadii "a useless name" (map (transformSDRWithList [(+3) | x <- [1..]]) innerSDRWithExtraFinDegrees)
+    outerSDR = degrees outerMDR
     outerMDRMap =  singleDegreeRadiiListToMap $ degrees outerMDR           
     
 
@@ -183,9 +185,7 @@ swimSocketWithFinBothSides originalSDR           rowReductionFactor    pixelsPer
     Concat them so they will work with the stl autogenerate function.
     -}
     mainSocketWalls = concat $ 
-      --drop 6  (createVerticalWalls  (mainSocketInnerMDR {degrees = innerSDRWithExtraFinDegrees} ) outerMDR origin transposeFactors)
-      dropTopScanLayers  (createVerticalWalls  (MultiDegreeRadii "a useless name" innerSDRWithExtraFinDegrees) outerMDR origin transposeFactors)
-
+      dropTopScanLayers  (createVerticalWalls  innerSDRWithExtraFinDegrees outerSDR origin transposeFactors)
   
   mainSocketCubes <- buildCubePointsList' "create socket cubes" mainSocketWalls [CornerPointsId | x <-[1..]]
 
@@ -206,7 +206,7 @@ swimSocketWithFinBothSides originalSDR           rowReductionFactor    pixelsPer
         Flw.|> (\sdrSeq -> F.toList sdrSeq)
         
   fin1Cubes     <- buildCubePointsList' "create fin 1 cubes"
-                     (concat $ dropTopScanLayers $ createVerticalWalls  (MultiDegreeRadii "a useless name" backOfFin1Sdr) (MultiDegreeRadii "a useless name" frontOfFin1Sdr) origin transposeFactors)
+                     (concat $ dropTopScanLayers $ createVerticalWalls  backOfFin1Sdr frontOfFin1Sdr origin transposeFactors)
                      [CornerPointsId | x <-[1..]]
   
   
@@ -227,7 +227,7 @@ swimSocketWithFinBothSides originalSDR           rowReductionFactor    pixelsPer
 
   
   fin2Cubes     <- buildCubePointsList' "create fin 2 cubes"
-                     (concat $ dropTopScanLayers $ createVerticalWalls  (MultiDegreeRadii "a useless name" backOfFin2Sdr) (MultiDegreeRadii "a useless name" frontOfFin2Sdr) origin transposeFactors)
+                     (concat $ dropTopScanLayers $ createVerticalWalls  backOfFin2Sdr frontOfFin2Sdr origin transposeFactors)
                      [CornerPointsId | x <-[1..]]
   
   return fin2Cubes
@@ -253,44 +253,41 @@ showSwimFinCumulativeCornerPoints     originalSDR            rowReductionFactor 
 {-=========================================================== side mounted quick-release socket ============================================
 Generate the socket with a thicker section of wall, into which a hole can be drilled for a quick coupler.
 -}
-     
-sideMountQuickReleaseSocket :: MultiDegreeRadii ->  RowReductionFactor -> PixelsPerMillimeter ->  IO ()
-sideMountQuickReleaseSocket      mainSocketInnerMDR             rowReductionFactor    pixelsPerMillimeter  =
+
+sideMountQuickReleaseSocket :: [SingleDegreeRadii] ->  RowReductionFactor -> PixelsPerMillimeter ->  IO ()
+sideMountQuickReleaseSocket      mainSocketInnerSDR             rowReductionFactor    pixelsPerMillimeter  =
   let
     mainWallThickness = 3
     quickReleaseWallThickness = 10
-    
-    {-Transpose mainSocketInnerMDR to get thickness of walls, as well as protusion for quick-release attachment.-}
-    mainSocketOuterMDR =
-      let origSDR = degrees mainSocketInnerMDR 
-          sdrMap = singleDegreeRadiiListToMap origSDR
-          
-            
-          transposedSDR =
-            --0-220 degrees
-            transformRangeOfSDR [(+3) | y <- [1..]] [0,10..220] origSDR
-            --230 degrees
-            Flw.|> (\sdrSeq -> sdrSeq S.|> (transformMaybeSDR ([(+7) | y <- [1..12]] ++ [(+3) | y <- [1..7]]) (sdrMap^.at 230.0)))
-            --240-270 degrees
-            Flw.|> (\sdrSeq -> sdrSeq S.>< (transformRangeOfSDR ([(+15) | y <- [1..12]] ++ [(+3) | y <- [1..7]]) [240,250..270] origSDR))
-            --280 degrees
-            Flw.|> (\sdrSeq -> sdrSeq S.|> (transformMaybeSDR ([(+9) | y <- [1..12]] ++ [(+3) | y <- [1..7]]) (sdrMap^.at 280.0)))
-            --290-360
-            Flw.|> (\sdrSeq -> sdrSeq S.>< (transformRangeOfSDR [(+3) | y <- [1..]] [290,300..360] origSDR))
-            --convert sdrSeq back into a list
-            Flw.|> (\sdrSeq -> F.toList sdrSeq)
-      in
-          mainSocketInnerMDR {degrees = transposedSDR}
-                 
     origin = (Point{x_axis=0, y_axis=0, z_axis=50})
     transposeFactors = [0,heightPerPixel.. ]
     heightPerPixel = 1/pixelsPerMM * (fromIntegral rowReductionFactor)
-           
-    mainSocketWalls =
-      [ newCornerPointsWith10DegreesBuilder currWalls | currWalls <-
-           drop 6  (createVerticalWalls  mainSocketInnerMDR mainSocketOuterMDR origin transposeFactors)]
+    
+    {-Transpose mainSocketInnerMDR to get thickness of walls, as well as protusion for quick-release attachment.-}
+    mainSocketOuterSDR = 
+      let sdrMap = singleDegreeRadiiListToMap mainSocketInnerSDR 
+          
+      in      
+          --0-220 degrees
+          transformRangeOfSDR [(+3) | y <- [1..]] [0,10..220] mainSocketInnerSDR 
+          --230 degrees
+          Flw.|> (\sdrSeq -> sdrSeq S.|> (transformMaybeSDR ([(+7) | y <- [1..12]] ++ [(+3) | y <- [1..7]]) (sdrMap^.at 230.0)))
+          --240-270 degrees
+          Flw.|> (\sdrSeq -> sdrSeq S.>< (transformRangeOfSDR ([(+15) | y <- [1..12]] ++ [(+3) | y <- [1..7]]) [240,250..270] mainSocketInnerSDR))
+          --280 degrees
+          Flw.|> (\sdrSeq -> sdrSeq S.|> (transformMaybeSDR ([(+9) | y <- [1..12]] ++ [(+3) | y <- [1..7]]) (sdrMap^.at 280.0)))
+          --290-360
+          Flw.|> (\sdrSeq -> sdrSeq S.>< (transformRangeOfSDR [(+3) | y <- [1..]] [290,300..360] mainSocketInnerSDR))
+          --convert sdrSeq back into a list
+          Flw.|> (\sdrSeq -> F.toList sdrSeq)
+      
+    
 
-    --ToDo: Reduce the need for so much nesting of lists.
+    mainSocketWalls =
+      map (newCornerPointsWith10DegreesBuilder) (drop 6  (createVerticalWalls  mainSocketInnerSDR mainSocketOuterSDR origin transposeFactors))
+
+
+    --ToDo: Replace with autogenerate stl
     mainSocketFaceTriangles = 
        let processSingleRow currRow faceConstructor =
               currRow ||@~+++^|| [[FacesWithRange faceConstructor (DegreeRange 0 360)]]
@@ -314,10 +311,7 @@ sideMountQuickReleaseSocket      mainSocketInnerMDR             rowReductionFact
   in
      writeStlToFile $ newStlShape "socket with quick release"  mainSocketFaceTriangles
 
-{-
-test =   [[3 | y <- [1,2]] | x <- [1,2]]
-         ++ [[4,4]]
--}
+
 {-========================================================== socket attached to walker=====================================================
 A series of functions, to produce a socket with riser so push plate can be attached to it, a push plate for his hand to push against, and the hose plate that allows the hose to be attached.
 -}
@@ -474,9 +468,9 @@ output to stl
 
 --do not call directly.
 --called via reducedRowsMultiDegreeScanWrapper as it reads the json file-}
-socketWithRiser :: MultiDegreeRadii -> MultiDegreeRadii -> ((Faces) -> (Faces) -> (Faces) -> (Faces) -> [Faces]) ->
+socketWithRiser :: [SingleDegreeRadii] -> [SingleDegreeRadii] -> ((Faces) -> (Faces) -> (Faces) -> (Faces) -> [Faces]) ->
                  ExtensionHeight -> RowReductionFactor -> PixelsPerMillimeter ->  IO ()
-socketWithRiser    innerSleeveMDR      outerSleeveMDR      extensionFaceBuilder extensionHeight    rowReductionFactor pixelsPerMM  =
+socketWithRiser    innerSleeveSDR      outerSleeveSDR      extensionFaceBuilder extensionHeight    rowReductionFactor pixelsPerMM  =
   let transposeFactors = [0,heightPerPixel.. ]
       heightPerPixel = 1/pixelsPerMM * (fromIntegral rowReductionFactor)
       origin = (Point{x_axis=0, y_axis=0, z_axis=50})
@@ -492,7 +486,7 @@ socketWithRiser    innerSleeveMDR      outerSleeveMDR      extensionFaceBuilder 
       --rewrite using Flw.|> to have everything built in 1 pass
       cubesAndTrianglesWithFunctionComposition =
         let mainCubes = --main body of the socket, with 1st 6 rows removed removed.
-                drop 6  (createVerticalWalls  innerSleeveMDR outerSleeveMDR origin transposeFactors) 
+                drop 6  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) 
         in
            --top row of scan
            S.fromList((riserFaceBuilder FacesBackFront FacesBackFront (FacesBackFrontTop) FacesBackFront FacesBackFront)  |+++^| (head mainCubes))
@@ -530,34 +524,7 @@ socketWithRiser    innerSleeveMDR      outerSleeveMDR      extensionFaceBuilder 
            --convert triangles seq back to list
            Flw.|>(\triangleSeq -> F.toList triangleSeq)
             
-      {-     
-      mainBodyCubes =  getCornerPoints $
-        (CornerPointsBuilder $
-          drop 6  (createVerticalWalls  innerSleeveMDR outerSleeveMDR origin transposeFactors) --main body of the socket, with head removed. 
-          
-        )
-        &+++#@ (|+++| [upperFaceFromLowerFace $ extractBottomFace x | x <- riser ] ) --socketToRiser
-      
-      socketTriangles =
-        (
-          [riserFaceBuilder FacesBackFront FacesBackFrontLeft FacesNada FacesBackFrontRight FacesBackFront] ++  --the socket to riser transition
-          [riserFaceBuilder FacesBackFront FacesBackFront (FacesBackFrontTop) FacesBackFront FacesBackFront]  ++ --top layer of the socket
-          [[FacesBackFront | x <- [1..]] | x <- [1..9]] ++  --get rid of a most layers, so that just the top is printed out, for fixing 1st print of socket.
-                                                           --leave empty to get rid of all mid-layers. Use 1..9 for all layers printed
-          [ [FacesBackBottomFront | x <- [1..]]   ]         --bottom of the socket      
-        )
-        ||+++^|| 
-        ( getCornerPoints $
-          (CornerPointsBuilder $
-            drop 6  (createVerticalWalls  innerSleeveMDR outerSleeveMDR origin transposeFactors) --main body of the socket, with head removed. 
-          )
-          &+++#@ (|+++| [upperFaceFromLowerFace $ extractBottomFace x | x <- riser ] ) --socketToRiser
-        )
 
-                  
-      
-      sleeveStlFile = newStlShape "walker sleeve" $ socketTriangles ++ riserTriangles
-      -}
   in
       --writeStlToFile sleeveStlFile
       writeStlToFile $ newStlShape "walker sleeve" cubesAndTrianglesWithFunctionComposition

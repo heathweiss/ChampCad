@@ -8,7 +8,7 @@ import qualified  CornerPoints.VerticalFaces  as Vertical (
   createRightFaces, createRightFacesNoSlope, createVerticalFaces,
   createLeftFaces, createLeftFacesNoSlope,
   createHorizontallyAlignedCubes, createHorizontallyAlignedCubesNoSlope,
-  createLeftFacesMultiColumns, createLeftFacesMultiColumnsNoSlope, createVerticalWalls,
+  createLeftFacesMultiColumns, createLeftFacesMultiColumnsNoSlope, {-createVerticalWalls,-}
   TransposeFactor(..))
 import CornerPoints.Radius(SingleDegreeRadii(..), Radius(..), MultiDegreeRadii(..))
 import CornerPoints.Create(flatXSlope, flatYSlope, Slope(..), Origin(..))
