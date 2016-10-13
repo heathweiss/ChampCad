@@ -114,7 +114,7 @@ loadMDRAndPassToProcessor = do
             innerSleeveMDRForSideMount = transpose (+2) $ reduceScan rowReductionFactor $ removeDefectiveTopRow (MultiDegreeRadii name' degrees')
         in  ------------------------------------choose the shape to process---------------------------------------------.
             ---------socket attached to walker       
-            socketWithRiser (degrees innerSleeveMDR) (degrees outerSleeveMDR) extensionFaceBuilder extensionHeight rowReductionFactor pixelsPerMM
+            --socketWithRiser (degrees innerSleeveMDR) (degrees outerSleeveMDR) extensionFaceBuilder extensionHeight rowReductionFactor pixelsPerMM
             --pushPlate plateRadius power lengthenYFactor
             --hosePlate plateRadius power lengthenYFactor
 
@@ -123,7 +123,7 @@ loadMDRAndPassToProcessor = do
 
             ----------------- swim fin---------------------
             --swimFinSocketOnlyInsideFin (degrees innerSleeveMDRForSideMount) rowReductionFactor pixelsPerMM
-            --generateSwimFinStl (degrees innerSleeveMDRForSideMount) rowReductionFactor pixelsPerMM []
+            generateSwimFinStl (degrees innerSleeveMDRForSideMount) rowReductionFactor pixelsPerMM []
             --showSwimFinCumulativeCornerPoints (degrees innerSleeveMDRForSideMount) rowReductionFactor pixelsPerMM []
             
             
@@ -142,14 +142,16 @@ swimSocketWithFinBothSides originalSDR           rowReductionFactor    pixelsPer
   let
     mainWallThickness = 3
     --start/end degrees of the base of fin1/2
-    fin1BaseStartDegree = 60
+    --1st print at 60, totally out of line with his arm action. Should -50
+    fin1BaseStartDegree = 10
     fin1BaseThicknessInDegrees   = 4
-    fin2BaseStartDegree = 250
+    --1st print at 250, totally out of line with his arm action. Should -50
+    fin2BaseStartDegree = 200
     fin2BaseThicknessInDegrees   = 5
     --start/end degrees of the tip of fin1/2
     fin1TipStartDegree = 60
     fin1TipThicknessInDegrees   = 2
-    fin2TipStartDegree = 250
+    fin2TipStartDegree = 200
     fin2TipThicknessInDegrees   = 3
     
     fin1ExtrusionTranposeValues = [(\r -> 65) | y <- [1..]]
@@ -165,11 +167,11 @@ swimSocketWithFinBothSides originalSDR           rowReductionFactor    pixelsPer
     heightPerPixel = 1/pixelsPerMM * (fromIntegral rowReductionFactor)
 
     innerSDRWithExtraFinDegrees =
-            transformRangeOfSDR [(+0) | y <- [1..]] [0,10..60] origSDR
+            transformRangeOfSDR [(+0) | y <- [1..]] [0,10] origSDR
             Flw.|> (\sdrSeq -> sdrSeq S.|> (transformMaybeSDRDegree (+fin1BaseThicknessInDegrees) (sdrMap^.at fin1BaseStartDegree)) )
-            Flw.|> (\sdrSeq -> sdrSeq S.>< transformRangeOfSDR [(+0) | y <- [1..]] [70,80..250] origSDR)
+            Flw.|> (\sdrSeq -> sdrSeq S.>< transformRangeOfSDR [(+0) | y <- [1..]] [20,30..200] origSDR)
             Flw.|> (\sdrSeq -> sdrSeq S.|> (transformMaybeSDRDegree (+fin2BaseThicknessInDegrees) (sdrMap^.at fin2BaseStartDegree)) )
-            Flw.|> (\sdrSeq -> sdrSeq S.>< transformRangeOfSDR [(+0) | y <- [1..]] [260,270..360] origSDR)
+            Flw.|> (\sdrSeq -> sdrSeq S.>< transformRangeOfSDR [(+0) | y <- [1..]] [210,220..360] origSDR)
             Flw.|> (\sdrSeq -> F.toList sdrSeq)
     
     innerSDRWithExtraFinDegreesMap = singleDegreeRadiiListToMap innerSDRWithExtraFinDegrees
