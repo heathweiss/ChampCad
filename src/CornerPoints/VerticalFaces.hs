@@ -33,7 +33,6 @@ will be zipped with the RightFaces after they have been created, using Transpose
 It would be more efficient to calculate it as the Faces are made up, but then would not be able to re-use
 the createCornerPoint function.
 
-
 Known uses:
 Scanning
 Scanning is done vertically, so it would be best to build the model that way, instead of transforing the data

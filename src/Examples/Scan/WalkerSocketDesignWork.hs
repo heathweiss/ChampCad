@@ -73,7 +73,9 @@ The original scan work is in Examples/Scan/WalkerSocketProcessScan module, the r
 There is a json processed version stored in: Dropbox/3D/MDRFiles/walkerSocketProcessed.json which is in millimeters. This is the version required for this module.
 This is the same file as src/Data/scanFullData.json" which is pushed to github.
 
-The entry point into this module is loadMDRAndPassToProcessor. It is a wrapper around whichever stl producing funtion is to be run. 
+The entry point into this module is loadMDRAndPassToProcessor. It is a wrapper around whichever stl producing funtion is to be run.
+
+The scan was done every 10 degrees starting at 0: [0,10..360]
 -}
 
 {-
@@ -119,11 +121,11 @@ loadMDRAndPassToProcessor = do
             --hosePlate plateRadius power lengthenYFactor
 
             ---------socket with sidemount quick release------------
-            --sideMountQuickReleaseSocket (degrees innerSleeveMDRForSideMount) rowReductionFactor pixelsPerMM
+            generateSideMountQuickReleaseSocketStl (degrees innerSleeveMDRForSideMount) rowReductionFactor pixelsPerMM []
 
             ----------------- swim fin---------------------
             --swimFinSocketOnlyInsideFin (degrees innerSleeveMDRForSideMount) rowReductionFactor pixelsPerMM
-            generateSwimFinStl (degrees innerSleeveMDRForSideMount) rowReductionFactor pixelsPerMM []
+            --generateSwimFinStl (degrees innerSleeveMDRForSideMount) rowReductionFactor pixelsPerMM []
             --showSwimFinCumulativeCornerPoints (degrees innerSleeveMDRForSideMount) rowReductionFactor pixelsPerMM []
             
             
@@ -237,8 +239,8 @@ swimSocketWithFinBothSides originalSDR           rowReductionFactor    pixelsPer
 --output the stl
 generateSwimFinStl :: [SingleDegreeRadii] ->  RowReductionFactor -> PixelsPerMillimeter -> CpointsStack -> IO () --[CornerPoints]
 generateSwimFinStl     originalSDR            rowReductionFactor    pixelsPerMillimeter    inState =
-  let cpoints = autoGenerateEachCube [] ((execState $ runExceptT (swimSocketWithFinBothSides originalSDR rowReductionFactor pixelsPerMillimeter) ) inState)
-  in  writeStlToFile $ newStlShape "socket with quick release"  $ [FacesAll | x <- [1..]] |+++^| (cpoints)
+  let cpoints =  ((execState $ runExceptT (swimSocketWithFinBothSides originalSDR rowReductionFactor pixelsPerMillimeter) ) inState)
+  in  writeStlToFile $ newStlShape "socket with quick release"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
 
 
 --print out the CornerPoints built up in the state monad.
@@ -256,20 +258,18 @@ showSwimFinCumulativeCornerPoints     originalSDR            rowReductionFactor 
 Generate the socket with a thicker section of wall, into which a hole can be drilled for a quick coupler.
 -}
 
-sideMountQuickReleaseSocket :: [SingleDegreeRadii] ->  RowReductionFactor -> PixelsPerMillimeter ->  IO ()
-sideMountQuickReleaseSocket      mainSocketInnerSDR             rowReductionFactor    pixelsPerMillimeter  =
+sideMountQuickReleaseSocket :: [SingleDegreeRadii] ->  RowReductionFactor -> PixelsPerMillimeter -> ExceptT BuilderError (State CpointsStack ) CpointsList
+sideMountQuickReleaseSocket    mainSocketInnerSDR           rowReductionFactor    pixelsPerMillimeter  = do
   let
     mainWallThickness = 3
     quickReleaseWallThickness = 10
     origin = (Point{x_axis=0, y_axis=0, z_axis=50})
     transposeFactors = [0,heightPerPixel.. ]
     heightPerPixel = 1/pixelsPerMM * (fromIntegral rowReductionFactor)
+    sdrMap = singleDegreeRadiiListToMap mainSocketInnerSDR
     
     {-Transpose mainSocketInnerMDR to get thickness of walls, as well as protusion for quick-release attachment.-}
     mainSocketOuterSDR = 
-      let sdrMap = singleDegreeRadiiListToMap mainSocketInnerSDR 
-          
-      in      
           --0-220 degrees
           transformRangeOfSDR [(+3) | y <- [1..]] [0,10..220] mainSocketInnerSDR 
           --230 degrees
@@ -283,38 +283,19 @@ sideMountQuickReleaseSocket      mainSocketInnerSDR             rowReductionFact
           --convert sdrSeq back into a list
           Flw.|> (\sdrSeq -> F.toList sdrSeq)
       
-    
-
-    mainSocketWalls =
-      map (newCornerPointsWith10DegreesBuilder) (drop 6  (createVerticalWalls  mainSocketInnerSDR mainSocketOuterSDR origin transposeFactors))
-
-
-    --ToDo: Replace with autogenerate stl
-    mainSocketFaceTriangles = 
-       let processSingleRow currRow faceConstructor =
-              currRow ||@~+++^|| [[FacesWithRange faceConstructor (DegreeRange 0 360)]]
-       in  --top row 1
-           S.fromList [processSingleRow (head mainSocketWalls) FacesBackFrontTop ]
-           --rows 2-11
-           Flw.|> (\facesSeq ->
-                    (
-                     facesSeq S.>< ( S.fromList [ processSingleRow currRow FacesBackFront | currRow <- take 10 (tail mainSocketWalls)])
-                    ,last  mainSocketWalls
-                     )
-                  )
-           --row 12
-           Flw.|> (\(facesSeq, cubes) ->
-                     facesSeq S.|> ( processSingleRow cubes FacesBackBottomFront )
-                  )
-           --turn it back to a list
-           Flw.|> (\faces -> concat $ F.toList faces)
-     
-    
-  in
-     writeStlToFile $ newStlShape "socket with quick release"  mainSocketFaceTriangles
+  buildCubePointsList' "create socket walls" 
+      (concat $ drop 6  (createVerticalWalls  mainSocketInnerSDR mainSocketOuterSDR origin transposeFactors))
+      [CornerPointsId | x <-[1..]]
+   
+  
 
 
-{-========================================================== socket attached to walker=====================================================
+--output the stl
+generateSideMountQuickReleaseSocketStl :: [SingleDegreeRadii] ->  RowReductionFactor -> PixelsPerMillimeter -> CpointsStack -> IO () --[CornerPoints]
+generateSideMountQuickReleaseSocketStl     originalSDR            rowReductionFactor    pixelsPerMillimeter    inState =
+  let cpoints =  ((execState $ runExceptT (sideMountQuickReleaseSocket originalSDR rowReductionFactor pixelsPerMillimeter) ) inState)
+  in  writeStlToFile $ newStlShape "socket with quick release"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
+  {-========================================================== socket attached to walker=====================================================
 A series of functions, to produce a socket with riser so push plate can be attached to it, a push plate for his hand to push against, and the hose plate that allows the hose to be attached.
 -}
 {-
