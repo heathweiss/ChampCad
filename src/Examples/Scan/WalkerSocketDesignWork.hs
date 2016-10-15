@@ -13,8 +13,8 @@ import CornerPoints.VerticalFaces(createRightFaces, createLeftFaces, createLeftF
 import CornerPoints.Points(Point(..))
 import CornerPoints.CornerPoints(CornerPoints(..), (+++), (|+++|), (|@+++#@|))
 import CornerPoints.Create(Slope(..), flatXSlope, flatYSlope, Angle(..), Origin(..))
-import CornerPoints.FaceExtraction (extractFrontFace, extractTopFace,extractBottomFace, extractBackFace)
-import CornerPoints.FaceConversions(backFaceFromFrontFace, upperFaceFromLowerFace, lowerFaceFromUpperFace )
+import CornerPoints.FaceExtraction (extractFrontFace, extractTopFace,extractBottomFace, extractBackFace, extractFrontTopLine, extractBackTopLine)
+import CornerPoints.FaceConversions(backFaceFromFrontFace, upperFaceFromLowerFace, lowerFaceFromUpperFace, frontFaceFromBackFace )
 import CornerPoints.Transpose (transposeZ, transposeY, transposeX)
 import TypeClasses.Transposable(transpose)
 import CornerPoints.CornerPointsWithDegrees(CornerPointsWithDegrees(..), (@~+++#@),(@~+++@),(|@~+++@|), (|@~+++#@|), DegreeRange(..))
@@ -29,8 +29,8 @@ import Scan.Filter(runningAverage, runningAvgSingleDegreeRadii)
 import Helpers.List((++:))
 
 import Primitives.Cylindrical(cylinderWallsNoSlopeSquaredOff, cylinderSolidNoSlopeSquaredOff,
-                                   cylinderWallsNoSlopeSquaredOffLengthenY, cylinderSolidNoSlopeSquaredOffLengthenY)
-import Primitives.Cylindrical(cylinderWallsNoSlope)
+                                   cylinderWallsNoSlopeSquaredOffLengthenY, cylinderSolidNoSlopeSquaredOffLengthenY,
+                              cylinderWallsNoSlope, cylinderSolidNoSlope)
 
 import Data.Word(Word8)
 import qualified Data.ByteString.Lazy as BL
@@ -119,9 +119,11 @@ loadMDRAndPassToProcessor = do
             --socketWithRiser (degrees innerSleeveMDR) (degrees outerSleeveMDR) extensionFaceBuilder extensionHeight rowReductionFactor pixelsPerMM
             --pushPlate plateRadius power lengthenYFactor
             --hosePlate plateRadius power lengthenYFactor
+            generatehosePlateStl plateRadius power lengthenYFactor []
+            --showHosePlateError plateRadius power lengthenYFactor []
 
             ---------socket with sidemount quick release------------
-            generateSideMountQuickReleaseSocketStl (degrees innerSleeveMDRForSideMount) rowReductionFactor pixelsPerMM []
+            --generateSideMountQuickReleaseSocketStl (degrees innerSleeveMDRForSideMount) rowReductionFactor pixelsPerMM []
 
             ----------------- swim fin---------------------
             --swimFinSocketOnlyInsideFin (degrees innerSleeveMDRForSideMount) rowReductionFactor pixelsPerMM
@@ -305,6 +307,90 @@ The attaches to the pushPlate and the hose
                     |||  |||  riser
               |||||||||||||||||||  innerHose riserBase outsideScrews
 -}
+hosePlateWithMtlBuilder :: PlateRadius -> Power -> LengthenYFactor -> ExceptT BuilderError (State CpointsStack ) CpointsList
+hosePlateWithMtlBuilder plateRadius power lengthenYFactor = do
+  let
+    
+    wallThickness = 3
+    hoseInnerRadius = 7.5
+    hoseThickness = wallThickness
+    hoseOuterRadius = hoseThickness + hoseInnerRadius
+    riserInnerRadius = hoseOuterRadius
+    riserThickness = 5 --10
+    riserOuterRadius = riserThickness + riserInnerRadius
+    screwInsideRadius = riserOuterRadius
+    screwsThickness = plateRadius - screwInsideRadius
+    baseHeight = 3
+    riserHeight = 5
+    hoseHeight = 20
+    angles = (map (Angle) [0,10..360])  
+    baseOrigin = Point 0 0 0
+    riserOrigin = transposeZ ( + baseHeight) baseOrigin
+  ---------------------------- base ---------------------------------  
+  screwRingFrontFaces <- buildCubePointsList' "baseScrewRingFrontFaces"
+    (map extractFrontFace
+    (cylinderWallsNoSlopeSquaredOffLengthenY
+             (Radius plateRadius) baseOrigin angles baseHeight riserThickness power lengthenYFactor))
+    [CornerPointsId | x <-[1..]]
+
+  screwRingCubes <- buildCubePointsList' "screwRingCubes"
+    (map extractBackFace
+    (cylinderWallsNoSlopeSquaredOffLengthenY
+             (Radius screwInsideRadius) baseOrigin angles baseHeight riserThickness power lengthenYFactor))
+    screwRingFrontFaces
+
+  riserBaseBackFaces <- buildCubePointsList' "riserBaseInsideFaces"
+    (map (backFaceFromFrontFace . extractFrontFace)
+    --(cylinderWallsNoSlope (Radius hoseInnerRadius) hoseThickness   baseOrigin angles baseHeight))
+    (cylinderSolidNoSlope (Radius hoseOuterRadius)  baseOrigin angles baseHeight))
+    [CornerPointsId | x <-[1..]]
+  
+  riserBaseCubes <- buildCubePointsList' "riserBaseCubes"
+    riserBaseBackFaces
+    (map (frontFaceFromBackFace . extractBackFace) screwRingCubes )
+
+  --base upon which the hose rests, so has same outer radius as the hose
+  hoseEndCubes <- buildCubePointsList' "hoseBaseCubes"
+    (cylinderSolidNoSlope (Radius hoseInnerRadius) baseOrigin angles baseHeight)
+    [CornerPointsId | x <-[1..]]
+
+  --walls that surround the hose.
+  hoseBaseWalls <- buildCubePointsList' "hoseWalls"
+    (map (frontFaceFromBackFace . extractBackFace) riserBaseCubes)
+    (map (backFaceFromFrontFace . extractFrontFace) hoseEndCubes)
+  
+  
+  riserCubes <-
+    buildCubePointsList' "riserCubes"
+    (map ( lowerFaceFromUpperFace . extractTopFace) riserBaseCubes)
+    --make a line/upperface from outer hose base wall transposed up
+    (  (map ((transposeZ (+riserHeight)). extractFrontTopLine . extractFrontFace) hoseBaseWalls)
+
+      |+++|
+      (map ( (transposeZ (+riserHeight)) . extractBackTopLine . backFaceFromFrontFace . extractFrontFace) hoseBaseWalls)
+    )
+  
+  riserHoseWalls <- buildCubePointsList' "riserHoseWalls"
+    (map (lowerFaceFromUpperFace . extractTopFace) hoseBaseWalls)
+    (map ((transposeZ (+riserHeight)) . extractTopFace) hoseBaseWalls)    
+  
+  --set of walls that rise about the riser.
+  upperHoseWalls <- buildCubePointsList' "upperHoseWalls"
+    (map (lowerFaceFromUpperFace . extractTopFace) riserHoseWalls)
+    (map ((transposeZ (+10)) . extractTopFace) riserHoseWalls)
+  
+  return screwRingCubes
+
+--output the stl
+generatehosePlateStl :: PlateRadius -> Power ->           LengthenYFactor ->   CpointsStack -> IO () --[CornerPoints]
+generatehosePlateStl     originalSDR   rowReductionFactor pixelsPerMillimeter  inState =
+  let cpoints =  ((execState $ runExceptT (hosePlateWithMtlBuilder originalSDR rowReductionFactor pixelsPerMillimeter) ) inState)
+  in  writeStlToFile $ newStlShape "hose plate"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
+
+showHosePlateError :: PlateRadius -> Power ->           LengthenYFactor ->   CpointsStack -> IO ()
+showHosePlateError originalSDR   rowReductionFactor pixelsPerMillimeter  inState =
+  print $ show ((evalState $ runExceptT (hosePlateWithMtlBuilder originalSDR rowReductionFactor pixelsPerMillimeter) ) inState)
+
 hosePlate ::  PlateRadius -> Power -> LengthenYFactor -> IO ()
 hosePlate plateRadius power lengthenYFactor =
   let
