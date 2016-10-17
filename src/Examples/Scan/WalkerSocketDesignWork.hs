@@ -66,8 +66,7 @@ import Builder.Monad(BuilderError(..), cornerPointsErrorHandler, buildCubePoints
                      CpointsStack, CpointsList)
 
 
---import Control.Arrow hiding ((+++))
---import Control.Category hiding ((.))
+
 {------------------------------------------------------------- overview ---------------------------------------------------
 The original scan work is in Examples/Scan/WalkerSocketProcessScan module, the result of which is a json file as required by this module.
 There is a json processed version stored in: Dropbox/3D/MDRFiles/walkerSocketProcessed.json which is in millimeters. This is the version required for this module.
@@ -87,8 +86,8 @@ For example: The top row is bad, and has to be removed. Use a rowReductionFactor
 I just comment out the stl producing functions that are not required. Should clean that up by wrapping loadMDRAndPassToProcessor in a function which
 would take the required function (with parameters), as a parameter. Or just a function for each required stl shape.
 -}
-loadMDRAndPassToProcessor :: IO ()
-loadMDRAndPassToProcessor = do
+loadMDRAndPassToProcessor ::  IO ()
+loadMDRAndPassToProcessor  = do
   contents <- BL.readFile "src/Data/scanFullData.json"
   let removeDefectiveTopRow :: MultiDegreeRadii -> MultiDegreeRadii
       removeDefectiveTopRow (MultiDegreeRadii name' degrees') = MultiDegreeRadii name' [(SingleDegreeRadii degree'' (tail radii''))  | (SingleDegreeRadii degree'' radii'') <- degrees']
@@ -118,8 +117,9 @@ loadMDRAndPassToProcessor = do
             ---------socket attached to walker       
             --socketWithRiser (degrees innerSleeveMDR) (degrees outerSleeveMDR) extensionFaceBuilder extensionHeight rowReductionFactor pixelsPerMM
             --pushPlate plateRadius power lengthenYFactor
-            --hosePlate plateRadius power lengthenYFactor
-            generatehosePlateStl plateRadius power lengthenYFactor []
+            generatePushPlateStl plateRadius power lengthenYFactor []
+
+            --generatehosePlateStl plateRadius power lengthenYFactor []
             --showHosePlateError plateRadius power lengthenYFactor []
 
             ---------socket with sidemount quick release------------
@@ -390,57 +390,52 @@ showHosePlateError originalSDR   rowReductionFactor pixelsPerMillimeter  inState
      
 
 {-
-Attaches directly to the socket
+Attaches directly to the socketWithRiser
 
 Printing notes:
 I printed with no infill, and 2 top layers. This resulted in the top 2 layers of the plate,
 printing over a gap of about 1 mm. This was not a problem. Should have had solid infill or more bottom layers.
-
-Used abs glue directly on upper glass plate with a primer wash just before printing. Worked great.
 -}
-pushPlate :: PlateRadius -> Power -> LengthenYFactor -> IO ()
-pushPlate    plateRadius    power    lengthenYFactor  = 
+
+pushPlate :: PlateRadius -> Power -> LengthenYFactor ->  ExceptT BuilderError (State CpointsStack ) CpointsList
+pushPlate plateRadius    power    lengthenYFactor  = do
   let
     origin = Point 0 0 0 :: Origin
     angles = (map (Angle) [0,10..360])
     plateHeight = 3
-    --power = 2.5
     riserHeight = 3
-    --lengthenFactor = 20
 
-    --create the cubes and the stl together without the use of builder
-    createCubesStlCompositionally = 
-      let centerPlate = (cylinderSolidNoSlopeSquaredOffLengthenY  (Radius 21)   origin    angles     plateHeight  power    lengthenYFactor)
-          addFacesTo faceConstructor =  ([faceConstructor | x <- [1..]] |+++^|)
-          addTrianglesToSeq sequence faceConstructor cubes = sequence S.><
-                                                (S.fromList
-                                                  ([faceConstructor | x <- [1..]] |+++^| cubes)
-                                                )
-      in  --centerPlate
-          S.fromList(addFacesTo FacesBackBottomTop centerPlate)
-          --the outer ring, which has an inner radius = outer radius of riser on socket
-          Flw.|>(\triangleSeq ->
-                  let cubes = (cylinderWallsNoSlopeSquaredOffLengthenY
+  centerPlate <- buildCubePointsList' "centerPlate"
+                  (cylinderSolidNoSlopeSquaredOffLengthenY  (Radius 21)   origin    angles     plateHeight  power    lengthenYFactor)
+                  [CornerPointsId | x <-[1..]]
+
+  outerRing <- buildCubePointsList' "outerRing"
+                 (cylinderWallsNoSlopeSquaredOffLengthenY
                                 (Radius (plateRadius - riserHeight))  origin angles plateHeight riserHeight power lengthenYFactor)
-                      faces = (riserFaceBuilder FacesBottomFront  FacesBottomFront FacesBottomFrontTop FacesBottomFront FacesBottomFront)
-                      triangles = S.fromList (faces |+++^| cubes)
-                  in triangleSeq S.>< triangles
-                )
-          --the riser that takes off from the outer ring
-          Flw.|>(\triangleSeq ->
-                  let cubes = (cylinderWallsNoSlopeSquaredOffLengthenY
-                                (Radius (plateRadius - riserHeight))
-                                (transposeZ (+plateHeight)origin)  angles (30 :: Height) riserHeight  power  lengthenYFactor)
-                      faces = (riserFaceBuilder FacesBackFrontTop FacesBackFrontLeftTop FacesNada FacesBackFrontRightTop FacesBackFrontTop)
-                      triangleSeq' = S.fromList (faces |+++^| cubes)
-                  in  triangleSeq S.>< triangleSeq'
-                )
-          --change back to [Triangles]
-          Flw.|>(\triangleSeq -> F.toList triangleSeq)
-    
-  in
-    writeStlToFile $  newStlShape "walker socket push plate" createCubesStlCompositionally
+                 [CornerPointsId | x <-[1..]]
 
+  --riser has to be created in 2 parts, as it spans the 0/360 degree segment, but with section from ~80 degrees -> ~270 excluded.
+  startRiser     <- buildCubePointsList' "outerRingStartRiser"
+                      (take 8
+                        (cylinderWallsNoSlopeSquaredOffLengthenY (Radius (plateRadius - riserHeight))
+                                (transposeZ (+plateHeight)origin)  angles (30 :: Height) riserHeight  power  lengthenYFactor)
+                      )
+                      [CornerPointsId | x <-[1..]]
+
+  endRiser       <- buildCubePointsList' "outerRingEndRiser"
+                      (drop  28
+                        (cylinderWallsNoSlopeSquaredOffLengthenY (Radius (plateRadius - riserHeight))
+                                (transposeZ (+plateHeight)origin)  angles (30 :: Height) riserHeight  power  lengthenYFactor)
+                      )
+                      [CornerPointsId | x <-[1..]]
+
+  return endRiser
+
+generatePushPlateStl :: PlateRadius -> Power -> LengthenYFactor ->  CpointsStack  -> IO ()
+generatePushPlateStl plateRadius    power    lengthenYFactor initialState  =
+  let cpoints = execState ( runExceptT $ pushPlate plateRadius    power    lengthenYFactor ) initialState 
+  in  writeStlToFile $ newStlShape "push plate"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
+    
 
 {-
 reduce the rows of the MulitiDegreeRadii by a factor of 100
