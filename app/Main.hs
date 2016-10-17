@@ -2,7 +2,10 @@ module Main where
 
 --import Lib
 import Examples.Scan.WalkerSocketDesignWork(loadMDRAndPassToProcessor)
+--import System.Environment
 
 main :: IO ()
-main = --someFunc
- loadMDRAndPassToProcessor 
+main = do
+ --x <-  getArgs
+ --loadMDRAndPassToProcessor (read $ head x) (read $ head $ tail x)
+ loadMDRAndPassToProcessor
