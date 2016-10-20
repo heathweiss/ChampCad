@@ -104,7 +104,7 @@ loadMDRAndPassToProcessor  = do
       Just (MultiDegreeRadii name' degrees') ->
         let ----------------------------for the socket that has the bottom extension to attach to the walker
             --enlarge it to fit over the socket already printed with WalkerSocket. 1st attempt at +2 was not quite big enough, trying 3.
-            --rotate it to line up better with the riser
+            --rotate it to line up better with the riser, when using squared off function.
             innerSleeveMDR = rotateMDR $ rotateMDR $ rotateMDR $ transpose (+3) $ reduceScan rowReductionFactor $ removeDefectiveTopRow (MultiDegreeRadii name' degrees')
             --give it a thickness of 3 mm
             outerSleeveMDR = transpose (+3) innerSleeveMDR
@@ -116,8 +116,10 @@ loadMDRAndPassToProcessor  = do
         in  ------------------------------------choose the shape to process---------------------------------------------.
             ---------socket attached to walker       
             --socketWithRiser (degrees innerSleeveMDR) (degrees outerSleeveMDR) extensionFaceBuilder extensionHeight rowReductionFactor pixelsPerMM
+            generatesocketWithRiserUsingStl (degrees innerSleeveMDR) (degrees outerSleeveMDR) rowReductionFactor pixelsPerMM []
+            
             --pushPlate plateRadius power lengthenYFactor
-            generatePushPlateStl plateRadius power lengthenYFactor []
+            --generatePushPlateStl plateRadius power lengthenYFactor []
 
             --generatehosePlateStl plateRadius power lengthenYFactor []
             --showHosePlateError plateRadius power lengthenYFactor []
@@ -438,19 +440,58 @@ generatePushPlateStl plateRadius    power    lengthenYFactor initialState  =
     
 
 {-
-reduce the rows of the MulitiDegreeRadii by a factor of 100
-chop of the top layer as it has an error,
-output to stl
+Socket which has a riser attached to the top. This allows the hose attachment/push plate to be attached to it.
 
---do not call directly.
---called via reducedRowsMultiDegreeScanWrapper as it reads the json file-}
-socketWithRiser :: [SingleDegreeRadii] -> [SingleDegreeRadii] -> ((Faces) -> (Faces) -> (Faces) -> (Faces) -> [Faces]) ->
+It differs from the original socketWithRiser, in that the riser is closed in, instead of half open.
+It has not been printed yet, to test this new closed in system.
+-}
+socketWithRiser :: [SingleDegreeRadii] -> [SingleDegreeRadii] -> RowReductionFactor -> PixelsPerMillimeter -> ExceptT BuilderError (State CpointsStack ) CpointsList
+socketWithRiser    innerSleeveSDR         outerSleeveSDR         rowReductionFactor    pixelsPerMM = do
+  let extensionHeight = 30
+      transposeFactors = [0,heightPerPixel.. ]
+      heightPerPixel = 1/pixelsPerMM * (fromIntegral rowReductionFactor)
+      origin = (Point{x_axis=0, y_axis=0, z_axis=50})
+      angles = (map (Angle) [0,10..360])
+
+  riserCubes <- buildCubePointsList' "riserCubes"
+                (cylinderWallsNoSlopeSquaredOff  (Radius 18)  (transposeX (+0)(transposeY (+(-15))(transposeZ (+(-15))origin)))    angles (20::Height) (3::Thickness) (2.5::Power))
+                [CornerPointsId | x <-[1..]]
+
+  mainCubes  <- buildCubePointsList' "mainCubes"
+                (concat $ drop 6  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
+                [CornerPointsId | x <-[1..]]
+
+  joinRiserToMainCubes <- buildCubePointsList' "joinRiserToMainCubes"
+                          (
+                            map (upperFaceFromLowerFace . extractBottomFace) riserCubes
+                          )
+                          (
+                            map (lowerFaceFromUpperFace . extractTopFace) (head $ drop 6  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors))
+                          )
+                
+  return riserCubes
+
+
+--output the stl
+generatesocketWithRiserStl :: [SingleDegreeRadii] -> [SingleDegreeRadii] -> RowReductionFactor -> PixelsPerMillimeter -> CpointsStack -> IO () 
+generatesocketWithRiserStl    innerSleeveSDR         outerSleeveSDR         rowReductionFactor    pixelsPerMM           inState =
+  let cpoints =  ((execState $ runExceptT (socketWithRiser innerSleeveSDR         outerSleeveSDR         rowReductionFactor    pixelsPerMM ) ) inState)
+  in  writeStlToFile $ newStlShape "socket with riser"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
+
+
+{-
+Socket with a riser attached to the top for the hose attachment/push plate.
+
+This is the original that does not auto-generate the stl. Keep it around for now as it is not quite the same as
+the new version. Once the new version has been printed/proven, then delete it.-}
+socketWithRiserOriginal :: [SingleDegreeRadii] -> [SingleDegreeRadii] -> ((Faces) -> (Faces) -> (Faces) -> (Faces) -> [Faces]) ->
                  ExtensionHeight -> RowReductionFactor -> PixelsPerMillimeter ->  IO ()
-socketWithRiser    innerSleeveSDR      outerSleeveSDR      extensionFaceBuilder extensionHeight    rowReductionFactor pixelsPerMM  =
+socketWithRiserOriginal    innerSleeveSDR      outerSleeveSDR      extensionFaceBuilder extensionHeight    rowReductionFactor pixelsPerMM  =
   let transposeFactors = [0,heightPerPixel.. ]
       heightPerPixel = 1/pixelsPerMM * (fromIntegral rowReductionFactor)
       origin = (Point{x_axis=0, y_axis=0, z_axis=50})
       angles = (map (Angle) [0,10..360])
+      
 
       riserCubes = cylinderWallsNoSlopeSquaredOff  (Radius 18)  (transposeX (+0)(transposeY (+(-15))(transposeZ (+(-15))origin)))    angles (20::Height) (3::Thickness) (2.5::Power)
       {-
