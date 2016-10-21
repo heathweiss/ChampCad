@@ -116,7 +116,7 @@ loadMDRAndPassToProcessor  = do
         in  ------------------------------------choose the shape to process---------------------------------------------.
             ---------socket attached to walker       
             --socketWithRiser (degrees innerSleeveMDR) (degrees outerSleeveMDR) extensionFaceBuilder extensionHeight rowReductionFactor pixelsPerMM
-            generatesocketWithRiserUsingStl (degrees innerSleeveMDR) (degrees outerSleeveMDR) rowReductionFactor pixelsPerMM []
+            generatesocketWithRiserStl (degrees innerSleeveMDR) (degrees outerSleeveMDR) rowReductionFactor pixelsPerMM []
             
             --pushPlate plateRadius power lengthenYFactor
             --generatePushPlateStl plateRadius power lengthenYFactor []
@@ -443,6 +443,7 @@ generatePushPlateStl plateRadius    power    lengthenYFactor initialState  =
 Socket which has a riser attached to the top. This allows the hose attachment/push plate to be attached to it.
 
 It differs from the original socketWithRiser, in that the riser is closed in, instead of half open.
+If it needs to be make open sided, see pushPlate on how to do it.
 It has not been printed yet, to test this new closed in system.
 -}
 socketWithRiser :: [SingleDegreeRadii] -> [SingleDegreeRadii] -> RowReductionFactor -> PixelsPerMillimeter -> ExceptT BuilderError (State CpointsStack ) CpointsList
@@ -479,84 +480,10 @@ generatesocketWithRiserStl    innerSleeveSDR         outerSleeveSDR         rowR
   in  writeStlToFile $ newStlShape "socket with riser"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
 
 
-{-
-Socket with a riser attached to the top for the hose attachment/push plate.
 
-This is the original that does not auto-generate the stl. Keep it around for now as it is not quite the same as
-the new version. Once the new version has been printed/proven, then delete it.-}
-socketWithRiserOriginal :: [SingleDegreeRadii] -> [SingleDegreeRadii] -> ((Faces) -> (Faces) -> (Faces) -> (Faces) -> [Faces]) ->
-                 ExtensionHeight -> RowReductionFactor -> PixelsPerMillimeter ->  IO ()
-socketWithRiserOriginal    innerSleeveSDR      outerSleeveSDR      extensionFaceBuilder extensionHeight    rowReductionFactor pixelsPerMM  =
-  let transposeFactors = [0,heightPerPixel.. ]
-      heightPerPixel = 1/pixelsPerMM * (fromIntegral rowReductionFactor)
-      origin = (Point{x_axis=0, y_axis=0, z_axis=50})
-      angles = (map (Angle) [0,10..360])
-      
-
-      riserCubes = cylinderWallsNoSlopeSquaredOff  (Radius 18)  (transposeX (+0)(transposeY (+(-15))(transposeZ (+(-15))origin)))    angles (20::Height) (3::Thickness) (2.5::Power)
-      {-
-      riserTriangles =
-        (riserFaceBuilder FacesBackFrontTop FacesBackFrontLeftTop FacesNada FacesBackFrontRightTop FacesBackFrontTop)
-        |+++^|
-        riser
-      -}
-      --rewrite using Flw.|> to have everything built in 1 pass
-      cubesAndTrianglesWithFunctionComposition =
-        let mainCubes = --main body of the socket, with 1st 6 rows removed removed.
-                drop 6  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) 
-        in
-           --top row of scan
-           S.fromList((riserFaceBuilder FacesBackFront FacesBackFront (FacesBackFrontTop) FacesBackFront FacesBackFront)  |+++^| (head mainCubes))
-           --
-           --create faces for row 2-10, which are all the same
-           
-           Flw.|>(\triangleSeq ->
-                   let rows2To10 = take 10 $ tail mainCubes
-                       faceConstructors = [[FacesBackFront | x <- [1..]] | x <- [1..10]]
-                       faces = S.fromList (faceConstructors ||+++^|| rows2To10 )
-                   in  triangleSeq S.>< faces
-                 )
-           --the bottom row
-           Flw.|>(\triangleSeq ->
-                   let bottomCubes = last mainCubes
-                       faceConstructors = [FacesBackBottomFront | x <- [1..]]
-                       faces = S.fromList (faceConstructors |+++^| bottomCubes)
-                   in  triangleSeq S.>< faces
-                 )
-           --add the socket to riser adaptor
-           Flw.|>(\triangleSeq ->
-                   let --mainCubesTopFaces = head mainCubes
-                       riserBtmFacesAsTopFaces = [upperFaceFromLowerFace $ extractBottomFace x | x <- riserCubes ]
-                       faceConstructors = riserFaceBuilder FacesBackFront FacesBackFrontLeft FacesNada FacesBackFrontRight FacesBackFront
-                       adaptorCubes = riserBtmFacesAsTopFaces |+++| (head mainCubes)
-                       adaptorTriangles = S.fromList (faceConstructors |+++^| adaptorCubes)
-                   in triangleSeq S.>< adaptorTriangles
-                       
-                 )
-           --add the riser
-           Flw.|>(\triangleSeq ->
-                   let riserTriangles = (riserFaceBuilder FacesBackFrontTop FacesBackFrontLeftTop FacesNada FacesBackFrontRightTop FacesBackFrontTop) |+++^| riserCubes
-                   in  triangleSeq S.>< (S.fromList riserTriangles)
-                 )
-           --convert triangles seq back to list
-           Flw.|>(\triangleSeq -> F.toList triangleSeq)
-            
-
-  in
-      --writeStlToFile sleeveStlFile
-      writeStlToFile $ newStlShape "walker sleeve" cubesAndTrianglesWithFunctionComposition
-
-
---build the faces for the squared riser and assoc'd layers
-riserFaceBuilder :: (Faces) -> (Faces) -> (Faces) -> (Faces) -> (Faces) -> [Faces]
-riserFaceBuilder faces1 faces2 faces3 faces4 faces5 =
- [faces1| x <- [1..8]] ++ [faces2] ++ [faces3| x <- [10..28]] ++ [faces4]   ++  [faces5 | x <- [11..]]
 
 pixelsPerMM = 696/38
-
-
 type RowReductionFactor = Int
---type Origin = Point
 type ExtensionHeight = Double
 type PlateRadius = Double
 type PixelsPerMillimeter = Double
