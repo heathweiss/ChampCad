@@ -8,7 +8,7 @@ It is built in at a low level, and will be quite a bit of work to refactor out.
 module CornerPoints.Radius(Radius(..), SingleDegreeRadii(..), Degree(..), MultiDegreeRadii(..),resetMultiDegreeRadiiIfNull,
                           extractSingle, extractList, rotateMDR, setRadiusIfNull, resetSingleDegreeRadiiIfNull,
                           setRadiusWithPrecedingValueIfNull, resetMultiDegreeRadiiIfNullWithPreviousValue,
-                          buildSymmetricalRadius, transposeSDRList, transposeMDRList, extractSDRWithinRange,
+                          buildSymmetricalRadius, transposeMDRList, extractSDRWithinRange,
                           transformSDRWithList, extractMaybeRadii, extractMaybeSDR, singleDegreeRadiiListToMap,
                           transformRangeOfSDR, transformMaybeSDR, transformMaybeSDRDegree, transformSDRDegree) where
 
@@ -115,17 +115,6 @@ instance TransposeLength SingleDegreeRadii  where
   transpose f (SingleDegreeRadii degree' radii') = SingleDegreeRadii degree' (map (transpose f) radii')
 
 {- |
-Transpose all the Radii in a list of SingleDegreeRadii.
-Each list of Radius, will be transposed using a list of functions, so that each Radius can have it's own transpose function.
--}
-transposeSDRList :: [[(Double -> Double) ]] -> [SingleDegreeRadii]  -> [SingleDegreeRadii]
-transposeSDRList    fx                         singleDegreeRadii    =
-  [SingleDegreeRadii (degree currSDR) (transposeWithList currFx $ radii currSDR)
-   | currSDR <- singleDegreeRadii
-   | currFx  <- fx
-  ]
-
-{- |
 Extract a [SingleDegreeRadii] whose 'degree' is contained in a [Double]
 -}
 extractSDRWithinRange ::  [Double] -> [SingleDegreeRadii] -> [SingleDegreeRadii]
@@ -137,15 +126,6 @@ extractSDRWithinRange range sdr =
 
 {- |
 Transpose the length of the [Radius] contained in a SingleDegreeRadii, using a [(Double -> Double)]
-
-transformSDRWithList :: SingleDegreeRadii -> [(Double -> Double)] -> SingleDegreeRadii
-transformSDRWithList sdr transformers =
-  sdr {radii =
-       [ transpose fx radius'
-        | radius' <- radii sdr
-        | fx      <- transformers
-       ]
-      }
 -}
 transformSDRWithList ::  [(Double -> Double)] -> SingleDegreeRadii -> SingleDegreeRadii
 transformSDRWithList  transformers sdr =
@@ -183,9 +163,8 @@ Filter a [SingleDegreeRadii] to those whose Degree is an element of [Double].
 Transpose the radii of filtered [SingleDegreeRadii] using a single [(Double-> Double)]
 -}
 transformRangeOfSDR :: [(Double -> Double)] -> [Double] -> [SingleDegreeRadii] -> S.Seq SingleDegreeRadii
-transformRangeOfSDR transformer range sdr =
-            S.fromList
-            (transposeSDRList [transformer | x <- [1..]]  (extractSDRWithinRange range sdr))
+transformRangeOfSDR transformerFxs range sdr =
+            S.fromList $ zipWith (transpose) transformerFxs (extractSDRWithinRange range sdr)
 
 {- |
 Transpose the Radii of a Maybe SingleDegreeRadii using a [(Double -> Double)]

@@ -5,7 +5,7 @@ Use the autogenerate stl in all functions.
 -}
 
 import CornerPoints.Radius(MultiDegreeRadii(..), SingleDegreeRadii(..), Radius(..),extractSingle, extractList, rotateMDR, transposeMDRList,
-                          transposeSDRList, extractSDRWithinRange, singleDegreeRadiiListToMap, transformSDRWithList, extractMaybeSDR,
+                          {-transposeSDRList,-} extractSDRWithinRange, singleDegreeRadiiListToMap, transformSDRWithList, extractMaybeSDR,
                           transformRangeOfSDR, transformMaybeSDR, transformMaybeSDRDegree, transformSDRDegree)
   
 import CornerPoints.VerticalFaces(createRightFaces, createLeftFaces, createLeftFacesMultiColumns,  createVerticalWalls,
@@ -116,7 +116,7 @@ loadMDRAndPassToProcessor  = do
         in  ------------------------------------choose the shape to process---------------------------------------------.
             ---------socket attached to walker       
             --socketWithRiser (degrees innerSleeveMDR) (degrees outerSleeveMDR) extensionFaceBuilder extensionHeight rowReductionFactor pixelsPerMM
-            generatesocketWithRiserStl (degrees innerSleeveMDR) (degrees outerSleeveMDR) rowReductionFactor pixelsPerMM []
+            --generatesocketWithRiserStl (degrees innerSleeveMDR) (degrees outerSleeveMDR) rowReductionFactor pixelsPerMM []
             
             --pushPlate plateRadius power lengthenYFactor
             --generatePushPlateStl plateRadius power lengthenYFactor []
@@ -129,7 +129,7 @@ loadMDRAndPassToProcessor  = do
 
             ----------------- swim fin---------------------
             --swimFinSocketOnlyInsideFin (degrees innerSleeveMDRForSideMount) rowReductionFactor pixelsPerMM
-            --generateSwimFinStl (degrees innerSleeveMDRForSideMount) rowReductionFactor pixelsPerMM []
+            generateSwimFinStl (degrees innerSleeveMDRForSideMount) rowReductionFactor pixelsPerMM []
             --showSwimFinCumulativeCornerPoints (degrees innerSleeveMDRForSideMount) rowReductionFactor pixelsPerMM []
             
             
