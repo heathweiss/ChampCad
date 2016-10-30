@@ -129,13 +129,252 @@ loadMDRAndPassToProcessor  = do
 
             ----------------- swim fin---------------------
             --swimFinSocketOnlyInsideFin (degrees innerSleeveMDRForSideMount) rowReductionFactor pixelsPerMM
-            generateSwimFinStl (degrees innerSleeveMDRForSideMount) rowReductionFactor pixelsPerMM []
+            --generateSwimFinStl (degrees innerSleeveMDRForSideMount) rowReductionFactor pixelsPerMM []
             --showSwimFinCumulativeCornerPoints (degrees innerSleeveMDRForSideMount) rowReductionFactor pixelsPerMM []
-            
+
+            ------------------ hammerhead shark swim fin -----------------------------------
+            generateHammerHeadSharkHeadSectionStl (degrees innerSleeveMDRForSideMount) rowReductionFactor pixelsPerMM []
+            --generateHammerHeadSharkBodySectionStl (degrees innerSleeveMDRForSideMount) rowReductionFactor pixelsPerMM []
             
       Nothing                                ->
         putStrLn "File not decoded"
 
+
+
+{---------------------------------------------------------hammer head shark swim fin---------------------------------------------
+Prints in 2 sections:
+1: Upper socket with the head. This will allow back of head to print flat on the print bed.
+
+2: Lower sockt with the body. The body should flare out like a set of curved fins to catch water underneath.
+-}
+
+{-
+ToDo:
+fin2 tip degrees need to be reduced to bring the tip around
+-}
+hammerHeadSharkHeadSection :: [SingleDegreeRadii] ->  RowReductionFactor -> PixelsPerMillimeter -> ExceptT BuilderError (State CpointsStack ) CpointsList
+hammerHeadSharkHeadSection originalSDR           rowReductionFactor    pixelsPerMillimeter  = do
+  let
+    mainWallThickness = 3
+    --start/end degrees of the base of fin1/2
+    --1st print at 60, totally out of line with his arm action. Should -50
+    fin1BaseStartDegree = 10
+    fin1BaseThicknessInDegrees   = 8 --orig 4
+    --1st print at 250, totally out of line with his arm action. Should -50
+    fin2BaseStartDegree = 200
+    fin2BaseThicknessInDegrees   = 8 --orig 5
+    --start/end degrees of the tip of fin1/2
+    fin1TipStartDegree = 60
+    fin1TipThicknessInDegrees   = 5 --orig 2
+    fin2TipStartDegree = 200 
+    fin2TipThicknessInDegrees   = 7 --orig 3
+    
+    fin1ExtrusionTranposeValues = [(\r -> 43) | y <- [1..]] --orig 65, too short 25, 40;  bit long 45
+    fin2ExtrusionTranposeValues = [(\r -> 25) | y <- [1..]] --orig 45, no good 15
+    
+    origSDR = originalSDR -- degrees mainSocketInnerMDR 
+    sdrMap = singleDegreeRadiiListToMap origSDR
+
+    --how many of the 10mm layers to drop of top off scan.
+    dropTopScanLayers = drop 1
+    takeTopRemainingScanLayers = take 7
+    origin = (Point{x_axis=0, y_axis=0, z_axis=50})
+    transposeFactors = [0,heightPerPixel.. ]
+    heightPerPixel = 1/pixelsPerMM * (fromIntegral rowReductionFactor)
+
+    innerSDRWithExtraFinDegrees =
+            transformRangeOfSDR [(+0) | y <- [1..]] [0,10] origSDR
+            Flw.|> (\sdrSeq -> sdrSeq S.|> (transformMaybeSDRDegree (+fin1BaseThicknessInDegrees) (sdrMap^.at fin1BaseStartDegree)) )
+            Flw.|> (\sdrSeq -> sdrSeq S.>< transformRangeOfSDR [(+0) | y <- [1..]] [20,30..200] origSDR)
+            Flw.|> (\sdrSeq -> sdrSeq S.|> (transformMaybeSDRDegree (+fin2BaseThicknessInDegrees) (sdrMap^.at fin2BaseStartDegree)) )
+            Flw.|> (\sdrSeq -> sdrSeq S.>< transformRangeOfSDR [(+0) | y <- [1..]] [210,220..360] origSDR)
+            Flw.|> (\sdrSeq -> F.toList sdrSeq)
+    
+    innerSDRWithExtraFinDegreesMap = singleDegreeRadiiListToMap innerSDRWithExtraFinDegrees
+    
+    {-Transpose mainSocketInnerMDR to get thickness of walls, as well as protusion for quick-release attachment.-}
+    outerMDR = MultiDegreeRadii "a useless name" (map (transformSDRWithList [(+3) | x <- [1..]]) innerSDRWithExtraFinDegrees)
+    outerSDR = degrees outerMDR
+    outerMDRMap =  singleDegreeRadiiListToMap $ degrees outerMDR           
+    
+
+    {-
+    Join the inner/outer MDR's together, then drop the 1st 6 rows to make the socket shorter.
+    Concat them so they will work with the stl autogenerate function.
+    -}
+    mainSocketWalls = concat $ 
+      takeTopRemainingScanLayers $ dropTopScanLayers  (createVerticalWalls  innerSDRWithExtraFinDegrees outerSDR origin transposeFactors)
+  
+  mainSocketCubes <- buildCubePointsList' "create socket cubes" mainSocketWalls [CornerPointsId | x <-[1..]]
+
+
+  let --fin1
+      backOfFin1Sdr  =
+        transformRangeOfSDR [(+0) | x <- [1..]] [fin1BaseStartDegree] (degrees outerMDR)
+        Flw.|> (\sdrSeq -> sdrSeq S.|> (transformMaybeSDRDegree (+fin1BaseThicknessInDegrees) (outerMDRMap^.at fin1BaseStartDegree)) )
+        Flw.|> (\sdrSeq -> F.toList sdrSeq)
+      
+      frontOfFin1Sdr =
+        transformRangeOfSDR fin1ExtrusionTranposeValues [fin1BaseStartDegree] (degrees outerMDR)
+        Flw.|> (\sdrSeq -> sdrSeq S.><
+                           (transformRangeOfSDR fin1ExtrusionTranposeValues [(fin1BaseStartDegree + fin1TipThicknessInDegrees)] 
+                             [(transformMaybeSDRDegree (+fin1TipThicknessInDegrees) (outerMDRMap^.at fin1BaseStartDegree))]
+                           )
+               )
+        Flw.|> (\sdrSeq -> F.toList sdrSeq)
+        
+  fin1Cubes     <- buildCubePointsList' "create fin 1 cubes"
+                     (concat $ takeTopRemainingScanLayers $ dropTopScanLayers $ createVerticalWalls  backOfFin1Sdr frontOfFin1Sdr origin transposeFactors)
+                     [CornerPointsId | x <-[1..]]
+  
+  
+  let --fin2
+      backOfFin2Sdr  =
+        transformRangeOfSDR [(+0) | x <- [1..]] [fin2BaseStartDegree] (degrees outerMDR)
+        Flw.|> (\sdrSeq -> sdrSeq S.|> (transformMaybeSDRDegree (+fin2BaseThicknessInDegrees) (outerMDRMap^.at fin2BaseStartDegree)) )
+        Flw.|> (\sdrSeq -> F.toList sdrSeq)
+
+      frontOfFin2Sdr =
+        transformRangeOfSDR fin2ExtrusionTranposeValues [fin2TipStartDegree] (degrees outerMDR)
+        Flw.|> (\sdrSeq -> sdrSeq S.><
+                           (transformRangeOfSDR fin2ExtrusionTranposeValues [(fin2TipStartDegree + fin2TipThicknessInDegrees)] 
+                             [(transformMaybeSDRDegree (+fin2TipThicknessInDegrees) (outerMDRMap^.at fin2TipStartDegree))]
+                           )
+               )
+        Flw.|> (\sdrSeq -> F.toList sdrSeq)
+
+  
+  fin2Cubes     <- buildCubePointsList' "create fin 2 cubes"
+                     (concat $ takeTopRemainingScanLayers $ dropTopScanLayers $ createVerticalWalls  backOfFin2Sdr frontOfFin2Sdr origin transposeFactors)
+                     [CornerPointsId | x <-[1..]]
+  
+  return fin2Cubes
+
+--output the stl
+generateHammerHeadSharkHeadSectionStl :: [SingleDegreeRadii] ->  RowReductionFactor -> PixelsPerMillimeter -> CpointsStack -> IO () --[CornerPoints]
+generateHammerHeadSharkHeadSectionStl     originalSDR            rowReductionFactor    pixelsPerMillimeter    inState =
+  let cpoints =  ((execState $ runExceptT (hammerHeadSharkHeadSection originalSDR rowReductionFactor pixelsPerMillimeter) ) inState)
+  in  writeStlToFile $ newStlShape "socket with quick release"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
+
+
+--print out the CornerPoints built up in the state monad.
+showHammerHeadSharkHeadSectionCumulativeCornerPoints :: [SingleDegreeRadii] ->  RowReductionFactor -> PixelsPerMillimeter -> CpointsStack -> IO ()
+showHammerHeadSharkHeadSectionCumulativeCornerPoints     originalSDR            rowReductionFactor    pixelsPerMillimeter    inState =
+  print $ show  ((evalState $ runExceptT (hammerHeadSharkHeadSection originalSDR rowReductionFactor pixelsPerMillimeter) ) inState)
+
+{-
+ToDo:
+Shorten the fins slightly.
+-}
+hammerHeadSharkBodySection :: [SingleDegreeRadii] ->  RowReductionFactor -> PixelsPerMillimeter -> ExceptT BuilderError (State CpointsStack ) CpointsList
+hammerHeadSharkBodySection originalSDR           rowReductionFactor    pixelsPerMillimeter  = do
+  let
+    mainWallThickness = 3
+    --start/end degrees of the base of fin1/2
+    --1st print at 60, totally out of line with his arm action. Should -50
+    fin1BaseStartDegree = 10
+    fin1BaseThicknessInDegrees   = 8 --orig 4
+    --1st print at 250, totally out of line with his arm action. Should -50
+    fin2BaseStartDegree = 200
+    fin2BaseThicknessInDegrees   = 8 --orig 5
+    --start/end degrees of the tip of fin1/2
+    fin1TipStartDegree = 60
+    fin1TipThicknessInDegrees   = 5 --orig 2
+    fin2TipStartDegree = 200
+    fin2TipThicknessInDegrees   = 7 --orig 3
+    
+    fin1ExtrusionTranposeValues = [(\r -> 50) | y <- [1..]] --orig 65, too short 43, 
+    fin2ExtrusionTranposeValues = [(\r -> 25) | y <- [1..]] --orig 45, no good 15
+    
+    origSDR = originalSDR -- degrees mainSocketInnerMDR 
+    sdrMap = singleDegreeRadiiListToMap origSDR
+
+    --how many of the 10mm layers to drop of top off scan.
+    dropTopScanLayers = drop 8
+    takeTopRemainingScanLayers = take 100
+    origin = (Point{x_axis=0, y_axis=0, z_axis=50})
+    transposeFactors = [0,heightPerPixel.. ]
+    heightPerPixel = 1/pixelsPerMM * (fromIntegral rowReductionFactor)
+
+    innerSDRWithExtraFinDegrees =
+            transformRangeOfSDR [(+0) | y <- [1..]] [0,10] origSDR
+            Flw.|> (\sdrSeq -> sdrSeq S.|> (transformMaybeSDRDegree (+fin1BaseThicknessInDegrees) (sdrMap^.at fin1BaseStartDegree)) )
+            Flw.|> (\sdrSeq -> sdrSeq S.>< transformRangeOfSDR [(+0) | y <- [1..]] [20,30..200] origSDR)
+            Flw.|> (\sdrSeq -> sdrSeq S.|> (transformMaybeSDRDegree (+fin2BaseThicknessInDegrees) (sdrMap^.at fin2BaseStartDegree)) )
+            Flw.|> (\sdrSeq -> sdrSeq S.>< transformRangeOfSDR [(+0) | y <- [1..]] [210,220..360] origSDR)
+            Flw.|> (\sdrSeq -> F.toList sdrSeq)
+    
+    innerSDRWithExtraFinDegreesMap = singleDegreeRadiiListToMap innerSDRWithExtraFinDegrees
+    
+    {-Transpose mainSocketInnerMDR to get thickness of walls, as well as protusion for quick-release attachment.-}
+    outerMDR = MultiDegreeRadii "a useless name" (map (transformSDRWithList [(+3) | x <- [1..]]) innerSDRWithExtraFinDegrees)
+    outerSDR = degrees outerMDR
+    outerMDRMap =  singleDegreeRadiiListToMap $ degrees outerMDR           
+    
+
+    {-
+    Join the inner/outer MDR's together, then drop the 1st 6 rows to make the socket shorter.
+    Concat them so they will work with the stl autogenerate function.
+    -}
+    mainSocketWalls = concat $ 
+      takeTopRemainingScanLayers $ dropTopScanLayers  (createVerticalWalls  innerSDRWithExtraFinDegrees outerSDR origin transposeFactors)
+  
+  mainSocketCubes <- buildCubePointsList' "create socket cubes" mainSocketWalls [CornerPointsId | x <-[1..]]
+
+
+  let --fin1
+      backOfFin1Sdr  =
+        transformRangeOfSDR [(+0) | x <- [1..]] [fin1BaseStartDegree] (degrees outerMDR)
+        Flw.|> (\sdrSeq -> sdrSeq S.|> (transformMaybeSDRDegree (+fin1BaseThicknessInDegrees) (outerMDRMap^.at fin1BaseStartDegree)) )
+        Flw.|> (\sdrSeq -> F.toList sdrSeq)
+      
+      frontOfFin1Sdr =
+        transformRangeOfSDR fin1ExtrusionTranposeValues [fin1BaseStartDegree] (degrees outerMDR)
+        Flw.|> (\sdrSeq -> sdrSeq S.><
+                           (transformRangeOfSDR fin1ExtrusionTranposeValues [(fin1BaseStartDegree + fin1TipThicknessInDegrees)] 
+                             [(transformMaybeSDRDegree (+fin1TipThicknessInDegrees) (outerMDRMap^.at fin1BaseStartDegree))]
+                           )
+               )
+        Flw.|> (\sdrSeq -> F.toList sdrSeq)
+        
+  fin1Cubes     <- buildCubePointsList' "create fin 1 cubes"
+                     (concat $ takeTopRemainingScanLayers $ dropTopScanLayers $ createVerticalWalls  backOfFin1Sdr frontOfFin1Sdr origin transposeFactors)
+                     [CornerPointsId | x <-[1..]]
+  
+  
+  let --fin2
+      backOfFin2Sdr  =
+        transformRangeOfSDR [(+0) | x <- [1..]] [fin2BaseStartDegree] (degrees outerMDR)
+        Flw.|> (\sdrSeq -> sdrSeq S.|> (transformMaybeSDRDegree (+fin2BaseThicknessInDegrees) (outerMDRMap^.at fin2BaseStartDegree)) )
+        Flw.|> (\sdrSeq -> F.toList sdrSeq)
+
+      frontOfFin2Sdr =
+        transformRangeOfSDR fin2ExtrusionTranposeValues [fin2BaseStartDegree] (degrees outerMDR)
+        Flw.|> (\sdrSeq -> sdrSeq S.><
+                           (transformRangeOfSDR fin2ExtrusionTranposeValues [(fin2BaseStartDegree + fin2TipThicknessInDegrees)] 
+                             [(transformMaybeSDRDegree (+fin2TipThicknessInDegrees) (outerMDRMap^.at fin2BaseStartDegree))]
+                           )
+               )
+        Flw.|> (\sdrSeq -> F.toList sdrSeq)
+
+  
+  fin2Cubes     <- buildCubePointsList' "create fin 2 cubes"
+                     (concat $ takeTopRemainingScanLayers $ dropTopScanLayers $ createVerticalWalls  backOfFin2Sdr frontOfFin2Sdr origin transposeFactors)
+                     [CornerPointsId | x <-[1..]]
+  
+  return fin2Cubes
+
+--output the stl
+generateHammerHeadSharkBodySectionStl :: [SingleDegreeRadii] ->  RowReductionFactor -> PixelsPerMillimeter -> CpointsStack -> IO () --[CornerPoints]
+generateHammerHeadSharkBodySectionStl     originalSDR            rowReductionFactor    pixelsPerMillimeter    inState =
+  let cpoints =  ((execState $ runExceptT (hammerHeadSharkBodySection originalSDR rowReductionFactor pixelsPerMillimeter) ) inState)
+  in  writeStlToFile $ newStlShape "socket with quick release"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
+
+
+--print out the CornerPoints built up in the state monad.
+showHammerHeadSharkBodySectionCumulativeCornerPoints :: [SingleDegreeRadii] ->  RowReductionFactor -> PixelsPerMillimeter -> CpointsStack -> IO ()
+showHammerHeadSharkBodySectionCumulativeCornerPoints     originalSDR            rowReductionFactor    pixelsPerMillimeter    inState =
+  print $ show  ((evalState $ runExceptT (hammerHeadSharkBodySection originalSDR rowReductionFactor pixelsPerMillimeter) ) inState)
 {-----------------------------------------------------------swim fin--------------------------------------------------------------
 A socket with fins on both sides to act as attachment points for poly-carbonate fins.
 Uses the mtl builder system.
