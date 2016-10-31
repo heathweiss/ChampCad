@@ -544,12 +544,18 @@ anyCornerPoint +++ (CornerPointsId) = anyCornerPoint
 (F1 f1) +++ (F4 f4) =
      BottomFrontLine {f1=f1, f4=f4}
 
+(BottomLeftLine b1' f1') +++ (BottomRightLine b4' f4') =
+    BottomFace {b1=b1', f1=f1', b4=b4', f4=f4'}
+
 
 (F1 f1) +++ (BottomFrontLine f1a f4a) = BottomFrontLine f1 f1a
 
 (BottomFrontLine f1a f4a) +++ (F1 f1) = BottomFrontLine f1a f1
 
 (F1 f1) +++ (B1 b1) =
+    BottomLeftLine b1 f1
+
+(B1 b1) +++ (F1 f1) =
     BottomLeftLine b1 f1
 
 (F2 f2) +++ (F3 f3) =
@@ -565,6 +571,9 @@ anyCornerPoint +++ (CornerPointsId) = anyCornerPoint
     (TopRightLine b3 f3)
 
 (F4 f4) +++ (B4 b4) =
+    (BottomRightLine b4 f4)
+
+(B4 b4) +++ (F4 f4)  =
     (BottomRightLine b4 f4)
 
 (F4 f4) +++ (F1 f1) =
@@ -585,6 +594,13 @@ anyCornerPoint +++ (CornerPointsId) = anyCornerPoint
 
 (F2 f2t) +++ (FrontTopLine f2 f3)  =
   FrontTopLine f2t f2
+
+(BottomLeftLine b1' f1') +++ (F1 f1'') =
+  BottomLeftLine f1' f1''
+
+(BottomRightLine b4' f4') +++ (F4 f4'') =
+  BottomRightLine f4' f4''
+
 
 (CornerPointsError _) +++ b = CornerPointsError "illegal CornerPointsError +++ _ operation"
 --faces
