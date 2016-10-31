@@ -23,7 +23,7 @@ import CornerPoints.FaceConversions(upperFaceFromLowerFace, backFaceFromFrontFac
 import CornerPoints.Degree(Degree(..))
 import TypeClasses.Transposable(transpose)
 
-import Control.Lens
+--import Control.Lens
 
 import Builder.List((&@~+++@), (&@~+++#@), (||@~+++^||), newCornerPointsWith10DegreesBuilder)
 import qualified Builder.Sequence as S (newCornerPointsWith10DegreesBuilder, (||@~+++^||), (@~+++#@|>), (@~+++@|>))
