@@ -46,6 +46,7 @@ library
                        Examples.ShoeLift.SnowBoardBoot, Examples.ShoeLift.KangarooShoe,
                        Examples.ShoeLift.GeoxShoe,
                        Examples.ShoeLift.SandalsAFO,
+                       Examples.ShoeLift.CrazyBBoots,
                        Examples.Persist.SingleLineTable,
                        Examples.Persist.MappedToCornerPoints,
                        --HeelGenerators.SandalsToe, HeelGenerators.SandalsHeel
