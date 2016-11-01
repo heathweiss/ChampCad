@@ -501,11 +501,17 @@ anyCornerPoint +++ (CornerPointsId) = anyCornerPoint
 (TopLeftLine b2 f2) +++ (TopRightLine b3 f3) =
     TopFace b2 f2 b3 f3
 
+(TopLeftLine b2 f2) +++ (F2 f2') =
+  TopLeftLine f2 f2'
+
 (TopLeftLine b2 f2) +++ (BottomLeftLine b1 f1) =
     LeftFace b1 b2 f1 f2
 
 (TopRightLine b3 f3) +++ (TopLeftLine b2 f2) =
     TopFace b2 f2 b3 f3
+
+(TopRightLine b3 f3) +++ (F3 f3') =
+  TopRightLine f3 f3'
 
 (TopRightLine b3 f3) +++ (BottomRightLine b4 f4) =
     (RightFace b3 b4 f3 f4)
@@ -541,6 +547,9 @@ anyCornerPoint +++ (CornerPointsId) = anyCornerPoint
 (B2 b2) +++ (B3 b3) =
      BackTopLine {b2=b2, b3=b3}
 
+(B2 b2) +++ (F2 f2) =
+  TopLeftLine b2 f2
+
 (F1 f1) +++ (F4 f4) =
      BottomFrontLine {f1=f1, f4=f4}
 
@@ -557,6 +566,9 @@ anyCornerPoint +++ (CornerPointsId) = anyCornerPoint
 
 (B1 b1) +++ (F1 f1) =
     BottomLeftLine b1 f1
+
+(B3 b3) +++ (F3 f3) =
+  TopRightLine b3 f3
 
 (F2 f2) +++ (F3 f3) =
      FrontTopLine {f2=f2, f3=f3}
