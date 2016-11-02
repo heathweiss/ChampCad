@@ -1,5 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-} 
-module Examples.ShoeLift.CrazyBBoots(generateCutTreadBottomStl, showCutTreadBottomCumulativeCornerPoints) where
+module Examples.ShoeLift.CrazyBBoots(generateRearStl, generateFrontStl, showLowerCubesState) where
 
 
 import CornerPoints.Points(Point(..))
@@ -35,10 +35,22 @@ data TreadData =
                                   _lvl2X1CutTread :: [Point],
                                   _lvl2X2CutTread :: [Point]
                                }
+               |
+                      BootTread
+                               {  _lvl1X1BootTread :: [Point],
+                                  _lvl1X2BootTread :: [Point]
+                                --  _lvl2X1CutTread :: [Point],
+                                --  _lvl2X2CutTread :: [Point]
+                               }
+               
+                    
                   
 
 makeLenses ''TreadData
 
+--split the shoe lift as it is too big to print in 1 piece
+rearHorizontalSplit = 28
+frontHorizontalSplit = rearHorizontalSplit - 1
 
 buildCubePointsListWithAdd  = buildCubePointsList (++)
 idList = [CornerPointsId | x <-[1..]]
@@ -270,20 +282,135 @@ treadData =
     }
 
 
+bootData =
+  BootTread
+    { _lvl1X1BootTread =
+      [Point (-1) (-1) 192,
+       Point (-3) 0 192,
+       Point (-7.5) 1 192,
+       Point (-11) 2 192,
+       Point (-12.5) 3 190,
+       Point (-16.5) 4 190,
+       Point (-18) 5 189,
+       Point (-19) 6 187,
+       Point (-21) 7 185,
+       Point (-22.5) 8 185,
+       Point (-25) 9 184,
+       Point (-26.5) 11 183,
+       Point (-29) 14 182,
+       Point (-31) 17.5 180,
+       Point (-33.5) 21 180,
+       Point (-35.5) 25 180,
+       Point (-36) 30 179,
+       Point (-36) 35 178,
+       Point (-36) 40 178,
+       Point (-36) 50 176,
+       Point (-35) 60 176,
+       Point (-34) 70 176,
+       Point (-32) 80 176,
+       Point (-27) 90 178,
+       Point (-26) 100 180,
+       Point (-24.5) 110 180,
+       Point (-25.5) 120 177,
+       Point (-28) 130 174,
+       Point (-31) 140 171.5,
+       Point (-32) 150 168,
+       Point (-35) 160 168,
+       Point (-35.5) 170 168,
+       Point (-34.5) 180 168,
+       Point (-33.5) 190 168,
+       Point (-32) 200 168,
+       Point (-31) 205 169,
+       Point (-29) 210 170,
+       Point (-26.5) 215 170,
+       Point (-26) 220 172,
+       Point (-23) 225 174,
+       Point (-19) 230 175,
+       Point (-15.5) 235 176,
+       Point (-12.5) 240 179.5,
+       Point (-7.5) 245 182,
+       Point (-6) 246 183,
+       Point (-5.5) 247 183,
+       Point (-4.5) 248 183.5,
+       Point (0) 249 186.5,
+       Point (2) 250 187,
+       Point (4) 250.5 187,
+       Point (6) 251 187.5,
+       Point (7) 251.5 188,
+       Point (9) 252 188
+      ],
+
+      _lvl1X2BootTread =
+      [Point (5) (-1) 190,
+       Point (7) 0 190,
+       Point (14) 1 192,
+       Point (16) 2 188,
+       Point (21) 3 187,
+       Point (24) 4 186,
+       Point (25) 5 183,
+       Point (26) 6 183,
+       Point (29) 7 183,
+       Point (31) 8 181.5,
+       Point (32) 9 181,
+       Point (35) 11 180,
+       Point (36) 14 178,
+       Point (37.5) 17.5 177,
+       Point (39.5) 21 175,
+       Point (41) 25 174.5,
+       Point (43) 30 173.5,
+       Point (43) 35 171,
+       Point (43) 40 171,
+       Point (43) 50 170.5,
+       Point (45) 60 169,
+       Point (46) 70 169,
+       Point (46.5) 80 171,
+       Point (48) 90 173,
+       Point (49) 100 173,
+       Point (52) 110 170.5,
+       Point (54) 120 168,
+       Point (56) 130 165.5,
+       Point (58) 140 163,
+       Point (60) 150 161,
+       Point (63) 160 159.5,
+       Point (62) 170 158,
+       Point (61.5) 180 158,
+       Point (62.5) 190 160,
+       Point (60.5) 200 162,
+       Point (59.5) 205 163.5,
+       Point (59) 210 164,
+       Point (57) 215 165,
+       Point (56) 220 167,
+       Point (53.5) 225 168,
+       Point (51) 230 168.5,
+       Point (48) 235 171,
+       Point (47) 240 174,
+       Point (44) 245 179.5,
+       Point (41) 246 183,
+       Point (41) 247 183,
+       Point (38) 248 183,
+       Point (37) 249 184,
+       Point (35) 250 185,
+       Point (33) 250.5 186,
+       Point (31) 251 187,
+       Point (29) 251.5 188,
+       Point (27) 252 188
+
+      ]
+
+    }
 
 
 
 
 
-
-cutTreadBottom :: ExceptT BuilderError (State CpointsStack ) CpointsList
-cutTreadBottom = do
+lowerCubes :: ([Point] -> [Point]) -> ExceptT BuilderError (State CpointsStack ) CpointsList
+lowerCubes splitter = do
   lvl1CutTreadBtmLeftLines <- buildCubePointsListWithAdd "lvl1X1CutTreadData"
-                            ((B1 (head $ treadData^.lvl1X1CutTread)) +++> (map (F1) (tail $ treadData^.lvl1X1CutTread )))
+                            (  (B1 (head $ splitter $ treadData^.lvl1X1CutTread))  +++> (map (F1) (tail $ splitter $ treadData^.lvl1X1CutTread )))
                             idList
 
   lvl1CutTreadRightLines <- buildCubePointsListWithAdd "lvl1X2CutTreadData"
-                            ((B4 (head $ treadData^.lvl1X2CutTread)) +++> (map (F4) (tail $ treadData^.lvl1X2CutTread )))
+                            ((B4 (head $ splitter $ treadData^.lvl1X2CutTread)) +++> (map (F4) (tail $ splitter $ treadData^.lvl1X2CutTread )))
                             idList
 
   lvl1CutTreadBtmFaces <- buildCubePointsListWithAdd "bottomOfCutTreadFaceData"
@@ -291,11 +418,11 @@ cutTreadBottom = do
                               lvl1CutTreadRightLines
 
   lvl2CutTreadTopLeftLines <- buildCubePointsListWithAdd "lvl2CutTreadTopLeftLines"
-                              ((B2 (head $ treadData^.lvl2X1CutTread)) +++> (map (F2) (tail $ treadData^.lvl2X1CutTread )))
+                              ((B2 (head $ splitter $ treadData^.lvl2X1CutTread)) +++> (map (F2) (tail $ splitter $ treadData^.lvl2X1CutTread )))
                               idList
 
   lvl2CutTreadTopRightLines <- buildCubePointsListWithAdd "lvl2CutTreadTopRightLines"
-                              ((B3 (head $ treadData^.lvl2X2CutTread)) +++> (map (F3) (tail $ treadData^.lvl2X2CutTread )))
+                              ((B3 (head $ splitter $ treadData^.lvl2X2CutTread)) +++> (map (F3) (tail $ splitter $ treadData^.lvl2X2CutTread )))
                               idList
 
   
@@ -308,22 +435,38 @@ cutTreadBottom = do
                            lvl1CutTreadBtmFaces
                            lvl2CutTreadTopFaces
 
-  --temporarily transposeZ to have a look at them. Can replace this once the second cut tread line is scanned.
-  {-
-  bottomOfCutTreadCubes <- buildCubePointsListWithAdd "tempTopForBottomOfCutTreadX1Data"
-                                      ( map ((transposeZ (+100)). upperFaceFromLowerFace) lvl1CutTreadBtmFaces )
-                                      lvl1CutTreadBtmFaces
-  -}                                  
-                            
-  return lvl1And2CutTreadCubes
+  lvl1BootTreadBtmLeftLines <- buildCubePointsListWithAdd "lvl1BootTreadBtmLeftLines"
+                               ((B1 (head $ splitter $ bootData^.lvl1X1BootTread)) +++> (map (F1) (tail $ splitter $ bootData^.lvl1X1BootTread )))
+                               idList
+
+  lvl1BootTreadRightLines <- buildCubePointsListWithAdd "lvl1BootTreadRightLines"
+                             ((B4 (head $ splitter $ bootData^.lvl1X2BootTread)) +++> (map (F4) (tail $ splitter $ bootData^.lvl1X2BootTread )))
+                             idList
+
+  lvl1BootTreadBtmFaces <- buildCubePointsListWithAdd "lvl1BootTreadBtmFaces"
+                          lvl1BootTreadBtmLeftLines
+                          lvl1BootTreadRightLines
+
+  cutTreadToBootTreadAdaptor <- buildCubePointsListWithAdd "cutTreadToBootTreadAdaptor"
+                                (map ((transposeZ (\z -> 140))  . upperFaceFromLowerFace) lvl1BootTreadBtmFaces)
+                                lvl1And2CutTreadCubes
+                               
+  return cutTreadToBootTreadAdaptor
 
 
-generateCutTreadBottomStl :: CpointsStack -> IO () 
-generateCutTreadBottomStl  inState =
-  let cpoints =  ((execState $ runExceptT cutTreadBottom) inState)
+generateStlBase :: ([Point] -> [Point]) -> CpointsStack -> IO () 
+generateStlBase splitter  inState =
+  let cpoints =  ((execState $ runExceptT (lowerCubes splitter)) inState)
   in  writeStlToFile $ newStlShape "crazyB boots lift"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
 
+generateRearStl :: IO ()
+generateRearStl  =
+  generateStlBase (take $ rearHorizontalSplit) []
 
-showCutTreadBottomCumulativeCornerPoints ::  CpointsStack -> IO ()
-showCutTreadBottomCumulativeCornerPoints     inState =
-  print $ show  ((evalState $ runExceptT (cutTreadBottom ) ) inState)
+generateFrontStl :: IO ()
+generateFrontStl  =
+  generateStlBase (drop $ frontHorizontalSplit) []
+
+showLowerCubesState ::  CpointsStack -> IO ()
+showLowerCubesState     inState =
+  print $ show  ((evalState $ runExceptT ((lowerCubes (id)) ) ) inState)
