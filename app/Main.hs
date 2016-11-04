@@ -3,7 +3,7 @@ module Main where
 --import Lib
 --import Examples.Scan.WalkerSocketDesignWork(loadMDRAndPassToProcessor)
 --import System.Environment
-import  Examples.ShoeLift.CrazyBBoots(generateCutTreadRearStl, generateCutTreadFrontStl, showCutTreadCubesState,
+import  Examples.ShoeLift.CrazyBBoots(generateCutTreadFrontStlV2,
                                       generateBootTreadRearStl, generateBootTreadFrontStl, showBootTreadCubesState)
 
 main :: IO ()
@@ -13,7 +13,7 @@ main = do
 
  --crazyBB boot lift
  --generateCutTreadRearStl
- generateCutTreadFrontStl
+ generateCutTreadFrontStlV2
  --showCutTreadCubesState []
 
  --showBootTreadCubesState []

@@ -1,5 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-} 
-module Examples.ShoeLift.CrazyBBoots(generateCutTreadRearStl, generateCutTreadFrontStl, showCutTreadCubesState,
+module Examples.ShoeLift.CrazyBBoots(generateCutTreadFrontStlV2,
                                      generateBootTreadRearStl, generateBootTreadFrontStl, showBootTreadCubesState) where
 
 
@@ -53,10 +53,12 @@ makeLenses ''TreadData
 rearVerticalSplit = 28
 frontVerticalSplit = rearVerticalSplit - 1
 --slice the top off of cutTread cubes so lift can be rotated 180 degrees for a flat print btm.
-cutTreadHorizontalSlicer = 140
+cutTreadHorizontalSlicerV1 = 140
+cutTreadHorizontalSlicerV2 = 130
 --cut the bottom of the boot tread cubes so it can have a flat btm to print.
 --Leave a gap between cut/boot tread slicers so can print an adjustment piece.
-bootTreadHorizontalSlicer = 150
+bootTreadHorizontalSlicerV1 = cutTreadHorizontalSlicerV1 + 10
+bootTreadHorizontalSlicerV2 = cutTreadHorizontalSlicerV2 + 10
 
 buildCubePointsListWithAdd  = buildCubePointsList (++)
 idList = [CornerPointsId | x <-[1..]]
@@ -537,7 +539,7 @@ bootTreadCubes verticalSplitter = do
                    lvl1BootTreadBtmFaces
                 )
                 (map
-                   (transposeZ (\z -> bootTreadHorizontalSlicer))
+                   (transposeZ (\z -> bootTreadHorizontalSlicerV1))
                    lvl1BootTreadBtmFaces
                 )
                 
@@ -563,10 +565,29 @@ showBootTreadCubesState     inState =
 {-------------------------------------------------------------- cutTreadCubes--------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------------------------------
 The lower section of the lift, which includes the shape of the cut tread, and a riser up to the shape of the lvl1 boot tread.
+
+Gets slice off on the top, so that can rotate 180 degrees around y axis in Slicr3r, for a flat print btm.
 -}
 
-cutTreadCubes :: ([Point] -> [Point]) -> ExceptT BuilderError (State CpointsStack ) CpointsList
-cutTreadCubes verticalSplitter = do
+
+{--------V1
+Version 1:
+Too narrow to fit over the cut tread.
+Putting the lift on top of the cut tread works better, especially considering it has a natural ledge to sit on.
+This means:
+-that the lvl2 is not needed.
+-the lift will sit ~1-1.5 cm higher, so the height should be adusted accordingly.
+
+Next:
+see V2
+
+Printer notes:
+Used 3 perimeters. Was good, perhaps should try 2.
+Used 5% honeycomb infill. Very strong, but still light. 4% might be adequate, but Slicr does not give that option.
+Rotated 180 degrees around y axis to have flat print btm.
+-}
+cutTreadCubesV1 :: ([Point] -> [Point]) -> ExceptT BuilderError (State CpointsStack ) CpointsList
+cutTreadCubesV1 verticalSplitter = do
   lvl1CutTreadBtmLeftLines <- buildCubePointsListWithAdd "lvl1X1CutTreadData"
                             (  (B1 (head $ verticalSplitter $ treadData^.lvl1X1CutTread))  +++> (map (F1) (tail $ verticalSplitter $ treadData^.lvl1X1CutTread )))
                             idList
@@ -610,30 +631,85 @@ cutTreadCubes verticalSplitter = do
                           lvl1BootTreadRightLines
 
   cutTreadToBootTreadAdaptor <- buildCubePointsListWithAdd "cutTreadToBootTreadAdaptor"
-                                (map ((transposeZ (\z -> cutTreadHorizontalSlicer))  . upperFaceFromLowerFace) lvl1BootTreadBtmFaces)
+                                (map ((transposeZ (\z -> cutTreadHorizontalSlicerV1))  . upperFaceFromLowerFace) lvl1BootTreadBtmFaces)
                                 lvl1And2CutTreadCubes
                                
   return cutTreadToBootTreadAdaptor
 
 
-generateCutTreadStlBase :: ([Point] -> [Point]) -> CpointsStack -> IO () 
-generateCutTreadStlBase verticalSplitter  inState =
-  let cpoints =  ((execState $ runExceptT (cutTreadCubes verticalSplitter)) inState)
+generateCutTreadStlBaseV1 :: ([Point] -> [Point]) -> CpointsStack -> IO () 
+generateCutTreadStlBaseV1 verticalSplitter  inState =
+  let cpoints =  ((execState $ runExceptT (cutTreadCubesV1 verticalSplitter)) inState)
   in  writeStlToFile $ newStlShape "crazyB boots lift"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
 
-generateCutTreadRearStl :: IO ()
-generateCutTreadRearStl  =
-  generateCutTreadStlBase (take $ rearVerticalSplit) []
+generateCutTreadRearStlV1 :: IO ()
+generateCutTreadRearStlV1  =
+  generateCutTreadStlBaseV1 (take $ rearVerticalSplit) []
 
-generateCutTreadFrontStl :: IO ()
-generateCutTreadFrontStl  =
-  generateCutTreadStlBase (drop $ frontVerticalSplit) []
+generateCutTreadFrontStlV1 :: IO ()
+generateCutTreadFrontStlV1  =
+  generateCutTreadStlBaseV1 (drop $ frontVerticalSplit) []
 
-showCutTreadCubesState ::  CpointsStack -> IO ()
-showCutTreadCubesState     inState =
-  print $ show  ((evalState $ runExceptT ((cutTreadCubes (id)) ) ) inState)
+showCutTreadCubesStateV1 ::  CpointsStack -> IO ()
+showCutTreadCubesStateV1     inState =
+  print $ show  ((evalState $ runExceptT ((cutTreadCubesV1 (id)) ) ) inState)
+
+-- -----===================V2
+
+{-
+Changes from V1:
+-eliminate cut tread lvl 2
+-lower boot tread lvl 1 too compensate for lift sitting higher on the cut tread.
+-}
+cutTreadCubesV2 :: ([Point] -> [Point]) -> ExceptT BuilderError (State CpointsStack ) CpointsList
+cutTreadCubesV2 verticalSplitter = do
+  lvl1CutTreadBtmLeftLines <- buildCubePointsListWithAdd "lvl1X1CutTreadData"
+                            (  (B1 (head $ verticalSplitter $ treadData^.lvl1X1CutTread))  +++> (map (F1) (tail $ verticalSplitter $ treadData^.lvl1X1CutTread )))
+                            idList
+
+  lvl1CutTreadRightLines <- buildCubePointsListWithAdd "lvl1X2CutTreadData"
+                            ((B4 (head $ verticalSplitter $ treadData^.lvl1X2CutTread)) +++> (map (F4) (tail $ verticalSplitter $ treadData^.lvl1X2CutTread )))
+                            idList
+
+  lvl1CutTreadBtmFaces <- buildCubePointsListWithAdd "bottomOfCutTreadFaceData"
+                              lvl1CutTreadBtmLeftLines
+                              lvl1CutTreadRightLines
+
+  lvl1BootTreadBtmLeftLines <- buildCubePointsListWithAdd "lvl1BootTreadBtmLeftLines"
+                               ((B1 (head $ verticalSplitter $ bootData^.lvl1X1BootTread)) +++> (map (F1) (tail $ verticalSplitter $ bootData^.lvl1X1BootTread )))
+                               idList
+
+  lvl1BootTreadRightLines <- buildCubePointsListWithAdd "lvl1BootTreadRightLines"
+                             ((B4 (head $ verticalSplitter $ bootData^.lvl1X2BootTread)) +++> (map (F4) (tail $ verticalSplitter $ bootData^.lvl1X2BootTread )))
+                             idList
+
+  lvl1BootTreadBtmFaces <- buildCubePointsListWithAdd "lvl1BootTreadBtmFaces"
+                          lvl1BootTreadBtmLeftLines
+                          lvl1BootTreadRightLines
+
+  cutTreadToBootTreadAdaptor <- buildCubePointsListWithAdd "cutTreadToBootTreadAdaptor"
+                                (map ((transposeZ (\z -> cutTreadHorizontalSlicerV2))  . upperFaceFromLowerFace) lvl1BootTreadBtmFaces)
+                                lvl1CutTreadBtmFaces
+
+  return cutTreadToBootTreadAdaptor
 
 
+generateCutTreadStlBaseV2 :: ([Point] -> [Point]) -> CpointsStack -> IO () 
+generateCutTreadStlBaseV2 verticalSplitter  inState =
+  let cpoints =  ((execState $ runExceptT (cutTreadCubesV2 verticalSplitter)) inState)
+  in  writeStlToFile $ newStlShape "crazyB boots lift"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
+
+generateCutTreadRearStlV2 :: IO ()
+generateCutTreadRearStlV2  =
+  generateCutTreadStlBaseV2 (take $ rearVerticalSplit) []
+
+generateCutTreadFrontStlV2 :: IO ()
+generateCutTreadFrontStlV2  =
+  generateCutTreadStlBaseV2 (drop $ frontVerticalSplit) []
+
+showCutTreadCubesStateV2 ::  CpointsStack -> IO ()
+showCutTreadCubesStateV2     inState =
+  print $ show  ((evalState $ runExceptT ((cutTreadCubesV2 (id)) ) ) inState)
 {---------------------------------------------------------- common cube builders ---------------------------------------------------}
 lvl1BootTreadBtmLeftLinesBase :: ([Point] -> [Point]) -> [CornerPoints]
 lvl1BootTreadBtmLeftLinesBase verticalSplitter =
