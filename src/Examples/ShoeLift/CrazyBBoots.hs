@@ -1,5 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-} 
-module Examples.ShoeLift.CrazyBBoots(generateCutTreadFrontStlV2,
+module Examples.ShoeLift.CrazyBBoots(generateCutTreadFrontStlV2, generateCutTreadRearStlV2,
                                      generateBootTreadRearStl, generateBootTreadFrontStl, showBootTreadCubesState) where
 
 
