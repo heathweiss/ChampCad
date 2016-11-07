@@ -1,6 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-} 
 module Examples.ShoeLift.CrazyBBoots(generateCutTreadFrontStlV2, generateCutTreadRearStlV2,
-                                     generateBootTreadRearStl, generateBootTreadFrontStl, showBootTreadCubesState) where
+                                     generateBootTreadRearStl, generateBootTreadFrontStl, showBootTreadCubesState,
+                                     generateCutTreadTestFitRearStl) where
 
 
 import CornerPoints.Points(Point(..))
@@ -33,8 +34,11 @@ import Builder.Monad(BuilderError(..), cornerPointsErrorHandler, buildCubePoints
 data TreadData =
                       CutTread {  _lvl1X1CutTread :: [Point],
                                   _lvl1X2CutTread :: [Point],
+                                  _lvl1X1CutTreadYAdj :: [Point],
+                                  _lvl1X2CutTreadYAdj :: [Point],
                                   _lvl2X1CutTread :: [Point],
-                                  _lvl2X2CutTread :: [Point]
+                                  _lvl2X2CutTread :: [Point],
+                                  _lvl1CutTreadAdjFxList :: [(Point -> Point)]
                                }
                |
                       BootTread
@@ -63,19 +67,21 @@ bootTreadHorizontalSlicerV2 = cutTreadHorizontalSlicerV2 + 10
 buildCubePointsListWithAdd  = buildCubePointsList (++)
 idList = [CornerPointsId | x <-[1..]]
 
+{-
+rear section of lvl1 is ~131 mm long, which is ~ 15mm too long.-}
 treadData =
   CutTread
     { _lvl1X1CutTread =
       [Point (-3)  0 64,--(-0.5)  0 64
        Point (-7.5)  1  64,-- ?
-       Point (-9.5)    2  64,--(-2)    2  64
-       Point (-11.5)    3  64,--(-8)    3  64
-       Point (-13.5)   4  64,--(-10)   4  64
+       Point (-9.5)  2  64,--(-2)    2  64
+       Point (-11.5) 3  64,--(-8)    3  64
+       Point (-13.5) 4  64,--(-10)   4  64
        Point (-15)   5  64,--(-11)   5  64
        Point (-16.5) 6  64,--(-13.5) 6  64
        Point (-18.5) 7  64,--(-16.5) 7  64
-       Point (-20) 8  64,--(-19.5) 8  64
-       Point (-21.5)   9  64,--(-22)   9  64
+       Point (-20)   8  64,--(-19.5) 8  64
+       Point (-21.5) 9  64,--(-22)   9  64
        Point (-22.5) 10 64,
        Point (-24.5) 12 64,
        Point (-29)   15 64,
@@ -84,7 +90,7 @@ treadData =
        Point (-36)   25 64,
        Point (-37)   30 64,
        Point (-38)   35 64,
-       Point (-38) 40 64,--(-37.5)
+       Point (-38)   40 64,--(-37.5)
        Point (-38.5) 50 64,
        Point (-37)   60 64,
        Point (-36)   70 64,
@@ -175,6 +181,21 @@ treadData =
        Point 25 263 111,
        Point 21 264 113	
       ],
+      _lvl1CutTreadAdjFxList =
+        let
+          adjuster :: (Double -> Double) -> Point -> Point
+          adjuster fx point =
+             transposeY fx point
+        in
+          [adjuster (\y -> y + adjVal) | adjVal <- [15,14.4642857143..0]]  ++ [adjuster (\y -> y + adjVal) | adjVal <- [0,0..]],
+      
+      _lvl1X1CutTreadYAdj =
+         (zipWith  ($) (treadData^.lvl1CutTreadAdjFxList) (treadData^.lvl1X1CutTread)),
+
+      _lvl1X2CutTreadYAdj =
+         (zipWith  ($) (treadData^.lvl1CutTreadAdjFxList) (treadData^.lvl1X2CutTread)),
+          
+       
       _lvl2X1CutTread =
       [Point (-3) (-1) 92,
        Point (-7.5) 0 92,
@@ -657,6 +678,41 @@ showCutTreadCubesStateV1     inState =
 -- -----===================V2
 
 {-
+Print a thin section to check the size.
+Do 2 perims to see what that is like, as 3 perims does not fit over the tread.
+No infill.
+-}
+cutTreadLvl1TestFit :: ([Point] -> [Point]) -> ExceptT BuilderError (State CpointsStack ) CpointsList
+cutTreadLvl1TestFit verticalSplitter = do
+  lvl1CutTreadBtmLeftLines <- buildCubePointsListWithAdd "lvl1X1CutTreadData"
+                            (  (B1 (head $ verticalSplitter $ treadData^.lvl1X1CutTreadYAdj))  +++> (map (F1) (tail $ verticalSplitter $ treadData^.lvl1X1CutTreadYAdj )))
+                            idList
+
+  lvl1CutTreadRightLines <- buildCubePointsListWithAdd "lvl1X2CutTreadData"
+                            ((B4 (head $ verticalSplitter $ treadData^.lvl1X2CutTreadYAdj)) +++> (map (F4) (tail $ verticalSplitter $ treadData^.lvl1X2CutTreadYAdj )))
+                            idList
+
+  lvl1CutTreadBtmFaces <- buildCubePointsListWithAdd "bottomOfCutTreadFaceData"
+                              lvl1CutTreadBtmLeftLines
+                              lvl1CutTreadRightLines
+
+  lvl1CutTreadCubes <- buildCubePointsListWithAdd "lvl1CutTreadTopFaces"
+                          (map (upperFaceFromLowerFace .  (transposeZ (\z -> 68))) lvl1CutTreadBtmFaces)
+                          lvl1CutTreadBtmFaces
+
+  return lvl1CutTreadCubes
+
+
+generateCutTreadTestFitStlBase :: ([Point] -> [Point]) -> CpointsStack -> IO () 
+generateCutTreadTestFitStlBase verticalSplitter  inState =
+  let cpoints =  ((execState $ runExceptT (cutTreadLvl1TestFit verticalSplitter)) inState)
+  in  writeStlToFile $ newStlShape "crazyB boots lift"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
+
+generateCutTreadTestFitRearStl :: IO ()
+generateCutTreadTestFitRearStl  =
+  generateCutTreadTestFitStlBase (take $ rearVerticalSplit) []
+
+{-
 Changes from V1:
 -eliminate cut tread lvl 2
 -lower boot tread lvl 1 too compensate for lift sitting higher on the cut tread.
@@ -664,11 +720,11 @@ Changes from V1:
 cutTreadCubesV2 :: ([Point] -> [Point]) -> ExceptT BuilderError (State CpointsStack ) CpointsList
 cutTreadCubesV2 verticalSplitter = do
   lvl1CutTreadBtmLeftLines <- buildCubePointsListWithAdd "lvl1X1CutTreadData"
-                            (  (B1 (head $ verticalSplitter $ treadData^.lvl1X1CutTread))  +++> (map (F1) (tail $ verticalSplitter $ treadData^.lvl1X1CutTread )))
+                            (  (B1 (head $ verticalSplitter $ treadData^.lvl1X1CutTreadYAdj))  +++> (map (F1) (tail $ verticalSplitter $ treadData^.lvl1X1CutTreadYAdj )))
                             idList
 
   lvl1CutTreadRightLines <- buildCubePointsListWithAdd "lvl1X2CutTreadData"
-                            ((B4 (head $ verticalSplitter $ treadData^.lvl1X2CutTread)) +++> (map (F4) (tail $ verticalSplitter $ treadData^.lvl1X2CutTread )))
+                            ((B4 (head $ verticalSplitter $ treadData^.lvl1X2CutTreadYAdj)) +++> (map (F4) (tail $ verticalSplitter $ treadData^.lvl1X2CutTreadYAdj )))
                             idList
 
   lvl1CutTreadBtmFaces <- buildCubePointsListWithAdd "bottomOfCutTreadFaceData"
