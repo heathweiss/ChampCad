@@ -34,10 +34,10 @@ import CornerPoints.Transpose(transposeZ, transposeY)
 import Builder.Sequence(newCornerPointsWith5DegreesBuilder, newCornerPointsWithDegreesBuilder, (||@~+++^||), (@~+++@|>) )
 
 
-import Primitives.Cylindrical(cylinderSolidVariableRadiusVariableTopSlope,
-                              cylinderSolidNoSlopeSquaredOffLengthenY, cylinderSolidNoSlopeSquaredOffLengthenYSeparately)
+import Primitives.Cylindrical(cylinderSolidNoSlopeSquaredOffLengthenY, cylinderSolidNoSlopeSquaredOffLengthenYSeparately)
 
-import Primitives.Cylindrical.Solid(slopedBottomCylinder)
+import Primitives.Cylindrical.Solid(slopedBottomCylinder, slopedTopCylinder)
+
 {-
 Will be a 1 piece riser that depends on the toe being rounded, instead of flex in the boot as in a 2 piece lift.
 -}
@@ -209,7 +209,7 @@ writeForwardRoundedToeTread = writeStlToFile $ newStlShape "tread forward" tread
 
 -- ==== print the back again, to fit better into the tread. Needs a sloped top
 
-treadRearSlopedCubes = cylinderSolidVariableRadiusVariableTopSlope treadRadius origin angles [flatXSlope | x <- [1..]] [NegYSlope 2 | x <- [1..]] (5::Height)
+treadRearSlopedCubes = slopedTopCylinder treadRadius origin angles [flatXSlope | x <- [1..]] [NegYSlope 2 | x <- [1..]] (5::Height)
 
 treadRearSlopedTriangles = (newCornerPointsWith5DegreesBuilder treadRearSlopedCubes)
                  ||@~+++^||
@@ -308,7 +308,7 @@ bootYSlopes = mirrorPlusMidPoint
  
 --Where the lift meets the boot.
 --Make cubes separate from Builder, so that can be re-used in adaptor.
-bootCubes =  cylinderSolidVariableRadiusVariableTopSlope bootRadius origin angles [flatXSlope | x <- [1..]] bootYSlopes (20::Height)
+bootCubes =  slopedTopCylinder bootRadius origin angles [flatXSlope | x <- [1..]] bootYSlopes (20::Height)
 
 --print 0-90, 270-360 to split the print as it is too big for my printer.
 bootRearTriangles = newCornerPointsWithDegreesBuilder 5 bootCubes

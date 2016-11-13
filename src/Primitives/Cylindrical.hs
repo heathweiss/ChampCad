@@ -15,8 +15,6 @@ module Primitives.Cylindrical(cylinderWallsNoSlope,cylinderWallsNoSlopeSquaredOf
   cylinderWallsNoSlopeSquaredOffLengthenY,
   cylinderWallsVariableThicknessSloped,
   cylinderWallsVariableThicknessNoSlope,
-  cylinderSolidVariableRadiusVariableTopSlope,
-  {-cylinderSolidVariableRadiusVariableBottomSlope,-}
   cylinderSolidNoSlopeSquaredOffLengthenYSeparately,) where
 
 import CornerPoints.Create(slopeAdjustedForVerticalAngle, Slope(..), Angle(..), flatXSlope, flatYSlope, Origin(..))
@@ -39,46 +37,6 @@ type Height = Double
 type Power = Double
 type LengthenFactor = Double
 
-{- |
-Create a solid cylinder with
--variable Radius
--variable bottom slope
--flat bottom
-
-cylinderSolidVariableRadiusVariableBottomSlope :: [Radius] -> Origin -> [Angle] -> [Slope] -> [Slope] -> Height -> [CornerPoints]
-cylinderSolidVariableRadiusVariableBottomSlope    radii       origin     angles     xSlopes    ySlopes    height  =
-  --bottom faces
-  (
-   createBottomFacesWithVariableSlope origin  radii angles xSlopes ySlopes
-   
-  )
-  |+++|
-  --top faces
-  (
-    createTopFaces (transposeZ (+ height) origin ) radii  angles flatXSlope flatYSlope 
-   
-  )
--}
-
-{- |
-Create a solid cylinder with
--variable Radius
--variable top slope
--flat bottom
--}
-cylinderSolidVariableRadiusVariableTopSlope :: [Radius] -> Origin -> [Angle] -> [Slope] -> [Slope] -> Height -> [CornerPoints]
-cylinderSolidVariableRadiusVariableTopSlope    radii       origin     angles     xSlopes    ySlopes    height  =
-  --top faces
-  (
-   createTopFacesWithVariableSlope (transposeZ (+ height) origin ) radii angles xSlopes ySlopes
-   
-  )
-  |+++|
-  --bottom faces
-  (
-    createBottomFaces origin radii  angles flatXSlope flatYSlope 
-   
-  )
 
 {- |
 Create a no slope walled cylinder with different inner and outer radius.

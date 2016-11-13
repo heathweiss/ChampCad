@@ -34,7 +34,9 @@ import Stl.StlFileWriter(writeStlToFile)
 import Stl.StlCornerPointsWithDegrees(FacesWithRange(..))
 
 import Primitives.Cylindrical(cylinderSolidNoSlopeSquaredOff, cylinderWallsNoSlope, cylinderWallsVariableRadiusNoSlope,
-                              cylinderWallsVariableThicknessNoSlope, cylinderWallsVariableThicknessSloped, cylinderSolidVariableRadiusVariableTopSlope )
+                              cylinderWallsVariableThicknessNoSlope, cylinderWallsVariableThicknessSloped)
+
+import Primitives.Cylindrical.Solid(slopedTopCylinder)
 
 --make signatures more readable
 type Thickness = Double
@@ -100,9 +102,9 @@ centerTopRadius =
 writeCenterTopSlope = writeStlToFile $ newStlShape "kangaroo center" $
                        [FacesBottomFrontTop | x <- [1..]]
                        |+++^|
-                       cylinderSolidVariableRadiusVariableTopSlope centerTopRadius origin angles [flatXSlope | x <- [1..]] [flatYSlope | x <- [1..]] (30.0::Height)
+                       slopedTopCylinder centerTopRadius origin angles [flatXSlope | x <- [1..]] [flatYSlope | x <- [1..]] (30.0::Height)
                        --the sloped section
-                       --cylinderSolidVariableRadiusVariableTopSlope centerTopRadius origin angles [flatXSlope | x <- [1..]] (map NegYSlope [15,15..]) (20.0::Height)
+                       --slopedTopCylinder centerTopRadius origin angles [flatXSlope | x <- [1..]] (map NegYSlope [15,15..]) (20.0::Height)
 
 
 {-The side plates for gluing/attaching the riser.-}

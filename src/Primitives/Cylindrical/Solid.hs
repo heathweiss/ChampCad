@@ -1,7 +1,8 @@
-module Primitives.Cylindrical.Solid(slopedBottomCylinder) where
+module Primitives.Cylindrical.Solid(slopedBottomCylinder, slopedTopCylinder) where
 
 import CornerPoints.Create(Slope(..), Angle(..), flatXSlope, flatYSlope, Origin(..))
-import CornerPoints.HorizontalFaces(createTopFaces, createBottomFacesWithVariableSlope)
+import CornerPoints.HorizontalFaces(createTopFaces, createTopFacesWithVariableSlope,
+                                    createBottomFaces, createBottomFacesWithVariableSlope)
 import CornerPoints.CornerPoints(CornerPoints(..), (+++), (|+++|))
 import CornerPoints.Radius(Radius(..))
 import CornerPoints.Transpose (transposeZ)
@@ -35,3 +36,22 @@ slopedBottomCylinder    radii       origin     angles     xSlopes    ySlopes    
    
   )
 
+{- |
+Create a solid cylinder with
+-variable Radius
+-variable top slope
+-flat bottom
+-}
+slopedTopCylinder :: [Radius] -> Origin -> [Angle] -> [Slope] -> [Slope] -> Height -> [CornerPoints]
+slopedTopCylinder    radii       origin     angles     xSlopes    ySlopes    height  =
+  --top faces
+  (
+   createTopFacesWithVariableSlope (transposeZ (+ height) origin ) radii angles xSlopes ySlopes
+   
+  )
+  |+++|
+  --bottom faces
+  (
+    createBottomFaces origin radii  angles flatXSlope flatYSlope 
+   
+  )
