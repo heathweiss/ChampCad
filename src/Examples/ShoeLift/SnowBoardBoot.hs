@@ -34,8 +34,10 @@ import CornerPoints.Transpose(transposeZ, transposeY)
 import Builder.Sequence(newCornerPointsWith5DegreesBuilder, newCornerPointsWithDegreesBuilder, (||@~+++^||), (@~+++@|>) )
 
 
-import Primitives.Cylindrical(cylinderSolidVariableRadiusVariableTopSlope, cylinderSolidVariableRadiusVariableBottomSlope,
+import Primitives.Cylindrical(cylinderSolidVariableRadiusVariableTopSlope,
                               cylinderSolidNoSlopeSquaredOffLengthenY, cylinderSolidNoSlopeSquaredOffLengthenYSeparately)
+
+import Primitives.Cylindrical.Solid(slopedBottomCylinder)
 {-
 Will be a 1 piece riser that depends on the toe being rounded, instead of flex in the boot as in a 2 piece lift.
 -}
@@ -191,7 +193,7 @@ Create separately from the builder so that can be easily re-used in the adaptor.
 
 This has the 90-270 degree section with a bottom upwards slope to have a rounded toe.
 -}
-treadRoundedToeCubes = cylinderSolidVariableRadiusVariableBottomSlope treadRadius origin angles [flatXSlope | x <- [1..]] treadYSlopes (20::Height)
+treadRoundedToeCubes = slopedBottomCylinder treadRadius origin angles [flatXSlope | x <- [1..]] treadYSlopes (20::Height)
 
 treadRearTriangles = (newCornerPointsWith5DegreesBuilder treadRoundedToeCubes)
                  ||@~+++^||
