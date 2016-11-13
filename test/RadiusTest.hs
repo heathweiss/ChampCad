@@ -3,7 +3,7 @@ module RadiusTest(radisuTestDo) where
 import Test.HUnit
 import CornerPoints.Radius(Radius(..), SingleDegreeRadii(..), Degree(..), MultiDegreeRadii(..), resetMultiDegreeRadiiIfNull,
                           extractSingle, extractList, rotateMDR, setRadiusIfNull,  resetSingleDegreeRadiiIfNull,
-                          setRadiusWithPrecedingValueIfNull, resetMultiDegreeRadiiIfNullWithPreviousValue, transposeSDRList,
+                          setRadiusWithPrecedingValueIfNull, resetMultiDegreeRadiiIfNullWithPreviousValue, 
                           transposeMDRList, extractSDRWithinRange, transformSDRWithList, extractMaybeRadii, extractMaybeSDR,
                           singleDegreeRadiiListToMap)
 
@@ -26,7 +26,6 @@ radisuTestDo = do
  runTestTT createMapOfSingleDegreeRadiiTest
  runTestTT singleDegreeRadiiListToMapTest
  runTestTT extractSDRWithRangeTest
- runTestTT transposeSDRListInRangeTest
   
  runTestTT extractRadiusFromMultiDegreeRadiiTest
  runTestTT extractRadiusFromMultiDegreeRadiiTest2
@@ -37,7 +36,6 @@ radisuTestDo = do
  runTestTT transposeSDRTest
  runTestTT transposeSDRTest2
  runTestTT transposeListOfRadiusWithListOfFxTest
- runTestTT transposeSDRWithListTest
  runTestTT transposeMDRWithListTest
 
  runTestTT rotateMultiDegreeRadiiTest
@@ -124,29 +122,6 @@ extractSDRWithRangeTest = TestCase $ assertEqual
        range = [0.0,1.0]
    in
        extractSDRWithinRange range sdrList
-  )
-
-{-
-given a range of degrees [Double],and a list of SDR  [SingleDegreeRadii], and a list of transpose functions  [(Double -> Double)]
-extract the SDR that are in range
-do the transormation on SDR in range
-return the transformed SDR
--}
-transposeSDRListInRangeTest = TestCase $ assertEqual
-  "transposeSDRListInRangeTest"
-  ([(SingleDegreeRadii 0.0 [Radius 0]),
-    (SingleDegreeRadii 1.0 [Radius 10])
-    
-   ])
-  (let sdrList = [(SingleDegreeRadii 0.0 [Radius 0]),
-                  (SingleDegreeRadii 1.0 [Radius 1]),
-                  (SingleDegreeRadii 2.0 [Radius 2])
-                 ]
-       range = [0.0,1.0]
-       transformFx = [(*10) | x <- [1..]]
-   in
-       transposeSDRList [transformFx | x <- [1..]]  (extractSDRWithinRange range sdrList)
-       
   )
 
 createMapOfSingleDegreeRadiiTest = TestCase $ assertEqual 
@@ -272,11 +247,6 @@ transposeSDRTest2 = TestCase $ assertEqual
   "transposeSDRTest2"
   (SingleDegreeRadii 1 [Radius 4, Radius 5])
   (transpose (+2) (SingleDegreeRadii 1 [Radius 2, Radius 3])  )
-
-transposeSDRWithListTest = TestCase $ assertEqual
-  "transposeSDRWithListTest"
-  ([SingleDegreeRadii 1 [Radius 2, Radius 4]])
-  (transposeSDRList [[(+1), (+2)]] [(SingleDegreeRadii 1 [Radius 1, Radius 2])]  )
 
 transposeMDRWithListTest = TestCase $ assertEqual
   "transposeMDRWithListTest"
