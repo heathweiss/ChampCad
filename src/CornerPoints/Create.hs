@@ -62,7 +62,7 @@ orign: Point
 -The starting point which gets adjusted to give the return point. That way, this point can be created relative to some position, instead of at an origin of 0 0 0
 
 -}
---this is the orig, renamed to Implict so testing will still compile
+
 createCornerPoint :: (Point-> CornerPoints) -> Origin -> Radius ->  Angle -> Slope -> Slope -> CornerPoints
 createCornerPoint cPoint origin horizRadius verticalAngle xSlope ySlope  =
                              let 
@@ -86,7 +86,7 @@ createCornerPoint cPoint origin horizRadius verticalAngle xSlope ySlope  =
                                       (Quadrant4Angle _) -> x_axis' - length
 
                                  
-                                 setYaxis' =
+                                 setYaxis =
                                    let length = radiusAdjustedForSlope * cosOfVerticalAngle
                                        y_axis' = y_axis origin
                                    in
@@ -108,7 +108,7 @@ createCornerPoint cPoint origin horizRadius verticalAngle xSlope ySlope  =
                                  
                                  
                              in       
-                                 cPoint (Point setXaxis setYaxis' setZaxis)
+                                 cPoint (Point setXaxis setYaxis setZaxis)
 
 
 {-Try to make a new version, that works like Christopher Olah's blog
