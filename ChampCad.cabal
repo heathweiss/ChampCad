@@ -73,6 +73,7 @@ library
                        
                        --Shapes
                        Primitives.Cylindrical, Primitives.Cubical
+                       Primitives.Cylindrical.Solid
                        
                        --Scanning
                        Scan.Filter,
