@@ -50,7 +50,6 @@ library
                        Examples.Persist.SingleLineTable,
                        Examples.Persist.MappedToCornerPoints,
                        --HeelGenerators.SandalsToe, HeelGenerators.SandalsHeel
-                       --HeelGenerators.BlackRunnerHeel,  HeelGenerators.BlackRunnerToe,
                        --Have not been redone for changes to MathPolar.
                        --Leave in until sure I will not need them further for printing shoe lifts
                        -- Sockets
