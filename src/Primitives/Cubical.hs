@@ -17,7 +17,7 @@ import CornerPoints.FaceConversions(
   frontTopLineFromBackTopLine,
   bottomFrontLineFromBackBottomLine)
 import  Math.Trigonometry(atanDegrees)
-import CornerPoints.Create( Slope(..), Origin(..), createCornerPoint, createCornerPointSquaredOff, Angle(..),  flatXSlope, flatYSlope,)
+import CornerPoints.Create( Slope(..), Origin(..),  createCornerPointSquaredOff, Angle(..),  flatXSlope, flatYSlope,)
 import CornerPoints.Radius(Radius(..))
 import CornerPoints.HorizontalFaces(createTopFaces, createBottomFaces, createTopFacesWithVariableSlope,  createBottomFacesWithVariableSlope)
 
