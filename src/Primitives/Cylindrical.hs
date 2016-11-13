@@ -1,4 +1,4 @@
-{-# LANGUAGE ParallelListComp #-}
+-- {-# LANGUAGE ParallelListComp #-}
 {---------------- intro -----------------------------
 Supplies basic cylindrical shapes as cad building blocks.
 Includes:
@@ -16,7 +16,7 @@ module Primitives.Cylindrical(cylinderWallsNoSlope,cylinderWallsNoSlopeSquaredOf
   cylinderWallsVariableThicknessSloped,
   cylinderWallsVariableThicknessNoSlope,
   cylinderSolidVariableRadiusVariableTopSlope,
-  cylinderSolidVariableRadiusVariableBottomSlope,
+  {-cylinderSolidVariableRadiusVariableBottomSlope,-}
   cylinderSolidNoSlopeSquaredOffLengthenYSeparately,) where
 
 import CornerPoints.Create(slopeAdjustedForVerticalAngle, Slope(..), Angle(..), flatXSlope, flatYSlope, Origin(..))
@@ -44,7 +44,7 @@ Create a solid cylinder with
 -variable Radius
 -variable bottom slope
 -flat bottom
--}
+
 cylinderSolidVariableRadiusVariableBottomSlope :: [Radius] -> Origin -> [Angle] -> [Slope] -> [Slope] -> Height -> [CornerPoints]
 cylinderSolidVariableRadiusVariableBottomSlope    radii       origin     angles     xSlopes    ySlopes    height  =
   --bottom faces
@@ -58,7 +58,7 @@ cylinderSolidVariableRadiusVariableBottomSlope    radii       origin     angles 
     createTopFaces (transposeZ (+ height) origin ) radii  angles flatXSlope flatYSlope 
    
   )
-
+-}
 
 {- |
 Create a solid cylinder with
