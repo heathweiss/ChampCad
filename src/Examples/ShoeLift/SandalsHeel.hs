@@ -6,7 +6,6 @@ import TriCad.MathPolar(
   radiusAdjustedForZslope,
   xyQuadrantAngle,
   QuadrantAngle(..),
-  createCornerPoint,
   Slope(..),
   Radius(..),
   flatXSlope,

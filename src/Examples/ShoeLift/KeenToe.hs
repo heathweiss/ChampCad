@@ -1,6 +1,6 @@
 module Examples.ShoeLift.KeenToe where
 
-import CornerPoints.Create(slopeAdjustedForVerticalAngle, createCornerPoint, Slope(..),
+import CornerPoints.Create(slopeAdjustedForVerticalAngle,  Slope(..),
   Angle(..), flatXSlope, flatYSlope )
 import CornerPoints.HorizontalFaces(createBottomFaces, createTopFacesWithVariableSlope, createTopFaces,)
 import CornerPoints.Points(Point(..))
