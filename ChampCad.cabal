@@ -43,7 +43,7 @@ library
                        --Examples
                        -- Example ShoeLifts
                        Examples.ShoeLift.KeenToe, Examples.ShoeLift.KeenHeel,
-                       Examples.ShoeLift.SnowBoardBoot, Examples.ShoeLift.KangarooShoe,
+                       Examples.ShoeLift.SnowBoardBoot
                        Examples.ShoeLift.GeoxShoe,
                        Examples.ShoeLift.SandalsAFO,
                        Examples.ShoeLift.CrazyBBoots,
