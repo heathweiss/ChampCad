@@ -239,7 +239,7 @@ createBottomFacesLengthenY inOrigin radii angles xSlope ySlope lengthenFactor =
 {-
 Used to expand a radial shape along the y-axis. Expands away from the origin to keep it centered.
 -}
---ToDo: Replace all logic to a call to the new createBottomFacesSquaredOffLengthenYSeparately, pasing in lengthenFactor/2
+--ToDo: Replace all logic to a call to the new createBottomFacesSquaredOffLengthenYSeparately, passing in lengthenFactor/2
 createBottomFacesSquaredOffLengthenY :: Origin -> [Radius] -> [Angle] -> Slope -> Slope -> Power -> LengthenFactor  -> [CornerPoints]
 createBottomFacesSquaredOffLengthenY inOrigin radii angles xSlope ySlope power lengthenFactor  =
   let --should this have been createLeftLine
