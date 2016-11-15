@@ -23,7 +23,6 @@ import Helpers.List((++:))
 import TypeClasses.Transposable(transpose)
 import Helpers.DSL (ofThe, forThe, andThen, adjustedFor, andThe,)
 
-import Primitives.Cylindrical(cylinderWallsNoSlope)
 
 {----------------------------------------------------- overview------------------------------------------------------------
 This module does the scanning work for the WalkerSocket. It processes the raw data into json files.

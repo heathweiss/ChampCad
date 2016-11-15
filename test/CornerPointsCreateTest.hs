@@ -18,8 +18,6 @@ import CornerPoints.CornerPoints(CornerPoints(..), (+++), (+++>), (|+++|), Corne
 import CornerPoints.Points (Point(..))
 import CornerPoints.Radius(Radius(..))
 import Math.Trigonometry(sinDegrees, cosDegrees)
-import Primitives.Cylindrical(cylinderWallsNoSlope)
-
 
 
 cornerPointsCreateTestDo = do
