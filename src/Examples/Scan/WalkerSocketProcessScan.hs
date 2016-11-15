@@ -19,10 +19,11 @@ import CornerPoints.FaceExtraction (extractFrontFace, extractTopFace,extractBott
 import CornerPoints.FaceConversions(backFaceFromFrontFace, upperFaceFromLowerFace, lowerFaceFromUpperFace )
 import CornerPoints.Transpose (transposeZ)
 import Helpers.List((++:))
-import Primitives.Cylindrical(cylinderSolidNoSlope)
-import Primitives.Cylindrical(cylinderWallsNoSlope)
+
 import TypeClasses.Transposable(transpose)
 import Helpers.DSL (ofThe, forThe, andThen, adjustedFor, andThe,)
+
+import Primitives.Cylindrical(cylinderWallsNoSlope)
 
 {----------------------------------------------------- overview------------------------------------------------------------
 This module does the scanning work for the WalkerSocket. It processes the raw data into json files.

@@ -6,16 +6,12 @@ Includes:
   cylinder
 -}
 
-module Primitives.Cylindrical(cylinderWallsNoSlope,cylinderWallsNoSlopeSquaredOff,
-  cylinderSolidNoSlope,
+module Primitives.Cylindrical(
+  cylinderWallsNoSlope,cylinderWallsNoSlopeSquaredOff,
   cylinderWallsVariableRadiusNoSlope,
-  cylinderSolidNoSlopeSquaredOff,
-  cylinderSolidNoSlopeLengthenY,
-  cylinderSolidNoSlopeSquaredOffLengthenY,
   cylinderWallsNoSlopeSquaredOffLengthenY,
   cylinderWallsVariableThicknessSloped,
-  cylinderWallsVariableThicknessNoSlope,
-  cylinderSolidNoSlopeSquaredOffLengthenYSeparately,) where
+  cylinderWallsVariableThicknessNoSlope) where
 
 import CornerPoints.Create(slopeAdjustedForVerticalAngle, Slope(..), Angle(..), flatXSlope, flatYSlope, Origin(..))
 import CornerPoints.HorizontalFaces(createTopFaces, createBottomFaces,
@@ -120,41 +116,12 @@ cylinderWallsNoSlopeSquaredOffLengthenY    innerRadius  origin     angles     he
              
         in   cylinderCubes
 
-cylinderSolidNoSlope :: Radius -> Origin -> [Angle] -> Height -> [CornerPoints]
-cylinderSolidNoSlope    radius    origin    angles     height  =
-  createBottomFaces origin [radius | x <- [1..]] angles flatXSlope flatYSlope
-  |@+++#@|
-  (upperFaceFromLowerFace . (transposeZ (+height)))
-
-cylinderSolidNoSlopeLengthenY :: Radius -> Origin -> [Angle] -> Height -> LengthenFactor -> [CornerPoints]
-cylinderSolidNoSlopeLengthenY    radius    origin    angles     height    lengthenFactor  =
-  createBottomFacesLengthenY origin [radius | x <- [1..]] angles flatXSlope flatYSlope lengthenFactor
-  |@+++#@|
-  (upperFaceFromLowerFace . (transposeZ (+height)))
 
 
-cylinderSolidNoSlopeSquaredOffLengthenY :: Radius -> Origin -> [Angle] -> Height  -> Power -> LengthenFactor -> [CornerPoints]
-cylinderSolidNoSlopeSquaredOffLengthenY    radius    origin    angles     height     power    lengthenFactor      =
---createBottomFacesSquaredOffLengthenY :: Origin -> [Radius] -> [Angle] -> Slope -> Slope -> Power -> LengthenFactor  -> [CornerPoints]
-  createBottomFacesSquaredOffLengthenY origin [radius | x <- [1..]] angles flatXSlope flatYSlope power lengthenFactor 
-  |@+++#@|
-  (upperFaceFromLowerFace . (transposeZ (+height)))
 
-{- |
-Create a solid cylinder, squared off, lengthened along the Y axis. The amount lengthened in the pos/neg directions, can be set separately.
--}  
-cylinderSolidNoSlopeSquaredOffLengthenYSeparately :: Radius -> Origin -> [Angle] -> Height  -> Power -> LengthenFactor -> LengthenFactor -> [CornerPoints]
-cylinderSolidNoSlopeSquaredOffLengthenYSeparately    radius    origin    angles     height     power    lengthenNegYFactor lengthenPosYFactor      =
-  createBottomFacesSquaredOffLengthenYSeparately origin [radius | x <- [1..]] angles flatXSlope flatYSlope power lengthenNegYFactor lengthenPosYFactor
-  |@+++#@|
-  (upperFaceFromLowerFace . (transposeZ (+height)))
 
---
-cylinderSolidNoSlopeSquaredOff :: Radius -> Origin -> [Angle] -> Height -> Power -> [CornerPoints]
-cylinderSolidNoSlopeSquaredOff    radius    origin    angles     height    power  =
-  createBottomFacesSquaredOff origin [radius | x <- [1..]] angles flatXSlope flatYSlope power
-  |@+++#@|
-  (upperFaceFromLowerFace . (transposeZ (+height)))
+
+
 
 
 

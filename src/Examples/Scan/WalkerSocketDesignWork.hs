@@ -28,9 +28,9 @@ import Scan.Filter(runningAverage, runningAvgSingleDegreeRadii)
 
 import Helpers.List((++:))
 
-import Primitives.Cylindrical(cylinderWallsNoSlopeSquaredOff, cylinderSolidNoSlopeSquaredOff,
-                                   cylinderWallsNoSlopeSquaredOffLengthenY, cylinderSolidNoSlopeSquaredOffLengthenY,
-                              cylinderWallsNoSlope, cylinderSolidNoSlope)
+import Primitives.Cylindrical(cylinderWallsNoSlopeSquaredOffLengthenY,
+                              cylinderWallsNoSlope, cylinderWallsNoSlopeSquaredOff)
+import Primitives.Cylindrical.Solid(cylinder, squaredOffYLengthenedCylinder, squaredOffCylinder)
 
 import Data.Word(Word8)
 import qualified Data.ByteString.Lazy as BL
@@ -580,7 +580,7 @@ hosePlate plateRadius power lengthenYFactor = do
 
   riserBaseBackFaces <- buildCubePointsList' "riserBaseInsideFaces"
     (map (backFaceFromFrontFace . extractFrontFace)
-    (cylinderSolidNoSlope (Radius hoseOuterRadius)  baseOrigin angles baseHeight))
+    (cylinder (Radius hoseOuterRadius)  baseOrigin angles baseHeight))
     [CornerPointsId | x <-[1..]]
   
   riserBaseCubes <- buildCubePointsList' "riserBaseCubes"
@@ -589,7 +589,7 @@ hosePlate plateRadius power lengthenYFactor = do
 
   --base upon which the hose rests
   hoseBaseCubes <- buildCubePointsList' "hoseBaseCubes"
-    (cylinderSolidNoSlope (Radius hoseInnerRadius) baseOrigin angles baseHeight)
+    (cylinder (Radius hoseInnerRadius) baseOrigin angles baseHeight)
     [CornerPointsId | x <-[1..]]
 
   --walls that surround the hose.
@@ -647,7 +647,7 @@ pushPlate plateRadius    power    lengthenYFactor  = do
     riserHeight = 3
 
   centerPlate <- buildCubePointsList' "centerPlate"
-                  (cylinderSolidNoSlopeSquaredOffLengthenY  (Radius 21)   origin    angles     plateHeight  power    lengthenYFactor)
+                  (squaredOffYLengthenedCylinder  (Radius 21)   origin    angles     plateHeight  power    lengthenYFactor)
                   [CornerPointsId | x <-[1..]]
 
   outerRing <- buildCubePointsList' "outerRing"

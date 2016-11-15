@@ -1,8 +1,8 @@
 {-# LANGUAGE ParallelListComp #-}
 module Examples.Primitives.Cylinders where
-import Primitives.Cylindrical(cylinderSolidNoSlopeSquaredOff, cylinderSolidNoSlope, cylinderWallsNoSlopeSquaredOff, 
-                                   cylinderSolidNoSlopeLengthenY, cylinderSolidNoSlopeSquaredOffLengthenY, cylinderWallsNoSlopeSquaredOffLengthenY)
-import Primitives.Cylindrical(cylinderWallsNoSlope)
+import Primitives.Cylindrical(cylinderWallsNoSlope, cylinderWallsNoSlopeSquaredOff,
+                              cylinderWallsNoSlopeSquaredOffLengthenY)
+import  Primitives.Cylindrical.Solid(yLengthenedCylinder, squaredOffCylinder, squaredOffYLengthenedCylinder)
 import CornerPoints.Radius(Radius(..))
 import CornerPoints.Points(Point(..))
 import Stl.StlCornerPoints((|+++^|), (||+++^||), Faces(..))
@@ -14,7 +14,7 @@ import CornerPoints.Transpose(transposeY)
 angles = (map (Angle) [0,10..360])
 
 solidCylinderSquared =
-  let cylinder = cylinderSolidNoSlopeSquaredOff (Radius 10) (Point 0 0 0) angles (10 :: Height) (30 :: Power) 
+  let cylinder = squaredOffCylinder (Radius 10) (Point 0 0 0) angles (10 :: Height) (30 :: Power) 
       cylinderTriangles =  [FacesBackBottomFrontTop | x <- [1..35]]
              |+++^|
              cylinder
@@ -22,8 +22,7 @@ solidCylinderSquared =
   in  writeStlToFile cylinderStl
 
 solidCylinderLengthenY =
-    --cylinderSolidNoSlopeLengthenY ::         Radius ->    Origin ->    [Angle] ->    Height -> LengthenFactor -> [CornerPoints]
-  let cylinder = cylinderSolidNoSlopeLengthenY (Radius 10) (Point 0 0 0) angles (10 :: Height)  (10 :: LengthenFactor) 
+  let cylinder = yLengthenedCylinder (Radius 10) (Point 0 0 0) angles (10 :: Height)  (10 :: LengthenFactor) 
       cylinderTriangles =  [FacesBackBottomFrontTop | x <- [1..36]]
              |+++^|
              cylinder
@@ -31,8 +30,7 @@ solidCylinderLengthenY =
   in  writeStlToFile cylinderStl
 
 solidCylinderSquaredOffLengthenY =
-    --cylinderSolidNoSlopeLengthenY ::         Radius ->    Origin ->    [Angle] ->    Height -> LengthenFactor -> [CornerPoints]
-  let cylinder = cylinderSolidNoSlopeSquaredOffLengthenY (Radius 10) (Point 0 0 0) angles (10 :: Height) (10 :: Power)  (10::LengthenFactor)  
+  let cylinder = squaredOffYLengthenedCylinder (Radius 10) (Point 0 0 0) angles (10 :: Height) (10 :: Power)  (10::LengthenFactor)  
       cylinderTriangles =  [FacesBackBottomFrontTop | x <- [1..36]]
              |+++^|
              cylinder

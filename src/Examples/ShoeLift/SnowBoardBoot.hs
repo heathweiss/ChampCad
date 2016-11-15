@@ -33,10 +33,7 @@ import CornerPoints.Transpose(transposeZ, transposeY)
 
 import Builder.Sequence(newCornerPointsWith5DegreesBuilder, newCornerPointsWithDegreesBuilder, (||@~+++^||), (@~+++@|>) )
 
-
-import Primitives.Cylindrical(cylinderSolidNoSlopeSquaredOffLengthenY, cylinderSolidNoSlopeSquaredOffLengthenYSeparately)
-
-import Primitives.Cylindrical.Solid(slopedBottomCylinder, slopedTopCylinder)
+import Primitives.Cylindrical.Solid(slopedBottomCylinder, slopedTopCylinder, squaredOffYLengthenedCylinder)
 
 {-
 Will be a 1 piece riser that depends on the toe being rounded, instead of flex in the boot as in a 2 piece lift.
