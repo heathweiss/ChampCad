@@ -112,7 +112,12 @@ createCornerPoint cPoint origin horizRadius verticalAngle xSlope ySlope  =
 
 
 {-Try to make a new version, that works like Christopher Olah's blog
-https://christopherolah.wordpress.com/2011/11/06/manipulation-of-implicit-functions-with-an-eye-on-cad/-}
+https://christopherolah.wordpress.com/2011/11/06/manipulation-of-implicit-functions-with-an-eye-on-cad/
+
+ToDo:
+Create a base function for this that would allow getZ3 formula to be passed in.
+This will allow the easy creation of other shapes, by passing in various formulas.
+-}
 createCornerPointSquaredOff :: (Point-> CornerPoints) -> Origin -> Radius ->  Angle -> Slope -> Slope -> Power -> CornerPoints
 createCornerPointSquaredOff cPoint origin horizRadius verticalAngle xSlope ySlope power  =
                              let 
@@ -142,10 +147,10 @@ createCornerPointSquaredOff cPoint origin horizRadius verticalAngle xSlope ySlop
                                    in
                                       
                                     case getQuadrantAngle verticalAngle of
-                                      (Quadrant1Angle _) -> x_axis' + length --nfg 
-                                      (Quadrant2Angle _) -> x_axis' + length --nfg 
-                                      (Quadrant3Angle _) -> x_axis' - length --nfg
-                                      (Quadrant4Angle _) -> x_axis' - length --nfg
+                                      (Quadrant1Angle _) -> x_axis' + length  
+                                      (Quadrant2Angle _) -> x_axis' + length  
+                                      (Quadrant3Angle _) -> x_axis' - length 
+                                      (Quadrant4Angle _) -> x_axis' - length 
                                  
                                  setYaxis' =
                                    let length = cosOfVerticalQuadrantAngle * radiusAdjustedForSlope
@@ -165,10 +170,10 @@ createCornerPointSquaredOff cPoint origin horizRadius verticalAngle xSlope ySlop
                                    in
                                      
                                     case getQuadrantAngle verticalAngle of
-                                      (Quadrant1Angle _) -> y_axis' - length --nfg 
-                                      (Quadrant2Angle _) -> y_axis' + length --nfg 
-                                      (Quadrant3Angle _) -> y_axis' + length --nfg 
-                                      (Quadrant4Angle _) -> y_axis' - length --
+                                      (Quadrant1Angle _) -> y_axis' - length  
+                                      (Quadrant2Angle _) -> y_axis' + length  
+                                      (Quadrant3Angle _) -> y_axis' + length  
+                                      (Quadrant4Angle _) -> y_axis' - length 
                                  
                                  
                                  setZaxis =
