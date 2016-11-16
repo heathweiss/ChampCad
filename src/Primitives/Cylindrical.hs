@@ -1,17 +1,15 @@
--- {-# LANGUAGE ParallelListComp #-}
-{---------------- intro -----------------------------
-Supplies basic cylindrical shapes as cad building blocks.
-Includes:
-  ringBase
-  cylinder
+
+{- |
+Supplies cylindrical shapes.
+
 -}
 
 module Primitives.Cylindrical(
-  cylinderWallsNoSlopeSquaredOff,
+  squaredCylinder, 
   cylinder,
-  cylinderWallsNoSlopeSquaredOffLengthenY,
-  slopedCylinder,
-  {-cylinderWallsVariableThicknessNoSlope-}) where
+  squaredYLengthenedCylinder, 
+  slopedCylinder
+  ) where
 
 import CornerPoints.Create(slopeAdjustedForVerticalAngle, Slope(..), Angle(..), flatXSlope, flatYSlope, Origin(..))
 import CornerPoints.HorizontalFaces(createTopFaces, createBottomFaces,
@@ -64,16 +62,17 @@ slopedCylinder    innerRadii  outerRadii  angles     origin      xSlope   ySlope
     (cylinder innerRadii outerRadii angles origin (0::Height)  )
   )
 
-
---cylinderWallsNoSlopeSquaredOff :: Radius -> Thickness ->   Origin -> [Angle] -> Height ->   Power -> [CornerPoints]
-cylinderWallsNoSlopeSquaredOff :: [Radius] -> Thickness ->   Origin -> [Angle] -> Height ->   Power -> [CornerPoints]
-cylinderWallsNoSlopeSquaredOff    innerWallRadii wallThickness  origin    angles     height     power  =
-        let  --innerCubes = createBottomFacesSquaredOff origin [innerWallRadii | x <-  [1..]] angles flatXSlope flatYSlope power
-             innerCubes = createBottomFacesSquaredOff origin innerWallRadii angles flatXSlope flatYSlope power
+{- |
+Create a walled cylinder which is squared off by modifying the radii with the formula:
+radius**2)/ (((x**power) + (y**power)) **(1/power))
+The higher the power, the more the shape comes to a square, though the corners will always remain somewhat rounded.
+-}
+squaredCylinder :: [Radius] -> Thickness ->   Origin -> [Angle] -> Height ->   Power -> [CornerPoints]
+squaredCylinder    innerWallRadii wallThickness  origin    angles     height     power  =
+        let  innerCubes = createBottomFacesSquaredOff origin innerWallRadii angles flatXSlope flatYSlope power
                          |@+++#@|
                          (upperFaceFromLowerFace . (transposeZ (+height)))
          
-             --outerCubes = createBottomFacesSquaredOff origin [Radius ((radius innerWallRadii) + wallThickness) |x <- [1..]] angles flatXSlope flatYSlope power
              outerCubes = createBottomFacesSquaredOff origin [Radius ((radius x) + wallThickness) |x <- innerWallRadii] angles flatXSlope flatYSlope power
                           |@+++#@|
                           (upperFaceFromLowerFace . (transposeZ (+height)))
@@ -84,8 +83,8 @@ cylinderWallsNoSlopeSquaredOff    innerWallRadii wallThickness  origin    angles
         in   cylinderCubes
 
 
-cylinderWallsNoSlopeSquaredOffLengthenY :: Radius ->     Origin -> [Angle] -> Height -> Thickness -> Power -> LengthenFactor -> [CornerPoints]
-cylinderWallsNoSlopeSquaredOffLengthenY    innerRadius  origin     angles     height   wallThickness power  lengthenFactor =
+squaredYLengthenedCylinder :: Radius ->     Origin -> [Angle] -> Height -> Thickness -> Power -> LengthenFactor -> [CornerPoints]
+squaredYLengthenedCylinder    innerRadius  origin     angles     height   wallThickness power  lengthenFactor =
         let  innerCubes = createBottomFacesSquaredOffLengthenY origin [innerRadius | x <-  [1..]] angles flatXSlope flatYSlope power lengthenFactor
                          |@+++#@|
                          (upperFaceFromLowerFace . (transposeZ (+height)))

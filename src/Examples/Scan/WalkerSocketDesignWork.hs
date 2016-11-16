@@ -28,8 +28,8 @@ import Scan.Filter(runningAverage, runningAvgSingleDegreeRadii)
 
 import Helpers.List((++:))
 
-import Primitives.Cylindrical(cylinderWallsNoSlopeSquaredOffLengthenY,
-                              cylinderWallsNoSlopeSquaredOff)
+import Primitives.Cylindrical(squaredYLengthenedCylinder,
+                              squaredCylinder)
 import Primitives.Cylindrical.Solid(cylinder, squaredOffYLengthenedCylinder, squaredOffCylinder)
 
 import Data.Word(Word8)
@@ -568,13 +568,13 @@ hosePlate plateRadius power lengthenYFactor = do
 
   screwRingFrontFaces <- buildCubePointsList' "baseScrewRingFrontFaces"
     (map extractFrontFace
-    (cylinderWallsNoSlopeSquaredOffLengthenY
+    (squaredYLengthenedCylinder
              (Radius plateRadius) baseOrigin angles baseHeight riserHeight power lengthenYFactor))
     [CornerPointsId | x <-[1..]]
 
   screwRingCubes <- buildCubePointsList' "screwRingCubes"
     (map extractBackFace
-    (cylinderWallsNoSlopeSquaredOffLengthenY
+    (squaredYLengthenedCylinder
              (Radius screwInsideRadius) baseOrigin angles baseHeight riserHeight power lengthenYFactor))
     screwRingFrontFaces
 
@@ -651,21 +651,21 @@ pushPlate plateRadius    power    lengthenYFactor  = do
                   [CornerPointsId | x <-[1..]]
 
   outerRing <- buildCubePointsList' "outerRing"
-                 (cylinderWallsNoSlopeSquaredOffLengthenY
+                 (squaredYLengthenedCylinder
                                 (Radius (plateRadius - riserHeight))  origin angles plateHeight riserHeight power lengthenYFactor)
                  [CornerPointsId | x <-[1..]]
 
   --riser has to be created in 2 parts, as it spans the 0/360 degree segment, but with section from ~80 degrees -> ~270 excluded.
   startRiser     <- buildCubePointsList' "outerRingStartRiser"
                       (take 8
-                        (cylinderWallsNoSlopeSquaredOffLengthenY (Radius (plateRadius - riserHeight))
+                        (squaredYLengthenedCylinder (Radius (plateRadius - riserHeight))
                                 (transposeZ (+plateHeight)origin)  angles (30 :: Height) riserHeight  power  lengthenYFactor)
                       )
                       [CornerPointsId | x <-[1..]]
 
   endRiser       <- buildCubePointsList' "outerRingEndRiser"
                       (drop  28
-                        (cylinderWallsNoSlopeSquaredOffLengthenY (Radius (plateRadius - riserHeight))
+                        (squaredYLengthenedCylinder (Radius (plateRadius - riserHeight))
                                 (transposeZ (+plateHeight)origin)  angles (30 :: Height) riserHeight  power  lengthenYFactor)
                       )
                       [CornerPointsId | x <-[1..]]
@@ -694,8 +694,8 @@ socketWithRiser    innerSleeveSDR         outerSleeveSDR         rowReductionFac
       angles = (map (Angle) [0,10..360])
 
   riserCubes <- buildCubePointsList' "riserCubes"
-                --(cylinderWallsNoSlopeSquaredOff  (Radius 18) (3::Thickness) (transposeX (+0)(transposeY (+(-15))(transposeZ (+(-15))origin)))    angles (20::Height)  (2.5::Power))
-                (cylinderWallsNoSlopeSquaredOff  [Radius 18 | x <- [1..]] (3::Thickness) (transposeX (+0)(transposeY (+(-15))(transposeZ (+(-15))origin)))    angles (20::Height)  (2.5::Power))
+                --(squaredCylinder  (Radius 18) (3::Thickness) (transposeX (+0)(transposeY (+(-15))(transposeZ (+(-15))origin)))    angles (20::Height)  (2.5::Power))
+                (squaredCylinder  [Radius 18 | x <- [1..]] (3::Thickness) (transposeX (+0)(transposeY (+(-15))(transposeZ (+(-15))origin)))    angles (20::Height)  (2.5::Power))
                 [CornerPointsId | x <-[1..]]
 
   mainCubes  <- buildCubePointsList' "mainCubes"
