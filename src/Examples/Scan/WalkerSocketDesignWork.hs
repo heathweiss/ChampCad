@@ -28,8 +28,7 @@ import Scan.Filter(runningAverage, runningAvgSingleDegreeRadii)
 
 import Helpers.List((++:))
 
-import Primitives.Cylindrical(squaredYLengthenedCylinder,
-                              squaredCylinder)
+import Primitives.Cylindrical.Walled(squaredYLengthenedCylinder, squaredCylinder)
 import Primitives.Cylindrical.Solid(cylinder, squaredOffYLengthenedCylinder, squaredOffCylinder)
 
 import Data.Word(Word8)

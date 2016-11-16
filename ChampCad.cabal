@@ -72,7 +72,7 @@ library
                        Examples.Cubical.CubicalKey
                        
                        --Shapes
-                       Primitives.Cylindrical, Primitives.Cubical
+                       Primitives.Cylindrical.Walled, Primitives.Cubical
                        Primitives.Cylindrical.Solid
                        
                        --Scanning

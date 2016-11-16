@@ -4,7 +4,7 @@ Supplies cylindrical shapes.
 
 -}
 
-module Primitives.Cylindrical(
+module Primitives.Cylindrical.Walled(
   squaredCylinder, 
   cylinder,
   squaredYLengthenedCylinder, 

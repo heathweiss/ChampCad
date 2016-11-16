@@ -1,8 +1,6 @@
 {-# LANGUAGE ParallelListComp #-}
 module Examples.Primitives.Cylinders where
-import Primitives.Cylindrical(squaredCylinder,
-                              squaredYLengthenedCylinder)
-import qualified Primitives.Cylindrical as Walled (cylinder) 
+import qualified Primitives.Cylindrical.Walled as Walled (cylinder, squaredCylinder, squaredYLengthenedCylinder) 
 import  Primitives.Cylindrical.Solid(yLengthenedCylinder, squaredOffCylinder, squaredOffYLengthenedCylinder)
 import CornerPoints.Radius(Radius(..))
 import CornerPoints.Points(Point(..))
@@ -39,7 +37,7 @@ solidCylinderSquaredOffLengthenY =
   in  writeStlToFile cylinderStl
 
 walledCylinderSquared =
-  let cylinder = squaredCylinder [(Radius 100)| x <-[1..]] (10::Thickness)  (Point 0 0 0) angles (10 :: Height)  (10 :: Power)
+  let cylinder = Walled.squaredCylinder [(Radius 100)| x <-[1..]] (10::Thickness)  (Point 0 0 0) angles (10 :: Height)  (10 :: Power)
       cylinderTriangles = FacesBackBottomFront :  [FacesBackBottomFrontTop | x <- [1..]]
              |+++^|
              cylinder
@@ -48,7 +46,7 @@ walledCylinderSquared =
 
         
 walledCylinderSquaredLengthenY =
-  let cylinder = squaredYLengthenedCylinder (Radius 10)  (Point 0 0 0) angles (10 :: Height) (10::Thickness) (10 :: Power) (10::LengthenFactor)
+  let cylinder = Walled.squaredYLengthenedCylinder (Radius 10)  (Point 0 0 0) angles (10 :: Height) (10::Thickness) (10 :: Power) (10::LengthenFactor)
       cylinderTriangles =   [FacesBackBottomFrontTop | x <- [1..]]
              |+++^|
              cylinder
