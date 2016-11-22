@@ -108,16 +108,123 @@ createCornerPoint cPoint origin horizRadius verticalAngle xSlope ySlope  =
                                  
                                  
                              in       
-                                 cPoint (Point setXaxis setYaxis setZaxis)
+                                 cPoint (Point setXaxis setYaxis setZaxis )
 
 
-{-Try to make a new version, that works like Christopher Olah's blog
+{- Base on the idea taken from Christopher Olah's blog
 https://christopherolah.wordpress.com/2011/11/06/manipulation-of-implicit-functions-with-an-eye-on-cad/
 
-ToDo:
-Create a base function for this that would allow getZ3 formula to be passed in.
-This will allow the easy creation of other shapes, by passing in various formulas.
+However, the function has been modified to cause a cylindrical shape to take on a square shape on the xy plane.
+The squareness of the shape depends on the power parameter.
+
+Gets combined with createCornerPointWithSlopeAndXYAdjustmentFx via the squaredOffAdjustment function.
+
+Making it the inverse of (radiusAdjustedForSlope**2) squared it off immensely,
+as opposed to just making it x*n + y*n = r*n
+Why does it work. What does inversing do.
+Making it 1/ instead of (radiusAdjustedForSlope**2) squares it off, but the dimensions
+are totally out. What does (radiusAdjustedForSlope**2)\ do compared to 1/
+xyAdjustment = (radiusAdjustedForSlope**2)/ (((getX**power) + (getY**power)) **(1/power))
 -}
+squaredOffAdjustmentFunction :: Double -> Double ->               Double -> Double -> Double
+squaredOffAdjustmentFunction    power'    radiusAdjustedForSlope' x         y          =
+                                               (radiusAdjustedForSlope'**2)
+                                                /
+                                                (
+                                                   (
+                                                      (x**power') + (y**power')
+                                                   )
+                                                   **(1/power')
+                                               )     
+
+createCornerPointSquaredOff :: (Point-> CornerPoints) -> Origin -> Radius ->  Angle -> Slope -> Slope -> Power -> CornerPoints
+createCornerPointSquaredOff cPoint origin horizRadius verticalAngle xSlope ySlope power =
+  createCornerPointWithSlopeAndXYAdjustmentFx (squaredOffAdjustmentFunction power) cPoint origin horizRadius verticalAngle xSlope ySlope {-power-}
+
+{-
+Creates a cornerpoint that is adjusted for slope and for an xy plane adjustment factor, such as being squared off..
+
+Given: 
+adjuster
+A passed in fx that will modify the x/y values according to logic contained within that function.
+This function takes the current radius, which has been adjusted for slope, the current x/y values.
+-}
+createCornerPointWithSlopeAndXYAdjustmentFx :: (Double -> Double -> Double -> Double ) ->
+                                   (Point-> CornerPoints) -> Origin -> Radius ->  Angle -> Slope -> Slope ->  CornerPoints
+createCornerPointWithSlopeAndXYAdjustmentFx    adjuster cPoint origin horizRadius verticalAngle xSlope ySlope   =
+                             let 
+                                 currentSlope = slopeAdjustedForVerticalAngle xSlope ySlope verticalAngle
+                                                                                      
+                                 radiusAdjustedForSlope = radius (adjustRadiusForSlope horizRadius currentSlope)
+
+                                 baseOfAngle = (angle $ getQuadrantAngle verticalAngle)
+                                 sinOfVerticalQuadrantAngle = sinDegrees baseOfAngle
+                                 cosOfVerticalQuadrantAngle = cosDegrees baseOfAngle
+                                 
+                                 setXaxis =
+                                   let length  =  sinOfVerticalQuadrantAngle * radiusAdjustedForSlope
+                                       x_axis' = x_axis origin
+                                   in
+                                      
+                                    case getQuadrantAngle verticalAngle of
+                                      (Quadrant1Angle _) -> x_axis' + length
+                                      (Quadrant2Angle _) -> x_axis' + length
+                                      (Quadrant3Angle _) -> x_axis' - length
+                                      (Quadrant4Angle _) -> x_axis' - length
+
+                                 getX = sinOfVerticalQuadrantAngle * radiusAdjustedForSlope
+                                 xAdjusted =
+                                   let length  = sinOfVerticalQuadrantAngle * xyAdjustment
+                                       x_axis' = x_axis origin
+                                   in
+                                      
+                                    case getQuadrantAngle verticalAngle of
+                                      (Quadrant1Angle _) -> x_axis' + length  
+                                      (Quadrant2Angle _) -> x_axis' + length  
+                                      (Quadrant3Angle _) -> x_axis' - length 
+                                      (Quadrant4Angle _) -> x_axis' - length 
+                                 
+                                 setYaxis' =
+                                   let length = cosOfVerticalQuadrantAngle * radiusAdjustedForSlope
+                                       y_axis' = y_axis origin
+                                   in
+                                     
+                                    case getQuadrantAngle verticalAngle of
+                                      (Quadrant1Angle _) -> y_axis' - length
+                                      (Quadrant2Angle _) -> y_axis' + length
+                                      (Quadrant3Angle _) -> y_axis' + length
+                                      (Quadrant4Angle _) -> y_axis' - length
+                                   
+                                 getY = cosOfVerticalQuadrantAngle * radiusAdjustedForSlope
+                                 yAdjusted =
+                                   let length = cosOfVerticalQuadrantAngle *  xyAdjustment
+                                       y_axis' = y_axis origin
+                                   in
+                                     
+                                    case getQuadrantAngle verticalAngle of
+                                      (Quadrant1Angle _) -> y_axis' - length  
+                                      (Quadrant2Angle _) -> y_axis' + length  
+                                      (Quadrant3Angle _) -> y_axis' + length  
+                                      (Quadrant4Angle _) -> y_axis' - length 
+                                 
+                                 
+                                 setZaxis =
+                                   let length = (radius horizRadius) * (sinDegrees (slope currentSlope))
+                                       z_axis' = z_axis origin
+                                   in
+                                    case currentSlope of
+                                     (PosSlope _) -> z_axis' +  length
+                                     (NegSlope _)  -> z_axis' - length
+                                 
+                                 --used to adjust the current point x/y values, according to the logic of this passed in fx.
+                                 xyAdjustment = adjuster radiusAdjustedForSlope getX getY 
+                                                
+                                   
+                                 
+                             in       
+                                 cPoint (Point xAdjusted yAdjusted setZaxis)
+
+{-------------- original squared off---------------------------------------
 createCornerPointSquaredOff :: (Point-> CornerPoints) -> Origin -> Radius ->  Angle -> Slope -> Slope -> Power -> CornerPoints
 createCornerPointSquaredOff cPoint origin horizRadius verticalAngle xSlope ySlope power  =
                              let 
@@ -195,6 +302,7 @@ createCornerPointSquaredOff cPoint origin horizRadius verticalAngle xSlope ySlop
                                  cPoint (Point x3 y3 setZaxis)
 
 
+-}
 
 {---------------------------------------------------------------------------
 e
