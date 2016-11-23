@@ -70,6 +70,9 @@ library
                        --cubical
                        Examples.Cubical.CubicalWalls
                        Examples.Cubical.CubicalKey
+                       --openbionics.org
+                       Examples.OpenBionicsOrg.FingerTubePlate
+                       Examples.OpenBionicsOrg.FingerJoints
                        
                        --Shapes
                        Primitives.Cylindrical.Walled, Primitives.Cubical
