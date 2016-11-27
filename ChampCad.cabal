@@ -47,6 +47,7 @@ library
                        Examples.ShoeLift.GeoxShoe,
                        Examples.ShoeLift.SandalsAFO,
                        Examples.ShoeLift.CrazyBBoots,
+                       Examples.ShoeLift.GeorgeSandalls,
                        Examples.Persist.SingleLineTable,
                        Examples.Persist.MappedToCornerPoints,
                        --HeelGenerators.SandalsToe, HeelGenerators.SandalsHeel
