@@ -1,6 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 
-module Examples.ShoeLift.GeorgeSandalls(generateTreadCubesToCxForErrors, generateAllTreadStl, generateRearTreadStl, generateForwardTreadStl) where
+module Examples.ShoeLift.GeorgeSandalls(generateLiftMeetsShoeCubesToCxForErrors,
+                                        generateRearLiftMeetsShoeStl, generateForwardLiftMeetsShoeStl ) where
 
 import CornerPoints.Points(Point(..))
 import CornerPoints.CornerPoints(CornerPoints(..), (+++>))
@@ -28,7 +29,10 @@ idList = [CornerPointsId | x <-[1..]]
 
 data TreadData =
   TreadData { _treadAsMeasuredX1 :: [Point],
-              _treadAsMeasuredX2 :: [Point]
+              _treadAsMeasuredX2 :: [Point],
+              _vibramHeight :: [Double],
+              _vibramHeightAdj :: [(Double -> Double)],
+              _vibramPointsX1 :: [Point]
                 }
 
 makeLenses ''TreadData
@@ -111,11 +115,53 @@ treadData =  TreadData
        Point (14.2) 241.7 91,
        Point (4.2) 242 91, --manually added
        Point (0.2) 243 91 --manually added
-    ]
+    ],
+   _vibramHeight =
+    [
+       31,
+       29,
+       27,
+       22,
+       19,
+       15,
+       12.5,
+       8.5,
+       4,
+       1,
+       0,
+       0,
+       0,
+       0,
+       0,
+       2,
+       3,
+       5,
+       6,
+       3.5,
+       1,
+       0,
+       0,
+       1,
+       2,
+       3,
+       6,
+       10,
+       17,
+       25,
+       35,
+       51,
+       52,
+       53,
+       54, 
+       55 
+    ],
+   _vibramHeightAdj = map ((\z_vibram -> (z_vibram +) )) (treadData^.vibramHeight),
+   _vibramPointsX1 = zipWith (transposeZ) (treadData^.vibramHeightAdj) (treadData^.treadAsMeasuredX1)
+     
   }
 
-tread :: ([Point] -> [Point]) -> ExceptT BuilderError (State CpointsStack ) CpointsList
-tread verticalSplitter = do
+liftMeetsShoe :: ([Point] -> [Point]) -> ExceptT BuilderError (State CpointsStack ) CpointsList
+liftMeetsShoe verticalSplitter = do
   measuredTopLeftLines <- buildCubePointsListWithAdd "measuredTopLeftLines"
                       ((B2 (head $ verticalSplitter $  treadData^.treadAsMeasuredX1)) +++> (map (F2) (tail $ verticalSplitter $ (treadData^.treadAsMeasuredX1) )))
                       idList
@@ -130,7 +176,7 @@ tread verticalSplitter = do
 
 
   flatBottomFaces <- buildCubePointsListWithAdd "flatBottomFaces"
-                 (map ((transposeZ (\z -> (58))) . lowerFaceFromUpperFace) measuredTopFaces)
+                 (map ((transposeZ (\z -> (40))) . lowerFaceFromUpperFace) measuredTopFaces) --58 was the original test print which gave about 2 mill thinest section
                  idList
 
   cubes <- buildCubePointsListWithAdd "cubes"
@@ -139,27 +185,27 @@ tread verticalSplitter = do
 
   return cubes
 
-generateTreadCubesToCxForErrors :: IO ()
-generateTreadCubesToCxForErrors  =
+generateLiftMeetsShoeCubesToCxForErrors :: IO ()
+generateLiftMeetsShoeCubesToCxForErrors  =
   let initialState = []
-  in  print $ show  ((evalState $ runExceptT (tread (id)  ) ) initialState)
+  in  print $ show  ((evalState $ runExceptT (liftMeetsShoe (id)  ) ) initialState)
 
 
-generateAllTreadStl :: IO () 
-generateAllTreadStl =
+generateAllLiftMeetsShoeStl :: IO () 
+generateAllLiftMeetsShoeStl =
   let initialState = []
-  in  generateTreadStlBase (id) initialState
+  in  generateLiftMeetsShoeStlBase (id) initialState
 
-generateRearTreadStl :: IO () 
-generateRearTreadStl  =
-  generateTreadStlBase (take 22) []
+generateRearLiftMeetsShoeStl :: IO () 
+generateRearLiftMeetsShoeStl  =
+  generateLiftMeetsShoeStlBase (take 22) []
 
-generateForwardTreadStl :: IO () 
-generateForwardTreadStl  =
+generateForwardLiftMeetsShoeStl :: IO () 
+generateForwardLiftMeetsShoeStl  =
   let initialState = []
-  in generateTreadStlBase (drop 21) initialState
+  in generateLiftMeetsShoeStlBase (drop 21) initialState
 
-generateTreadStlBase :: ([Point] -> [Point]) -> CpointsStack -> IO ()
-generateTreadStlBase verticalSplitter inState = 
-  let cpoints =  ((execState $ runExceptT (tread (verticalSplitter))) inState)
+generateLiftMeetsShoeStlBase :: ([Point] -> [Point]) -> CpointsStack -> IO ()
+generateLiftMeetsShoeStlBase verticalSplitter inState = 
+  let cpoints =  ((execState $ runExceptT (liftMeetsShoe (verticalSplitter))) inState)
   in  writeStlToFile $ newStlShape "george sandalls"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)

@@ -3,7 +3,7 @@ module Main where
 --import Lib
 --import Examples.Scan.WalkerSocketDesignWork(loadMDRAndPassToProcessor)
 --import System.Environment
-import  Examples.ShoeLift.GeorgeSandalls(generateTreadCubesToCxForErrors, generateAllTreadStl, generateRearTreadStl, generateForwardTreadStl)
+import  Examples.ShoeLift.GeorgeSandalls(generateRearLiftMeetsShoeStl, generateForwardLiftMeetsShoeStl)
 
 main :: IO ()
 main = do
@@ -11,9 +11,5 @@ main = do
  --loadMDRAndPassToProcessor (read $ head x) (read $ head $ tail x)
 
  --crazyBB boot lift
- 
- --generateTreadCubesToCxForErrors []
-  
-  generateForwardTreadStl 
- 
+ generateForwardLiftMeetsShoeStl
  
