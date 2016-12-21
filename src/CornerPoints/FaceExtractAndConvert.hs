@@ -1,5 +1,6 @@
 module CornerPoints.FaceExtractAndConvert(getFrontFaceAsBackFace, getFrontLeftLineAsBackFace, getLeftFaceAsBackFace,
-                                         getFrontRightLineAsBackFace, getRightFaceAsBackFace, getBackRightLineAsBackFace) where
+                                         getFrontRightLineAsBackFace, getRightFaceAsBackFace, getBackRightLineAsBackFace,
+                                         getLeftFaceAsFrontFace, getRightFaceAsFrontFace) where
 import CornerPoints.FaceConversions
 import CornerPoints.FaceExtraction
 
@@ -14,8 +15,12 @@ getFrontLeftLineAsBackFace cornerPoint = toBackFace $ extractFrontLeftLine corne
 
 getLeftFaceAsBackFace cornerPoint = toBackFace $ extractLeftFace cornerPoint
 
+getLeftFaceAsFrontFace cornerPoint = toFrontFace $ extractLeftFace cornerPoint
+
 getFrontRightLineAsBackFace cornerPoint = toBackFace $ extractFrontRightLine cornerPoint
 
 getRightFaceAsBackFace cornerPoint = toBackFace $ extractRightFace cornerPoint
+
+getRightFaceAsFrontFace cornerPoint = toFrontFace $ extractRightFace cornerPoint
 
 getBackRightLineAsBackFace cornerPoint = toBackFace $ extractBackRightLine cornerPoint
