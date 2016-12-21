@@ -127,6 +127,12 @@ data CornerPoints =
                 b4 :: Point
         }
         |
+        BackLeftLine
+        {
+                b1 :: Point,
+                b2 :: Point
+        }
+        |
         BottomRightLine
         {
                 b4 :: Point,
@@ -497,6 +503,12 @@ anyCornerPoint +++ (CornerPointsId) = anyCornerPoint
 
 (BottomRightLine b4 f4) +++ (BottomLeftLine b1 f1) =
     BottomFace b1 f1 b4 f4
+
+(FrontLeftLine f1 f2) +++ (FrontRightLine f3 f4) =
+  FrontFace f1 f2 f3 f4
+
+(FrontRightLine f3 f4) +++ (FrontLeftLine f1 f2)  =
+  FrontFace f1 f2 f3 f4
 
 (TopLeftLine b2 f2) +++ (TopRightLine b3 f3) =
     TopFace b2 f2 b3 f3
