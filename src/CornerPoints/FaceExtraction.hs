@@ -11,7 +11,8 @@ module CornerPoints.FaceExtraction (
  extractBackBottomLine,
  extractBackFace,
  extractLeftFace,
- extractBackRightLine
+ extractBackRightLine,
+ extractBackLeftLine
  ) where
 import CornerPoints.CornerPoints(CornerPoints(..))
 import CornerPoints.Points(Point(..))
@@ -47,19 +48,22 @@ extractBackTopLine (BackFace b1 b2 b3 b4) = BackTopLine b2 b3
 extractBackBottomLine (CubePoints f1 f2 f3 f4 b1 b2 b3 b4) = BackBottomLine b1 b4
 extractBackBottomLine (BottomFace b1 f1 b4 f4) = BackBottomLine b1 b4
 
-
+extractBackLeftLine (BackFace b1 b2 b3 b4) = BackLeftLine b1 b2 
 
 extractBackFace :: CornerPoints -> CornerPoints
 extractBackFace (CubePoints f1 f2 f3 f4 b1 b2 b3 b4) = BackFace b1 b2 b3 b4
 
 extractFrontLeftLine :: CornerPoints -> CornerPoints
 extractFrontLeftLine (CubePoints f1 f2 f3 f4 b1 b2 b3 b4) = FrontLeftLine f1 f2
+extractFrontLeftLine (FrontFace f1 f2 f3 f4) = FrontLeftLine f1 f2
 
 extractBackRightLine :: CornerPoints -> CornerPoints
 extractBackRightLine (CubePoints f1 f2 f3 f4 b1 b2 b3 b4) = BackRightLine b3 b4
+extractBackRightLine (BackFace b1 b2 b3 b4) = BackRightLine b3 b4
 
 extractFrontRightLine :: CornerPoints -> CornerPoints
 extractFrontRightLine (CubePoints f1 f2 f3 f4 b1 b2 b3 b4) = FrontRightLine f3 f4
+extractFrontRightLine (FrontFace f1 f2 f3 f4) = FrontRightLine f3 f4
 
 extractLeftFace :: CornerPoints -> CornerPoints
 extractLeftFace (CubePoints f1 f2 f3 f4 b1 b2 b3 b4) = LeftFace b1 b2 f1 f2
