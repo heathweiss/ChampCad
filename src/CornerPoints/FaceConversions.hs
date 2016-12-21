@@ -1,6 +1,8 @@
 module CornerPoints.FaceConversions(
   upperFaceFromLowerFace,
   f23LineFromF14Line,
+  f12LineFromF34Line,
+  f34LineFromF12Line,
   frontBottomLineFromFrontTopLine,
   backTopLineFromFrontTopLine,
   lowerFaceFromUpperFace,
@@ -57,18 +59,26 @@ Typically used for the back face of a radial shape, where all back faces represe
 of the shape.
 -}
 toBackFace :: CornerPoints -> CornerPoints
-toBackFace (RightFace b3 b4 f3 f4) = BackFace f4 f3 b3 b4
+toBackFace (RightFace b3 b4 f3 f4) = BackFace b4 b3  f3 f4 
 toBackFace (LeftFace b1 b2 f1 f2) = BackFace f1 f2 b2 b1
 toBackFace (FrontRightLine f3 f4) = BackFace f4 f3 f3 f4
 toBackFace (FrontLeftLine f1 f2) = BackFace f1 f2 f2 f1
 toBackFace (FrontFace f1 f2 f3 f4) = BackFace f4 f3 f2 f1
 toBackFace (BackRightLine b3 b4) = BackFace b4 b3 b3 b4
+toBackFace (BackLeftLine b1 b2) = BackFace b1 b2 b2 b1
 
 
-toFrontFace(RightFace b3 b4 f3 f4) = FrontFace b4 f3 b3 b4
+toFrontFace(RightFace b3 b4 f3 f4) = FrontFace f4 f3 b3 b4
+toFrontFace(LeftFace b1 b2 f1 f2) = FrontFace b1 b2 f2 f1
 
 f23LineFromF14Line :: CornerPoints -> CornerPoints
 f23LineFromF14Line (BottomFrontLine f1 f4) = FrontTopLine f1 f4
+
+f12LineFromF34Line :: CornerPoints -> CornerPoints
+f12LineFromF34Line (FrontRightLine f3 f4) = FrontLeftLine f4 f3
+
+f34LineFromF12Line :: CornerPoints -> CornerPoints
+f34LineFromF12Line (FrontLeftLine f1 f2) = FrontRightLine f2 f1
 
 frontBottomLineFromFrontTopLine :: CornerPoints -> CornerPoints
 frontBottomLineFromFrontTopLine (FrontTopLine f2 f3) = BottomFrontLine f2 f3
@@ -90,6 +100,8 @@ frontTopLineFromBackTopLine (BackTopLine b2 b3) = FrontTopLine b2 b3
 
 bottomFrontLineFromBackBottomLine :: CornerPoints -> CornerPoints
 bottomFrontLineFromBackBottomLine (BackBottomLine b1 b4) = BottomFrontLine b1 b4
+
+
 
 {- |Reverse the corners so that it faces the opposite way.-}
 reverseNormal :: CornerPoints -> CornerPoints
