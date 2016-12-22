@@ -3,6 +3,8 @@ module CornerPoints.FaceConversions(
   f23LineFromF14Line,
   f12LineFromF34Line,
   f34LineFromF12Line,
+  b12LineFromF12Line,
+  b34LineFromF34Line,
   frontBottomLineFromFrontTopLine,
   backTopLineFromFrontTopLine,
   lowerFaceFromUpperFace,
@@ -79,6 +81,12 @@ f12LineFromF34Line (FrontRightLine f3 f4) = FrontLeftLine f4 f3
 
 f34LineFromF12Line :: CornerPoints -> CornerPoints
 f34LineFromF12Line (FrontLeftLine f1 f2) = FrontRightLine f2 f1
+
+b12LineFromF12Line :: CornerPoints -> CornerPoints
+b12LineFromF12Line (FrontLeftLine f1 f2) = BackLeftLine f1 f2
+
+b34LineFromF34Line :: CornerPoints -> CornerPoints
+b34LineFromF34Line (FrontRightLine f3 f4) = BackRightLine f3 f4
 
 frontBottomLineFromFrontTopLine :: CornerPoints -> CornerPoints
 frontBottomLineFromFrontTopLine (FrontTopLine f2 f3) = BottomFrontLine f2 f3
