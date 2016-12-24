@@ -513,8 +513,6 @@ anyCornerPoint +++ (CornerPointsId) = anyCornerPoint
 (TopLeftLine b2 f2) +++ (TopRightLine b3 f3) =
     TopFace b2 f2 b3 f3
 
-  TopLeftLine f2 f2'
-
 (TopLeftLine b2 f2) +++ (BottomLeftLine b1 f1) =
     LeftFace b1 b2 f1 f2
 

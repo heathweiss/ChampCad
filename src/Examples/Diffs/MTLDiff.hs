@@ -208,149 +208,79 @@ makeFaceFromF34Line invalidFace =
 
 unionCubes :: ExceptT BuilderError (State CpointsStack ) CpointsList
 unionCubes = do
-  --pick 1st 3 items from a list using lense, to represent a large face split into faces for each of the side lines as well
-  --as main face.
-  
-        
-  btmLargeFaces <-
+  ------------build the containing cube from which the shape will be removed--------------
+  btmContainingFaces <-
     buildCubePointsListWithAdd "btmFaces"
     (createBottomFaces (Point 0 0 0) largeRadius angles flatXSlope flatYSlope)
     idList
    
-  topLargeFaces <-
+  topContainingFaces <-
     buildCubePointsListWithAdd "topFaces"
     (createTopFaces (Point 0 0 10) largeRadius angles flatXSlope flatYSlope)
     idList
 
-  largeCube <-
-    buildCubePointsListWithNoAdd "largeCube"
-    btmLargeFaces
-    topLargeFaces
+  containingCube <-
+    buildCubePointsListWithNoAdd "containingCube"
+    btmContainingFaces
+    topContainingFaces
 
-  largeCubeInteriorFaces <- buildCubePointsListWithAdd "largeCubeInteriorFaces"
-                   (splitCubeIntoInteriorFaces $ head largeCube)
-                   idList
-
-  largeLeftFace <- buildCubePointsListWithAdd "largeLeftFaceAsInvertedFrontFace"
-                   [getLeftFaceAsFrontFace (head largeCube)]
-                   idList
-
-  largeRightFace <- buildCubePointsListWithAdd "largeRightFace"
-                    [getRightFaceAsFrontFace (head largeCube)]
-                    idList
-
-  
-
-  largeFrontFace <- buildCubePointsListWithAdd "largeFrontFace"
-                    [extractFrontFace $ head largeCube]
-                    idList
-  largeFaces <- buildCubePointsListWithAdd "largeFaces"
-                (splitCubeIntoInteriorFaces $ head largeCube)
-                idList
   ------------------------------- build the cutter cubes for cutting the radial shape----------
-  btmFaces <-
+  btmCutterFaces <-
     buildCubePointsListWithAdd "btmFaces"
     (createBottomFaces (Point (5) (-10) 0) smallRadius smalAngles flatXSlope flatYSlope)
     idList
    
-  topFaces <-
+  topCutterFaces <-
     buildCubePointsListWithAdd "topFaces"
     (createTopFaces (Point (5) (-10) 10) smallRadius smalAngles flatXSlope flatYSlope)
     idList
 
   cutterCubes <-
     buildCubePointsListWithNoAdd "cutterCubes"
-    btmFaces
-    topFaces
+    btmCutterFaces
+    topCutterFaces
 
-  --convert cutter cubes top back faces and reverse normals so they can be combined
-  --with the inner faces of the large surrounding cube.
-  cutterCubesAsBackFaces <- buildCubePointsListWithNoAdd "cutterCubesAsBackFaces"
+  --extract the cutter cubes front faces and convert to back faces and then reverse normals so they can be combined (+++)
+  --with the inner faces of the large containing cube.
+  cutterFaces <- buildCubePointsListWithNoAdd "cutterFaces"
        (map (reverseNormal . getFrontFaceAsBackFace) cutterCubes)
        idList
 
   let
-    --curry in the cutterCubesAsBackFaces so faces can now be accessed with a lens.
-    getCutterFace = getCutterFaceBase cutterCubesAsBackFaces
+    --curry in the cutterFaces so faces can now be accessed with a lens.
+    getCutterFace = getCutterFaceBase cutterFaces
 
   cube0  <- buildCubePointsListWithAdd "cube0"
-            [ extractFrontFace $ head largeCube]
+            [ extractFrontFace $ head containingCube]
             [getCutterFace 0]
-  {-
-  cube0 <- buildCubePointsListWithAdd "cube0"
-           (getCubeFace front largeCubeInteriorFaces )
-           [getCutterFace 0]
-
-  -}
-  cube1 <- buildCubePointsListWithAdd "cube1"
-           [makeFaceFromF12Line . extractFrontFace $ head largeCube]
-           [getCutterFace 1]
-  {-
-  cube1 <- buildCubePointsListWithAdd "cube1"
-           ( getCubeFace left
-             $ splitFaceInto3Faces
-             $ head (getCubeFace front largeCubeInteriorFaces )
-           )
-           [getCutterFace 1]
-  -}
-  cube2 <- buildCubePointsListWithAdd "cube2"
-           [makeFaceFromF12Line . extractFrontFace $ head largeCube]
-           [getCutterFace 2]
-  {-
-  cube2 <- buildCubePointsListWithAdd "cube2"
-           ( getCubeFace left
-             $ splitFaceInto3Faces
-             $ head (getCubeFace front largeCubeInteriorFaces )
-           )
-           [getCutterFace 2]
-  -}
-  cube3 <- buildCubePointsListWithAdd "cube3"
-           [getLeftFaceAsFrontFace $ head largeCube]
-           [getCutterFace 3]
-  {-
-  cube3 <- buildCubePointsListWithAdd "cube3"
-           (getCubeFace left largeCubeInteriorFaces )
-           [getCutterFace 3]
-  -}
-  cube4 <- buildCubePointsListWithAdd "cube4"
-           [frontFaceFromBackFace . extractBackFace  $ head largeCube]
-           [getCutterFace 4]
-  {-
-  cube4 <- buildCubePointsListWithAdd "cube4"
-           (getCubeFace back largeCubeInteriorFaces )
-           [getCutterFace 4]
-  -}
-  cube5 <- buildCubePointsListWithAdd "cube5"
-           [frontFaceFromBackFace . extractBackFace  $ head largeCube]
-           [getCutterFace 5]
-  {-
-  cube5 <- buildCubePointsListWithAdd "cube5"
-           --largeBackFace
-           (getCubeFace back largeCubeInteriorFaces )
-           [getCutterFace 5]
-  -}
-  cube6 <- buildCubePointsListWithAdd "cube6"
-           [getRightFaceAsFrontFace $ head largeCube]
-           [getCutterFace 6]
-  {-
-  cube6 <- buildCubePointsListWithAdd "cube6"
-           --largeRightFace
-           (getCubeFace right largeCubeInteriorFaces )
-           [getCutterFace 6]
-  -}
-  cube7 <- buildCubePointsListWithAdd "cube7"
-           [makeFaceFromF34Line . extractFrontFace $ head largeCube]
-           [getCutterFace 7]
-  {-
-  cube7 <- buildCubePointsListWithAdd "cube7"
-           --(getLargeFace largeFrontFaceList right )
-           ( getCubeFace right
-             $ splitFaceInto3Faces
-             $ head (getCubeFace front largeCubeInteriorFaces )
-           )
-           [getCutterFace 7]
-  -}
   
+  cube1 <- buildCubePointsListWithAdd "cube1"
+           [makeFaceFromF12Line . extractFrontFace $ head containingCube]
+           [getCutterFace 1]
+  
+  cube2 <- buildCubePointsListWithAdd "cube2"
+           [makeFaceFromF12Line . extractFrontFace $ head containingCube]
+           [getCutterFace 2]
+  
+  cube3 <- buildCubePointsListWithAdd "cube3"
+           [getLeftFaceAsFrontFace $ head containingCube]
+           [getCutterFace 3]
+  
+  cube4 <- buildCubePointsListWithAdd "cube4"
+           [frontFaceFromBackFace . extractBackFace  $ head containingCube]
+           [getCutterFace 4]
+  
+  cube5 <- buildCubePointsListWithAdd "cube5"
+           [frontFaceFromBackFace . extractBackFace  $ head containingCube]
+           [getCutterFace 5]
+  
+  cube6 <- buildCubePointsListWithAdd "cube6"
+           [getRightFaceAsFrontFace $ head containingCube]
+           [getCutterFace 6]
+
+  cube7 <- buildCubePointsListWithAdd "cube7"
+           [makeFaceFromF34Line . extractFrontFace $ head containingCube]
+           [getCutterFace 7]
   
   
   return cube7
