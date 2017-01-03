@@ -11,8 +11,11 @@ scaleCornerPoints,
 scaleCornerPointsZ,
 CornerPointsBuilder(..),
 cornerPointsError, findCornerPointsError,
-isCubePoints, isCubePointsList
+isCubePoints, isCubePointsList,
+getCornerPointsWithIndex
 ) where
+
+import Control.Lens
 
 import CornerPoints.Points (Point(..))
 
@@ -683,6 +686,12 @@ scalePoint (Point x y z) scaleFactor = Point {x_axis=x*scaleFactor, y_axis=y*sca
 scalePointZ :: Point -> Double -> Point
 scalePointZ (Point x y z) scaleFactor = Point {x_axis=x, y_axis=y, z_axis=z*scaleFactor}
 
-
-
+{- |
+Use Lense to extract a face from [CornerPoints]
+-}
+getCornerPointsWithIndex :: String -> [CornerPoints] -> Int-> CornerPoints
+getCornerPointsWithIndex errMsg cutterFaces index = 
+  case (cutterFaces ^? element index) of
+    Nothing -> CornerPointsError errMsg 
+    Just a  -> a
 

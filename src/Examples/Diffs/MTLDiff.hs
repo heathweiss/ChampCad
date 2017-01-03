@@ -7,7 +7,7 @@ module Examples.Diffs.MTLDiff(generateSingleLargeCubeToCxForErrors, generateSing
 import Control.Monad.State.Lazy
 import Control.Monad.Except
 
-import Control.Lens
+
 
 import Builder.Monad(BuilderError(..), cornerPointsErrorHandler, buildCubePointsList,
                      CpointsStack, CpointsList)
@@ -15,14 +15,15 @@ import Builder.Monad(BuilderError(..), cornerPointsErrorHandler, buildCubePoints
 import CornerPoints.Radius(Radius(..))
 import CornerPoints.HorizontalFaces(createBottomFaces, createTopFaces)
 import CornerPoints.Create(Angle(..), flatXSlope, flatYSlope, Origin(..))
-import CornerPoints.CornerPoints((|@+++#@|), (|+++|),  CornerPoints(..), (+++))
+import CornerPoints.CornerPoints((|@+++#@|), (|+++|),  CornerPoints(..), (+++), getCornerPointsWithIndex)
 import CornerPoints.Points(Point(..))
 import CornerPoints.MeshGeneration(autoGenerateEachCube)
 import CornerPoints.FaceExtractAndConvert(getFrontFaceAsBackFace, getFrontLeftLineAsBackFace, getLeftFaceAsBackFace,
                                           getFrontRightLineAsBackFace, getRightFaceAsBackFace, getBackRightLineAsBackFace,
-                                          getLeftFaceAsFrontFace, getRightFaceAsFrontFace)
+                                          getLeftFaceAsFrontFace, getRightFaceAsFrontFace, faceFromF12Line, faceFromF34Line)
 import CornerPoints.FaceConversions(toBackFace, reverseNormal, toFrontFace, backFaceFromFrontFace, frontFaceFromBackFace,
-                                    f12LineFromF34Line, f34LineFromF12Line, b12LineFromF12Line, b34LineFromF34Line)
+                                    f12LineFromF34Line, f34LineFromF12Line, b12LineFromF12Line, b34LineFromF34Line,
+                                    )
 import CornerPoints.FaceExtraction(extractFrontFace, extractFrontLeftLine, extractFrontRightLine, extractLeftFace,
                                   extractRightFace, extractBackRightLine, extractBackLeftLine, extractBackFace, extractBackLeftLine)
 
@@ -118,94 +119,12 @@ generatecutterCubesStl inState =
   in  writeStlToFile $ newStlShape "cutter cubes"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
 
 
+
+
+
 {----------------------------------------------------- build the union ---------------------------------------------
 Combine the single large cube and the cutter.
 -}
-
-left = 0
-back = 1
-center = 1
-right = 2
-front = 3
-
-splitCubeIntoInteriorFaces :: CornerPoints -> [CornerPoints]
-splitCubeIntoInteriorFaces cube =
-  [
-   getLeftFaceAsFrontFace cube,
-   frontFaceFromBackFace $ extractBackFace cube,
-   getRightFaceAsFrontFace cube,
-   extractFrontFace cube
-  ]
-
-getCubeFace :: Int-> [CornerPoints] ->  [CornerPoints]
-getCubeFace  index faceList = 
-      case (faceList ^? element index) of
-        Nothing -> [CornerPointsError "bad face lense"]
-        Just a  -> [a]
-
---use Lense to extract a face from the cutter cubes
---Inside the monad, curry in the cutter cube faces.
-getCutterFaceBase :: [CornerPoints] -> Int-> CornerPoints
-getCutterFaceBase cutterFaces index = 
-  case (cutterFaces ^? element index) of
-    Nothing -> CornerPointsError "bad cutter lense"
-    Just a  -> a
-
-{-
-Take a CornerPoints face, and create a list comprising of:
-1: A face made by from combining a single line, such as making a face from the FrontLeftLine of a FrontFace
-2: The original face. Do I really need this, as why not just use the orignal face w/o splitting it.
-3: A face made from the line on the opposite side from step 1.
-
-Return them as a list so they can be accessed with a lens.
-Should look at doing this with a map.
-
-Should just get rid of it as it adds complexity, and get the target face as required.
--}
-splitFaceInto3Faces :: CornerPoints -> [CornerPoints]
-splitFaceInto3Faces (FrontFace f1 f2 f3 f4) =
-  let frontFace = FrontFace f1 f2 f3 f4
-  in        
-      [ (extractFrontLeftLine  frontFace)
-        +++
-        (f34LineFromF12Line $ extractFrontLeftLine frontFace ),
-        frontFace,
-        (extractFrontRightLine frontFace)
-        +++
-        (f12LineFromF34Line $ extractFrontRightLine frontFace )
-      ]
-
-makeFaceFromF12Line :: CornerPoints-> CornerPoints
-makeFaceFromF12Line (FrontFace f1 f2 f3 f4) =
-  let frontFace = FrontFace f1 f2 f3 f4
-  in  (extractFrontLeftLine  frontFace)
-        +++
-      (f34LineFromF12Line $ extractFrontLeftLine frontFace )
-makeFaceFromF12Line (LeftFace b1 b2 f3 f4) =
-  let leftFace = LeftFace b1 b2 f3 f4
-      frontLeftLine = extractFrontLeftLine  leftFace
-  in  frontLeftLine
-      +++
-      (b12LineFromF12Line frontLeftLine)
-makeFaceFromF12Line invalidFace =      
-      CornerPointsError "invalid cube supplied to makeFaceFromF12Line"
-
-makeFaceFromF34Line :: CornerPoints-> CornerPoints
-makeFaceFromF34Line (FrontFace f1 f2 f3 f4) =
-  let frontFace = FrontFace f1 f2 f3 f4
-      frontRightLine = extractFrontRightLine frontFace
-  in  (frontRightLine)
-      +++
-      (f12LineFromF34Line frontRightLine)
-makeFaceFromF34Line (RightFace b3 b4 f3 f4) =
-  let rightFace = RightFace b3 b4 f3 f4
-      frontRightLine = extractFrontRightLine rightFace
-  in  frontRightLine
-      +++
-      (b34LineFromF34Line frontRightLine )
-makeFaceFromF34Line invalidFace =      
-      CornerPointsError "invalid cube supplied to makeFaceFromF34Line"
-
 unionCubes :: ExceptT BuilderError (State CpointsStack ) CpointsList
 unionCubes = do
   ------------build the containing cube from which the shape will be removed--------------
@@ -248,18 +167,18 @@ unionCubes = do
 
   let
     --curry in the cutterFaces so faces can now be accessed with a lens.
-    getCutterFace = getCutterFaceBase cutterFaces
+    getCutterFace = getCornerPointsWithIndex "bad cutterFace index" cutterFaces
 
   cube0  <- buildCubePointsListWithAdd "cube0"
             [ extractFrontFace $ head containingCube]
             [getCutterFace 0]
   
   cube1 <- buildCubePointsListWithAdd "cube1"
-           [makeFaceFromF12Line . extractFrontFace $ head containingCube]
+           [faceFromF12Line . extractFrontFace $ head containingCube]
            [getCutterFace 1]
   
   cube2 <- buildCubePointsListWithAdd "cube2"
-           [makeFaceFromF12Line . extractFrontFace $ head containingCube]
+           [faceFromF12Line . extractFrontFace $ head containingCube]
            [getCutterFace 2]
   
   cube3 <- buildCubePointsListWithAdd "cube3"
@@ -279,7 +198,7 @@ unionCubes = do
            [getCutterFace 6]
 
   cube7 <- buildCubePointsListWithAdd "cube7"
-           [makeFaceFromF34Line . extractFrontFace $ head containingCube]
+           [faceFromF34Line . extractFrontFace $ head containingCube]
            [getCutterFace 7]
   
   

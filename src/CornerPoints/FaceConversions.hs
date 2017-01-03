@@ -20,7 +20,8 @@ module CornerPoints.FaceConversions(
   frontFaceFromBackFace,
   
 ) where
-import CornerPoints.CornerPoints (CornerPoints(..))
+import CornerPoints.CornerPoints (CornerPoints(..), (+++))
+
 
 {- | Convert faces of cube. Tests are in Tests.FaceConversionsTest and Tests.FaceExtractAndConvertTest.
      Example in Examples.Diffs.FirstDiff (if it still exits).
@@ -28,7 +29,13 @@ import CornerPoints.CornerPoints (CornerPoints(..))
      Used for adding cubes together.
      Used to embed a cube inside 1 or more other cubes.
 
-     ToDo: Write tests.
+     ToDo: Write moretests.
+
+           Some functions reverse normals, while others do not.
+           eg: frontFaceFromBackFace vs toBackFace(with FrontFace passed in.)
+           Should they be in separate modules. Or should none of them reverse the normals,
+           and instead, reverseNormal would have to be called when required.
+           For instance, frontFaceFromBackFace would become: reverseNormal . toFrontFace
 -}
 
 
