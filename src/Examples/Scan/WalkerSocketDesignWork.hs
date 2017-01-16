@@ -1,5 +1,5 @@
 {-# LANGUAGE ParallelListComp #-}
-module Examples.Scan.WalkerSocketDesignWork(loadMDRAndPassToProcessor) where
+module Examples.Scan.WalkerSocketDesignWork(loadMDRAndPassToProcessor, socketWithRiserStlGenerator) where
 {------------------------------ ToDo------------------------------------
 Use the autogenerate stl in all functions.
 -}
@@ -95,16 +95,15 @@ loadMDRAndPassToProcessor  = do
       plateRadius = 30
       power = 2.5
       lengthenYFactor = 20
-      extensionFaceBuilder :: (Faces) -> (Faces) -> (Faces) -> (Faces) -> [Faces]
-      extensionFaceBuilder leftFace emptyFaces rightFace fillerFaces =
-        [leftFace] ++ [emptyFaces | x <- [2..30]] ++ [rightFace]   ++  [fillerFaces | x <- [31..]]
+      
   case (decode contents) of
    
       Just (MultiDegreeRadii name' degrees') ->
         let ----------------------------for the socket that has the bottom extension to attach to the walker
             --enlarge it to fit over the socket already printed with WalkerSocket. 1st attempt at +2 was not quite big enough, trying 3.
             --rotate it to line up better with the riser, when using squared off function.
-            innerSleeveMDR = rotateMDR $ rotateMDR $ rotateMDR $ transpose (+3) $ reduceScan rowReductionFactor $ removeDefectiveTopRow (MultiDegreeRadii name' degrees')
+            --innerSleeveMDR = rotateMDR $ rotateMDR $ rotateMDR $ transpose (+3) $ reduceScan rowReductionFactor $ removeDefectiveTopRow (MultiDegreeRadii name' degrees')
+            innerSleeveMDR = (rotateMDR) . (rotateMDR) . (rotateMDR) .  (transpose (+3)) . (reduceScan rowReductionFactor) . removeDefectiveTopRow   $ (MultiDegreeRadii name' degrees')
             --give it a thickness of 3 mm
             outerSleeveMDR = transpose (+3) innerSleeveMDR
             plateRadius = 24
@@ -113,12 +112,12 @@ loadMDRAndPassToProcessor  = do
             --need to adjust transposefactor, as +3 was a loose fit for his walker. Try +2
             innerSleeveMDRForSideMount = transpose (+2) $ reduceScan rowReductionFactor $ removeDefectiveTopRow (MultiDegreeRadii name' degrees')
         in  ------------------------------------choose the shape to process---------------------------------------------.
-            ---------socket attached to walker       
-            --socketWithRiser (degrees innerSleeveMDR) (degrees outerSleeveMDR) extensionFaceBuilder extensionHeight rowReductionFactor pixelsPerMM
-            --generatesocketWithRiserStl (degrees innerSleeveMDR) (degrees outerSleeveMDR) rowReductionFactor pixelsPerMM []
+            ---------socket attached to walker
+            --Moved to it's own processor, loadMDRAndCallSocketWithRiserStlGenerator, and probably will no longer compile this way.
+            
             
             --pushPlate plateRadius power lengthenYFactor
-            --generatePushPlateStl plateRadius power lengthenYFactor []
+            generatePushPlateStl plateRadius power lengthenYFactor []
 
             --generatehosePlateStl plateRadius power lengthenYFactor []
             --showHosePlateError plateRadius power lengthenYFactor []
@@ -132,12 +131,14 @@ loadMDRAndPassToProcessor  = do
             --showSwimFinCumulativeCornerPoints (degrees innerSleeveMDRForSideMount) rowReductionFactor pixelsPerMM []
 
             ------------------ hammerhead shark swim fin -----------------------------------
-            generateHammerHeadSharkHeadSectionStl (degrees innerSleeveMDRForSideMount) rowReductionFactor pixelsPerMM []
+            --generateHammerHeadSharkHeadSectionStl (degrees innerSleeveMDRForSideMount) rowReductionFactor pixelsPerMM []
             --generateHammerHeadSharkBodySectionStl (degrees innerSleeveMDRForSideMount) rowReductionFactor pixelsPerMM []
             
       Nothing                                ->
         putStrLn "File not decoded"
 
+removeDefectiveTopRow' :: MultiDegreeRadii -> MultiDegreeRadii
+removeDefectiveTopRow' (MultiDegreeRadii name' degrees') = MultiDegreeRadii name' [(SingleDegreeRadii degree'' (tail radii''))  | (SingleDegreeRadii degree'' radii'') <- degrees']
 
 
 {---------------------------------------------------------hammer head shark swim fin---------------------------------------------
@@ -478,6 +479,7 @@ swimSocketWithFinBothSides originalSDR           rowReductionFactor    pixelsPer
   
   return fin2Cubes
 
+
 --output the stl
 generateSwimFinStl :: [SingleDegreeRadii] ->  RowReductionFactor -> PixelsPerMillimeter -> CpointsStack -> IO () --[CornerPoints]
 generateSwimFinStl     originalSDR            rowReductionFactor    pixelsPerMillimeter    inState =
@@ -676,7 +678,7 @@ generatePushPlateStl plateRadius    power    lengthenYFactor initialState  =
   let cpoints = execState ( runExceptT $ pushPlate plateRadius    power    lengthenYFactor ) initialState 
   in  writeStlToFile $ newStlShape "push plate"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
     
-
+-- ============================================================================================================================================================
 {-
 Socket which has a riser attached to the top. This allows the hose attachment/push plate to be attached to it.
 
@@ -688,7 +690,7 @@ socketWithRiser :: [SingleDegreeRadii] -> [SingleDegreeRadii] -> RowReductionFac
 socketWithRiser    innerSleeveSDR         outerSleeveSDR         rowReductionFactor    pixelsPerMM = do
   let extensionHeight = 30
       transposeFactors = [0,heightPerPixel.. ]
-      heightPerPixel = 1/pixelsPerMM * (fromIntegral rowReductionFactor)
+      heightPerPixel = (1/ pixelsPerMM) * (fromIntegral rowReductionFactor)
       origin = (Point{x_axis=0, y_axis=0, z_axis=50})
       angles = (map (Angle) [0,10..360])
 
@@ -711,12 +713,24 @@ socketWithRiser    innerSleeveSDR         outerSleeveSDR         rowReductionFac
                 
   return riserCubes
 
-
---output the stl
-generatesocketWithRiserStl :: [SingleDegreeRadii] -> [SingleDegreeRadii] -> RowReductionFactor -> PixelsPerMillimeter -> CpointsStack -> IO () 
-generatesocketWithRiserStl    innerSleeveSDR         outerSleeveSDR         rowReductionFactor    pixelsPerMM           inState =
-  let cpoints =  ((execState $ runExceptT (socketWithRiser innerSleeveSDR         outerSleeveSDR         rowReductionFactor    pixelsPerMM ) ) inState)
-  in  writeStlToFile $ newStlShape "socket with riser"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
+--load the json file and call generate stl
+socketWithRiserStlGenerator :: IO ()
+socketWithRiserStlGenerator = do
+  contents <- BL.readFile "src/Data/scanFullData.json"
+  
+  case (decode contents) of
+   
+      Just (MultiDegreeRadii name' degrees') ->
+        let --Changing this to 50 does not work. It should be made so this can be changed.
+            --Is it some combination with PixelsPerMillimeter that messes it up.
+            --ToDo: Make a diff. version of reduceScan that perhaps uses mm instead of mod of some number.
+            rowReductionFactor = 100::RowReductionFactor 
+            innerSleeveMDR = (rotateMDR) . (rotateMDR) . (rotateMDR) . (transpose (+3)) . (reduceScan rowReductionFactor) . removeDefectiveTopRow' $ (MultiDegreeRadii name' degrees')
+            outerSleeveMDR = transpose (+3) innerSleeveMDR
+            cpoints =  ((execState $ runExceptT (socketWithRiser (degrees innerSleeveMDR) (degrees outerSleeveMDR)         rowReductionFactor    pixelsPerMM ) ) [])
+        in  writeStlToFile $ newStlShape "socket with riser"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
+      Nothing                                ->
+        putStrLn "File not decoded"
 
 
 

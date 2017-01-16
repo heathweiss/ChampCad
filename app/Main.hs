@@ -1,12 +1,10 @@
 module Main where
 
 --import Lib
---import Examples.Scan.WalkerSocketDesignWork(loadMDRAndPassToProcessor)
+import Examples.Scan.WalkerSocketDesignWork(loadMDRAndPassToProcessor, socketWithRiserStlGenerator)
 --import System.Environment
 
-import Examples.Diffs.MTLDiff(generateSingleLargeCubeToCxForErrors, generateSingleLargeCubeStl,
-                              generatecutterCubesToCxForErrors, generatecutterCubesStl,
-                              generateUnionCubesToCxForErrors, generateUnionCubesStl)
+
 
 main :: IO ()
 main = do
@@ -14,6 +12,7 @@ main = do
  --loadMDRAndPassToProcessor (read $ head x) (read $ head $ tail x)
 
  
- generateUnionCubesStl
- --generateUnionCubesToCxForErrors
+ 
+
+ socketWithRiserStlGenerator
  
