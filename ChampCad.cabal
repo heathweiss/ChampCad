@@ -57,6 +57,7 @@ library
                        -- scanned shapes
                        Examples.Scan.WalkerSocketProcessScan
                        Examples.Scan.WalkerSocketDesignWork
+                       Examples.Scan.OpenBionicsDotComDesignWork
                        -- Misc Shapes
                        --Examples.MiscShapes.RvVentCaps
                        --Exlcluded as they have not been updated for the new cylinders.

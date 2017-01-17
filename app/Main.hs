@@ -2,6 +2,7 @@ module Main where
 
 --import Lib
 import Examples.Scan.WalkerSocketDesignWork(loadMDRAndPassToProcessor, socketWithRiserStlGenerator)
+import Examples.Scan.OpenBionicsDotComDesignWork (socketNoConnectorStlGenerator, handBaseStlGenerator)
 --import System.Environment
 
 
@@ -14,5 +15,5 @@ main = do
  
  
 
- socketWithRiserStlGenerator
+ handBaseStlGenerator 
  
