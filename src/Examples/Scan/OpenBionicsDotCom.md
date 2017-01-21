@@ -7,8 +7,11 @@ Socket with a round end onto which the adaptor will fit.
 
 [innerMDR] ------transpose(+3)--------------------------[outerMDR]
 
-[innerMDR]----------- createVerticalWalls---------->    [CornerPoints: socket w/o adaptor]
-
+[innerMDR----------- createVerticalWalls---------->    [CornerPoints: socket w/o adaptor]
+ outerMDR
+ transposeFactors
+ origin
+]
 
 ================================ adaptor ==========================================
 The adaptor which will fit between the socket and the hand.
@@ -23,3 +26,12 @@ The adaptor which will fit between the socket and the hand.
  Angles       ---- Primitives.Cylindrical.Walled.cylinder----> [CornerPoints: base of hand cylinder]
  Origin
  Height    ]
+
+
+
+
+
+
+
+========================================== terms =====================================
+base of hand: 

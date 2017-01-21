@@ -1,4 +1,4 @@
-module Examples.Scan.OpenBionicsDotComDesignWork (socketNoConnectorStlGenerator, innerHandBaseStlGenerator, outerHandBaseStlGenerator,
+module Examples.Scan.OpenBionicsDotComDesignWork (socketNoConnectorStlGenerator,  
                                                   innerOuterHandBaseStlGenerator) where
 
 {- |
@@ -17,7 +17,7 @@ import CornerPoints.VerticalFaces(createRightFaces, createLeftFaces, createLeftF
                                   createHorizontallyAlignedCubesNoSlope, createHorizontallyAlignedCubes)
 import CornerPoints.Points(Point(..))
 import CornerPoints.CornerPoints(CornerPoints(..), (+++), (|+++|), (|@+++#@|))
-import CornerPoints.Create(Slope(..), flatXSlope, flatYSlope, Angle(..), Origin(..), createCornerPoint)
+import CornerPoints.Create(Slope(..), flatXSlope, flatYSlope, Angle(..), Origin(..), createCornerPoint, AngleRadius(..), extractAngles, extractRadii)
 import CornerPoints.FaceExtraction (extractFrontFace, extractTopFace,extractBottomFace, extractBackFace, extractFrontTopLine, extractBackTopLine,
                                     extractBackBottomLine, extractBackTopLine, extractBottomFrontLine)
 import CornerPoints.FaceConversions(backFaceFromFrontFace, upperFaceFromLowerFace, lowerFaceFromUpperFace, frontFaceFromBackFace, backBottomLineFromBottomFrontLine )
@@ -73,6 +73,16 @@ import Builder.Monad(BuilderError(..), cornerPointsErrorHandler, buildCubePoints
 
 {-
 Create a socket without using any reduction, to see what it is like
+
+[rawMDR] -----transpose(+3) . reduceRows 35 ----------> [innerMDR]
+
+[innerMDR] ------transpose(+3)--------------------------[outerMDR]
+
+[innerMDR----------- createVerticalWalls---------->    [CornerPoints: socket w/o adaptor]
+ outerMDR
+ transposeFactors
+ origin
+]
 -}
 socketNoConnector :: [SingleDegreeRadii] -> [SingleDegreeRadii] -> RowReductionFactor ->  PixelsPerMillimeter -> ExceptT BuilderError (State CpointsStack ) CpointsList
 socketNoConnector    innerSleeveSDR         outerSleeveSDR         rowReductionFactor      pixelsPerMM = do
@@ -111,173 +121,125 @@ connect together the inner/outer hand bases so inner/outer walls will be differe
 This would be the proper shape that would then transfomr to circle and socket.
 -}
 
-{-
+{-The AngleRadius pairs representing the 12 points of the dodecagon in the base of the hand.
+Note that this is less than the 37 angles used in the socket scan, and so will have to be built up into
+a list of 37-}
+angleRadius0 = AngleRadius (Angle 0) (Radius 27.36)
+angleRadius8 = AngleRadius (Angle 8) (Radius 26.22)
+angleRadius44 = AngleRadius (Angle 44) (Radius 20.01)
+angleRadius88 = AngleRadius (Angle 88) (Radius 20.01)
+angleRadius124 = AngleRadius (Angle 124) (Radius 26.22)
+angleRadius136 = AngleRadius (Angle 136) (Radius 27.36)
+angleRadius180 = AngleRadius (Angle 180) (Radius 27.36)
+angleRadius188 = AngleRadius (Angle 188) (Radius 26.22)
+angleRadius224 = AngleRadius (Angle 224) (Radius 20.01)
+angleRadius268 = AngleRadius (Angle 268) (Radius 20.01)
+angleRadius304 = AngleRadius (Angle 304) (Radius 26.22)
+angleRadius316 = AngleRadius (Angle 316) (Radius 27.36)
+angleRadius360 = AngleRadius (Angle 360) (Radius 27.36)
 
-[                                                                 [
-  [InnerPosition]--------------generateInnerLists ------------->    InnerPositionLists
-                  ]                                                 
-                                                                              ]
-
--}
-data InnerPosition = InnerPosition
-                       { posDegree :: Angle,
-                         posRadius :: Radius
-                       }
-
-instance Show InnerPosition where
-  show (InnerPosition posDegree' posRadius') = (show posDegree') ++ " : " ++ (show posRadius')
-
-data InnerPositionLists = InnerPositionLists
-                           {posDegrees :: [Angle],
-                            posRadii :: [Radius]
-                           }
-
-instance Show  InnerPositionLists where
-  show (InnerPositionLists posDegrees' posRadii') = (show posDegrees' ) ++ (show posRadii')
-
-pos0 = InnerPosition (Angle 0) (Radius 27.36)
-pos8 = InnerPosition (Angle 8) (Radius 26.22)
-pos44 = InnerPosition (Angle 44) (Radius 20.01)
-pos88 = InnerPosition (Angle 88) (Radius 20.01)
-pos124 = InnerPosition (Angle 124) (Radius 26.22)
-pos136 = InnerPosition (Angle 136) (Radius 27.36)
-pos180 = InnerPosition (Angle 180) (Radius 27.36)
-pos188 = InnerPosition (Angle 188) (Radius 26.22)
-pos224 = InnerPosition (Angle 224) (Radius 20.01)
-pos268 = InnerPosition (Angle 268) (Radius 20.01)
-pos304 = InnerPosition (Angle 304) (Radius 26.22)
-pos316 = InnerPosition (Angle 316) (Radius 27.36)
-pos360 = InnerPosition (Angle 360) (Radius 27.36)
-positions =
+{-Now build up a list of AngleRadius, to match the 37 angles or the wrist outer radii,
+which in turn has to match the 37 angles used for the socket scan.-}
+angleRadii =
   [
-   pos0, --0
-   pos8, --10
-   pos8, --20
-   pos44, --30
-   pos44, --40
-   pos44, --50
-   pos44, --60
-   pos88, --70
-   pos88, --80
-   pos88, --90
-   pos88, --100
-   pos88, --110
-   pos124, --120
-   pos124, --130
-   pos136, --140
-   pos136, --150
-   pos136, --160
-   pos180, --170
-   pos180, --180
-   pos188, --190
-   pos188, --200
-   pos188, --210
-   pos224, --220
-   pos224, --230
-   pos224, --240
-   pos224, --250
-   pos268, --260
-   pos268, --270
-   pos268, --280
-   pos268, --290
-   pos304, --300
-   pos304, --310
-   pos316, --320
-   pos316, --330
-   pos316, --340
-   pos360, --350
-   pos360  --360
+   angleRadius0, --0
+   angleRadius8, --10
+   angleRadius8, --20
+   angleRadius44, --30
+   angleRadius44, --40
+   angleRadius44, --50
+   angleRadius44, --60
+   angleRadius88, --70
+   angleRadius88, --80
+   angleRadius88, --90
+   angleRadius88, --100
+   angleRadius88, --110
+   angleRadius124, --120
+   angleRadius124, --130
+   angleRadius136, --140
+   angleRadius136, --150
+   angleRadius136, --160
+   angleRadius180, --170
+   angleRadius180, --180
+   angleRadius188, --190
+   angleRadius188, --200
+   angleRadius188, --210
+   angleRadius224, --220
+   angleRadius224, --230
+   angleRadius224, --240
+   angleRadius224, --250
+   angleRadius268, --260
+   angleRadius268, --270
+   angleRadius268, --280
+   angleRadius268, --290
+   angleRadius304, --300
+   angleRadius304, --310
+   angleRadius316, --320
+   angleRadius316, --330
+   angleRadius316, --340
+   angleRadius360, --350
+   angleRadius360  --360
    
   ]
-generateInnerLists :: [InnerPosition] -> InnerPositionLists
-generateInnerLists positions =
-  generateInnerLists' (reverse positions) (InnerPositionLists [] [])
-
-generateInnerLists' :: [InnerPosition] -> InnerPositionLists -> InnerPositionLists
-generateInnerLists' (x:[]) (InnerPositionLists posDegrees' posRadii') =
-  (InnerPositionLists ((posDegree x) : posDegrees' ) ((posRadius x) : posRadii') )
-
-generateInnerLists' (x:xs) (InnerPositionLists posDegrees' posRadii') =
-  generateInnerLists' xs (InnerPositionLists (( posDegree x) : posDegrees' ) ( (posRadius x) : posRadii') )
  
-seePostions = generateInnerLists positions
+
 
 innerOuterHandBase :: ExceptT BuilderError (State CpointsStack ) CpointsList
 innerOuterHandBase = do
   let
+      
       -- ======================= outer radii info ===================================
+      --make them every 10 degees to match up with socket.
       outerAngles =  [Angle a | a <- [0,10..360]]
 
-      --outerRadii = rotateBack outerRadii' 
-      --outerRadii will have to be rotated forward to match up with inner angles as they are measured
-      --with a different initial 0 degrees.
+      {-
+      Everty 10 degrees to match up with the socket.
+      -}
       outerRadii = map Radius
-        [31.36, --0
-         29.65, --10
-         27.4, --20
-         25.1, --30
-         23.83, --40
-         22.83,  --50
-         22.45, --60
+        [29.64, --0
+         28.74, --10
+         26.77, --20
+         25.25, --30
+         23.98, --40
+         23.01, --50
+         22.25, --60
          21.95, --70
-         22.63, --80
-         23.0,  --90
+         22.19, --80
+         23.1, --90
          24.32, --100
-         26.1, --110
-         28.13, --120
-         30.98, --130
-         33.2, --140
-         33.48,  --150
-         33.25, --160
-         33.48, --170
-         33.34, --180
-         33.62, --190
-         31.22, --200
-         29.68, --210
-         27.18, --220
-         25.26, --230
-         24.22, --240
-         23.9, --250
-         24.81, --260
-         25.65, --270
-         28.0, --280
-         31.56, --290
-         33.26, --300
-         33.68, --310
-         33.81, --320
-         33.56, --330
-         33.19, --340
-         33.21, --350
-         31.36  --360
+         26.23, --110
+         28.62, --120
+         30.55, --130
+         32.42, --140
+         32.53, --150
+         31.75, --160
+         31.76, --170
+         32.5, --180
+         32.25, --190
+         31.11, --200
+         29.47, --210
+         26.38, --220
+         24.49, --230
+         23.19, --240
+         22.83, --250
+         23.25, --260
+         24.93, --270
+         28.53, --280
+         33.02, --290
+         34.9, --300
+         34.2, --310
+         33.62, --320
+         33.4, --330
+         32.15, --340
+         30.96, --350
+         29.64 --360
         ]
       -- ============================= inners radii info========================
-      innerRadiiBuilder a b c =
-        map Radius
-        (concat
-        [
-        [a], --0
-        [b,b], --8.5, 8.6
-        [c | c' <- [1,2..8]], -- 43.9-44.2 87.8-88.1
-        [b,b], --123.4, 123.5
-        [a | a' <- [1,2..6]], -- 132, 132.1, 132.2 179.8-180
-        [b,b,b], -- 188.5-7
-        [c | c' <- [1,2..7]], --224-224.2 267.8-268.1
-        [b,b], -- 303.4-5
-        [a | a' <- [1,2..6]] --312.0-2  359.8-360
-        ]
-        )
       
-      --slightly too small at 27.42  26.5 19.4 
-      innerRadii = innerRadiiBuilder 28.0  27.0 20.0
-      innerAngles = map (\(Angle x) -> Angle (x + 20)) innerAngles'         
-      innerAngles' = map Angle
-        [0,8.5,8.6,43.9,44,44.1,44.2,87.8,87.9,88,88.1,123.4,123.5,132,132.1,132.2,179.8,179.9,180,
-         188.5,188.6,188.7,224,224.1,224.2,267.8,267.9,268,268.1,303.4,303.5,312,312.1,312.2,359.8,359.9,360
-        ]
 
   innerWall <- buildCubePointsListAdd "innerWall"
                ( map (backBottomLineFromBottomFrontLine . extractBottomFrontLine)
-                 (createBottomFaces (Point 0 0 0) {-innerRadii-}(posRadii seePostions) {-innerAngles-}(posDegrees seePostions) flatXSlope flatYSlope)
+                 (createBottomFaces (Point 0 0 0) (extractRadii angleRadii) (extractAngles angleRadii) flatXSlope flatYSlope)
                )
                [CornerPointsId | x <-[1..]]
   outerWall <- buildCubePointsListAdd "outerWall"
@@ -301,117 +263,7 @@ innerOuterHandBaseStlGenerator = do
   let cpoints = ((execState $ runExceptT (innerOuterHandBase)) [])
   writeStlToFile $ newStlShape "cpoinst"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
 
--- =============================================== outer hand base ==================================
-{-
-The shape of the base of the hand, on the outside of hand. So the shape of the wrist.
 
-Just look at the wrist on its own for now.
-
--}
-outerHandBase :: ExceptT BuilderError (State CpointsStack ) CpointsList
-outerHandBase = do
-  let
-      -- ======================= outer radii info ===================================
-      outerAngles =  [Angle a | a <- [0,10..360]]
-
-      --outerRadii = rotateBack outerRadii' 
-      --outerRadii will have to be rotated forward to match up with inner angles as they are measured
-      --with a different initial 0 degrees.
-      outerRadii = map Radius
-        [33.86, --0
-         32.08, --10
-         30.91, --20
-         30.03, --30
-         27.63, --40
-         25.5,  --50
-         23.94, --60
-         23.15, --70
-         21.75, --80
-         21.8,  --90
-         21.71, --100
-         22.25, --110
-         23.54, --120
-         25.41, --130
-         27.05, --140
-         29.7,  --150
-         31.42, --160
-         32.08, --170
-         31.09, --180
-         31.35, --190
-         31.82, --200
-         31.58, --210
-         31.04, --220
-         29.62, --230
-         27.43, --240
-         25.27, --250
-         24.15, --260
-         23.83, --270
-         24.38, --280
-         25.55, --290
-         27.98, --300
-         32.18, --310
-         35.47, --320
-         36.03, --330
-         35.16, --340
-         34.46, --350
-         33.86  --360
-        ]
-
-  base <- buildCubePointsListAdd "base"
-          (cylinder  outerRadii (map (transpose (+3)) outerRadii ) outerAngles (Point 0 0 0) 5)
-          [CornerPointsId | x <-[1..]]
-
-  return base
-
-outerHandBaseStlGenerator :: IO ()
-outerHandBaseStlGenerator = do
-  let cpoints = ((execState $ runExceptT (outerHandBase)) [])
-  writeStlToFile $ newStlShape "cpoinst"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
-
--- ===============================================inner hand base ======================================
-{-
-Have a look at the base of the hand on its own, to print and fit.
-This is the inner section, the semi-octagon shape
--}
-
-innerHandBase :: ExceptT BuilderError (State CpointsStack ) CpointsList
-innerHandBase = do
-  let
-      -- ============================= inners radii info========================
-      innerRadiiBuilder a b c =
-        map Radius
-        (concat
-        [
-        [a], --0
-        [b,b], --8.5, 8.6
-        [c | c' <- [1,2..8]], -- 43.9-44.2 87.8-88.1
-        [b,b], --123.4, 123.5
-        [a | a' <- [1,2..6]], -- 132, 132.1, 132.2 179.8-180
-        [b,b,b], -- 188.5-7
-        [c | c' <- [1,2..7]], --224-224.2 267.8-268.1
-        [b,b], -- 303.4-5
-        [a | a' <- [1,2..6]] --312.0-2  359.8-360
-        ]
-        )
-        
-      innerRadii = innerRadiiBuilder 27.42  26.5 19.4
-      innerAngles = map (\(Angle x) -> Angle (x + 20)) innerAngles'         
-      innerAngles' = map Angle
-        [0,8.5,8.6,43.9,44,44.1,44.2,87.8,87.9,88,88.1,123.4,123.5,132,132.1,132.2,179.8,179.9,180,
-         188.5,188.6,188.7,224,224.1,224.2,267.8,267.9,268,268.1,303.4,303.5,312,312.1,312.2,359.8,359.9,360
-        ]
-
-      
-  base <- buildCubePointsListAdd "base"
-          (cylinder  innerRadii (map (transpose (+3)) innerRadii ) innerAngles (Point 0 0 0) 5)
-          [CornerPointsId | x <-[1..]]
-
-  return base
-
-innerHandBaseStlGenerator :: IO ()
-innerHandBaseStlGenerator = do
-  let cpoints = ((execState $ runExceptT (innerHandBase)) [])
-  writeStlToFile $ newStlShape "cpoinst"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
 -- ============================================== helpers ==========================================
 --curry in the stack pushing function
 buildCubePointsListAdd = buildCubePointsList (++)
@@ -427,45 +279,3 @@ rotate list = (last list) : (init list)
 rotateBack :: [a] -> [a]
 rotateBack (x:xs) = xs ++ [x]
 
-{-
-
-outerRadii = map Radius
-        [33.86, --0
-         32.08, --10
-         30.91, --20
-         30.03, --30
-         27.63, --40
-         25.5,  --50
-         23.94, --60
-         23.15, --70
-         21.75, --80
-         21.8,  --90
-         21.71, --100
-         22.25, --110
-         23.54, --120
-         25.41, --130
-         27.05, --140
-         29.7,  --150
-         31.42, --160
-         32.08, --170
-         31.09, --180
-         31.35, --190
-         31.82, --200
-         31.58, --210
-         31.04, --220
-         29.62, --230
-         27.43, --240
-         25.27, --250
-         24.15, --260
-         23.83, --270
-         24.38, --280
-         25.55, --290
-         27.98, --300
-         32.18, --310
-         35.47, --320
-         36.03, --330
-         35.16, --340
-         34.46, --350
-         33.86  --360
-        ]
--}
