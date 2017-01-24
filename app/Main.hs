@@ -2,7 +2,7 @@ module Main where
 
 --import Lib
 import Examples.Scan.WalkerSocketDesignWork(loadMDRAndPassToProcessor, socketWithRiserStlGenerator)
-import Examples.Scan.OpenBionicsDotComDesignWork (socketNoConnectorStlGenerator, innerOuterHandBaseStlGenerator)
+import Examples.Scan.OpenBionicsDotComDesignWork (socketWithAdaptorStlGenerator, innerOuterHandBaseStlGenerator, topOfSocketStlGenerator)
 --import System.Environment
 
 
@@ -12,8 +12,5 @@ main = do
  --x <-  getArgs
  --loadMDRAndPassToProcessor (read $ head x) (read $ head $ tail x)
 
- 
- 
-
- innerOuterHandBaseStlGenerator 
+ socketWithAdaptorStlGenerator
  

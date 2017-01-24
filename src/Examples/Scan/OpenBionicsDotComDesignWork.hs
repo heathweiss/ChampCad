@@ -1,4 +1,4 @@
-module Examples.Scan.OpenBionicsDotComDesignWork (socketNoConnectorStlGenerator,  
+module Examples.Scan.OpenBionicsDotComDesignWork (socketWithAdaptorStlGenerator,  topOfSocketStlGenerator, 
                                                   innerOuterHandBaseStlGenerator) where
 
 {- |
@@ -20,7 +20,8 @@ import CornerPoints.CornerPoints(CornerPoints(..), (+++), (|+++|), (|@+++#@|))
 import CornerPoints.Create(Slope(..), flatXSlope, flatYSlope, Angle(..), Origin(..), createCornerPoint, AngleRadius(..), extractAngles, extractRadii)
 import CornerPoints.FaceExtraction (extractFrontFace, extractTopFace,extractBottomFace, extractBackFace, extractFrontTopLine, extractBackTopLine,
                                     extractBackBottomLine, extractBackTopLine, extractBottomFrontLine)
-import CornerPoints.FaceConversions(backFaceFromFrontFace, upperFaceFromLowerFace, lowerFaceFromUpperFace, frontFaceFromBackFace, backBottomLineFromBottomFrontLine )
+import CornerPoints.FaceConversions(backFaceFromFrontFace, upperFaceFromLowerFace, lowerFaceFromUpperFace, frontFaceFromBackFace,
+                                    backBottomLineFromBottomFrontLine, frontTopLineFromBackTopLine, backTopLineFromFrontTopLine)
 import CornerPoints.Transpose (transposeZ, transposeY, transposeX)
 import CornerPoints.CornerPointsWithDegrees(CornerPointsWithDegrees(..), (@~+++#@),(@~+++@),(|@~+++@|), (|@~+++#@|), DegreeRange(..))
 import CornerPoints.MeshGeneration(autoGenerateEachCube)
@@ -71,6 +72,39 @@ import Control.Monad.Reader
 import Builder.Monad(BuilderError(..), cornerPointsErrorHandler, buildCubePointsList,
                      CpointsStack, CpointsList)
 
+-- ====================================================== top of socket =================================================
+topOfSocket :: [SingleDegreeRadii] -> [SingleDegreeRadii] -> RowReductionFactor ->  PixelsPerMillimeter -> ExceptT BuilderError (State CpointsStack ) CpointsList
+topOfSocket    innerSleeveSDR         outerSleeveSDR         rowReductionFactor      pixelsPerMM = do
+  let angles = (map (Angle) [0,10..360])
+      transposeFactors = [0,((1/ pixelsPerMM) * (fromIntegral rowReductionFactor))..]
+      origin = (Point{x_axis=0, y_axis=0, z_axis=50})
+  
+  mainCubes  <- buildCubePointsListAdd "mainCubes"
+                (head $ tail (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
+                [CornerPointsId | x <-[1..]]
+  
+  return mainCubes
+
+--load the json file and call generate stl
+topOfSocketStlGenerator :: IO ()
+topOfSocketStlGenerator = do
+  contents <- BL.readFile "src/Data/scanFullData.json"
+  
+  case (decode contents) of
+   
+      Just (MultiDegreeRadii name' degrees') ->
+        let --Changing this to 50 does not work. It should be made so this can be changed.
+            --Is it some combination with PixelsPerMillimeter that messes it up.
+            --ToDo: Make a diff. version of reduceScan that perhaps uses mm instead of mod of some number.
+            rowReductionFactor = 40::RowReductionFactor
+            innerSleeveMDR = (transpose (+3)) . (reduceScan rowReductionFactor) $ (MultiDegreeRadii name' degrees')
+            outerSleeveMDR = (transpose (+3)) innerSleeveMDR
+            cpoints =  ((execState $ runExceptT (topOfSocket (degrees innerSleeveMDR) (degrees outerSleeveMDR) rowReductionFactor pixelsPerMM ) ) [])
+        in  writeStlToFile $ newStlShape "socket no reduction"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
+      Nothing                                ->
+        putStrLn "File not decoded"
+
+-- ================================================== full length socket w/o connector===============================================================
 {-
 Create a socket without using any reduction, to see what it is like
 
@@ -84,22 +118,69 @@ Create a socket without using any reduction, to see what it is like
  origin
 ]
 -}
-socketNoConnector :: [SingleDegreeRadii] -> [SingleDegreeRadii] -> RowReductionFactor ->  PixelsPerMillimeter -> ExceptT BuilderError (State CpointsStack ) CpointsList
-socketNoConnector    innerSleeveSDR         outerSleeveSDR         rowReductionFactor      pixelsPerMM = do
+socketWithAdaptor :: [SingleDegreeRadii] -> [SingleDegreeRadii] -> RowReductionFactor ->  PixelsPerMillimeter -> ExceptT BuilderError (State CpointsStack ) CpointsList
+socketWithAdaptor    innerSleeveSDR         outerSleeveSDR         rowReductionFactor      pixelsPerMM = do
   let angles = (map (Angle) [0,10..360])
       transposeFactors = [0,((1/ pixelsPerMM) * (fromIntegral rowReductionFactor))..]
       origin = (Point{x_axis=0, y_axis=0, z_axis=50})
   
-  mainCubes  <- buildCubePointsListAdd "mainCubes"
-                (concat (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
-                [CornerPointsId | x <-[1..]]
+  topOfSocketCubes  <- buildCubePointsListAdd "mainCubes"
+                      (concat $ tail (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
+                      [CornerPointsId | x <-[1..]]
+
+  let triacontakaihexagonOrigin = (Point (-3) 5 (z_axis . (transposeZ (+10)) . f2 .  extractFrontTopLine .  head $ topOfSocketCubes))
+
+  btmOfTriacontakaihexagonAsTopFrontLines <- buildCubePointsListAdd "btmOfTriacontakaihexagonAsTopFrontLines"
+                        (map extractFrontTopLine
+                        (createTopFaces
+                          triacontakaihexagonOrigin
+                          [Radius 20 | x <- [1..]]
+                          outerWristAngles
+                          flatXSlope
+                          flatYSlope
+                        )
+                       )
+                       [CornerPointsId | x <-[1..]]
+
   
-  return mainCubes
+  btmOfTriacontakaihexagonAsBackTopLines <- buildCubePointsListAdd "wristTopBackLine"
+                       (map (backTopLineFromFrontTopLine . extractFrontTopLine)
+                        (createTopFaces
+                          triacontakaihexagonOrigin
+                          [Radius 17 | x <- [1..]]
+                          outerWristAngles
+                          flatXSlope
+                          flatYSlope
+                        )
+                       )
+                       [CornerPointsId | x <-[1..]]
+                   
+
+  
+  btmOfTriacontakaihexagonAsTopFaces          <- buildCubePointsListAdd "topFaces"
+                       btmOfTriacontakaihexagonAsTopFrontLines
+                       btmOfTriacontakaihexagonAsBackTopLines
+  
+  socketToTriacontakaihexagonAdaptor          <- buildCubePointsListAdd "topFaces"
+                       btmOfTriacontakaihexagonAsTopFaces
+                       (map (lowerFaceFromUpperFace .extractTopFace)
+                         topOfSocketCubes
+                       )
+
+  triacontakaihexagonAdaptor <- buildCubePointsListAdd "triacontakaihexagonAdaptor"
+                       (map (transposeZ (+20))
+                          btmOfTriacontakaihexagonAsTopFaces  
+                       )
+                       ( map lowerFaceFromUpperFace
+                         btmOfTriacontakaihexagonAsTopFaces
+                        )
+                       
+  return socketToTriacontakaihexagonAdaptor
 
 
 --load the json file and call generate stl
-socketNoConnectorStlGenerator :: IO ()
-socketNoConnectorStlGenerator = do
+socketWithAdaptorStlGenerator :: IO ()
+socketWithAdaptorStlGenerator = do
   contents <- BL.readFile "src/Data/scanFullData.json"
   
   case (decode contents) of
@@ -111,7 +192,7 @@ socketNoConnectorStlGenerator = do
             rowReductionFactor = 40::RowReductionFactor
             innerSleeveMDR = (transpose (+3)) . (reduceScan rowReductionFactor) $ (MultiDegreeRadii name' degrees')
             outerSleeveMDR = (transpose (+3)) innerSleeveMDR
-            cpoints =  ((execState $ runExceptT (socketNoConnector (degrees innerSleeveMDR) (degrees outerSleeveMDR) rowReductionFactor pixelsPerMM ) ) [])
+            cpoints =  ((execState $ runExceptT (socketWithAdaptor (degrees innerSleeveMDR) (degrees outerSleeveMDR) rowReductionFactor pixelsPerMM ) ) [])
         in  writeStlToFile $ newStlShape "socket no reduction"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
       Nothing                                ->
         putStrLn "File not decoded"
@@ -181,21 +262,13 @@ angleRadii =
    angleRadius360  --360
    
   ]
- 
 
-
-innerOuterHandBase :: ExceptT BuilderError (State CpointsStack ) CpointsList
-innerOuterHandBase = do
-  let
-      
-      -- ======================= outer radii info ===================================
+-- ======================= outer wrist info ===================================
       --make them every 10 degees to match up with socket.
-      outerAngles =  [Angle a | a <- [0,10..360]]
+outerWristAngles =  [Angle a | a <- [0,10..360]]
 
-      {-
-      Everty 10 degrees to match up with the socket.
-      -}
-      outerRadii = map Radius
+--outer shape of the wrist
+outerWristRadii = map Radius
         [29.64, --0
          28.74, --10
          26.77, --20
@@ -234,6 +307,16 @@ innerOuterHandBase = do
          30.96, --350
          29.64 --360
         ]
+
+
+innerOuterHandBase :: ExceptT BuilderError (State CpointsStack ) CpointsList
+innerOuterHandBase = do
+  let
+      
+      
+      {-
+      Everty 10 degrees to match up with the socket.
+      -}
       -- ============================= inners radii info========================
       
 
@@ -242,9 +325,10 @@ innerOuterHandBase = do
                  (createBottomFaces (Point 0 0 0) (extractRadii angleRadii) (extractAngles angleRadii) flatXSlope flatYSlope)
                )
                [CornerPointsId | x <-[1..]]
+
   outerWall <- buildCubePointsListAdd "outerWall"
                ( map extractBottomFrontLine
-                 (createBottomFaces (Point 0 0 0) outerRadii outerAngles flatXSlope flatYSlope)
+                 (createBottomFaces (Point 0 0 0) outerWristRadii outerWristAngles flatXSlope flatYSlope)
                )
                [CornerPointsId | x <-[1..]]
 
@@ -279,3 +363,5 @@ rotate list = (last list) : (init list)
 rotateBack :: [a] -> [a]
 rotateBack (x:xs) = xs ++ [x]
 
+removeDefectiveTopRow :: MultiDegreeRadii -> MultiDegreeRadii
+removeDefectiveTopRow (MultiDegreeRadii name' degrees') = MultiDegreeRadii name' [(SingleDegreeRadii degree'' (tail radii''))  | (SingleDegreeRadii degree'' radii'') <- degrees']
