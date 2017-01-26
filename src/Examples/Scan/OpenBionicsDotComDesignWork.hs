@@ -1,5 +1,5 @@
 module Examples.Scan.OpenBionicsDotComDesignWork (socketWithAdaptorStlGenerator,  topOfSocketStlGenerator, 
-                                                  handtoTriacontakaihexagonStlGenerator) where
+                                                  handtoTriacontakaihexagonStlGenerator, triacontakaihexagonInnerRadiiShaftStlGenerator) where
 
 {- |
 Design a socket that the OpenBionics.com hand can be attached to.
@@ -210,6 +210,15 @@ to take the shape of the wrist of the hand.
 Name of the wrist section corresponding to the shape of the base of the hand which consists of:
 -outer shape: wrist
 -inner shape: dodecagon (12 sided)
+
+test print 1:
+abs
+1 permineter: should have f2 perimeters
+5% infill: should use 10%
+
+Sloped section would/should print better with more infill and perimeters.
+
+Shape of outer wrist could use some further adjustment.
 -}
 
 
@@ -288,7 +297,40 @@ handtoTriacontakaihexagonStlGenerator = do
   let cpoints = ((execState $ runExceptT (handtoTriacontakaihexagon)) [])
   writeStlToFile $ newStlShape "cpoinst"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
 
+-- =====================================triacontakaihexagon joiner===========================
+{-
+The 36 sided shaft, which the socket and hand adaptors will slide over, to join them together
 
+The hand and socket each have a female height of triacontakaihexagonHeight and so the shaft
+should be triacontakaihexagonHeight * 2, or slightly under for some tolerance.
+
+The inside inside of the female pieces is triacontakaihexagonInnerRadii, which will be the
+outer radii of the shaft, - some tolerance.
+
+|-------|
+|       |
+|       |
+|-------|
+-}
+
+triacontakaihexagonInnerRadiiShaft :: ExceptT BuilderError (State CpointsStack ) CpointsList
+triacontakaihexagonInnerRadiiShaft = do
+  cylinder <- buildCubePointsListAdd "cylinder"
+              (cylinder (map (transpose (\length -> length - 3))triacontakaihexagonInnerRadii)
+                         (map (transpose (\length -> length - 0.2))triacontakaihexagonInnerRadii)
+                         (map (Angle) [0,10..360])
+                         (Point 0 0 0)
+                         ((triacontakaihexagonHeight * 2) - 2) -- -2 is a bit sloppy. Should try 0.5
+              )
+              [CornerPointsId | x <-[1..]]
+
+  
+  return cylinder
+
+triacontakaihexagonInnerRadiiShaftStlGenerator :: IO ()
+triacontakaihexagonInnerRadiiShaftStlGenerator = do
+  let cpoints = ((execState $ runExceptT (triacontakaihexagonInnerRadiiShaft)) [])
+  writeStlToFile $ newStlShape "cpoinst"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
 -- ======================= outer wrist info ===================================
       --make them every 10 degees to match up with socket.
 outerWristAngles =  [Angle a | a <- [0,10..360]]
