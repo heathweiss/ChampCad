@@ -13,5 +13,5 @@ main = do
  --x <-  getArgs
  --loadMDRAndPassToProcessor (read $ head x) (read $ head $ tail x)
 
- triacontakaihexagonInnerRadiiShaftStlGenerator
+ loadMDRAndPassToProcessor
 
