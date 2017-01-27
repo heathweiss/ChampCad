@@ -1,6 +1,7 @@
-module Examples.Scan.OpenBionicsDotComDesignWork (socketWithAdaptorStlGenerator,  topOfSocketStlGenerator, halfSocketWithAdaptorStlGenerator,
-                                                  handtoTriacontakaihexagonStlGenerator, triacontakaihexagonInnerRadiiShaftStlGenerator,
-                                                  halfHandtoTriacontakaihexagonStlGenerator) where
+module Examples.OpenBionicsCom.OpenBionicsDotComDesignWork
+       (socketWithAdaptorStlGenerator,  topOfSocketStlGenerator, halfSocketWithAdaptorStlGenerator,
+        handtoTriacontakaihexagonStlGenerator, triacontakaihexagonInnerRadiiShaftStlGenerator,
+        halfHandtoTriacontakaihexagonStlGenerator) where
 
 {- |
 Design a socket that the OpenBionics.com hand can be attached to.

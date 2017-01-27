@@ -2,7 +2,7 @@ module Main where
 
 --import Lib
 --import Examples.Scan.WalkerSocketDesignWork(loadMDRAndPassToProcessor, socketWithRiserStlGenerator)
-import Examples.Scan.OpenBionicsDotComDesignWork (socketWithAdaptorStlGenerator, handtoTriacontakaihexagonStlGenerator,
+import Examples.OpenBionicsCom.OpenBionicsDotComDesignWork (socketWithAdaptorStlGenerator, handtoTriacontakaihexagonStlGenerator,
                                                   topOfSocketStlGenerator, triacontakaihexagonInnerRadiiShaftStlGenerator,
                                                   halfSocketWithAdaptorStlGenerator, halfHandtoTriacontakaihexagonStlGenerator
                                                   )
