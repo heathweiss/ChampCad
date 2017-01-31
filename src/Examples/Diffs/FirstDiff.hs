@@ -10,7 +10,7 @@ import CornerPoints.CornerPointsWithDegrees(DegreeRange(..), newCornerPointsWith
 import CornerPoints.FaceExtraction(extractFrontFace, extractFrontLeftLine, extractFrontRightLine, extractLeftFace,
                                   extractRightFace, extractBackRightLine)
 import CornerPoints.FaceConversions(toBackFace, reverseNormal, toFrontFace, backFaceFromFrontFace)
-import CornerPoints.FaceExtractAndConvert(getFrontFaceAsBackFace, getFrontLeftLineAsBackFace, getLeftFaceAsBackFace,
+import CornerPoints.FaceExtractAndConvert(getFrontLeftLineAsBackFace, getLeftFaceAsBackFace,
                                           getFrontRightLineAsBackFace, getRightFaceAsBackFace, getBackRightLineAsBackFace)
 
 
@@ -104,7 +104,7 @@ buildHoleInSingleTriangle = do
       
       f = -- 0-45 degrees of hole
           arr (\triangles ->
-                    let backFace = getFrontFaceAsBackFace $ largeCube 0 45
+                    let backFace = toBackFace . extractFrontFace $ largeCube 0 45
                         
                     in   triangles S.>< (S.fromList (FacesBackBottomFrontTop +++^ (backFace +++ (frontFaceOfSmallCube 0 45))))
                   )

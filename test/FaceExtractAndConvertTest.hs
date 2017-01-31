@@ -4,7 +4,6 @@ import CornerPoints.CornerPoints(CornerPoints(..), (+++))
 import CornerPoints.Points(Point(..))
 import CornerPoints.FaceConversions(reverseNormal, toBackFace)
 import CornerPoints.FaceExtraction(extractFrontFace, extractBackFace, extractRightFace)
-import CornerPoints.FaceExtractAndConvert(getFrontFaceAsBackFace)
 
 faceExtractAndConvertTestDo = do
   let helloTest = TestCase $ assertEqual

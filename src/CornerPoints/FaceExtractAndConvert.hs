@@ -1,4 +1,4 @@
-module CornerPoints.FaceExtractAndConvert(getFrontFaceAsBackFace, getFrontLeftLineAsBackFace, getLeftFaceAsBackFace,
+module CornerPoints.FaceExtractAndConvert(getFrontLeftLineAsBackFace, getLeftFaceAsBackFace,
                                          getFrontRightLineAsBackFace, getRightFaceAsBackFace, getBackRightLineAsBackFace,
                                          getLeftFaceAsFrontFace, getRightFaceAsFrontFace, faceFromF12Line, faceFromF34Line) where
 import CornerPoints.FaceConversions
@@ -9,8 +9,6 @@ import CornerPoints.CornerPoints(CornerPoints(..), (+++))
 Tests are in Tests.FaceExtractAndConvertTest-}
 
 
-
-getFrontFaceAsBackFace cornerPoint = toBackFace $ extractFrontFace cornerPoint
 
 getFrontLeftLineAsBackFace cornerPoint = toBackFace $ extractFrontLeftLine cornerPoint
 

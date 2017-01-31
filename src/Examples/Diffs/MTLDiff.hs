@@ -18,7 +18,7 @@ import CornerPoints.Create(Angle(..), flatXSlope, flatYSlope, Origin(..))
 import CornerPoints.CornerPoints((|@+++#@|), (|+++|),  CornerPoints(..), (+++), getCornerPointsWithIndex)
 import CornerPoints.Points(Point(..))
 import CornerPoints.MeshGeneration(autoGenerateEachCube)
-import CornerPoints.FaceExtractAndConvert(getFrontFaceAsBackFace, getFrontLeftLineAsBackFace, getLeftFaceAsBackFace,
+import CornerPoints.FaceExtractAndConvert(getFrontLeftLineAsBackFace, getLeftFaceAsBackFace,
                                           getFrontRightLineAsBackFace, getRightFaceAsBackFace, getBackRightLineAsBackFace,
                                           getLeftFaceAsFrontFace, getRightFaceAsFrontFace, faceFromF12Line, faceFromF34Line)
 import CornerPoints.FaceConversions(toBackFace, reverseNormal, toFrontFace, backFaceFromFrontFace, frontFaceFromBackFace,
@@ -162,7 +162,7 @@ unionCubes = do
   --extract the cutter cubes front faces and convert to back faces and then reverse normals so they can be combined (+++)
   --with the inner faces of the large containing cube.
   cutterFaces <- buildCubePointsListWithNoAdd "cutterFaces"
-       (map (reverseNormal . getFrontFaceAsBackFace) cutterCubes)
+       (map (reverseNormal . toBackFace . extractFrontFace) cutterCubes)
        idList
 
   let
