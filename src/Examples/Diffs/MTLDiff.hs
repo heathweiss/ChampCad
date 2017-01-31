@@ -18,9 +18,6 @@ import CornerPoints.Create(Angle(..), flatXSlope, flatYSlope, Origin(..))
 import CornerPoints.CornerPoints((|@+++#@|), (|+++|),  CornerPoints(..), (+++), getCornerPointsWithIndex)
 import CornerPoints.Points(Point(..))
 import CornerPoints.MeshGeneration(autoGenerateEachCube)
-import CornerPoints.FaceExtractAndConvert(getFrontLeftLineAsBackFace, getLeftFaceAsBackFace,
-                                          getFrontRightLineAsBackFace, getRightFaceAsBackFace, getBackRightLineAsBackFace,
-                                          getLeftFaceAsFrontFace, getRightFaceAsFrontFace, faceFromF12Line, faceFromF34Line)
 import CornerPoints.FaceConversions(toBackFace, reverseNormal, toFrontFace, backFaceFromFrontFace, frontFaceFromBackFace,
                                     f12LineFromF34Line, f34LineFromF12Line, b12LineFromF12Line, b34LineFromF34Line,
                                     )
@@ -174,15 +171,16 @@ unionCubes = do
             [getCutterFace 0]
   
   cube1 <- buildCubePointsListWithAdd "cube1"
-           [faceFromF12Line . extractFrontFace $ head containingCube]
+           [toFrontFace . extractFrontLeftLine $ head containingCube]
+           --
            [getCutterFace 1]
   
   cube2 <- buildCubePointsListWithAdd "cube2"
-           [faceFromF12Line . extractFrontFace $ head containingCube]
+           [toFrontFace . extractFrontLeftLine $ head containingCube]
            [getCutterFace 2]
   
   cube3 <- buildCubePointsListWithAdd "cube3"
-           [getLeftFaceAsFrontFace $ head containingCube]
+           [toFrontFace . extractLeftFace $ head containingCube]
            [getCutterFace 3]
   
   cube4 <- buildCubePointsListWithAdd "cube4"
@@ -194,11 +192,11 @@ unionCubes = do
            [getCutterFace 5]
   
   cube6 <- buildCubePointsListWithAdd "cube6"
-           [getRightFaceAsFrontFace $ head containingCube]
+           [toFrontFace . extractRightFace $ head containingCube]
            [getCutterFace 6]
 
   cube7 <- buildCubePointsListWithAdd "cube7"
-           [faceFromF34Line . extractFrontFace $ head containingCube]
+           [toFrontFace . extractFrontRightLine $ head containingCube]
            [getCutterFace 7]
   
   

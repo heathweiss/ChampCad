@@ -79,6 +79,9 @@ toBackFace (BackLeftLine b1 b2) = BackFace b1 b2 b2 b1
 
 toFrontFace(RightFace b3 b4 f3 f4) = FrontFace f4 f3 b3 b4
 toFrontFace(LeftFace b1 b2 f1 f2) = FrontFace b1 b2 f2 f1
+toFrontFace (FrontLeftLine f1 f2) = FrontFace f1 f2 f2 f1
+toFrontFace (FrontRightLine f3 f4) = FrontFace f4 f3 f3 f4
+
 
 f23LineFromF14Line :: CornerPoints -> CornerPoints
 f23LineFromF14Line (BottomFrontLine f1 f4) = FrontTopLine f1 f4
