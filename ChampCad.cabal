@@ -68,7 +68,6 @@ library
                        --adaptors
                        Examples.Adaptors.HockeyStick
                        --try out removing a cylinder from a cylinder
-                       Examples.Diffs.FirstDiff
                        Examples.Diffs.MTLDiff
                        --cubical
                        Examples.Cubical.CubicalWalls
