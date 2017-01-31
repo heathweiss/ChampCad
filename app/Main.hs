@@ -16,4 +16,4 @@ main = do
  --loadMDRAndPassToProcessor (read $ head x) (read $ head $ tail x)
 
  
-  triacontakaihexagonInnerRadiiShaftStlGenerator
+  halfHandtoTriacontakaihexagonStlGenerator

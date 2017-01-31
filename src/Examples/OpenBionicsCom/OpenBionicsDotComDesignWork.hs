@@ -84,7 +84,7 @@ This is because his hand could not fit into the upper section of the socket.
 
 [innerMDR] ------transpose(+3)--------------------------[outerMDR]
 
-[innerMDR----------- createVerticalWalls---------->    [CornerPoints: socket w/o adaptor]
+[innerMDR----------- createVerticalWalls---------->    [socket with adaptor::CornerPoints]
  outerMDR
  transposeFactors
  origin
@@ -172,7 +172,7 @@ halfSocketWithAdaptorStlGenerator = do
 
 -- ===============================================half inner/outer hand base============================
 {-
-----------same as but adjusted for the different radii as required by halfSocketWithAdaptor
+
 
 connect together the inner/outer walls of the base of the hand(wrist). Wrist inner/outer walls will be different because:
 The inner wall has 12 radii, as it is a 12 sided shape.
@@ -201,34 +201,34 @@ halfHandtoTriacontakaihexagon :: ExceptT BuilderError (State CpointsStack ) Cpoi
 halfHandtoTriacontakaihexagon = do
       
   
-  dodecagonAsBackBtmLines <- buildCubePointsListAdd "dodecagonAsBackBtmLines"
+  wristBackBtmLines <- buildCubePointsListAdd "wristBackBtmLines"
                ( map (backBottomLineFromBottomFrontLine . extractBottomFrontLine)
                  (createBottomFaces (Point 0 0 0) (extractRadii angleRadii) (extractAngles angleRadii) flatXSlope flatYSlope)
                )
                [CornerPointsId | x <-[1..]]
   
-  wristAsBtmFrontLines <- buildCubePointsListAdd "wristAsBtmFrontLines"
+  wristBtmFrontLines <- buildCubePointsListAdd "wristBtmFrontLines"
                ( map extractBottomFrontLine
                  (createBottomFaces (Point 0 0 0) outerWristRadii outerWristAngles flatXSlope flatYSlope)
                )
                [CornerPointsId | x <-[1..]]
 
-  wristWithInnerDodecagonAsBtmFaces <- buildCubePointsListAdd "wristWithInnerDodecagonAsBtmFaces"
-              dodecagonAsBackBtmLines
-              wristAsBtmFrontLines
+  wristBtmFaces <- buildCubePointsListAdd "wristBtmFaces"
+              wristBackBtmLines
+              wristBtmFrontLines
 
-  wristWithInnerDodecagonCubes <- buildCubePointsListAdd "wristWithInnerDodecagon"
-              (map (upperFaceFromLowerFace . (transposeZ (+dodecagonHeight))) wristWithInnerDodecagonAsBtmFaces)
-              wristWithInnerDodecagonAsBtmFaces
+  wristCubes <- buildCubePointsListAdd "wristCubes"
+              (map (upperFaceFromLowerFace . (transposeZ (+wristHeight))) wristBtmFaces)
+              wristBtmFaces
               
   --now build the 36 sided(triacontakaihexagon) adapator top faces and add it to btm off wrist cubes
   --to convert from the wrist to the triacontakaihexagon
-  let triacontakaihexagonOrigin = (Point 0 0 (-10)) -- -10 mm below the btm of the wristWithInnerDodecagonCubes
+  let shaftOrigin = (Point 0 0 (-10)) -- -10 mm below the btm of the wristCubes
                      
   topOfTriacontakaihexagonAsBtmFrontLines <- buildCubePointsListAdd "topOfTriacontakaihexagonAsBtmFrontLines"
               (map extractBottomFrontLine
                         (createBottomFaces
-                          triacontakaihexagonOrigin
+                          shaftOrigin
                           halfTriacontakaihexagonOuterRadii 
                           outerWristAngles
                           flatXSlope
@@ -240,7 +240,7 @@ halfHandtoTriacontakaihexagon = do
   topOfTriacontakaihexagonAsBackBtmLines <- buildCubePointsListAdd "topOfTriacontakaihexagonAsBackBtmLines"
               (map (backBottomLineFromBottomFrontLine.  extractBottomFrontLine)
                         (createBottomFaces
-                          triacontakaihexagonOrigin
+                          shaftOrigin
                           halfTriacontakaihexagonInnerRadii 
                           outerWristAngles
                           flatXSlope
@@ -254,7 +254,7 @@ halfHandtoTriacontakaihexagon = do
               topOfTriacontakaihexagonAsBtmFrontLines
 
   triacontakaihexagonToWristWithInnerDodecagonCubes <- buildCubePointsListAdd "triacontakaihexagonToWristWithInnerDodecagonCubes"
-              (map upperFaceFromLowerFace wristWithInnerDodecagonAsBtmFaces)
+              (map upperFaceFromLowerFace wristBtmFaces)
               topOfTriacontakaihexagonAsBackBtmFaces
               
   --build triacontakaihexagon btm faces to give the triacontakaihexagon some depth below the wrist-to-triacontakaihexagon adaptor
@@ -336,12 +336,12 @@ socketWithAdaptor    innerSleeveSDR         outerSleeveSDR         rowReductionF
                       (concat $ tail (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
                       [CornerPointsId | x <-[1..]]
 
-  let triacontakaihexagonOrigin = (Point (-3) 5 (z_axis . (transposeZ (+10)) . f2 .  extractFrontTopLine .  head $ topOfSocketCubes))
+  let shaftOrigin = (Point (-3) 5 (z_axis . (transposeZ (+10)) . f2 .  extractFrontTopLine .  head $ topOfSocketCubes))
 
   btmOfTriacontakaihexagonAsTopFrontLines <- buildCubePointsListAdd "btmOfTriacontakaihexagonAsTopFrontLines"
                         (map extractFrontTopLine
                         (createTopFaces
-                          triacontakaihexagonOrigin
+                          shaftOrigin
                           triacontakaihexagonOuterRadii 
                           outerWristAngles
                           flatXSlope
@@ -354,7 +354,7 @@ socketWithAdaptor    innerSleeveSDR         outerSleeveSDR         rowReductionF
   btmOfTriacontakaihexagonAsBackTopLines <- buildCubePointsListAdd "wristTopBackLine"
                        (map (backTopLineFromFrontTopLine . extractFrontTopLine)
                         (createTopFaces
-                          triacontakaihexagonOrigin
+                          shaftOrigin
                           triacontakaihexagonInnerRadii 
                           outerWristAngles
                           flatXSlope
@@ -431,34 +431,34 @@ handtoTriacontakaihexagon :: ExceptT BuilderError (State CpointsStack ) CpointsL
 handtoTriacontakaihexagon = do
       
   
-  dodecagonAsBackBtmLines <- buildCubePointsListAdd "dodecagonAsBackBtmLines"
+  wristAsBackBtmLines <- buildCubePointsListAdd "wristAsBackBtmLines"
                ( map (backBottomLineFromBottomFrontLine . extractBottomFrontLine)
                  (createBottomFaces (Point 0 0 0) (extractRadii angleRadii) (extractAngles angleRadii) flatXSlope flatYSlope)
                )
                [CornerPointsId | x <-[1..]]
   
-  wristAsBtmFrontLines <- buildCubePointsListAdd "wristAsBtmFrontLines"
+  wristBtmFrontLines <- buildCubePointsListAdd "wristBtmFrontLines"
                ( map extractBottomFrontLine
                  (createBottomFaces (Point 0 0 0) outerWristRadii outerWristAngles flatXSlope flatYSlope)
                )
                [CornerPointsId | x <-[1..]]
 
-  wristWithInnerDodecagonAsBtmFaces <- buildCubePointsListAdd "wristWithInnerDodecagonAsBtmFaces"
-              dodecagonAsBackBtmLines
-              wristAsBtmFrontLines
+  wristAsBtmFaces <- buildCubePointsListAdd "wristAsBtmFaces"
+              wristAsBackBtmLines
+              wristBtmFrontLines       
 
-  wristWithInnerDodecagonCubes <- buildCubePointsListAdd "wristWithInnerDodecagon"
-              (map (upperFaceFromLowerFace . (transposeZ (+dodecagonHeight))) wristWithInnerDodecagonAsBtmFaces)
-              wristWithInnerDodecagonAsBtmFaces
+  wristCubes <- buildCubePointsListAdd "wristCubes"
+              (map (upperFaceFromLowerFace . (transposeZ (+wristHeight))) wristAsBtmFaces)
+              wristAsBtmFaces
               
   --now build the 36 sided(triacontakaihexagon) adapator top faces and add it to btm off wrist cubes
   --to convert from the wrist to the triacontakaihexagon
-  let triacontakaihexagonOrigin = (Point 0 0 (-10)) -- -10 mm below the btm of the wristWithInnerDodecagonCubes
+  let shaftOrigin = (Point 0 0 (-10)) -- -10 mm below the btm of the wristCubes
                      
   topOfTriacontakaihexagonAsBtmFrontLines <- buildCubePointsListAdd "topOfTriacontakaihexagonAsBtmFrontLines"
               (map extractBottomFrontLine
                         (createBottomFaces
-                          triacontakaihexagonOrigin
+                          shaftOrigin
                           triacontakaihexagonOuterRadii 
                           outerWristAngles
                           flatXSlope
@@ -470,7 +470,7 @@ handtoTriacontakaihexagon = do
   topOfTriacontakaihexagonAsBackBtmLines <- buildCubePointsListAdd "topOfTriacontakaihexagonAsBackBtmLines"
               (map (backBottomLineFromBottomFrontLine.  extractBottomFrontLine)
                         (createBottomFaces
-                          triacontakaihexagonOrigin
+                          shaftOrigin
                           triacontakaihexagonInnerRadii 
                           outerWristAngles
                           flatXSlope
@@ -483,15 +483,15 @@ handtoTriacontakaihexagon = do
               topOfTriacontakaihexagonAsBackBtmLines
               topOfTriacontakaihexagonAsBtmFrontLines
 
-  triacontakaihexagonToWristWithInnerDodecagonCubes <- buildCubePointsListAdd "triacontakaihexagonToWristWithInnerDodecagonCubes"
-              (map upperFaceFromLowerFace wristWithInnerDodecagonAsBtmFaces)
+  triacontakaihexagonToWristWithInnerInnerWristCubes <- buildCubePointsListAdd "triacontakaihexagonToWristWithInnerInnerWristCubes"
+              (map upperFaceFromLowerFace wristAsBtmFaces)
               topOfTriacontakaihexagonAsBackBtmFaces
               
   --build triacontakaihexagon btm faces to give the triacontakaihexagon some depth below the wrist-to-triacontakaihexagon adaptor
   triacontakaihexagonBottomFaces <- buildCubePointsListAdd "triacontakaihexagonBottomFaces"
               --(map (transposeZ (-triacontakaihexagonHeight)) topOfTriacontakaihexagonAsBackBtmFaces)
               
-              (triacontakaihexagonToWristWithInnerDodecagonCubes)
+              (triacontakaihexagonToWristWithInnerInnerWristCubes)
               (map (transposeZ (+ (negate triacontakaihexagonHeight))) topOfTriacontakaihexagonAsBackBtmFaces)
   
   return triacontakaihexagonBottomFaces
@@ -586,13 +586,13 @@ outerWristRadii = map Radius
 triacontakaihexagonOuterRadii = [Radius 20 | x <- [1..]]
 triacontakaihexagonInnerRadii = [Radius 17 | x <- [1..]]
 triacontakaihexagonHeight = 20
-dodecagonHeight = 15
+wristHeight = 15
 --this 2nd set is enlarged so it can take off from lower on the socket
 halfTriacontakaihexagonOuterRadii = [Radius 26 | x <- [1..]]
 halfTriacontakaihexagonInnerRadii = [Radius 23 | x <- [1..]]
 halfTriacontakaihexagonHeight = 20
 
-{-The AngleRadius pairs representing the 12 points of the dodecagon in the base of the hand.
+{-The AngleRadius pairs representing the 12 points of the wrist in the base of the hand.
 Note that this is less than the 37 angles used in the socket scan, and so will have to be built up into
 a list of 37-}
 angleRadius0 = AngleRadius (Angle 0) (Radius 27.36)
