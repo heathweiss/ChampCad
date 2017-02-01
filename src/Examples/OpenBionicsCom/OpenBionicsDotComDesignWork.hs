@@ -1,7 +1,7 @@
 module Examples.OpenBionicsCom.OpenBionicsDotComDesignWork
-       (socketWithAdaptorStlGenerator,  topOfSocketStlGenerator, halfSocketWithAdaptorStlGenerator,
+       (fullLengthSocketWithSmallShaftStlGenerator,  topOfSocketStlGenerator, shortSocketToLargeShaftStlGenerator,
         handtoTriacontakaihexagonStlGenerator, triacontakaihexagonInnerRadiiShaftStlGenerator,
-        halfHandtoTriacontakaihexagonStlGenerator) where
+        wristToLargeShaftStlGenerator) where
 
 {- |
 Design a socket that the OpenBionics.com hand can be attached to.
@@ -77,7 +77,7 @@ import Builder.Monad(BuilderError(..), cornerPointsErrorHandler, buildCubePoints
 
 -- ================================================== half length socket with adaptor===============================================================
 {-
-Same as socketWithAdaptor but kick off with the riser from much lower on the socket.
+Same as fullLengthSocketWithSmallShaft but kick off with the riser from much lower on the socket.
 This is because his hand could not fit into the upper section of the socket.
 
 [rawMDR] -----transpose(+3) . reduceRows 35 ----------> [innerMDR]
@@ -90,8 +90,8 @@ This is because his hand could not fit into the upper section of the socket.
  origin
 ]
 -}
-halfSocketWithAdaptor :: [SingleDegreeRadii] -> [SingleDegreeRadii] -> RowReductionFactor ->  PixelsPerMillimeter -> ExceptT BuilderError (State CpointsStack ) CpointsList
-halfSocketWithAdaptor    innerSleeveSDR         outerSleeveSDR         rowReductionFactor      pixelsPerMM = do
+shortSocketToLargeShaft :: [SingleDegreeRadii] -> [SingleDegreeRadii] -> RowReductionFactor ->  PixelsPerMillimeter -> ExceptT BuilderError (State CpointsStack ) CpointsList
+shortSocketToLargeShaft    innerSleeveSDR         outerSleeveSDR         rowReductionFactor      pixelsPerMM = do
   let angles = (map (Angle) [0,10..360])
       transposeFactors = [0,((1/ pixelsPerMM) * (fromIntegral rowReductionFactor))..]
       origin = (Point{x_axis=0, y_axis=0, z_axis=50})
@@ -101,13 +101,13 @@ halfSocketWithAdaptor    innerSleeveSDR         outerSleeveSDR         rowReduct
                   (concat $ (drop 10) (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
                       [CornerPointsId | x <-[1..]]
 
-  let triacontakaihexagonOrigin = (Point (-3) (-5) (z_axis . (transposeZ (+10)) . f2 .  extractFrontTopLine .  head $ socketCubes))
+  let shaftOrigin = (Point (-3) (-5) (z_axis . (transposeZ (+10)) . f2 .  extractFrontTopLine .  head $ socketCubes))
 
-  btmOfTriacontakaihexagonAsTopFrontLines <- buildCubePointsListAdd "btmOfTriacontakaihexagonAsTopFrontLines"
+  shaftTopFrontLines <- buildCubePointsListAdd "shaftTopFrontLines"
                         (map extractFrontTopLine
                         (createTopFaces
-                          triacontakaihexagonOrigin
-                          halfTriacontakaihexagonOuterRadii 
+                          shaftOrigin
+                          largeShaftOuterRadii 
                           outerWristAngles
                           flatXSlope
                           flatYSlope
@@ -116,11 +116,11 @@ halfSocketWithAdaptor    innerSleeveSDR         outerSleeveSDR         rowReduct
                        [CornerPointsId | x <-[1..]]
 
   
-  btmOfTriacontakaihexagonAsBackTopLines <- buildCubePointsListAdd "wristTopBackLine"
+  shaftBackTopLines <- buildCubePointsListAdd "shaftBackTopLines"
                        (map (backTopLineFromFrontTopLine . extractFrontTopLine)
                         (createTopFaces
-                          triacontakaihexagonOrigin
-                          halfTriacontakaihexagonInnerRadii 
+                          shaftOrigin
+                          largeShaftInnerRadii 
                           outerWristAngles
                           flatXSlope
                           flatYSlope
@@ -130,30 +130,30 @@ halfSocketWithAdaptor    innerSleeveSDR         outerSleeveSDR         rowReduct
                    
 
   
-  btmOfTriacontakaihexagonAsTopFaces          <- buildCubePointsListAdd "topFaces"
-                       btmOfTriacontakaihexagonAsTopFrontLines
-                       btmOfTriacontakaihexagonAsBackTopLines
+  shaftTopFaces          <- buildCubePointsListAdd "topFaces"
+                       shaftTopFrontLines
+                       shaftBackTopLines
   
-  socketToTriacontakaihexagonAdaptor          <- buildCubePointsListAdd "topFaces"
-                       btmOfTriacontakaihexagonAsTopFaces
+  socketToShaftCubes          <- buildCubePointsListAdd "socketToShaftCubes"
+                       shaftTopFaces
                        (map (lowerFaceFromUpperFace .extractTopFace)
                          socketCubes
                        )
 
-  triacontakaihexagonAdaptor <- buildCubePointsListAdd "triacontakaihexagonAdaptor"
-                       (map (transposeZ (+ halfTriacontakaihexagonHeight))
-                          btmOfTriacontakaihexagonAsTopFaces  
+  shaftCubes <- buildCubePointsListAdd "shaftCubes"
+                       (map (transposeZ (+ largeShaftHeight))
+                          shaftTopFaces  
                        )
                        ( map lowerFaceFromUpperFace
-                         btmOfTriacontakaihexagonAsTopFaces
+                         shaftTopFaces
                         )
                        
-  return socketToTriacontakaihexagonAdaptor
+  return shaftCubes
 
 
 --load the json file and call generate stl
-halfSocketWithAdaptorStlGenerator :: IO ()
-halfSocketWithAdaptorStlGenerator = do
+shortSocketToLargeShaftStlGenerator :: IO ()
+shortSocketToLargeShaftStlGenerator = do
   contents <- BL.readFile "src/Data/scanFullData.json"
   
   case (decode contents) of
@@ -165,7 +165,7 @@ halfSocketWithAdaptorStlGenerator = do
             rowReductionFactor = 40::RowReductionFactor
             innerSleeveMDR = (transpose (+3)) . (reduceScan rowReductionFactor) $ (MultiDegreeRadii name' degrees')
             outerSleeveMDR = (transpose (+3)) innerSleeveMDR
-            cpoints =  ((execState $ runExceptT (halfSocketWithAdaptor (degrees innerSleeveMDR) (degrees outerSleeveMDR) rowReductionFactor pixelsPerMM ) ) [])
+            cpoints =  ((execState $ runExceptT (shortSocketToLargeShaft (degrees innerSleeveMDR) (degrees outerSleeveMDR) rowReductionFactor pixelsPerMM ) ) [])
         in  writeStlToFile $ newStlShape "socket no reduction"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
       Nothing                                ->
         putStrLn "File not decoded"
@@ -181,7 +181,7 @@ to take the shape of the wrist of the hand.
 
 Name of the wrist section corresponding to the shape of the base of the hand which consists of:
 -outer shape: wrist
--inner shape: dodecagon (12 sided)
+-inner shape: openBionicsShaft
 
 test print 1:
 abs
@@ -197,8 +197,8 @@ Shape of outer wrist could use some further adjustment.
 
 
 
-halfHandtoTriacontakaihexagon :: ExceptT BuilderError (State CpointsStack ) CpointsList
-halfHandtoTriacontakaihexagon = do
+wristToLargeShaft :: ExceptT BuilderError (State CpointsStack ) CpointsList
+wristToLargeShaft = do
       
   
   wristBackBtmLines <- buildCubePointsListAdd "wristBackBtmLines"
@@ -221,15 +221,15 @@ halfHandtoTriacontakaihexagon = do
               (map (upperFaceFromLowerFace . (transposeZ (+wristHeight))) wristBtmFaces)
               wristBtmFaces
               
-  --now build the 36 sided(triacontakaihexagon) adapator top faces and add it to btm off wrist cubes
-  --to convert from the wrist to the triacontakaihexagon
+  --now build the 36 sided shaft top faces and add them to btm faces of the wrist cubes
+  --to convert from the wrist to the shaft
   let shaftOrigin = (Point 0 0 (-10)) -- -10 mm below the btm of the wristCubes
                      
-  topOfTriacontakaihexagonAsBtmFrontLines <- buildCubePointsListAdd "topOfTriacontakaihexagonAsBtmFrontLines"
+  shaftBtmFrontLines <- buildCubePointsListAdd "shaftBtmFrontLines"
               (map extractBottomFrontLine
                         (createBottomFaces
                           shaftOrigin
-                          halfTriacontakaihexagonOuterRadii 
+                          largeShaftOuterRadii 
                           outerWristAngles
                           flatXSlope
                           flatYSlope
@@ -237,21 +237,22 @@ halfHandtoTriacontakaihexagon = do
               )
               [CornerPointsId | x <-[1..]]
               
-  topOfTriacontakaihexagonAsBackBtmLines <- buildCubePointsListAdd "topOfTriacontakaihexagonAsBackBtmLines"
+  shaftBackBtmLines <- buildCubePointsListAdd "shaftBackBtmLines"
               (map (backBottomLineFromBottomFrontLine.  extractBottomFrontLine)
                         (createBottomFaces
                           shaftOrigin
-                          halfTriacontakaihexagonInnerRadii 
+                          largeShaftInnerRadii 
                           outerWristAngles
                           flatXSlope
                           flatYSlope
                         )
                        )
               [CornerPointsId | x <-[1..]]
-              
-  topOfTriacontakaihexagonAsBackBtmFaces <- buildCubePointsListAdd "topOfTriacontakaihexagonAsBackBtmLines"
-              topOfTriacontakaihexagonAsBackBtmLines
-              topOfTriacontakaihexagonAsBtmFrontLines
+   x
+   --left off replacing this with 'shaftBackBtmFaces'
+  topOfTriacontakaihexagonAsBackBtmFaces <- buildCubePointsListAdd "shaftBackBtmLines"
+              shaftBackBtmLines
+              shaftBtmFrontLines
 
   triacontakaihexagonToWristWithInnerDodecagonCubes <- buildCubePointsListAdd "triacontakaihexagonToWristWithInnerDodecagonCubes"
               (map upperFaceFromLowerFace wristBtmFaces)
@@ -262,13 +263,13 @@ halfHandtoTriacontakaihexagon = do
               --(map (transposeZ (-triacontakaihexagonHeight)) topOfTriacontakaihexagonAsBackBtmFaces)
               
               (triacontakaihexagonToWristWithInnerDodecagonCubes)
-              (map (transposeZ (+ (negate halfTriacontakaihexagonHeight))) topOfTriacontakaihexagonAsBackBtmFaces)
+              (map (transposeZ (+ (negate largeShaftHeight))) topOfTriacontakaihexagonAsBackBtmFaces)
   
   return triacontakaihexagonBottomFaces
 
-halfHandtoTriacontakaihexagonStlGenerator :: IO ()
-halfHandtoTriacontakaihexagonStlGenerator = do
-  let cpoints = ((execState $ runExceptT (halfHandtoTriacontakaihexagon)) [])
+wristToLargeShaftStlGenerator :: IO ()
+wristToLargeShaftStlGenerator = do
+  let cpoints = ((execState $ runExceptT (wristToLargeShaft)) [])
   writeStlToFile $ newStlShape "cpoinst"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
 
 
@@ -314,7 +315,7 @@ Create a socket with adaptor starting at top of socket.
 
 Failure:
 His hand could not fit in the socket as the riser is to skinny.
-New version is halfSocketWithAdaptor
+New version with larger adaptor and shorter socke is in:  shortSocketToLargeShaft
 
 [rawMDR] -----transpose(+3) . reduceRows 35 ----------> [innerMDR]
 
@@ -326,8 +327,8 @@ New version is halfSocketWithAdaptor
  origin
 ]
 -}
-socketWithAdaptor :: [SingleDegreeRadii] -> [SingleDegreeRadii] -> RowReductionFactor ->  PixelsPerMillimeter -> ExceptT BuilderError (State CpointsStack ) CpointsList
-socketWithAdaptor    innerSleeveSDR         outerSleeveSDR         rowReductionFactor      pixelsPerMM = do
+fullLengthSocketWithSmallShaft :: [SingleDegreeRadii] -> [SingleDegreeRadii] -> RowReductionFactor ->  PixelsPerMillimeter -> ExceptT BuilderError (State CpointsStack ) CpointsList
+fullLengthSocketWithSmallShaft    innerSleeveSDR         outerSleeveSDR         rowReductionFactor      pixelsPerMM = do
   let angles = (map (Angle) [0,10..360])
       transposeFactors = [0,((1/ pixelsPerMM) * (fromIntegral rowReductionFactor))..]
       origin = (Point{x_axis=0, y_axis=0, z_axis=50})
@@ -338,11 +339,11 @@ socketWithAdaptor    innerSleeveSDR         outerSleeveSDR         rowReductionF
 
   let shaftOrigin = (Point (-3) 5 (z_axis . (transposeZ (+10)) . f2 .  extractFrontTopLine .  head $ topOfSocketCubes))
 
-  btmOfTriacontakaihexagonAsTopFrontLines <- buildCubePointsListAdd "btmOfTriacontakaihexagonAsTopFrontLines"
+  shaftTopFrontLines <- buildCubePointsListAdd "shaftTopFrontLines"
                         (map extractFrontTopLine
                         (createTopFaces
                           shaftOrigin
-                          triacontakaihexagonOuterRadii 
+                          smallShaftOuterRadii 
                           outerWristAngles
                           flatXSlope
                           flatYSlope
@@ -351,11 +352,11 @@ socketWithAdaptor    innerSleeveSDR         outerSleeveSDR         rowReductionF
                        [CornerPointsId | x <-[1..]]
 
   
-  btmOfTriacontakaihexagonAsBackTopLines <- buildCubePointsListAdd "wristTopBackLine"
+  shaftBackTopLines <- buildCubePointsListAdd "wristTopBackLine"
                        (map (backTopLineFromFrontTopLine . extractFrontTopLine)
                         (createTopFaces
                           shaftOrigin
-                          triacontakaihexagonInnerRadii 
+                          smallShaftInnerRadii 
                           outerWristAngles
                           flatXSlope
                           flatYSlope
@@ -365,30 +366,30 @@ socketWithAdaptor    innerSleeveSDR         outerSleeveSDR         rowReductionF
                    
 
   
-  btmOfTriacontakaihexagonAsTopFaces          <- buildCubePointsListAdd "topFaces"
-                       btmOfTriacontakaihexagonAsTopFrontLines
-                       btmOfTriacontakaihexagonAsBackTopLines
+  shaftTopFaces          <- buildCubePointsListAdd "shaftTopFaces"
+                       shaftTopFrontLines
+                       shaftBackTopLines
   
-  socketToTriacontakaihexagonAdaptor          <- buildCubePointsListAdd "topFaces"
-                       btmOfTriacontakaihexagonAsTopFaces
+  socketToShaftCubes          <- buildCubePointsListAdd "socketToShaftCubes"
+                       shaftTopFaces
                        (map (lowerFaceFromUpperFace .extractTopFace)
                          topOfSocketCubes
                        )
 
-  triacontakaihexagonAdaptor <- buildCubePointsListAdd "triacontakaihexagonAdaptor"
-                       (map (transposeZ (+ triacontakaihexagonHeight))
-                          btmOfTriacontakaihexagonAsTopFaces  
+  shaftCubes <- buildCubePointsListAdd "shaftCubes"
+                       (map (transposeZ (+ smallShaftHeight))
+                          shaftTopFaces  
                        )
                        ( map lowerFaceFromUpperFace
-                         btmOfTriacontakaihexagonAsTopFaces
+                         shaftTopFaces
                         )
                        
-  return socketToTriacontakaihexagonAdaptor
+  return socketToShaftCubes
 
 
 --load the json file and call generate stl
-socketWithAdaptorStlGenerator :: IO ()
-socketWithAdaptorStlGenerator = do
+fullLengthSocketWithSmallShaftStlGenerator :: IO ()
+fullLengthSocketWithSmallShaftStlGenerator = do
   contents <- BL.readFile "src/Data/scanFullData.json"
   
   case (decode contents) of
@@ -400,7 +401,7 @@ socketWithAdaptorStlGenerator = do
             rowReductionFactor = 40::RowReductionFactor
             innerSleeveMDR = (transpose (+3)) . (reduceScan rowReductionFactor) $ (MultiDegreeRadii name' degrees')
             outerSleeveMDR = (transpose (+3)) innerSleeveMDR
-            cpoints =  ((execState $ runExceptT (socketWithAdaptor (degrees innerSleeveMDR) (degrees outerSleeveMDR) rowReductionFactor pixelsPerMM ) ) [])
+            cpoints =  ((execState $ runExceptT (fullLengthSocketWithSmallShaft (degrees innerSleeveMDR) (degrees outerSleeveMDR) rowReductionFactor pixelsPerMM ) ) [])
         in  writeStlToFile $ newStlShape "socket no reduction"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
       Nothing                                ->
         putStrLn "File not decoded"
@@ -459,7 +460,7 @@ handtoTriacontakaihexagon = do
               (map extractBottomFrontLine
                         (createBottomFaces
                           shaftOrigin
-                          triacontakaihexagonOuterRadii 
+                          smallShaftOuterRadii 
                           outerWristAngles
                           flatXSlope
                           flatYSlope
@@ -471,7 +472,7 @@ handtoTriacontakaihexagon = do
               (map (backBottomLineFromBottomFrontLine.  extractBottomFrontLine)
                         (createBottomFaces
                           shaftOrigin
-                          triacontakaihexagonInnerRadii 
+                          smallShaftInnerRadii 
                           outerWristAngles
                           flatXSlope
                           flatYSlope
@@ -489,10 +490,10 @@ handtoTriacontakaihexagon = do
               
   --build triacontakaihexagon btm faces to give the triacontakaihexagon some depth below the wrist-to-triacontakaihexagon adaptor
   triacontakaihexagonBottomFaces <- buildCubePointsListAdd "triacontakaihexagonBottomFaces"
-              --(map (transposeZ (-triacontakaihexagonHeight)) topOfTriacontakaihexagonAsBackBtmFaces)
+              --(map (transposeZ (-smallShaftHeight)) topOfTriacontakaihexagonAsBackBtmFaces)
               
               (triacontakaihexagonToWristWithInnerInnerWristCubes)
-              (map (transposeZ (+ (negate triacontakaihexagonHeight))) topOfTriacontakaihexagonAsBackBtmFaces)
+              (map (transposeZ (+ (negate smallShaftHeight))) topOfTriacontakaihexagonAsBackBtmFaces)
   
   return triacontakaihexagonBottomFaces
 
@@ -508,7 +509,7 @@ The 36 sided shaft, which the socket and hand adaptors will slide over, to join 
 The hand and socket each have a female height of triacontakaihexagonHeight and so the shaft
 should be triacontakaihexagonHeight * 2, or slightly under for some tolerance.
 
-The inside inside of the female pieces is triacontakaihexagonInnerRadii, which will be the
+The inside inside of the female pieces is smallShaftInnerRadii, which will be the
 outer radii of the shaft, - some tolerance.
 
 |-------|
@@ -520,11 +521,11 @@ outer radii of the shaft, - some tolerance.
 triacontakaihexagonInnerRadiiShaft :: ExceptT BuilderError (State CpointsStack ) CpointsList
 triacontakaihexagonInnerRadiiShaft = do
   cylinder <- buildCubePointsListAdd "cylinder"
-              (cylinder (map (transpose (\length -> length - 3))halfTriacontakaihexagonInnerRadii)
-                         (map (transpose (\length -> length - 0.05))halfTriacontakaihexagonInnerRadii)  -- -.2 is a bit sloppy. Try 0.05
+              (cylinder (map (transpose (\length -> length - 3))largeShaftInnerRadii)
+                         (map (transpose (\length -> length - 0.05))largeShaftInnerRadii)  -- -.2 is a bit sloppy. Try 0.05
                          (map (Angle) [0,10..360])
                          (Point 0 0 0)
-                         ((halfTriacontakaihexagonHeight * 2) - 2)
+                         ((largeShaftHeight * 2) - 2)
               )
               [CornerPointsId | x <-[1..]]
 
@@ -583,14 +584,14 @@ outerWristRadii = map Radius
 -- ============================================== common data======================================
 --triacontakaihexagon is the 36 sided riser that is the common shape of the wrist that fits into the hand and the socket.
 --This 1st set is for the full length socket, which is hand did not fit in
-triacontakaihexagonOuterRadii = [Radius 20 | x <- [1..]]
-triacontakaihexagonInnerRadii = [Radius 17 | x <- [1..]]
-triacontakaihexagonHeight = 20
+smallShaftOuterRadii = [Radius 20 | x <- [1..]]
+smallShaftInnerRadii = [Radius 17 | x <- [1..]]
+smallShaftHeight = 20
 wristHeight = 15
 --this 2nd set is enlarged so it can take off from lower on the socket
-halfTriacontakaihexagonOuterRadii = [Radius 26 | x <- [1..]]
-halfTriacontakaihexagonInnerRadii = [Radius 23 | x <- [1..]]
-halfTriacontakaihexagonHeight = 20
+largeShaftOuterRadii = [Radius 26 | x <- [1..]]
+largeShaftInnerRadii = [Radius 23 | x <- [1..]]
+largeShaftHeight = 20
 
 {-The AngleRadius pairs representing the 12 points of the wrist in the base of the hand.
 Note that this is less than the 37 angles used in the socket scan, and so will have to be built up into

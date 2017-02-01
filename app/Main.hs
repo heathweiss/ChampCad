@@ -2,9 +2,9 @@ module Main where
 
 --import Lib
 --import Examples.Scan.WalkerSocketDesignWork(loadMDRAndPassToProcessor, socketWithRiserStlGenerator)
-import Examples.OpenBionicsCom.OpenBionicsDotComDesignWork (socketWithAdaptorStlGenerator, handtoTriacontakaihexagonStlGenerator,
+import Examples.OpenBionicsCom.OpenBionicsDotComDesignWork (fullLengthSocketWithSmallShaftStlGenerator, handtoTriacontakaihexagonStlGenerator,
                                                   topOfSocketStlGenerator, triacontakaihexagonInnerRadiiShaftStlGenerator,
-                                                  halfSocketWithAdaptorStlGenerator, halfHandtoTriacontakaihexagonStlGenerator
+                                                  shortSocketToLargeShaftStlGenerator, wristToLargeShaftStlGenerator
                                                   )
 --import System.Environment
 
@@ -16,4 +16,7 @@ main = do
  --loadMDRAndPassToProcessor (read $ head x) (read $ head $ tail x)
 
  
-  halfHandtoTriacontakaihexagonStlGenerator
+  wristToLargeShaftStlGenerator
+  
+  
+  
