@@ -1,6 +1,6 @@
 module Examples.OpenBionicsCom.OpenBionicsDotComDesignWork
        (fullLengthSocketWithSmallShaftStlGenerator,  topOfSocketStlGenerator, shortSocketToLargeShaftStlGenerator,
-        handtoTriacontakaihexagonStlGenerator, triacontakaihexagonInnerRadiiShaftStlGenerator,
+        wristToSmallShaftStlGenerator, joinerShaftStlGenerator,
         wristToLargeShaftStlGenerator) where
 
 {- |
@@ -248,24 +248,23 @@ wristToLargeShaft = do
                         )
                        )
               [CornerPointsId | x <-[1..]]
-   x
-   --left off replacing this with 'shaftBackBtmFaces'
-  topOfTriacontakaihexagonAsBackBtmFaces <- buildCubePointsListAdd "shaftBackBtmLines"
+   
+  shaftBackBtmFaces <- buildCubePointsListAdd "shaftBackBtmLines"
               shaftBackBtmLines
               shaftBtmFrontLines
 
-  triacontakaihexagonToWristWithInnerDodecagonCubes <- buildCubePointsListAdd "triacontakaihexagonToWristWithInnerDodecagonCubes"
+  shaftToWristCubes <- buildCubePointsListAdd "shaftToWristCubes"
               (map upperFaceFromLowerFace wristBtmFaces)
-              topOfTriacontakaihexagonAsBackBtmFaces
+              shaftBackBtmFaces
               
-  --build triacontakaihexagon btm faces to give the triacontakaihexagon some depth below the wrist-to-triacontakaihexagon adaptor
-  triacontakaihexagonBottomFaces <- buildCubePointsListAdd "triacontakaihexagonBottomFaces"
-              --(map (transposeZ (-triacontakaihexagonHeight)) topOfTriacontakaihexagonAsBackBtmFaces)
+  --build another set of shaft btm faces to give the shaft some depth below the wrist-to-shaft cubes
+  shaftBottomFaces <- buildCubePointsListAdd "shaftBottomFaces"
+              --(map (transposeZ (-triacontakaihexagonHeight)) shaftBackBtmFaces)
               
-              (triacontakaihexagonToWristWithInnerDodecagonCubes)
-              (map (transposeZ (+ (negate largeShaftHeight))) topOfTriacontakaihexagonAsBackBtmFaces)
+              (shaftToWristCubes)
+              (map (transposeZ (+ (negate largeShaftHeight))) shaftBackBtmFaces)
   
-  return triacontakaihexagonBottomFaces
+  return shaftBottomFaces
 
 wristToLargeShaftStlGenerator :: IO ()
 wristToLargeShaftStlGenerator = do
@@ -276,6 +275,9 @@ wristToLargeShaftStlGenerator = do
 -- ====================================================== top of socket =================================================
 {-
 Take the top layer of the socket just to have a look at it.
+Could be handy for adding a squared off top, where the squared off section is rotated,
+instead of rotating the whole socket as I did earlier. This would make more sense to do.
+
 Can be deleted.
 -}
 topOfSocket :: [SingleDegreeRadii] -> [SingleDegreeRadii] -> RowReductionFactor ->  PixelsPerMillimeter -> ExceptT BuilderError (State CpointsStack ) CpointsList
@@ -309,7 +311,7 @@ topOfSocketStlGenerator = do
       Nothing                                ->
         putStrLn "File not decoded"
 
--- ================================================== full length socket w/o connector===============================================================
+-- ================================================== full length socket with small shaft===============================================================
 {-
 Create a socket with adaptor starting at top of socket.
 
@@ -428,8 +430,8 @@ Shape of outer wrist could use some further adjustment.
 
 
 
-handtoTriacontakaihexagon :: ExceptT BuilderError (State CpointsStack ) CpointsList
-handtoTriacontakaihexagon = do
+wristToSmallShaft :: ExceptT BuilderError (State CpointsStack ) CpointsList
+wristToSmallShaft = do
       
   
   wristAsBackBtmLines <- buildCubePointsListAdd "wristAsBackBtmLines"
@@ -451,12 +453,11 @@ handtoTriacontakaihexagon = do
   wristCubes <- buildCubePointsListAdd "wristCubes"
               (map (upperFaceFromLowerFace . (transposeZ (+wristHeight))) wristAsBtmFaces)
               wristAsBtmFaces
-              
   --now build the 36 sided(triacontakaihexagon) adapator top faces and add it to btm off wrist cubes
   --to convert from the wrist to the triacontakaihexagon
   let shaftOrigin = (Point 0 0 (-10)) -- -10 mm below the btm of the wristCubes
                      
-  topOfTriacontakaihexagonAsBtmFrontLines <- buildCubePointsListAdd "topOfTriacontakaihexagonAsBtmFrontLines"
+  shaftBtmFrontLines <- buildCubePointsListAdd "shaftBtmFrontLines"
               (map extractBottomFrontLine
                         (createBottomFaces
                           shaftOrigin
@@ -468,7 +469,7 @@ handtoTriacontakaihexagon = do
               )
               [CornerPointsId | x <-[1..]]
               
-  topOfTriacontakaihexagonAsBackBtmLines <- buildCubePointsListAdd "topOfTriacontakaihexagonAsBackBtmLines"
+  shaftBackBtmLines <- buildCubePointsListAdd "shaftBackBtmLines"
               (map (backBottomLineFromBottomFrontLine.  extractBottomFrontLine)
                         (createBottomFaces
                           shaftOrigin
@@ -480,34 +481,31 @@ handtoTriacontakaihexagon = do
                        )
               [CornerPointsId | x <-[1..]]
               
-  topOfTriacontakaihexagonAsBackBtmFaces <- buildCubePointsListAdd "topOfTriacontakaihexagonAsBackBtmLines"
-              topOfTriacontakaihexagonAsBackBtmLines
-              topOfTriacontakaihexagonAsBtmFrontLines
+  shaftBackBtmFaces <- buildCubePointsListAdd "shaftBackBtmFaces"
+              shaftBackBtmLines
+              shaftBtmFrontLines
 
-  triacontakaihexagonToWristWithInnerInnerWristCubes <- buildCubePointsListAdd "triacontakaihexagonToWristWithInnerInnerWristCubes"
+  shaftToWristCubes <- buildCubePointsListAdd "shaftToWristCubes"
               (map upperFaceFromLowerFace wristAsBtmFaces)
-              topOfTriacontakaihexagonAsBackBtmFaces
+              shaftBackBtmFaces
               
-  --build triacontakaihexagon btm faces to give the triacontakaihexagon some depth below the wrist-to-triacontakaihexagon adaptor
-  triacontakaihexagonBottomFaces <- buildCubePointsListAdd "triacontakaihexagonBottomFaces"
-              --(map (transposeZ (-smallShaftHeight)) topOfTriacontakaihexagonAsBackBtmFaces)
-              
-              (triacontakaihexagonToWristWithInnerInnerWristCubes)
-              (map (transposeZ (+ (negate smallShaftHeight))) topOfTriacontakaihexagonAsBackBtmFaces)
+  shaftCubes <- buildCubePointsListAdd "shaftCubes"
+              (shaftToWristCubes)
+              (map (transposeZ (+ (negate smallShaftHeight))) shaftBackBtmFaces)
   
-  return triacontakaihexagonBottomFaces
+  return shaftCubes
 
-handtoTriacontakaihexagonStlGenerator :: IO ()
-handtoTriacontakaihexagonStlGenerator = do
-  let cpoints = ((execState $ runExceptT (handtoTriacontakaihexagon)) [])
+wristToSmallShaftStlGenerator :: IO ()
+wristToSmallShaftStlGenerator = do
+  let cpoints = ((execState $ runExceptT (wristToSmallShaft)) [])
   writeStlToFile $ newStlShape "cpoinst"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
 
--- =====================================triacontakaihexagon joiner===========================
+-- =====================================shaft joiner===========================
 {-
 The 36 sided shaft, which the socket and hand adaptors will slide over, to join them together
 
-The hand and socket each have a female height of triacontakaihexagonHeight and so the shaft
-should be triacontakaihexagonHeight * 2, or slightly under for some tolerance.
+The hand and socket each have a female shaft and so the shaft
+should be shaftHeight * 2, or slightly under for some tolerance.
 
 The inside inside of the female pieces is smallShaftInnerRadii, which will be the
 outer radii of the shaft, - some tolerance.
@@ -518,8 +516,8 @@ outer radii of the shaft, - some tolerance.
 |-------|
 -}
 
-triacontakaihexagonInnerRadiiShaft :: ExceptT BuilderError (State CpointsStack ) CpointsList
-triacontakaihexagonInnerRadiiShaft = do
+joinerShaft :: ExceptT BuilderError (State CpointsStack ) CpointsList
+joinerShaft = do
   cylinder <- buildCubePointsListAdd "cylinder"
               (cylinder (map (transpose (\length -> length - 3))largeShaftInnerRadii)
                          (map (transpose (\length -> length - 0.05))largeShaftInnerRadii)  -- -.2 is a bit sloppy. Try 0.05
@@ -532,9 +530,9 @@ triacontakaihexagonInnerRadiiShaft = do
   
   return cylinder
 
-triacontakaihexagonInnerRadiiShaftStlGenerator :: IO ()
-triacontakaihexagonInnerRadiiShaftStlGenerator = do
-  let cpoints = ((execState $ runExceptT (triacontakaihexagonInnerRadiiShaft)) [])
+joinerShaftStlGenerator :: IO ()
+joinerShaftStlGenerator = do
+  let cpoints = ((execState $ runExceptT (joinerShaft)) [])
   writeStlToFile $ newStlShape "cpoinst"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
 -- ======================= outer wrist info ===================================
       --make them every 10 degees to match up with socket.
