@@ -1,7 +1,8 @@
 module VerticalFacesTest(verticalFacesTestDo)where
 
 import Test.HUnit
-import CornerPoints.VerticalFaces(createRightFaces, createRightFacesNoSlope, createLeftFaces, createLeftFacesNoSlope, createHorizontallyAlignedCubes, createHorizontallyAlignedCubesNoSlope , createLeftFacesMultiColumns, createLeftFacesMultiColumnsNoSlope,TransposeFactor, createVerticalWalls')
+import CornerPoints.VerticalFaces(createRightFaces, createRightFacesNoSlope, createLeftFaces, createLeftFacesNoSlope, createHorizontallyAlignedCubes, createHorizontallyAlignedCubesNoSlope , createLeftFacesMultiColumns, createLeftFacesMultiColumnsNoSlope,TransposeFactor,
+                                 createVerticalWalls)
 import CornerPoints.Create(Slope(..), Origin(..), createCornerPoint, Angle(..), flatXSlope, flatYSlope)
 import CornerPoints.CornerPoints(CornerPoints(..))
 import CornerPoints.Points(Point(..))

@@ -13,7 +13,6 @@ module BuilderMonadTest(builderMonadTest) where
 import Builder.Monad(BuilderError(..), cornerPointsErrorHandler, buildCubePointsList,
                      CpointsStack, CpointsList)
 
---import Tests.StlAutoGenerateTest(extractFaces)
 
 import CornerPoints.CornerPoints((|@+++#@|), (|+++|), CornerPoints(..), (+++), (+++>),
                                  cornerPointsError, findCornerPointsError)
