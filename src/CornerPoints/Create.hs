@@ -156,6 +156,7 @@ A passed in fx that will modify the x/y values according to logic contained with
 This function takes the current radius, which has been adjusted for slope, the current x/y values.
 
 ---------------------createCornerPointWithSlopeAndXYAdjustmentFx----
+The original call and it's parameters.
 [(Double -> Double -> Double -> Double ) (adjuster)
  (Point-> CornerPoints)                  (cornerPointsConstructor)
  Origin                                  (origin)
@@ -164,6 +165,7 @@ This function takes the current radius, which has been adjusted for slope, the c
  Slope                                   (xSlope)
  Slope ]                                 (ySlope)
  ----------------------------------slopeAdjustedForVerticalAngle (xSlope ySlope radialAngle)---------->
+Now start listing the internal state, without the orignal parameters.
 [currentSlope]
 ------------------------------radiusAdjustedForSlope(adjustRadiusForSlope horizRadius currentSlope)------------.
 [currentSlope
@@ -171,36 +173,23 @@ This function takes the current radius, which has been adjusted for slope, the c
 -------------------------------getQuadrantAngle( radialAngle)------------------------------->
 [currentSlope
  radiusAdjustedForSlope 
- baseOfAngle]
------------------------------------sinDegrees (baseOfAngle)-------------------------->
------------------------------------cosDegrees (baseOfAngle)-------------------------->
-[currentSlope
- radiusAdjustedForSlope 
- baseOfAngle
- sinOfVerticalQuadrantAngle
- cosOfVerticalQuadrantAngle]
+ quadrantAngle]
 --------------------------------------adjuster (radiusAdjustedForSlope getX getY )-------------->
 [currentSlope
  radiusAdjustedForSlope 
- baseOfAngle
- sinOfVerticalQuadrantAngle
- cosOfVerticalQuadrantAngle
+ quadrantAngle
  adjustedRadius]
 ----------------------------adjust x/y for adjustedRadius------------------>
 [currentSlope
  radiusAdjustedForSlope 
- baseOfAngle
- sinOfVerticalQuadrantAngle
- cosOfVerticalQuadrantAngle
+ quadrantAngle
  adjustedRadius
  xAdjusted,
  yAdjusted]
 --------------------------------- adjust z-axis for slope------------------------->
 [currentSlope
  radiusAdjustedForSlope 
- baseOfAngle
- sinOfVerticalQuadrantAngle
- cosOfVerticalQuadrantAngle
+ quadrantAngle
  adjustedRadius
  xAdjusted
  yAdjusted
@@ -217,20 +206,19 @@ createCornerPointWithSlopeAndXYAdjustmentFx    radiusAdjuster cornerPointConstru
                                                                                       
                                  radiusAdjustedForSlope = radius (adjustRadiusForSlope horizRadius currentSlope)
 
-                                 baseOfAngle = (angle $ getQuadrantAngle radialAngle)
-                                 sinOfVerticalQuadrantAngle = sinDegrees baseOfAngle
-                                 cosOfVerticalQuadrantAngle = cosDegrees baseOfAngle
-
+                                 quadrantAngle = (angle $ getQuadrantAngle radialAngle)
+                                 
                                  --used to adjust the current point x/y values, according to the logic of the passed in
                                  --adjuster function fx. Eg: a function that squares off the shape.
                                  --rename to adjustedRadius
-                                 adjustedRadius = radiusAdjuster radiusAdjustedForSlope
-                                                           (sinOfVerticalQuadrantAngle * radiusAdjustedForSlope) --getX
-                                                           (cosOfVerticalQuadrantAngle * radiusAdjustedForSlope)--getY
+                                 adjustedRadius = radiusAdjuster
+                                                   radiusAdjustedForSlope
+                                                   ((sinDegrees quadrantAngle) * radiusAdjustedForSlope) --getX
+                                                   ((cosDegrees quadrantAngle) * radiusAdjustedForSlope)--getY
                                  
                                  
                                  xAdjusted =
-                                   let length  = sinOfVerticalQuadrantAngle * adjustedRadius
+                                   let length  = (sinDegrees quadrantAngle) * adjustedRadius
                                        x_axis' = x_axis origin
                                    in
                                       
@@ -241,7 +229,7 @@ createCornerPointWithSlopeAndXYAdjustmentFx    radiusAdjuster cornerPointConstru
                                       (Quadrant4Angle _) -> x_axis' - length 
                                  
                                  yAdjusted =
-                                   let length = cosOfVerticalQuadrantAngle *  adjustedRadius
+                                   let length = (cosDegrees quadrantAngle) *  adjustedRadius
                                        y_axis' = y_axis origin
                                    in
                                      
