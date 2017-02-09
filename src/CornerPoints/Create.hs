@@ -498,23 +498,4 @@ extractRadii'(x:[]) radii =
 extractRadii' (x:xs) radii =
   extractRadii' xs (posRadius x : radii)
 
--- ====================================== alter radius =================================================
-{- |
- Square off the radii as is done in CornerPoints.Create.createCornerPointSquaredOff
--}
---leftOff
---create an stl shape and have a look at it.
---then create a test just to have it tested.
-squareRadii :: Double -> [Radius] -> [Angle] -> [Radius]
-squareRadii    power     radii       angles      =
-  --map (squaredOffAdjustmentFunction' power) radii
-  zipWith
-    (squaredOffAdjustmentFunction' power)
-    radii
-    (map getQuadrantAngle angles)
 
-squaredOffAdjustmentFunction' :: Double -> Radius -> Angle -> Radius
-squaredOffAdjustmentFunction'    power'    (Radius radius') angle'  =
-                                            Radius $ 
-                                               ((sinDegrees (angle angle')) * radius')
-                                               
