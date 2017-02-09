@@ -65,6 +65,7 @@ library
                        -- Primitives
                        Examples.Primitives.Cube
                        Examples.Primitives.Cylinders
+                       Examples.Primitives.Squared
                        --adaptors
                        Examples.Adaptors.HockeyStick
                        --try out removing a cylinder from a cylinder
@@ -83,6 +84,9 @@ library
                        --Scanning
                        Scan.Filter,
                        Scan.Json,  Scan.ParseJuicy
+
+                       --Geometry
+                       Geometry.Radius
   
 
   build-depends:       base >= 4.7 && < 5

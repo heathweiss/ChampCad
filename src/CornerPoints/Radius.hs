@@ -10,14 +10,18 @@ module CornerPoints.Radius(Radius(..), SingleDegreeRadii(..), Degree(..), MultiD
                           setRadiusWithPrecedingValueIfNull, resetMultiDegreeRadiiIfNullWithPreviousValue,
                           buildSymmetricalRadius, transposeMDRList, extractSDRWithinRange,
                           transformSDRWithList, extractMaybeRadii, extractMaybeSDR, singleDegreeRadiiListToMap,
-                          transformRangeOfSDR, transformMaybeSDR, transformMaybeSDRDegree, transformSDRDegree) where
+                          transformRangeOfSDR, transformMaybeSDR, transformMaybeSDRDegree, transformSDRDegree,
+                          ) where
 
 import TypeClasses.Transposable( TransposeLength, transpose, TransposeWithList, transposeWithList)
 import Data.List(sortBy)
 import Data.Ord (Ordering(..), comparing)
 import CornerPoints.CornerPoints(CornerPoints(..))
+
 import qualified Data.Map as M
 import qualified Data.Sequence as S
+
+import Math.Trigonometry(sinDegrees, cosDegrees)
 
 -- |Degree of a circle.
 type Degree = Double
@@ -67,6 +71,8 @@ instance TransposeWithList Radius where
     ]
 
 {- |Build the Radius for a full 360 degree shape that is symmetrical.
+    Only the 1st half of the shape is required as the 2nd symmetrical half
+    is generated from the 1st half.
     The halfDegrees represents 0-170 degrees. centerDegree is the 180 degree.
 
 Known uses: Creating the heel of a shoe, which is typically symmetrical.-}
@@ -96,7 +102,9 @@ resetSingleDegreeRadiiIfNullWithPreviousValue :: Double ->  SingleDegreeRadii ->
 resetSingleDegreeRadiiIfNullWithPreviousValue resetValue    (SingleDegreeRadii degree' radii') =
   SingleDegreeRadii degree' $ setRadiusWithPrecedingValueIfNull resetValue radii'
 
-  -- ===================================== Single Degree Radii ========================================
+
+
+-- ===================================== Single Degree Radii ========================================
 {- |
 Contains the [Radius] associated with a single degree from a vertical scan.
 

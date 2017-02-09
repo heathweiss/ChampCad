@@ -6,6 +6,7 @@ import Examples.OpenBionicsCom.OpenBionicsDotComDesignWork (fullLengthSocketWith
                                                   topOfSocketStlGenerator, joinerShaftStlGenerator,
                                                   shortSocketToLargeShaftStlGenerator, wristToLargeShaftStlGenerator
                                                   )
+import Examples.Primitives.Squared(cylinderWithSquaredRadiiStlGenerator)
 --import System.Environment
 
 
@@ -16,7 +17,7 @@ main = do
  --loadMDRAndPassToProcessor (read $ head x) (read $ head $ tail x)
 
  
-  joinerShaftStlGenerator
+  cylinderWithSquaredRadiiStlGenerator
   
   
   
