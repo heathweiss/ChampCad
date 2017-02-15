@@ -1,17 +1,25 @@
 {-# LANGUAGE ParallelListComp #-}
-module Examples.Primitives.Cylinders where
+module Examples.Primitives.Cylinders(slopedToppedCylinder) where
 import qualified Primitives.Cylindrical.Walled as Walled (cylinder, squaredCylinder, squaredYLengthenedCylinder) 
-import  Primitives.Cylindrical.Solid(yLengthenedCylinder, squaredOffCylinder, squaredOffYLengthenedCylinder)
+import  Primitives.Cylindrical.Solid(yLengthenedCylinder, squaredOffCylinder, squaredOffYLengthenedCylinder, slopedTopCylinder)
 import CornerPoints.Radius(Radius(..))
 import CornerPoints.Points(Point(..))
 import Stl.StlCornerPoints((|+++^|), (||+++^||), Faces(..))
 import Stl.StlBase (StlShape(..), newStlShape)
 import Stl.StlFileWriter(writeStlToFile)
-import CornerPoints.Create(Angle(..))
+import CornerPoints.Create(Angle(..), Slope(..), flatXSlope, flatYSlope,)
 import CornerPoints.Transpose(transposeY)
 
 angles = (map (Angle) [0,10..360])
 
+slopedToppedCylinder = 
+  let cylinder = slopedTopCylinder [Radius r | r <- [10,10..]] (Point 0 0 0) angles [NegXSlope s | s <- [10,10..]] [NegYSlope s | s <- [10,10..]] (10 :: Height)
+      cylinderTriangles =  [FacesBackBottomFrontTop | x <- [1..35]]
+             |+++^|
+             cylinder
+      cylinderStl = newStlShape "cylinder" cylinderTriangles
+  in  writeStlToFile cylinderStl
+      
 solidCylinderSquared =
   let cylinder = squaredOffCylinder (Radius 10) (Point 0 0 0) angles (10 :: Height) (30 :: Power) 
       cylinderTriangles =  [FacesBackBottomFrontTop | x <- [1..35]]

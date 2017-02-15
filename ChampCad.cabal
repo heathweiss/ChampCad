@@ -24,7 +24,7 @@ library
                        CornerPoints.FaceExtractionWithDegrees, CornerPoints.VerticalFacesWithDegrees,
                        CornerPoints.FaceConversionsWithDegrees
                        CornerPoints.Degree, CornerPoints.MeshGeneration, CornerPoints.Slicer,
-                       CornerPoints.Rotations
+                       CornerPoints.Rotations, CornerPoints.Composable
                        --TypeClasses
                        TypeClasses.Transposable
                        --Cubical
@@ -66,6 +66,7 @@ library
                        Examples.Primitives.Cube
                        Examples.Primitives.Cylinders
                        Examples.Primitives.Squared
+                       Examples.Primitives.ComposableExample
                        --adaptors
                        Examples.Adaptors.HockeyStick
                        --try out removing a cylinder from a cylinder
@@ -148,6 +149,7 @@ test-suite ChampCad-test
                        SequenceTest
                        SlicerTest
                        VerticalFacesTest
+                       ComposableTest
  
   build-depends:       base
                      , ChampCad

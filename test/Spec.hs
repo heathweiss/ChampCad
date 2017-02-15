@@ -19,6 +19,7 @@ import RotationsTest(rotationsTestDo)
 import ScanFilterTest (scanFilterTestDo)
 import VerticalFacesTest(verticalFacesTestDo)
 import SequenceTest(sequenceTestDo)
+import  ComposableTest(composableTestDo)
 
 --main :: IO ()
 main = do
@@ -41,3 +42,4 @@ main = do
   scanFilterTestDo
   verticalFacesTestDo
   sequenceTestDo
+  composableTestDo

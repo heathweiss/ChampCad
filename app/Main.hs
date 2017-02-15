@@ -7,6 +7,9 @@ import Examples.OpenBionicsCom.OpenBionicsDotComDesignWork (fullLengthSocketWith
                                                   shortSocketToLargeShaftStlGenerator, wristToLargeShaftStlGenerator
                                                   )
 import Examples.Primitives.Squared(cylinderWithSquaredRadiiStlGenerator)
+
+import Examples.Primitives.ComposableExample(cylinderStlGenerator, createCylinderComposableStlGenerator, createCylinderComposableCumulativeCornerPoints)
+import Examples.Primitives.Cylinders(slopedToppedCylinder)
 --import System.Environment
 
 
@@ -17,7 +20,7 @@ main = do
  --loadMDRAndPassToProcessor (read $ head x) (read $ head $ tail x)
 
  
-  cylinderWithSquaredRadiiStlGenerator
+  createCylinderComposableStlGenerator
   
   
   
