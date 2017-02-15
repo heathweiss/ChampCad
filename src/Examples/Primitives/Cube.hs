@@ -1,3 +1,4 @@
+
 module Examples.Primitives.Cube() where
 import Stl.StlCornerPoints((|+++^|))
 import Stl.StlCornerPoints( Faces(..))
