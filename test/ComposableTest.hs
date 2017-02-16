@@ -14,6 +14,7 @@ composableTestDo = do
   runTestTT createDefaultComposableWithCreateCornerPointComposable
   runTestTT createCornerPointComposableSlopedTest1
   runTestTT createComposableTest
+  runTestTT createCornerPointTest
 
 createDefaultComposableWithCreateCornerPointComposable = TestCase $ assertEqual
   "createDefaultComposableWithCreateCornerPointComposable"
@@ -31,3 +32,13 @@ createComposableTest = TestCase $ assertEqual
   "createComposableTest"
   (composableDefault {_cpoint = F1 (Point 1 2 3), _xyRadius = Radius 10, _xyAngle = Angle 10})
   (createComposable (F1(Point 1 2 3)) (Point 0 0 0) (Radius 10) (Angle 10))
+
+createCornerPointTest = TestCase $ assertEqual
+  "createCornerPointTest"
+  ([F1 (Point 0 (-10) 0),
+    F1 (Point 0 (10) 0)
+   ])
+  ([createCornerPoint (F1) (Point 0 0 0) (Radius 10) (Angle 0),
+    createCornerPoint (F1) (Point 0 0 0) (Radius 10) (Angle 180)
+   ]
+  )

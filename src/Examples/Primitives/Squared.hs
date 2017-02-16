@@ -11,7 +11,7 @@ import CornerPoints.Points(Point(..))
 import CornerPoints.Create(flatXSlope, flatYSlope)
 import CornerPoints.MeshGeneration(autoGenerateEachCube)
 
-import Geometry.Radius(doubleCylinder)
+import Geometry.Radius(doubleCylinderZip)
 
 import Control.Monad.Trans.Except
 import Control.Monad.Trans.Maybe
@@ -30,7 +30,7 @@ cylinderWithSquaredRadii = do
     radii = [Radius x | x <- [10,10..]]
     
   btmFaces <- buildCubePointsListWithAdd "btmFaces"
-              (createBottomFaces (Point 0 0 0) (doubleCylinder radii angles) angles flatXSlope flatYSlope )
+              (createBottomFaces (Point 0 0 0) (doubleCylinderZip radii angles) angles flatXSlope flatYSlope )
               [CornerPointsId | x <-[1..]]
 
   topFaces <- buildCubePointsListWithAdd "topFaces"

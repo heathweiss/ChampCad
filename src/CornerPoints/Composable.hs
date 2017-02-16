@@ -1,17 +1,25 @@
 {-# LANGUAGE ParallelListComp #-}
 {-# LANGUAGE TemplateHaskell #-}
-module CornerPoints.Composable (createCornerPoint, Origin(..), createBottomFaces, Composable(..),
+module CornerPoints.Composable (createCornerPoint, Origin(..), createBottomFaces, createTopFaces, Composable(..),
                                 composableDefault, runComposer, createCornerPointComposable, createBottomFacesComposable, createTopFacesComposable,
                                 createCornerPointComposableSloped, createComposable) where
 
-{-
+{- |
 
-Reproduce Create.createCornerPoint but with:
--no slope, no adjustment function
+Reproduce CornerPoints.Create but with a way of using function composition to
+geometrically manipulate the shapes.:
 
 
 
-This module should eventually replace CornerPoints.Create
+
+This module may(should?) eventually replace CornerPoints.Create or some parts of it.
+
+Example: CornerPoints.Create.createCornerPoint takes in Slope info even if it is not required.
+This module would allow Slope to be added via composition.
+
+Example: CornerPoints.Create.createCornerPointSquaredOff combines Slope and squared off function.
+This should be done with a combination of: manipulate the [Radius] then create the slope shape.
+
 -}
 
 import CornerPoints.Points(Point(..))
@@ -40,6 +48,9 @@ composableDefault = Composable {_cpoint = F1 (Point 0 0 0), _xyRadius = Radius 0
 runComposer :: Composable -> CornerPoints
 runComposer composer = composer^.cpoint 
 
+{- |
+Create a Composable that uses slope.
+-}
 createCornerPointComposableSloped :: Slope -> Slope -> Composable  -> Composable
 createCornerPointComposableSloped xSlope      ySlope   composer =
   let 
@@ -96,9 +107,9 @@ createCornerPointComposableSloped xSlope      ySlope   composer =
                                    
                                  
   in       
-    --cornerPointConstructor (Point xAdjusted yAdjusted zAdjusted)
-    --composer {_cpoint = (F1 (Point xAdjusted yAdjusted zAdjusted)), _xyRadius = (Radius adjustedRadius) }
-   composer {_cpoint = (cpointSetter (composer^.cpoint) (Point xAdjusted yAdjusted zAdjusted)), _xyRadius = (Radius adjustedRadius) }
+    composer {_cpoint = (cpointSetter (composer^.cpoint) (Point xAdjusted yAdjusted zAdjusted)), _xyRadius = (Radius adjustedRadius) }
+
+
     
 --used in createCornerPointComposableSloped to get the CornerPoints constructor
 cpointSetter :: CornerPoints -> Point -> CornerPoints
@@ -136,7 +147,12 @@ createComposable    cPoint                    origin    horizRadius verticalAngl
                       _xyAngle = verticalAngle,
                       _origin = origin
                     }
-
+{-
+Create a CornerPoint from raw values, including a CornerPoints constructor.
+Differs from CornerPoints.Create.createCornerPoint in that it does not use Slope.
+This should eventually replace CornerPoints.Create.createCornerPoint.
+-}
+--ToDo: Replace CornerPoints.Create.createCornerPoint with this version so Slope is no longer required.
 createCornerPoint :: (Point-> CornerPoints) -> Origin -> Radius ->  Angle -> CornerPoints
 createCornerPoint cPoint origin horizRadius verticalAngle   =
                              let 
@@ -192,10 +208,15 @@ createCornerPoint cPoint origin horizRadius verticalAngle   =
                                  cPoint (Point setXaxis setYaxis setZaxis )
 
 
---createBottomFacesComposable :: Origin -> [Radius] -> [Angle] -> [CornerPoints]
---createBottomFacesComposable    inOrigin   radii       angles   =
-  
 
+{- |
+Creates a CornerPoint from raw values.
+
+Differs from CornerPoints.HorizontalFaces in that is does not use Slope.
+Should eventually replace CornerPoints.HorizontalFaces.
+-}
+
+--ToDo: replace CornerPoints.HorizontalFaces with this version.
 createBottomFaces :: Origin -> [Radius] -> [Angle] -> [CornerPoints]
 createBottomFaces inOrigin radii angles   =
     (createCornerPoint
@@ -221,10 +242,39 @@ createBottomFaces inOrigin radii angles   =
        | radius <- tail radii
     ]
 
-{-
+
+createTopFaces :: Origin -> [Radius] -> [Angle] -> [CornerPoints]
+createTopFaces inOrigin radii angles   =
+    (createCornerPoint
+      (F3)
+      inOrigin
+      (head radii)
+      (head angles)
+      
+    ) 
+    +++
+    B3 inOrigin
+    +++>
+    [(createCornerPoint
+      (F2)
+      inOrigin
+      radius
+      angle
+      
+     ) 
+     +++
+     B2 inOrigin
+       | angle <- tail angles
+       | radius <- tail radii
+    ]
+
+
+{- |
+Creates [CornerPoints.BottomFace] from a [Composable]
 inComposables must be made up of the proper CornerPoints types which is:
 F4 : [F1]
 -}
+--ToDo: Should not have to pass in the proper CornerPoints type.
 createBottomFacesComposable :: [Composable] -> [CornerPoints]
 createBottomFacesComposable  inComposables   =
   let headCCPoint = (head inComposables)^.cpoint
@@ -234,6 +284,12 @@ createBottomFacesComposable  inComposables   =
       [(curr^.cpoint) +++ B1 (curr^.origin) | curr <-  (tail inComposables)]
       
 
+{- |
+Creates [CornerPoints.TopFace] from a [Composable]
+inComposables must be made up of the proper CornerPoints types which is:
+F3 : [F2]
+-}
+--ToDo: Should not have to pass in the proper CornerPoints type.
 createTopFacesComposable :: [Composable] -> [CornerPoints]
 createTopFacesComposable  inComposables   =
   --let headCCPoint = (head inComposables)^.cpoint

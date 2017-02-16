@@ -1,22 +1,30 @@
-module Examples.Primitives.ComposableExample(cylinderStlGenerator, createCylinderComposableStlGenerator, createCylinderComposableCumulativeCornerPoints) where
+{-# LANGUAGE ParallelListComp #-}
+module Examples.Primitives.ComposableExample(createCylinderComposableSlopedStlGenerator, createCylinderComposableSlopedCumulativeCornerPoints,
+                                            createDoubleCylinderComposableStlGenerator, createDoubleCylinderComposableCumulativeCornerPoints,
+                                            createDoubleCylinderSquaredStlGenerator, createDoubleCylinderSquaredCumulativeCornerPoints) where
 
-import CornerPoints.Composable (createCornerPoint, Origin(..), createBottomFaces, Composable(..), composableDefault, createCornerPointComposable,
+import CornerPoints.Composable (createCornerPoint, Origin(..), createBottomFaces, createTopFaces, Composable(..), composableDefault, createCornerPointComposable,
                                createBottomFacesComposable, createCornerPointComposableSloped,  createTopFacesComposable, createComposable)
 import CornerPoints.Radius(Radius(..))
-import CornerPoints.CornerPoints(CornerPoints(..), (+++), (|+++|), (|@+++#@|))
+import CornerPoints.CornerPoints(CornerPoints(..), (+++), (|+++|), (|@+++#@|), (+++>))
 import CornerPoints.Create(Angle(..), Slope(..))
 import CornerPoints.FaceExtraction (extractFrontFace, extractTopFace,extractBottomFace, extractBackFace, extractFrontTopLine, extractBackTopLine,
                                     extractBackBottomLine, extractBackTopLine, extractBottomFrontLine)
 import CornerPoints.FaceConversions(backFaceFromFrontFace, upperFaceFromLowerFace, lowerFaceFromUpperFace, frontFaceFromBackFace,
                                     backBottomLineFromBottomFrontLine, frontTopLineFromBackTopLine, backTopLineFromFrontTopLine)
 import CornerPoints.Transpose (transposeZ, transposeY, transposeX, )
-import TypeClasses.Transposable(transpose)
 import CornerPoints.Points(Point(..))
 import CornerPoints.MeshGeneration(autoGenerateEachCube)
+
+import TypeClasses.Transposable(transpose)
+
+import Geometry.Radius(doubleCylinderZip, doubleCylinder, squaredOff)
 
 import Stl.StlCornerPoints((|+++^|), (||+++^||), Faces(..))
 import Stl.StlBase (StlShape(..), newStlShape)
 import Stl.StlFileWriter(writeStlToFile)
+
+import Geometry.Radius(doubleCylinderZip)
 
 import Control.Monad.Trans.Except
 import Control.Monad.Trans.Maybe
@@ -29,29 +37,9 @@ import Control.Monad.Writer (WriterT, tell, execWriterT)
 import Control.Monad.Reader
 import Builder.Monad(BuilderError(..), cornerPointsErrorHandler, buildCubePointsList, buildCubePointsListWithAdd,
                      CpointsStack, CpointsList)
-{-
-walledCylinder =
-  let cylinder = Walled.cylinder [(Radius 100)|x <- [1..]] [(Radius 110)|x <- [1..]]   angles  (Point 0 0 0) (10 :: Height)
-      cylinderTriangles =  [FacesBackBottomFrontTop | x <- [1..35]]
-             |+++^|
-             cylinder
-      cylinderStl = newStlShape "cylinder" cylinderTriangles
-  in  writeStlToFile cylinderStl
--}
 
-cylinder :: [Radius] ->     [Radius] ->     [Angle] -> Origin -> Double -> [CornerPoints]
-cylinder    innerWallRadii  outerWallRadii  angles     origin    height  =
-   ((--bottom faces
-      (map (backBottomLineFromBottomFrontLine . extractBottomFrontLine) (createBottomFaces origin innerWallRadii angles )) 
-      |+++|
-      (map (extractBottomFrontLine) (createBottomFaces origin outerWallRadii angles  )) 
-    )
-    |@+++#@|
-    ((transposeZ (+ height)) . upperFaceFromLowerFace)
-   )
-{-
-cylinderComposable ::  [CornerPoints]
-cylinderComposable    =
+createDoubleCylinderComposable :: ExceptT BuilderError (State CpointsStack ) CpointsList
+createDoubleCylinderComposable = do
   let originBtm = Point 0 0 0
       originTop = Point 0 0 10
       radii = map (Radius) [10,10..]
@@ -61,29 +49,99 @@ cylinderComposable    =
                 (createCornerPointComposable (F1) originBtm)
                 (tail radii)
                 (tail angles)
-      headTop = createCornerPointComposableSloped (NegSlope 10) (NegYSlope 10) $ createCornerPointComposable  (F3) originTop (head radii) (head angles)
-      tailTop = map (createCornerPointComposableSloped (NegSlope 10) (NegYSlope 10)) 
+      radiiTop = doubleCylinderZip radii angles
+      headTop = createCornerPointComposable  (F3) originTop (head radiiTop) (head angles)
+      --This is the version to make them sloped
+      --headTop = createCornerPointComposableSloped (NegXSlope 10) (NegYSlope 10) $ createComposable  (F3(Point 0 0 0)) originTop (head radiiTop) (head angles)
+      tailTop = --map to make it sloped
+                --map (createCornerPointComposableSloped (NegXSlope 10) (NegYSlope 10))
                  (zipWith
+                   --to make it sloped
+                   --(createComposable (F2(Point 0 0 0)) originTop )
                    (createCornerPointComposable (F2) originTop )
-                   (tail radii)
+                   (tail radiiTop)
                    (tail angles)
                  )
-      
-      btmFaces = createBottomFacesComposable (headBtm : tailBtm)
-      --
-      topFaces = createTopFacesComposable (headTop : tailTop)
-      --topFacesTemp = createBottomFacesComposable (createCornerPointComposableSloped flatXSlope flatYSlope headBtm  : map (createCornerPointComposableSloped (NegSlope 10) (NegYSlope 10)) tailBtm)
-      --topFaces = map (upperFaceFromLowerFace . (transposeZ (+10))) topFacesTemp
-  in  
-      btmFaces  |+++| topFaces
 
--}
-createCylinderComposable :: ExceptT BuilderError (State CpointsStack ) CpointsList
-createCylinderComposable = do
-  {-cyl <- buildCubePointsListWithAdd  "cyl"
-         cylinderComposable
-         [CornerPointsId | x <-[1..]]
-  -}
+  btmFaces <- buildCubePointsListWithAdd "btmFaces"
+              (createBottomFacesComposable (headBtm : tailBtm))
+              [CornerPointsId | x <-[1..]]
+
+              
+  topFaces <- buildCubePointsListWithAdd "topFaces"
+              (createTopFacesComposable (headTop : tailTop))
+              [CornerPointsId | x <-[1..]]
+
+  cylinder <- buildCubePointsListWithAdd "cylinder"
+              btmFaces
+              topFaces
+              
+  
+  return cylinder 
+
+createDoubleCylinderComposableStlGenerator :: IO ()
+createDoubleCylinderComposableStlGenerator = do
+  let cpoints = ((execState $ runExceptT (createDoubleCylinderComposable)) [])
+  writeStlToFile $ newStlShape "cpoinst"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
+
+createDoubleCylinderComposableCumulativeCornerPoints :: IO ()
+createDoubleCylinderComposableCumulativeCornerPoints    =
+  print $ show  ((evalState $ runExceptT (createDoubleCylinderComposable) ) [])
+
+
+createDoubleCylinderSquared :: ExceptT BuilderError (State CpointsStack ) CpointsList
+createDoubleCylinderSquared = do
+  let originBtm = Point 0 0 0
+      originTop = Point 0 0 10
+      radii = map (Radius) [10,10..]
+      angles = map (Angle) [0,10..360]
+      headBtm = createCornerPoint (F4) originBtm (head radii) (head angles)
+                
+      tailBtm = zipWith
+                (createCornerPoint (F1) originBtm)
+                (tail radii)
+                (tail angles)
+      radiiTop  = [doubleCylinder r a | r <- radii | a <- angles ]
+                  --apply squared of as well. Can be done in either order with == results.
+                  --[squaredOff 4 (doubleCylinder r a) a   | r <- radii | a <- angles ]--map (radiiTop') angles
+                  --[ doubleCylinder (squaredOff 4 r a) a   | r <- radii | a <- angles ]--map (radiiTop') angles
+      headTop = createCornerPoint  (F3) originTop (head radiiTop) (head angles)
+      tailTop =  (zipWith
+                   (createCornerPoint (F2) originTop )
+                   (tail radiiTop)
+                   (tail angles)
+                 )
+
+  btmFaces <- buildCubePointsListWithAdd "btmFaces"
+              (createBottomFaces originBtm radii angles)
+              [CornerPointsId | x <-[1..]]
+
+              
+  topFaces <- buildCubePointsListWithAdd "topFaces"
+              (createTopFaces originTop radiiTop angles)
+              [CornerPointsId | x <-[1..]]
+
+  cylinder <- buildCubePointsListWithAdd "cylinder"
+              btmFaces
+              topFaces
+              
+  
+  return cylinder
+
+createDoubleCylinderSquaredStlGenerator :: IO ()
+createDoubleCylinderSquaredStlGenerator = do
+  let cpoints = ((execState $ runExceptT (createDoubleCylinderSquared)) [])
+  writeStlToFile $ newStlShape "cpoinst"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
+
+createDoubleCylinderSquaredCumulativeCornerPoints :: IO ()
+createDoubleCylinderSquaredCumulativeCornerPoints    =
+  print $ show  ((evalState $ runExceptT (createDoubleCylinderSquared) ) [])
+
+
+  
+createCylinderComposableSloped :: ExceptT BuilderError (State CpointsStack ) CpointsList
+createCylinderComposableSloped = do
+  
   let originBtm = Point 0 0 0
       originTop = Point 0 0 10
       radii = map (Radius) [10,10..]
@@ -93,7 +151,6 @@ createCylinderComposable = do
                 (createCornerPointComposable (F1) originBtm)
                 (tail radii)
                 (tail angles)
-      --headTop = createCornerPointComposableSloped (NegXSlope 10) (NegYSlope 10) $ createCornerPointComposable  (F3) originTop (head radii) (head angles)
       headTop = createCornerPointComposableSloped (NegXSlope 10) (NegYSlope 10) $ createComposable  (F3 (Point 0 0 0)) originTop (head radii) (head angles)
       tailTop = map (createCornerPointComposableSloped (NegXSlope 10) (NegYSlope 10)) 
                  (zipWith
@@ -119,26 +176,14 @@ createCylinderComposable = do
   
   return cylinder 
 
-createCylinderComposableStlGenerator :: IO ()
-createCylinderComposableStlGenerator = do
-  let cpoints = ((execState $ runExceptT (createCylinderComposable)) [])
+createCylinderComposableSlopedStlGenerator :: IO ()
+createCylinderComposableSlopedStlGenerator = do
+  let cpoints = ((execState $ runExceptT (createCylinderComposableSloped)) [])
   writeStlToFile $ newStlShape "cpoinst"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
 
-createCylinderComposableCumulativeCornerPoints :: IO ()
-createCylinderComposableCumulativeCornerPoints    =
-  print $ show  ((evalState $ runExceptT (createCylinderComposable) ) [])
+createCylinderComposableSlopedCumulativeCornerPoints :: IO ()
+createCylinderComposableSlopedCumulativeCornerPoints    =
+  print $ show  ((evalState $ runExceptT (createCylinderComposableSloped) ) [])
 
-createCylinder :: ExceptT BuilderError (State CpointsStack ) CpointsList
-createCylinder = do
-  cyl <- buildCubePointsListWithAdd  "cyl"
-         (cylinder [Radius r | r <- [5,5..]] [Radius r | r <-[10,10..]] [Angle a | a <- [0,10..360]] (Point 0 0 0) 10)
-         [CornerPointsId | x <-[1..]]
-
-  return cyl
-
-cylinderStlGenerator :: IO ()
-cylinderStlGenerator = do
-  let cpoints = ((execState $ runExceptT (createCylinder)) [])
-  writeStlToFile $ newStlShape "cpoinst"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
 
 type Height = Double
