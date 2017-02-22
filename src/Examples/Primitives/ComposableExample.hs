@@ -1,13 +1,14 @@
 {-# LANGUAGE ParallelListComp #-}
 module Examples.Primitives.ComposableExample(createCylinderComposableSlopedStlGenerator, createCylinderComposableSlopedCumulativeCornerPoints,
                                             createDoubleCylinderComposableStlGenerator, createDoubleCylinderComposableCumulativeCornerPoints,
-                                            createDoubleCylinderSquaredStlGenerator, createDoubleCylinderSquaredCumulativeCornerPoints) where
+                                            createDoubleCylinderSquaredStlGenerator, createDoubleCylinderSquaredCumulativeCornerPoints,
+                                            createDoubleCylinderSquaredAndSlopedStlGenerator, createDoubleCylinderSquaredAndSlopedCumulativeCornerPoints ) where
 
 import CornerPoints.Composable (createCornerPoint, Origin(..), createBottomFaces, createTopFaces, Composable(..), composableDefault, createCornerPointComposable,
-                               createBottomFacesComposable, createCornerPointComposableSloped,  createTopFacesComposable, createComposable)
+                               createBottomFacesComposable, createCornerPointComposableSloped,  createTopFacesComposable, createComposable, addSlope, createTopFacesSloped)
 import CornerPoints.Radius(Radius(..))
 import CornerPoints.CornerPoints(CornerPoints(..), (+++), (|+++|), (|@+++#@|), (+++>))
-import CornerPoints.Create(Angle(..), Slope(..))
+import CornerPoints.Create(Angle(..), Slope(..), rotateAngle, RotateFactor(..))
 import CornerPoints.FaceExtraction (extractFrontFace, extractTopFace,extractBottomFace, extractBackFace, extractFrontTopLine, extractBackTopLine,
                                     extractBackBottomLine, extractBackTopLine, extractBottomFrontLine)
 import CornerPoints.FaceConversions(backFaceFromFrontFace, upperFaceFromLowerFace, lowerFaceFromUpperFace, frontFaceFromBackFace,
@@ -101,7 +102,8 @@ createDoubleCylinderSquared = do
                 (createCornerPoint (F1) originBtm)
                 (tail radii)
                 (tail angles)
-      radiiTop  = [doubleCylinder r a | r <- radii | a <- angles ]
+                --rotateAngle rotated the double cylinder, by adjusting the angle. Worked excellent.
+      radiiTop  = [doubleCylinder r (rotateAngle 10 a) | r <- radii | a <- angles ]
                   --apply squared of as well. Can be done in either order with == results.
                   --[squaredOff 4 (doubleCylinder r a) a   | r <- radii | a <- angles ]--map (radiiTop') angles
                   --[ doubleCylinder (squaredOff 4 r a) a   | r <- radii | a <- angles ]--map (radiiTop') angles
@@ -136,6 +138,59 @@ createDoubleCylinderSquaredStlGenerator = do
 createDoubleCylinderSquaredCumulativeCornerPoints :: IO ()
 createDoubleCylinderSquaredCumulativeCornerPoints    =
   print $ show  ((evalState $ runExceptT (createDoubleCylinderSquared) ) [])
+
+
+
+createDoubleCylinderSquaredAndSloped :: ExceptT BuilderError (State CpointsStack ) CpointsList
+createDoubleCylinderSquaredAndSloped = do
+  let originBtm = Point 0 0 0
+      originTop = Point 0 0 10
+      radii = map (Radius) [10,10..]
+      angles = map (Angle) [0,10..360]
+      headBtm = createCornerPoint (F4) originBtm (head radii) (head angles)
+                
+      tailBtm = zipWith
+                (createCornerPoint (F1) originBtm)
+                (tail radii)
+                (tail angles)
+                --rotateAngle rotated the double cylinder, by adjusting the angle. Worked excellent.
+      radiiTop  = [doubleCylinder r (rotateAngle 10 a) | r <- radii | a <- angles ]
+                  --apply squared of as well. Can be done in either order with == results.
+                  --[squaredOff 4 (doubleCylinder r a) a   | r <- radii | a <- angles ]--map (radiiTop') angles
+                  --[ doubleCylinder (squaredOff 4 r a) a   | r <- radii | a <- angles ]--map (radiiTop') angles
+      headTop = createCornerPoint  (F3) originTop (head radiiTop) (head angles)
+      tailTop =  (zipWith
+                   (createCornerPoint (F2) originTop )
+                   (tail radiiTop)
+                   (tail angles)
+                 )
+
+  btmFaces <- buildCubePointsListWithAdd "btmFaces"
+              (createBottomFaces originBtm radii angles)
+              [CornerPointsId | x <-[1..]]
+  
+  topFaces <- buildCubePointsListWithAdd "topFaces"
+              (createTopFacesSloped  originTop radiiTop angles (PosXSlope 10) (PosYSlope 10))
+              [CornerPointsId | x <-[1..]]
+
+
+       
+  cylinder <- buildCubePointsListWithAdd "cylinder"
+              btmFaces
+              topFaces
+              
+  
+  return cylinder
+
+createDoubleCylinderSquaredAndSlopedStlGenerator :: IO ()
+createDoubleCylinderSquaredAndSlopedStlGenerator = do
+  let cpoints = ((execState $ runExceptT (createDoubleCylinderSquaredAndSloped)) [])
+  writeStlToFile $ newStlShape "cpoinst"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
+
+createDoubleCylinderSquaredAndSlopedCumulativeCornerPoints :: IO ()
+createDoubleCylinderSquaredAndSlopedCumulativeCornerPoints    =
+  print $ show  ((evalState $ runExceptT (createDoubleCylinderSquaredAndSloped) ) [])
+
 
 
   

@@ -10,7 +10,10 @@ import  CornerPoints.Create(
   Origin(..),
   Angle(..),
   createCornerPointSquaredOff,
-  getQuadrantAngle
+  getQuadrantAngle,
+  Angle(..),
+  rotateAngle,
+  RotateFactor(..)
   )
 import CornerPoints.FaceConversions(backFaceFromFrontFace, upperFaceFromLowerFace, lowerFaceFromUpperFace )
 import CornerPoints.Transpose (transposeZ)
@@ -30,6 +33,14 @@ cornerPointsCreateTestDo = do
   runTestTT getYTest
   runTestTT getZTest
   runTestTT createCornerPointSquaredOffTest
+  runTestTT rotateForwardWithinBounds
+  runTestTT rotateForwardBeyondBounds
+  runTestTT rotateForwardToBounds
+  runTestTT rotateBackWithinBounds
+  runTestTT rotateBackBeyondBounds
+  runTestTT rotateBackToBounds
+  runTestTT rotateForwardTwiceBeyondBounds
+  runTestTT rotateBackTwiceBeyondBounds
   
 cubePoints = (BottomFace
               {f1 = Point {x_axis = 0.0, y_axis = 1.0, z_axis = 0.0}, f4 = Point {x_axis = 1.0, y_axis = 1.0, z_axis = 0.0},
@@ -86,3 +97,42 @@ createCornerPointSquaredOffTest = TestCase $ assertEqual
   (createCornerPointSquaredOff (F1) (Point 0 0 0) (Radius 1) (Angle 45) flatXSlope flatYSlope 10 )
 
 
+rotateForwardWithinBounds = TestCase $ assertEqual
+  "rotateForwardWithinBounds"
+  (Angle 10)
+  (rotateAngle (10 :: RotateFactor) (Angle 0))
+
+rotateForwardBeyondBounds = TestCase $ assertEqual
+  "rotateForwardBeyondBounds"
+  (Angle 1)
+  (rotateAngle (10 :: RotateFactor) (Angle 351))
+
+rotateForwardToBounds = TestCase $ assertEqual
+  "rotateForwardToBounds"
+  (Angle 360)
+  (rotateAngle (10 :: RotateFactor) (Angle 350))
+
+rotateForwardTwiceBeyondBounds = TestCase $ assertEqual
+  "rotateForwardTwiceBeyondBounds"
+  (Angle 350)
+  (rotateAngle (720 :: RotateFactor) (Angle 350))  
+
+rotateBackWithinBounds = TestCase $ assertEqual
+  "rotateBackWithinBounds"
+  (Angle 10)
+  (rotateAngle ((-10) :: RotateFactor) (Angle 20))
+
+rotateBackBeyondBounds = TestCase $ assertEqual
+  "rotateBackBeyondBounds"
+  (Angle 350)
+  (rotateAngle ((-20) :: RotateFactor) (Angle 10))
+
+rotateBackTwiceBeyondBounds = TestCase $ assertEqual
+  "rotateBackTwiceBeyondBounds"
+  (Angle 0)
+  (rotateAngle ((-720) :: RotateFactor) (Angle 0))
+
+rotateBackToBounds = TestCase $ assertEqual
+  "rotateBackToBounds"
+  (Angle 0)
+  (rotateAngle ((-10) :: RotateFactor) (Angle 10))

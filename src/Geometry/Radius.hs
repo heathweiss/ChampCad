@@ -1,13 +1,16 @@
-module Geometry.Radius(doubleCylinderZip, doubleCylinder, squaredOff) where
+module Geometry.Radius(doubleCylinderZip, doubleCylinder, squaredOff, calcultateDistance) where
 
 {- |
 Manipulate Radius using various geometric formulas, in order to change the resulting CornerPoints.
 
 Examples: Examples.Primitives.ComposableExample
+
+Test in test/GeometryRadiusTest
 -}
 
 import CornerPoints.Create(Angle(..), getQuadrantAngle)
 import CornerPoints.Radius(Radius(..))
+import CornerPoints.Points(Point(..) )
 
 import Math.Trigonometry(sinDegrees, cosDegrees)
 
@@ -75,3 +78,20 @@ squaredOff power (Radius radius') angle' =
   in  Radius $
       (radius'**2)/
         (((x**power) + (y**power))**(1/power)) 
+
+-- | Given a 2 points, caluclate the distance between the points.
+calcultateDistance :: Point -> Point -> Radius
+calcultateDistance    point1   point2  =
+  let
+      distance :: Point -> Point -> Point
+      distance    (Point x y z)    (Point x1 y1 z1) =
+        Point (abs $ x - x1) (abs $ y - y1) (abs $ z - z1)
+      p = distance point1 point2
+      x = x_axis p
+      y = y_axis p
+      z = z_axis p
+  in
+      Radius $ sqrt (x**2 + y**2 + z**2) 
+  
+
+

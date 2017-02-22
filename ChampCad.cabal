@@ -150,6 +150,7 @@ test-suite ChampCad-test
                        SlicerTest
                        VerticalFacesTest
                        ComposableTest
+                       GeometryRadiusTest
  
   build-depends:       base
                      , ChampCad

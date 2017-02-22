@@ -13,7 +13,8 @@ module CornerPoints.Create(
   AngleRadius(..),
   extractAngles,
   extractRadii,
-  
+  rotateAngle,
+  RotateFactor(..)
   ) where
 import CornerPoints.Points(Point(..))
 import CornerPoints.CornerPoints(CornerPoints(..), (+++), )
@@ -262,6 +263,7 @@ Angle:
 This will be the replacement for all of the others. It is simply a wrapper around Double.
 Once the others are gone, should make it a newtype, for efficiency.
 -}
+--ToDo: Create a Angle module and move this there.
 data Angle =         Quadrant1Angle  { angle::Double}
                    | Quadrant2Angle  { angle::Double}
                    | Quadrant3Angle  { angle::Double}
@@ -270,6 +272,23 @@ data Angle =         Quadrant1Angle  { angle::Double}
                    
   deriving (Show, Eq)
 
+type RotateFactor = Double
+{- |
+Rotate the angle forward or backwards by amount of rotateFactor.
+Neg value will rotate back, pos will rotate forward.
+Keep the value between 0 and 360
+-}
+--ToDo: Create a Angle module and move this there.
+rotateAngle :: RotateFactor -> Angle -> Angle
+rotateAngle rotateFactor (Angle angle') =
+  let rotated = angle' + rotateFactor
+  in  case (rotated < 0) of
+        True -> --Angle $ rotated + 360
+                rotateAngle rotateFactor (Angle $ angle' + 360) 
+        False -> case (rotated > 360) of
+                   True -> --Angle $ rotated - 360
+                           rotateAngle rotateFactor (Angle $ angle' - 360)
+                   False -> Angle rotated
 
 {-
 Used for:
