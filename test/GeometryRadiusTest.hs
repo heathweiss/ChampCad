@@ -6,6 +6,8 @@ import CornerPoints.Radius(Radius(..))
 
 import Test.HUnit
 
+
+
 geometryRadiusTestDo = do
   runTestTT pos1Test
   runTestTT neg1Test
