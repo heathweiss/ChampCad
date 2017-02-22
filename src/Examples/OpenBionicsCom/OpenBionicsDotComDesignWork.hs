@@ -3,13 +3,6 @@ module Examples.OpenBionicsCom.OpenBionicsDotComDesignWork
         wristToSmallShaftStlGenerator, joinerShaftStlGenerator,
         wristToLargeShaftStlGenerator) where
 
-{- |
-Design a socket that the OpenBionics.com hand can be attached to.
-
-Design an adpator to join the hand to the socket.
--Hand end must be same shape as comes with the hand.
--Socket end could be round, so it can be rotated on the socket for best positioning.
--}
 
 import CornerPoints.Radius(MultiDegreeRadii(..), SingleDegreeRadii(..), Radius(..),extractSingle, extractList, rotateMDR, transposeMDRList,
                           {-transposeSDRList,-} extractSDRWithinRange, singleDegreeRadiiListToMap, transformSDRWithList, extractMaybeSDR,
@@ -73,6 +66,14 @@ import Control.Monad.Writer (WriterT, tell, execWriterT)
 import Control.Monad.Reader
 import Builder.Monad(BuilderError(..), cornerPointsErrorHandler, buildCubePointsList,
                      CpointsStack, CpointsList)
+
+{- |
+Design a socket that the OpenBionics.com hand can be attached to.
+
+Design an adpator to join the hand to the socket.
+-Hand end must be same shape as comes with the hand.
+-Socket end could be round, so it can be rotated on the socket for best positioning.
+-}
 
 
 -- ================================================== half length socket with adaptor===============================================================

@@ -1,9 +1,6 @@
 module Examples.OpenBionicsOrg.FingerTubePlate() where
 
-{- |
-Recreate the FingerTubePlate from openBionics.org as they did not generate the stl for them.
 
--}
 
 import CornerPoints.Points(Point(..))
 import CornerPoints.CornerPoints(CornerPoints(..), (+++>))
@@ -26,4 +23,7 @@ import Builder.Monad(BuilderError(..), cornerPointsErrorHandler, buildCubePoints
                      CpointsStack, CpointsList)
 
 
+{- |
+Recreate the FingerTubePlate from openBionics.org as they did not generate the stl for them.
 
+-}

@@ -1,5 +1,5 @@
 module Examples.Cubical.CubicalKey where
-{- |
+{- 
 
 terms::::::::
 key: piece that will fit in the key way.
@@ -59,6 +59,7 @@ The question is, will they be back faces or front faces.
 Continue on from =zip= section, with idea of states.
 Use the following data structures and functions
 -}
+
 --The state of the cubical structure
 data KeyState =
  InitialState {keyWidth::Double, bufferWidth::Double}

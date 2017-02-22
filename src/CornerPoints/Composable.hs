@@ -4,6 +4,22 @@ module CornerPoints.Composable (createCornerPoint, Origin(..), createBottomFaces
                                 composableDefault, runComposer, createCornerPointComposable, createBottomFacesComposable, createTopFacesComposable,
                                 createCornerPointComposableSloped, createComposable, addSlope, createTopFacesSloped) where
 
+
+
+import CornerPoints.Points(Point(..))
+import CornerPoints.CornerPoints(CornerPoints(..), (+++), (+++>), (|+++|), (|@+++#@|))
+import CornerPoints.Transpose (transposeZ)
+import CornerPoints.Radius(Radius(..))
+import CornerPoints.Create(Angle(..), Slope(..), getQuadrantAngle, slopeAdjustedForVerticalAngle, adjustRadiusForSlope)
+
+
+import Geometry.CornerPoints(squaredOffAdjustmentFunction)
+import  Geometry.Radius(calcultateDistance)
+
+import Math.Trigonometry(sinDegrees, cosDegrees)
+
+import Control.Lens
+
 {- |
 
 Reproduce CornerPoints.Create but with a way of using function composition to
@@ -21,20 +37,6 @@ Example: CornerPoints.Create.createCornerPointSquaredOff combines Slope and squa
 This should be done with a combination of: manipulate the [Radius] then create the slope shape.
 
 -}
-
-import CornerPoints.Points(Point(..))
-import CornerPoints.CornerPoints(CornerPoints(..), (+++), (+++>), (|+++|), (|@+++#@|))
-import CornerPoints.Transpose (transposeZ)
-import CornerPoints.Radius(Radius(..))
-import CornerPoints.Create(Angle(..), Slope(..), getQuadrantAngle, slopeAdjustedForVerticalAngle, adjustRadiusForSlope)
-
-
-import Geometry.CornerPoints(squaredOffAdjustmentFunction)
-import  Geometry.Radius(calcultateDistance)
-
-import Math.Trigonometry(sinDegrees, cosDegrees)
-
-import Control.Lens
 
 type Power = Double
 type Origin = Point

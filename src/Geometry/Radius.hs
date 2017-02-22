@@ -1,5 +1,13 @@
 module Geometry.Radius(doubleCylinderZip, doubleCylinder, squaredOff, calcultateDistance) where
 
+
+
+import CornerPoints.Create(Angle(..), getQuadrantAngle)
+import CornerPoints.Radius(Radius(..))
+import CornerPoints.Points(Point(..) )
+
+import Math.Trigonometry(sinDegrees, cosDegrees)
+
 {- |
 Manipulate Radius using various geometric formulas, in order to change the resulting CornerPoints.
 
@@ -7,12 +15,6 @@ Examples: Examples.Primitives.ComposableExample
 
 Test in test/GeometryRadiusTest
 -}
-
-import CornerPoints.Create(Angle(..), getQuadrantAngle)
-import CornerPoints.Radius(Radius(..))
-import CornerPoints.Points(Point(..) )
-
-import Math.Trigonometry(sinDegrees, cosDegrees)
 
 {- |
  Use cosDegrees/sinDegrees to create a double cylinder from a Radius Angle

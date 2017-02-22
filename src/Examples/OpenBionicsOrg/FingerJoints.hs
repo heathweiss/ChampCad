@@ -1,8 +1,5 @@
 module Examples.OpenBionicsOrg.FingerJoints() where
 
-{- |
-Recreate the finger joints that would normally be make out of silicone sheets, so that they can instead be printed from NinjaFlex.
--}
 
 
 import Stl.StlCornerPoints((|+++^|))
@@ -10,6 +7,11 @@ import Stl.StlCornerPoints( Faces(..))
 import Stl.StlBase (StlShape(..), newStlShape)
 import Stl.StlFileWriter(writeStlToFile)
 import Primitives.Cubical( rectangularCubeNonRadial)
+
+{- |
+Recreate the finger joints that would normally be make out of silicone sheets, so that they can instead be printed from NinjaFlex.
+-}
+
 
 {-
 middle finger
