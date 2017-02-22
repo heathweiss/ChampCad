@@ -29,7 +29,7 @@ import Scan.Filter(runningAverage, runningAvgSingleDegreeRadii)
 import Helpers.List((++:))
 
 import Primitives.Cylindrical.Walled(squaredYLengthenedCylinder, squaredCylinder)
-import Primitives.Cylindrical.Solid(cylinder, squaredOffYLengthenedCylinder, squaredOffCylinder)
+import Primitives.Cylindrical.Solid(cylinder, squaredOffYLengthenedCylinder)
 
 import Data.Word(Word8)
 import qualified Data.ByteString.Lazy as BL

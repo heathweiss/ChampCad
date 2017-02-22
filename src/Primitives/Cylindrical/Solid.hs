@@ -92,6 +92,10 @@ squaredOffCylinder    radius    origin    angles     height    power  =
   |@+++#@|
   (upperFaceFromLowerFace . (transposeZ (+height)))
 
+squaredOffCylinder' :: Radius -> Origin -> [Angle] -> Height -> Power -> [CornerPoints]
+squaredOffCylinder'    radius    origin    angles     height    power  =
+  let btmFaces = 
+
 
 squaredOffYLengthenedCylinder :: Radius -> Origin -> [Angle] -> Height  -> Power -> LengthenFactor -> [CornerPoints]
 squaredOffYLengthenedCylinder    radius    origin    angles     height     power    lengthenFactor      =
