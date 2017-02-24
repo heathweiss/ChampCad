@@ -16,7 +16,7 @@ import CornerPoints.Radius(Radius(..))
 import CornerPoints.FaceExtraction (extractFrontFace, extractTopFace,extractBottomFace)
 import CornerPoints.FaceConversions(backFaceFromFrontFace, upperFaceFromLowerFace, lowerFaceFromUpperFace )
 import CornerPoints.Transpose (transposeZ, transposeY)
-import qualified CornerPoints.Composable  as Com (createBottomFaces, createCornerPoint)
+import qualified CornerPoints.Composable  as Com (createCornerPoint)
 
 import Geometry.Radius(squaredOff)
 
@@ -36,7 +36,72 @@ QuadrantAngle
 -}
 
 
+{-
+Replace createCornerPoint with Com.createCornerPoint:
 
+test/HorizontalFacesTest.hs
+-recreated the createBottomFaces test. Orig test needs to be removed.
+
+src/Primitives/Cylindrical/Walled.hs:
+-uses it in cylinder
+ -cylinder is used in Examples/OpenBionicsCom/OpenBionicsDotComDesignWork.hs:35:38: joinerShaft
+ -converted to cylinder'
+
+src/Primitives/Cylindrical/Solid.hs:
+-converted to createBottomFaces'
+-uses it for cylinder which is used by:
+ -Examples/Scan/WalkerSocketDesignWork.hs:32:37: to create hose plate.
+  -therefore hose plate now used ' version
+-slopedTopCylinder which is used in:
+ -src/Examples/Primitives/Cylinders.hs: now uses '
+  -uses it for slopedToppedCylinder
+ -src/Examples/ShoeLift/SnowBoardBoot.hs:
+ -treadRearSlopedCubes
+ -bootCubes
+ 
+src/Examples/OpenBionicsCom/OpenBionicsDotComDesignWork.hs: uses it in sevaral places
+-wristToLargeShaft: now uses '
+-wristToSmallShaft: now uses '
+
+src/Primitives/Cubical.hs
+-uses it for: rectangularSolidNoSlope
+ -now uses '
+ -which uses it in src/Examples/Primitives/Cube.hs:rectangle
+  -and so now uses ' via rectangle
+
+src/Examples/Primitives/Squared.hs:
+-cylinderWithSquaredRadii: now uses '
+
+Examples.Diffs.MTLDiff
+-now uses '
+-}
+createBottomFaces :: Origin -> [Radius] -> [Angle] -> {-Slope -> Slope ->-} [CornerPoints]
+createBottomFaces inOrigin radii angles {-xSlope ySlope-}  =
+    (Com.createCornerPoint
+      (F4)
+      inOrigin
+      (head radii)
+      (head angles)
+      --xSlope
+      --ySlope
+    ) 
+    +++
+    B4 inOrigin
+    +++>
+    [(Com.createCornerPoint
+      (F1)
+      inOrigin
+      radius
+      angle
+      --xSlope
+      --ySlope
+     ) 
+     +++
+     B1 inOrigin
+       | angle <- tail angles
+       | radius <- tail radii
+    ]
+{-orig
 createBottomFaces :: Origin -> [Radius] -> [Angle] -> Slope -> Slope -> [CornerPoints]
 createBottomFaces inOrigin radii angles xSlope ySlope  =
     (createCornerPoint
@@ -64,7 +129,7 @@ createBottomFaces inOrigin radii angles xSlope ySlope  =
        | radius <- tail radii
     ]
 
-
+-}
 {- |
 Create [BottomFaces] that have modified radii that are squared off by the Geometry.Radius.squaredOff function.
 -}

@@ -2,7 +2,7 @@
 module Examples.ShoeLift.GeoxShoe where
 
 import CornerPoints.Radius(Radius(..), buildSymmetricalRadius)
-import CornerPoints.HorizontalFaces(createBottomFaces, createTopFaces)
+import CornerPoints.HorizontalFaces(createTopFaces)
 import CornerPoints.Points(Point(..))
 import CornerPoints.Create(Angle(..), flatXSlope, flatYSlope, Slope(..))
 import CornerPoints.CornerPointsWithDegrees(CornerPointsWithDegrees(..), (@~+++#@),(@~+++@),(|@~+++@|), (|@~+++#@|), DegreeRange(..))

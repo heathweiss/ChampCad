@@ -42,7 +42,6 @@ library
                        Persistable.Mapping
                        --Examples
                        -- Example ShoeLifts
-                       Examples.ShoeLift.KeenToe, Examples.ShoeLift.KeenHeel,
                        Examples.ShoeLift.SnowBoardBoot
                        Examples.ShoeLift.GeoxShoe,
                        Examples.ShoeLift.SandalsAFO,
@@ -50,7 +49,6 @@ library
                        Examples.ShoeLift.GeorgeSandalls,
                        Examples.Persist.SingleLineTable,
                        Examples.Persist.MappedToCornerPoints,
-                       --HeelGenerators.SandalsToe, HeelGenerators.SandalsHeel
                        --Have not been redone for changes to MathPolar.
                        --Leave in until sure I will not need them further for printing shoe lifts
                        -- Sockets

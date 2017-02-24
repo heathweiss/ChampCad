@@ -13,6 +13,14 @@ import Examples.Primitives.ComposableExample(createCylinderComposableSlopedStlGe
                                             createDoubleCylinderSquaredStlGenerator, createDoubleCylinderSquaredCumulativeCornerPoints,
                                             createDoubleCylinderSquaredAndSlopedStlGenerator, createDoubleCylinderSquaredAndSlopedCumulativeCornerPoints)
 import Examples.Primitives.Cylinders(slopedToppedCylinder, solidCylinderSquared, solidCylinderLengthenY, solidCylinderSquared, walledCylinderSquared)
+
+import Examples.Scan.WalkerSocketDesignWork(loadMDRAndPassToProcessor)
+
+import Examples.Primitives.Cube(writeJoinerStlFile)
+
+import Examples.Diffs.MTLDiff(generateUnionCubesStl)
+
+import Examples.ShoeLift.SnowBoardBoot (writeRearSlopedTread, writeRearBoot, writeForwardBoot)
 --import System.Environment
 
 
@@ -23,7 +31,7 @@ main = do
  --loadMDRAndPassToProcessor (read $ head x) (read $ head $ tail x)
 
  
-  walledCylinderSquared
+  writeForwardBoot 
   
   
   

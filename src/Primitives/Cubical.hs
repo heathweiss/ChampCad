@@ -17,7 +17,7 @@ import CornerPoints.FaceConversions(
   frontTopLineFromBackTopLine,
   bottomFrontLineFromBackBottomLine)
 import  Math.Trigonometry(atanDegrees)
-import CornerPoints.Create( Slope(..), Origin(..),  createCornerPointSquaredOff, Angle(..),  flatXSlope, flatYSlope,)
+import CornerPoints.Create( Slope(..), Origin(..),  createCornerPointSquaredOff, Angle(..))
 import CornerPoints.Radius(Radius(..))
 import CornerPoints.HorizontalFaces(createTopFaces, createBottomFaces, createTopFacesWithVariableSlope,  createBottomFacesWithVariableSlope)
 
@@ -35,7 +35,7 @@ type LengthenFactor = Double
 -- angles and radii.
 rectangularSolidNoSlope :: [Radius] -> Origin -> [Angle] -> Height -> [CornerPoints]
 rectangularSolidNoSlope    radii    origin    angles     height   =
-  createBottomFaces origin radii   angles flatXSlope flatYSlope
+  createBottomFaces origin radii   angles 
   |@+++#@|
   (upperFaceFromLowerFace . (transposeZ (+height)))
 

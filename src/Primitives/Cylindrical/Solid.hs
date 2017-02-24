@@ -6,12 +6,12 @@ module Primitives.Cylindrical.Solid(cylinder,
                                     squaredOffCylinder) where
 
 import CornerPoints.Create(Slope(..), Angle(..), flatXSlope, flatYSlope, Origin(..))
-import CornerPoints.HorizontalFaces(createTopFaces, createTopFacesWithVariableSlope,
-                                    createBottomFaces, createBottomFacesWithVariableSlope, createBottomFacesLengthenY,
+import CornerPoints.HorizontalFaces(createTopFaces, createBottomFaces, createTopFacesWithVariableSlope,
+                                    createBottomFacesWithVariableSlope, createBottomFacesLengthenY,
                                     createBottomFacesSquaredOffLengthenY,
                                     createBottomFacesSquaredOffLengthenYSeparately
                                    )
-import qualified CornerPoints.Composable  as Com (createBottomFaces)
+import qualified CornerPoints.Composable  as Com (createBottomFacesSloped, )
 import CornerPoints.CornerPoints(CornerPoints(..), (+++), (|+++|), (|@+++#@|))
 import CornerPoints.Radius(Radius(..))
 import CornerPoints.Transpose (transposeZ)
@@ -28,7 +28,7 @@ Solid cylinder which is stretched out along the y-axis by the LengthenFactor.
 -}
 yLengthenedCylinder :: Radius -> Origin -> [Angle] -> Height -> LengthenFactor -> [CornerPoints]
 yLengthenedCylinder    radius    origin    angles     height    lengthenFactor  =
-  createBottomFacesLengthenY origin [radius | x <- [1..]] angles {-flatXSlope flatYSlope-} lengthenFactor
+  createBottomFacesLengthenY origin [radius | x <- [1..]] angles  lengthenFactor
   |@+++#@|
   (upperFaceFromLowerFace . (transposeZ (+height)))
 
@@ -38,10 +38,9 @@ Solid cylinder based only on a list of angles and a height.
 -}
 cylinder :: Radius -> Origin -> [Angle] -> Height -> [CornerPoints]
 cylinder    radius    origin    angles     height  =
-  createBottomFaces origin [radius | x <- [1..]] angles flatXSlope flatYSlope
+  createBottomFaces origin [radius | x <- [1..]] angles 
   |@+++#@|
   (upperFaceFromLowerFace . (transposeZ (+height)))
-
 
 
 {- |
@@ -70,8 +69,9 @@ Create a solid cylinder with
 -variable top slope
 -flat bottom
 -}
+
 slopedTopCylinder :: [Radius] -> Origin -> [Angle] -> [Slope] -> [Slope] -> Height -> [CornerPoints]
-slopedTopCylinder    radii       origin     angles     xSlopes    ySlopes    height  =
+slopedTopCylinder    radii       origin     angles    xSlopes    ySlopes    height  =
   --top faces
   (
    createTopFacesWithVariableSlope (transposeZ (+ height) origin ) radii angles xSlopes ySlopes
@@ -80,17 +80,16 @@ slopedTopCylinder    radii       origin     angles     xSlopes    ySlopes    hei
   |+++|
   --bottom faces
   (
-    createBottomFaces origin radii  angles flatXSlope flatYSlope 
+    createBottomFaces origin radii  angles
    
   )
-
 
 {- |
 A cylinder that has flattened sides. The degree of flatness is based on the 'power' parameter.
 -}
 squaredOffCylinder :: Radius -> Origin -> [Angle] -> Height -> Power -> [CornerPoints]
 squaredOffCylinder    radius    origin    angles     height    power  =
-  let btmFaces = Com.createBottomFaces
+  let btmFaces = createBottomFaces
                   origin
                   (map (squaredOff power radius) angles)
                   angles

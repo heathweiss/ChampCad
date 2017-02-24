@@ -1,8 +1,8 @@
 {-# LANGUAGE ParallelListComp #-}
 {-# LANGUAGE TemplateHaskell #-}
-module CornerPoints.Composable (createCornerPoint, Origin(..), createBottomFaces, createTopFaces, Composable(..),
+module CornerPoints.Composable (createCornerPoint, Origin(..), createTopFaces, Composable(..),
                                 composableDefault, runComposer, createCornerPointComposable, createBottomFacesComposable, createTopFacesComposable,
-                                createCornerPointComposableSloped, createComposable, addSlope, createTopFacesSloped) where
+                                createCornerPointComposableSloped, createComposable, addSlope, createTopFacesSloped, createBottomFacesSloped) where
 
 
 
@@ -275,17 +275,10 @@ createCornerPoint cPoint origin horizRadius verticalAngle   =
 
 
 
-{- |
-Creates a CornerPoint from raw values.
-
-Differs from CornerPoints.HorizontalFaces in that is does not use Slope.
-Should eventually replace CornerPoints.HorizontalFaces.
--}
-
---ToDo: replace CornerPoints.HorizontalFaces with this version.
-createBottomFaces :: Origin -> [Radius] -> [Angle] -> [CornerPoints]
-createBottomFaces inOrigin radii angles   =
-    (createCornerPoint
+createBottomFacesSloped :: Origin -> [Radius] -> [Angle] ->  Slope -> Slope -> [CornerPoints]
+createBottomFacesSloped inOrigin radii angles xSlope ySlope  =
+    (addSlope xSlope ySlope (head angles) inOrigin $
+     createCornerPoint
       (F4)
       inOrigin
       (head radii)
@@ -295,7 +288,8 @@ createBottomFaces inOrigin radii angles   =
     +++
     B4 inOrigin
     +++>
-    [(createCornerPoint
+    [(addSlope xSlope ySlope (head angles) inOrigin $
+      createCornerPoint
       (F1)
       inOrigin
       radius
@@ -307,7 +301,6 @@ createBottomFaces inOrigin radii angles   =
        | angle <- tail angles
        | radius <- tail radii
     ]
-
 
 createTopFaces :: Origin -> [Radius] -> [Angle] -> [CornerPoints]
 createTopFaces inOrigin radii angles   =

@@ -7,7 +7,7 @@ import CornerPoints.Points(Point(..))
 import Stl.StlCornerPoints((|+++^|), (||+++^||), Faces(..))
 import Stl.StlBase (StlShape(..), newStlShape)
 import Stl.StlFileWriter(writeStlToFile)
-import CornerPoints.Create(Angle(..), Slope(..), flatXSlope, flatYSlope,)
+import CornerPoints.Create(Angle(..), Slope(..))
 import CornerPoints.Transpose(transposeY)
 
 angles = (map (Angle) [0,10..360])

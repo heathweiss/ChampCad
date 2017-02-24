@@ -38,9 +38,9 @@ Create a walled cylinder.
 cylinder :: [Radius] ->     [Radius] ->     [Angle] -> Origin -> Height -> [CornerPoints]
 cylinder    innerWallRadii  outerWallRadii  angles     origin    height  =
    ((--bottom faces
-      (map (backBottomLineFromBottomFrontLine . extractBottomFrontLine) (createBottomFaces origin innerWallRadii angles flatXSlope flatYSlope)) 
+      (map (backBottomLineFromBottomFrontLine . extractBottomFrontLine) (createBottomFaces origin innerWallRadii angles )) 
       |+++|
-      (map (extractBottomFrontLine) (createBottomFaces origin outerWallRadii angles flatXSlope flatYSlope)) 
+      (map (extractBottomFrontLine) (createBottomFaces origin outerWallRadii angles )) 
     )
     |@+++#@|
     ((transposeZ (+ height)) . upperFaceFromLowerFace)
@@ -69,11 +69,11 @@ The higher the power, the more the shape comes to a square, though the corners w
 -}
 squaredCylinder :: [Radius] -> Thickness ->   Origin -> [Angle] -> Height ->   Power -> [CornerPoints]
 squaredCylinder    innerWallRadii wallThickness  origin    angles     height     power  =
-        let  innerCubes = createBottomFacesSquaredOff origin innerWallRadii angles {-flatXSlope flatYSlope-} power
+        let  innerCubes = createBottomFacesSquaredOff origin innerWallRadii angles  power
                          |@+++#@|
                          (upperFaceFromLowerFace . (transposeZ (+height)))
          
-             outerCubes = createBottomFacesSquaredOff origin [Radius ((radius x) + wallThickness) |x <- innerWallRadii] angles {-flatXSlope flatYSlope-} power
+             outerCubes = createBottomFacesSquaredOff origin [Radius ((radius x) + wallThickness) |x <- innerWallRadii] angles  power
                           |@+++#@|
                           (upperFaceFromLowerFace . (transposeZ (+height)))
              cylinderCubes = [(backFaceFromFrontFace . extractFrontFace) currCube  |currCube <- innerCubes]

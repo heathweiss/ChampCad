@@ -1,4 +1,3 @@
--- {-# LANGUAGE TemplateHaskell #-}
 
 module Examples.Diffs.MTLDiff(generateSingleLargeCubeToCxForErrors, generateSingleLargeCubeStl,
                               generatecutterCubesToCxForErrors, generatecutterCubesStl,
@@ -48,7 +47,7 @@ singleLargeCube :: ExceptT BuilderError (State CpointsStack ) CpointsList
 singleLargeCube = do
   btmFaces <-
     buildCubePointsListWithAdd "btmFaces"
-    (createBottomFaces (Point 0 0 0) largeRadius angles flatXSlope flatYSlope)
+    (createBottomFaces (Point 0 0 0) largeRadius angles )
     idList
    
   topFaces <-
@@ -89,7 +88,7 @@ cutterCubes = do
 
   btmFaces <-
     buildCubePointsListWithAdd "btmFaces"
-    (createBottomFaces (Point (5) (-10) 0) smallRadius smalAngles flatXSlope flatYSlope)
+    (createBottomFaces (Point (5) (-10) 0) smallRadius smalAngles )
     idList
    
   topFaces <-
@@ -127,7 +126,7 @@ unionCubes = do
   ------------build the containing cube from which the shape will be removed--------------
   btmContainingFaces <-
     buildCubePointsListWithAdd "btmFaces"
-    (createBottomFaces (Point 0 0 0) largeRadius angles flatXSlope flatYSlope)
+    (createBottomFaces (Point 0 0 0) largeRadius angles )
     idList
    
   topContainingFaces <-
@@ -143,7 +142,7 @@ unionCubes = do
   ------------------------------- build the cutter cubes for cutting the radial shape----------
   btmCutterFaces <-
     buildCubePointsListWithAdd "btmFaces"
-    (createBottomFaces (Point (5) (-10) 0) smallRadius smalAngles flatXSlope flatYSlope)
+    (createBottomFaces (Point (5) (-10) 0) smallRadius smalAngles )
     idList
    
   topCutterFaces <-

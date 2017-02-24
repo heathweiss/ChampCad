@@ -117,9 +117,9 @@ loadMDRAndPassToProcessor  = do
             
             
             --pushPlate plateRadius power lengthenYFactor
-            generatePushPlateStl plateRadius power lengthenYFactor []
+            --generatePushPlateStl plateRadius power lengthenYFactor []
 
-            --generatehosePlateStl plateRadius power lengthenYFactor []
+            generatehosePlateStl plateRadius power lengthenYFactor []
             --showHosePlateError plateRadius power lengthenYFactor []
 
             ---------socket with sidemount quick release------------
