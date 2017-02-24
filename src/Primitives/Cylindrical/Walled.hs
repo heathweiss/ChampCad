@@ -5,7 +5,7 @@ Supplies cylindrical shapes.
 -}
 
 module Primitives.Cylindrical.Walled(
-  squaredCylinder, 
+  squaredCylinder,
   cylinder,
   squaredYLengthenedCylinder, 
   slopedCylinder
@@ -14,8 +14,8 @@ module Primitives.Cylindrical.Walled(
 import CornerPoints.Create(slopeAdjustedForVerticalAngle, Slope(..), Angle(..), flatXSlope, flatYSlope, Origin(..))
 import CornerPoints.HorizontalFaces(createTopFaces, createBottomFaces,
                                     createTopFacesWithVariableSlope, createBottomFacesWithVariableSlope,
-                                    createTopFaces,createBottomFacesSquaredOff,
-                                   createBottomFacesWithVariableSlope,createBottomFacesSquaredOffLengthenY,createBottomFacesLengthenY,
+                                    createTopFaces, createBottomFacesSquaredOff,
+                                   createBottomFacesWithVariableSlope,createBottomFacesSquaredOffLengthenY,
                                    createBottomFacesSquaredOffLengthenYSeparately)
 import CornerPoints.Points(Point(..))
 import CornerPoints.CornerPoints(CornerPoints(..), (+++), (|+++|), (|@+++#@|))
@@ -69,11 +69,11 @@ The higher the power, the more the shape comes to a square, though the corners w
 -}
 squaredCylinder :: [Radius] -> Thickness ->   Origin -> [Angle] -> Height ->   Power -> [CornerPoints]
 squaredCylinder    innerWallRadii wallThickness  origin    angles     height     power  =
-        let  innerCubes = createBottomFacesSquaredOff origin innerWallRadii angles flatXSlope flatYSlope power
+        let  innerCubes = createBottomFacesSquaredOff origin innerWallRadii angles {-flatXSlope flatYSlope-} power
                          |@+++#@|
                          (upperFaceFromLowerFace . (transposeZ (+height)))
          
-             outerCubes = createBottomFacesSquaredOff origin [Radius ((radius x) + wallThickness) |x <- innerWallRadii] angles flatXSlope flatYSlope power
+             outerCubes = createBottomFacesSquaredOff origin [Radius ((radius x) + wallThickness) |x <- innerWallRadii] angles {-flatXSlope flatYSlope-} power
                           |@+++#@|
                           (upperFaceFromLowerFace . (transposeZ (+height)))
              cylinderCubes = [(backFaceFromFrontFace . extractFrontFace) currCube  |currCube <- innerCubes]

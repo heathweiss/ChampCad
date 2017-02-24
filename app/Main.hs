@@ -12,7 +12,7 @@ import Examples.Primitives.ComposableExample(createCylinderComposableSlopedStlGe
                                             createDoubleCylinderComposableCumulativeCornerPoints, createDoubleCylinderComposableStlGenerator,
                                             createDoubleCylinderSquaredStlGenerator, createDoubleCylinderSquaredCumulativeCornerPoints,
                                             createDoubleCylinderSquaredAndSlopedStlGenerator, createDoubleCylinderSquaredAndSlopedCumulativeCornerPoints)
-import Examples.Primitives.Cylinders(slopedToppedCylinder)
+import Examples.Primitives.Cylinders(slopedToppedCylinder, solidCylinderSquared, solidCylinderLengthenY, solidCylinderSquared, walledCylinderSquared)
 --import System.Environment
 
 
@@ -23,8 +23,8 @@ main = do
  --loadMDRAndPassToProcessor (read $ head x) (read $ head $ tail x)
 
  
-  createDoubleCylinderSquaredAndSlopedStlGenerator
-  --createDoubleCylinderSquaredAndSlopedCumulativeCornerPoints
+  walledCylinderSquared
+  
   
   
   

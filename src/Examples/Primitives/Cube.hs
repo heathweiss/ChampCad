@@ -15,10 +15,3 @@ stlFile = newStlShape "joiner cube" rectangleTriangles
 rectangle = rectangularSolidNoSlope (map (Radius) [10,10..])  (Point 0 0 0) (map (Angle) [20,160,200,340,20]) 2 
 rectangleTriangles = [FacesBottomFrontTop | x <- [1..]] |+++^| rectangle
 
-{-
-rectangularSolidNoSlopeSquaredOff :: [Radius] -> Origin -> [Angle] -> Height -> Power -> [CornerPoints]
-rectangularSolidNoSlopeSquaredOff    radiii    origin    angles     height    power  =
-  createBottomFacesSquaredOff origin [radii] angles flatXSlope flatYSlope power
-  |@+++#@|
-  (upperFaceFromLowerFace . (transposeZ (+height)))
--}

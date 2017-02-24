@@ -16,7 +16,9 @@ import CornerPoints.Radius(Radius(..))
 import CornerPoints.FaceExtraction (extractFrontFace, extractTopFace,extractBottomFace)
 import CornerPoints.FaceConversions(backFaceFromFrontFace, upperFaceFromLowerFace, lowerFaceFromUpperFace )
 import CornerPoints.Transpose (transposeZ, transposeY)
+import qualified CornerPoints.Composable  as Com (createBottomFaces, createCornerPoint)
 
+import Geometry.Radius(squaredOff)
 
 type Thickness = Double
 type Height = Double
@@ -63,37 +65,38 @@ createBottomFaces inOrigin radii angles xSlope ySlope  =
     ]
 
 
-
-createBottomFacesSquaredOff :: Origin -> [Radius] -> [Angle] -> Slope -> Slope ->  Power -> [CornerPoints]
-createBottomFacesSquaredOff    inOrigin  radii       angles     xSlope   ySlope    power  =
-    (createCornerPointSquaredOff 
+{- |
+Create [BottomFaces] that have modified radii that are squared off by the Geometry.Radius.squaredOff function.
+-}
+createBottomFacesSquaredOff :: Origin -> [Radius] -> [Angle] ->  Power -> [CornerPoints]
+createBottomFacesSquaredOff    inOrigin  radii       angles      power  =
+  let radiiSquared =
+        [
+          squaredOff power radius' angle'
+           | radius' <- radii
+           | angle'  <- angles
+        ]
+  in
+    (Com.createCornerPoint
       (F4)
       inOrigin
-      (head radii)
+      (head radiiSquared)
       (head angles)
-      xSlope
-      ySlope
-      power
     ) 
     +++
     B4 inOrigin
     +++>
-    [(createCornerPointSquaredOff 
+    [(Com.createCornerPoint 
       (F1)
       inOrigin
       radius
       angle
-      xSlope
-      ySlope
-      power
      ) 
      +++
      B1 inOrigin
        | angle <- tail angles
-       | radius <- tail radii
+       | radius <- tail radiiSquared
     ]
-
-
 
 createBottomFacesWithVariableSlope :: Origin -> [Radius] -> [Angle] -> [Slope] -> [Slope] -> [CornerPoints]
 createBottomFacesWithVariableSlope inOrigin inRadius inAngles xSlope ySlope  =
@@ -190,8 +193,8 @@ createTopFacesWithVariableSlope    origin    radii        angles    xSlopes     
 {-
 Used to expand a radial shape along the y-axis. Expands away from the origin to keep it centered.
 -}
-createBottomFacesLengthenY :: Origin -> [Radius] -> [Angle] -> Slope -> Slope -> LengthenFactor -> [CornerPoints]
-createBottomFacesLengthenY inOrigin radii angles xSlope ySlope lengthenFactor =
+createBottomFacesLengthenY :: Origin -> [Radius] -> [Angle] -> {-Slope -> Slope ->-} LengthenFactor -> [CornerPoints]
+createBottomFacesLengthenY inOrigin radii angles {-xSlope ySlope-} lengthenFactor =
   let createRightLine (Angle angle') cube
         | angle' <= 90 =
             F1 (transposeY ((+)(negate $ lengthenFactor/2)) $ f1 cube)
@@ -205,13 +208,13 @@ createBottomFacesLengthenY inOrigin radii angles xSlope ySlope lengthenFactor =
   in
     
      (transposeY ((+)(negate $ lengthenFactor/2))
-      (createCornerPoint
+      (Com.createCornerPoint
         (F4)
         inOrigin
         (head radii)
         (head angles)
-        xSlope
-        ySlope
+        --xSlope
+        --ySlope
       )
      )
       +++
@@ -219,13 +222,13 @@ createBottomFacesLengthenY inOrigin radii angles xSlope ySlope lengthenFactor =
      +++>
      [ createRightLine angle
        (
-        (createCornerPoint
+        (Com.createCornerPoint
          (F1)
           inOrigin
           radius
           angle
-          xSlope
-          ySlope
+          --xSlope
+          --ySlope
         ) 
         +++
         B1 inOrigin

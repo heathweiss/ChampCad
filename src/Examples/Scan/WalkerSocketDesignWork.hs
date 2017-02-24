@@ -695,7 +695,6 @@ socketWithRiser    innerSleeveSDR         outerSleeveSDR         rowReductionFac
       angles = (map (Angle) [0,10..360])
 
   riserCubes <- buildCubePointsList' "riserCubes"
-                --(squaredCylinder  (Radius 18) (3::Thickness) (transposeX (+0)(transposeY (+(-15))(transposeZ (+(-15))origin)))    angles (20::Height)  (2.5::Power))
                 (squaredCylinder  [Radius 18 | x <- [1..]] (3::Thickness) (transposeX (+0)(transposeY (+(-15))(transposeZ (+(-15))origin)))    angles (20::Height)  (2.5::Power))
                 [CornerPointsId | x <-[1..]]
 

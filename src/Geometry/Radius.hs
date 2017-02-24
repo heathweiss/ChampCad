@@ -1,3 +1,10 @@
+{- |
+Manipulate Radius using various geometric formulas, in order to change the resulting CornerPoints.
+
+Examples: Examples.Primitives.ComposableExample
+
+Test in test/GeometryRadiusTest
+-}
 module Geometry.Radius(doubleCylinderZip, doubleCylinder, squaredOff, calcultateDistance) where
 
 
@@ -8,13 +15,7 @@ import CornerPoints.Points(Point(..) )
 
 import Math.Trigonometry(sinDegrees, cosDegrees)
 
-{- |
-Manipulate Radius using various geometric formulas, in order to change the resulting CornerPoints.
 
-Examples: Examples.Primitives.ComposableExample
-
-Test in test/GeometryRadiusTest
--}
 
 {- |
  Use cosDegrees/sinDegrees to create a double cylinder from a Radius Angle
@@ -55,6 +56,9 @@ doubleCylinderZip    radii       angles      =
  Create a rectangle with rounded corners, by manipulating Angle Radius.
  
 
+
+-}
+{-
 [power:                                    [current x                     [Radius:
  -how strongly to square                    current y                      -squared off
  radius:                                    radius
@@ -62,8 +66,7 @@ doubleCylinderZip    radii       angles      =
  angle':
  current angle
                    ]--------------caluclate x/y-->  ]-------------------adust radius-->]
--}                               
-type Power = Double
+-}
 squaredOff :: Power -> Radius -> Angle -> Radius
 squaredOff power (Radius radius') angle' =
   let quadrantAngle = (angle $ getQuadrantAngle angle')
@@ -96,4 +99,4 @@ calcultateDistance    point1   point2  =
       Radius $ sqrt (x**2 + y**2 + z**2) 
   
 
-
+type Power = Double

@@ -1,14 +1,17 @@
+{-# LANGUAGE ParallelListComp #-}
 module Primitives.Cylindrical.Solid(cylinder,
                                     slopedBottomCylinder, slopedTopCylinder,
-                                    yLengthenedCylinder, squaredOffYLengthenedCylinder,
+                                    yLengthenedCylinder,
+                                    squaredOffYLengthenedCylinder,
                                     squaredOffCylinder) where
 
 import CornerPoints.Create(Slope(..), Angle(..), flatXSlope, flatYSlope, Origin(..))
 import CornerPoints.HorizontalFaces(createTopFaces, createTopFacesWithVariableSlope,
                                     createBottomFaces, createBottomFacesWithVariableSlope, createBottomFacesLengthenY,
-                                    createBottomFacesSquaredOff, createBottomFacesSquaredOffLengthenY,
+                                    createBottomFacesSquaredOffLengthenY,
                                     createBottomFacesSquaredOffLengthenYSeparately
                                    )
+import qualified CornerPoints.Composable  as Com (createBottomFaces)
 import CornerPoints.CornerPoints(CornerPoints(..), (+++), (|+++|), (|@+++#@|))
 import CornerPoints.Radius(Radius(..))
 import CornerPoints.Transpose (transposeZ)
@@ -16,17 +19,16 @@ import CornerPoints.FaceConversions(lowerFaceFromUpperFace, backBottomLineFromBo
                                     frontTopLineFromBackTopLine, upperFaceFromLowerFace, bottomFrontLineFromBackBottomLine,
                                     backFaceFromFrontFace)
 
-
+import Geometry.Radius(squaredOff)
 
 import TypeClasses.Transposable(transposeZ)
 
 {- |
 Solid cylinder which is stretched out along the y-axis by the LengthenFactor.
 -}
-
 yLengthenedCylinder :: Radius -> Origin -> [Angle] -> Height -> LengthenFactor -> [CornerPoints]
 yLengthenedCylinder    radius    origin    angles     height    lengthenFactor  =
-  createBottomFacesLengthenY origin [radius | x <- [1..]] angles flatXSlope flatYSlope lengthenFactor
+  createBottomFacesLengthenY origin [radius | x <- [1..]] angles {-flatXSlope flatYSlope-} lengthenFactor
   |@+++#@|
   (upperFaceFromLowerFace . (transposeZ (+height)))
 
@@ -88,15 +90,16 @@ A cylinder that has flattened sides. The degree of flatness is based on the 'pow
 -}
 squaredOffCylinder :: Radius -> Origin -> [Angle] -> Height -> Power -> [CornerPoints]
 squaredOffCylinder    radius    origin    angles     height    power  =
-  createBottomFacesSquaredOff origin [radius | x <- [1..]] angles flatXSlope flatYSlope power
-  |@+++#@|
-  (upperFaceFromLowerFace . (transposeZ (+height)))
+  let btmFaces = Com.createBottomFaces
+                  origin
+                  (map (squaredOff power radius) angles)
+                  angles
+  in  btmFaces
+      |+++|
+      (
+        map (upperFaceFromLowerFace . (transposeZ (+height))) btmFaces
+      )
 
-{-
-squaredOffCylinder' :: Radius -> Origin -> [Angle] -> Height -> Power -> [CornerPoints]
-squaredOffCylinder'    radius    origin    angles     height    power  =
-  let btmFaces = 
--}
 
 squaredOffYLengthenedCylinder :: Radius -> Origin -> [Angle] -> Height  -> Power -> LengthenFactor -> [CornerPoints]
 squaredOffYLengthenedCylinder    radius    origin    angles     height     power    lengthenFactor      =
