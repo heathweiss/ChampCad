@@ -9,7 +9,7 @@ module CornerPoints.HorizontalFaces(
   createBottomFacesLengthenY,
   createBottomFacesSquaredOffLengthenYSeparately,
   )where
-import CornerPoints.Create( Slope(..), Origin(..), createCornerPoint, createCornerPointSquaredOff, Angle(..),  flatXSlope, flatYSlope,)
+import CornerPoints.Create( Slope(..), Origin(..), createCornerPoint, createCornerPointSquaredOff, Angle(..))
 import CornerPoints.CornerPoints(CornerPoints(..), (+++>), (+++), (|+++|), (|@+++#@|))
 import CornerPoints.Points(Point(..))
 import CornerPoints.Radius(Radius(..))
@@ -194,8 +194,34 @@ createBottomFacesWithVariableSlope inOrigin inRadius inAngles xSlope ySlope  =
 {---------------------------------------------------------------- createTopFaces ----------------------------
 
 -}
-createTopFaces :: Origin -> [Radius] -> [Angle] -> Slope -> Slope -> [CornerPoints]
-createTopFaces inOrigin inRadius inAngles xSlope ySlope  =
+createTopFaces :: Origin -> [Radius] -> [Angle] -> [CornerPoints]
+createTopFaces inOrigin radii angles   =
+    (Com.createCornerPoint
+      (F3)
+      inOrigin
+      (head radii)
+      (head angles)
+      
+    ) 
+    +++
+    B3 inOrigin
+    +++>
+    [(Com.createCornerPoint
+      (F2)
+      inOrigin
+      radius
+      angle
+      
+     ) 
+     +++
+     B2 inOrigin
+       | angle <- tail angles
+       | radius <- tail radii
+    ]
+
+
+createTopFaces' :: Origin -> [Radius] -> [Angle] -> Slope -> Slope -> [CornerPoints]
+createTopFaces' inOrigin inRadius inAngles xSlope ySlope  =
      (createCornerPoint
       (F3)
       inOrigin

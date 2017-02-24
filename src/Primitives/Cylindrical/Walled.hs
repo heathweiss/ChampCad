@@ -52,9 +52,9 @@ Create a walled cylinder with sloped top
 slopedCylinder :: [Radius] -> [Radius] -> [Angle] -> Origin -> Slope -> Slope -> Height -> [CornerPoints]
 slopedCylinder    innerRadii  outerRadii  angles     origin      xSlope   ySlope   height  =
   (  --top Sloped faces
-    (map (backTopLineFromFrontTopLine . extractFrontTopLine) (createTopFaces {-(Point 0 0 height)-}origin innerRadii angles xSlope ySlope))
+    (map (backTopLineFromFrontTopLine . extractFrontTopLine) (createTopFaces origin innerRadii angles {-xSlope ySlope-}))
     |+++|
-    (map extractFrontTopLine (createTopFaces origin outerRadii angles xSlope ySlope))
+    (map extractFrontTopLine (createTopFaces origin outerRadii angles {-xSlope ySlope-}))
   )
   |+++|
   --flat bottom faces.

@@ -12,7 +12,7 @@ import CornerPoints.VerticalFaces(createRightFaces, createLeftFaces, createLeftF
                                   createHorizontallyAlignedCubesNoSlope, createHorizontallyAlignedCubes)
 import CornerPoints.Points(Point(..))
 import CornerPoints.CornerPoints(CornerPoints(..), (+++), (|+++|), (|@+++#@|))
-import CornerPoints.Create(Slope(..), flatXSlope, flatYSlope, Angle(..), Origin(..), createCornerPoint, AngleRadius(..), extractAngles, extractRadii)
+import CornerPoints.Create(Slope(..), Angle(..), Origin(..), createCornerPoint, AngleRadius(..), extractAngles, extractRadii)
 import CornerPoints.FaceExtraction (extractFrontFace, extractTopFace,extractBottomFace, extractBackFace, extractFrontTopLine, extractBackTopLine,
                                     extractBackBottomLine, extractBackTopLine, extractBottomFrontLine)
 import CornerPoints.FaceConversions(backFaceFromFrontFace, upperFaceFromLowerFace, lowerFaceFromUpperFace, frontFaceFromBackFace,
@@ -109,8 +109,7 @@ shortSocketToLargeShaft    innerSleeveSDR         outerSleeveSDR         rowRedu
                           shaftOrigin
                           largeShaftOuterRadii 
                           outerWristAngles
-                          flatXSlope
-                          flatYSlope
+                          
                         )
                        )
                        [CornerPointsId | x <-[1..]]
@@ -122,8 +121,7 @@ shortSocketToLargeShaft    innerSleeveSDR         outerSleeveSDR         rowRedu
                           shaftOrigin
                           largeShaftInnerRadii 
                           outerWristAngles
-                          flatXSlope
-                          flatYSlope
+                          
                         )
                        )
                        [CornerPointsId | x <-[1..]]
@@ -196,76 +194,6 @@ Shape of outer wrist could use some further adjustment.
 -}
 
 
-{-
-wristToLargeShaftOrig :: ExceptT BuilderError (State CpointsStack ) CpointsList
-wristToLargeShaft = do
-      
-  
-  wristBackBtmLines <- buildCubePointsListAdd "wristBackBtmLines"
-               ( map (backBottomLineFromBottomFrontLine . extractBottomFrontLine)
-                 (createBottomFaces (Point 0 0 0) (extractRadii angleRadii) (extractAngles angleRadii) flatXSlope flatYSlope)
-               )
-               [CornerPointsId | x <-[1..]]
-  
-  wristBtmFrontLines <- buildCubePointsListAdd "wristBtmFrontLines"
-               ( map extractBottomFrontLine
-                 (createBottomFaces (Point 0 0 0) outerWristRadii outerWristAngles flatXSlope flatYSlope)
-               )
-               [CornerPointsId | x <-[1..]]
-
-  wristBtmFaces <- buildCubePointsListAdd "wristBtmFaces"
-              wristBackBtmLines
-              wristBtmFrontLines
-
-  wristCubes <- buildCubePointsListAdd "wristCubes"
-              (map (upperFaceFromLowerFace . (transposeZ (+wristHeight))) wristBtmFaces)
-              wristBtmFaces
-              
-  --now build the 36 sided shaft top faces and add them to btm faces of the wrist cubes
-  --to convert from the wrist to the shaft
-  let shaftOrigin = (Point 0 0 (-10)) -- -10 mm below the btm of the wristCubes
-                     
-  shaftBtmFrontLines <- buildCubePointsListAdd "shaftBtmFrontLines"
-              (map extractBottomFrontLine
-                        (createBottomFaces
-                          shaftOrigin
-                          largeShaftOuterRadii 
-                          outerWristAngles
-                          flatXSlope
-                          flatYSlope
-                        )
-              )
-              [CornerPointsId | x <-[1..]]
-              
-  shaftBackBtmLines <- buildCubePointsListAdd "shaftBackBtmLines"
-              (map (backBottomLineFromBottomFrontLine.  extractBottomFrontLine)
-                        (createBottomFaces
-                          shaftOrigin
-                          largeShaftInnerRadii 
-                          outerWristAngles
-                          flatXSlope
-                          flatYSlope
-                        )
-                       )
-              [CornerPointsId | x <-[1..]]
-   
-  shaftBackBtmFaces <- buildCubePointsListAdd "shaftBackBtmLines"
-              shaftBackBtmLines
-              shaftBtmFrontLines
-
-  shaftToWristCubes <- buildCubePointsListAdd "shaftToWristCubes"
-              (map upperFaceFromLowerFace wristBtmFaces)
-              shaftBackBtmFaces
-              
-  --build another set of shaft btm faces to give the shaft some depth below the wrist-to-shaft cubes
-  shaftBottomFaces <- buildCubePointsListAdd "shaftBottomFaces"
-              --(map (transposeZ (-triacontakaihexagonHeight)) shaftBackBtmFaces)
-              
-              (shaftToWristCubes)
-              (map (transposeZ (+ (negate largeShaftHeight))) shaftBackBtmFaces)
-  
-  return shaftBottomFaces
--}
 
 wristToLargeShaft :: ExceptT BuilderError (State CpointsStack ) CpointsList
 wristToLargeShaft = do
@@ -301,8 +229,7 @@ wristToLargeShaft = do
                           shaftOrigin
                           largeShaftOuterRadii 
                           outerWristAngles
-                          --flatXSlope
-                          --flatYSlope
+                          
                         )
               )
               [CornerPointsId | x <-[1..]]
@@ -416,8 +343,7 @@ fullLengthSocketWithSmallShaft    innerSleeveSDR         outerSleeveSDR         
                           shaftOrigin
                           smallShaftOuterRadii 
                           outerWristAngles
-                          flatXSlope
-                          flatYSlope
+                          
                         )
                        )
                        [CornerPointsId | x <-[1..]]
@@ -429,8 +355,7 @@ fullLengthSocketWithSmallShaft    innerSleeveSDR         outerSleeveSDR         
                           shaftOrigin
                           smallShaftInnerRadii 
                           outerWristAngles
-                          flatXSlope
-                          flatYSlope
+                          
                         )
                        )
                        [CornerPointsId | x <-[1..]]
@@ -505,13 +430,13 @@ wristToSmallShaft = do
   
   wristAsBackBtmLines <- buildCubePointsListAdd "wristAsBackBtmLines"
                ( map (backBottomLineFromBottomFrontLine . extractBottomFrontLine)
-                 (createBottomFaces (Point 0 0 0) (extractRadii angleRadii) (extractAngles angleRadii) {-flatXSlope flatYSlope-})
+                 (createBottomFaces (Point 0 0 0) (extractRadii angleRadii) (extractAngles angleRadii) )
                )
                [CornerPointsId | x <-[1..]]
   
   wristBtmFrontLines <- buildCubePointsListAdd "wristBtmFrontLines"
                ( map extractBottomFrontLine
-                 (createBottomFaces (Point 0 0 0) outerWristRadii outerWristAngles {-flatXSlope flatYSlope-})
+                 (createBottomFaces (Point 0 0 0) outerWristRadii outerWristAngles )
                )
                [CornerPointsId | x <-[1..]]
 

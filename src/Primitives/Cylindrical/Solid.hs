@@ -60,7 +60,7 @@ slopedBottomCylinder    radii       origin     angles     xSlopes    ySlopes    
   |+++|
   --top faces
   (
-    createTopFaces (transposeZ (+ height) origin ) radii  angles flatXSlope flatYSlope 
+    createTopFaces (transposeZ (+ height) origin ) radii  angles 
    
   )
 

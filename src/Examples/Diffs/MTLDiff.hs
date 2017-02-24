@@ -13,7 +13,7 @@ import Builder.Monad(BuilderError(..), cornerPointsErrorHandler, buildCubePoints
 
 import CornerPoints.Radius(Radius(..))
 import CornerPoints.HorizontalFaces(createBottomFaces, createTopFaces)
-import CornerPoints.Create(Angle(..), flatXSlope, flatYSlope, Origin(..))
+import CornerPoints.Create(Angle(..), Origin(..))
 import CornerPoints.CornerPoints((|@+++#@|), (|+++|),  CornerPoints(..), (+++), getCornerPointsWithIndex)
 import CornerPoints.Points(Point(..))
 import CornerPoints.MeshGeneration(autoGenerateEachCube)
@@ -52,7 +52,7 @@ singleLargeCube = do
    
   topFaces <-
     buildCubePointsListWithAdd "topFaces"
-    (createTopFaces (Point 0 0 10) largeRadius angles flatXSlope flatYSlope)
+    (createTopFaces (Point 0 0 10) largeRadius angles )
     idList
 
   singleCube <-
@@ -93,7 +93,7 @@ cutterCubes = do
    
   topFaces <-
     buildCubePointsListWithAdd "topFaces"
-    (createTopFaces (Point (5) (-10) 10) smallRadius smalAngles flatXSlope flatYSlope)
+    (createTopFaces (Point (5) (-10) 10) smallRadius smalAngles )
     idList
 
   cutterCubes <-
@@ -131,7 +131,7 @@ unionCubes = do
    
   topContainingFaces <-
     buildCubePointsListWithAdd "topFaces"
-    (createTopFaces (Point 0 0 10) largeRadius angles flatXSlope flatYSlope)
+    (createTopFaces (Point 0 0 10) largeRadius angles )
     idList
 
   containingCube <-
@@ -147,7 +147,7 @@ unionCubes = do
    
   topCutterFaces <-
     buildCubePointsListWithAdd "topFaces"
-    (createTopFaces (Point (5) (-10) 10) smallRadius smalAngles flatXSlope flatYSlope)
+    (createTopFaces (Point (5) (-10) 10) smallRadius smalAngles )
     idList
 
   cutterCubes <-

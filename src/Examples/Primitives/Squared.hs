@@ -8,7 +8,6 @@ import CornerPoints.Radius(Radius(..), )
 import CornerPoints.Create(Angle(..))
 import CornerPoints.HorizontalFaces(createTopFaces,  createBottomFaces)
 import CornerPoints.Points(Point(..))
-import CornerPoints.Create(flatXSlope, flatYSlope)
 import CornerPoints.MeshGeneration(autoGenerateEachCube)
 
 import Geometry.Radius(doubleCylinderZip)
@@ -34,7 +33,7 @@ cylinderWithSquaredRadii = do
               [CornerPointsId | x <-[1..]]
 
   topFaces <- buildCubePointsListWithAdd "topFaces"
-              (createTopFaces (Point 0 0 20) radii angles flatXSlope flatYSlope )
+              (createTopFaces (Point 0 0 20) radii angles  )
               [CornerPointsId | x <-[1..]]
 
   cubes    <- buildCubePointsListWithAdd "cubes"
