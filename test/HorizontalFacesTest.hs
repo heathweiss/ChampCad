@@ -1,7 +1,7 @@
 {-# LANGUAGE ParallelListComp #-}
 module HorizontalFacesTest (horizontalFacesTestDo) where
 import Test.HUnit
-import CornerPoints.HorizontalFaces(createBottomFaces, createBottomFacesWithVariableSlope, createTopFaces,)
+import CornerPoints.HorizontalFaces(createBottomFaces, createBottomFacesWithVariableSlope, createTopFaces, createBottomFacesSquaredOffLengthenY)
 import CornerPoints.CornerPoints(CornerPoints(..), (+++))
 import CornerPoints.Create(flatXSlope,flatYSlope, Slope(..), Angle(..))
 import CornerPoints.Points(Point(..))
@@ -15,6 +15,7 @@ horizontalFacesTestDo = do
   runTestTT createBottomFacesTest'
   runTestTT createBottomFacesWithVariableSlopeTest
   runTestTT createTopFacesTest
+  runTestTT createBottomFacesSquaredOffLengthYTest
 
 
 createTopFacesTest = TestCase $ assertEqual
@@ -59,3 +60,22 @@ createBottomFacesWithVariableSlopeTest = TestCase $ assertEqual
     [(PosXSlope 1),(PosXSlope 2),(PosXSlope 3)]
     [(PosYSlope 1),(PosYSlope 2),(PosYSlope 3)]     )
 
+
+createBottomFacesSquaredOffLengthYTest = TestCase $ assertEqual
+  "createBottomFacesSquaredOffLengthYTest"
+  ([BottomFace {b1 = Point {x_axis = 0.0, y_axis = 0.0, z_axis = 0.0},
+                f1 = Point {x_axis = 9.999999999999998, y_axis = -2.5000000000000004, z_axis = 0.0},
+                b4 = Point {x_axis = 0.0,y_axis = 0.0, z_axis = 0.0},
+                f4 = Point {x_axis = 0.0, y_axis = -12.499999999999998, z_axis = 0.0}},
+    BottomFace {b1 = Point {x_axis = 0.0, y_axis = 0.0, z_axis = 0.0},
+                f1 = Point {x_axis = 0.0, y_axis = 12.499999999999998, z_axis = 0.0},
+                b4 = Point {x_axis = 0.0, y_axis = 0.0, z_axis = 0.0},
+                f4 = Point {x_axis = 9.999999999999998, y_axis = -2.5000000000000004, z_axis = 0.0}}]
+  )
+  (createBottomFacesSquaredOffLengthenY
+   (Point 0 0 0)
+   [Radius 10, Radius 10, Radius 10]
+   [Angle 0, Angle 90, Angle 180]
+   5
+   5
+  )

@@ -16,7 +16,6 @@ import CornerPoints.Radius(Radius(..))
 import CornerPoints.FaceExtraction (extractFrontFace, extractTopFace,extractBottomFace)
 import CornerPoints.FaceConversions(backFaceFromFrontFace, upperFaceFromLowerFace, lowerFaceFromUpperFace )
 import CornerPoints.Transpose (transposeZ, transposeY)
---import qualified CornerPoints.Composable  as Com (createCornerPoint)
 import CornerPoints.Composable(addSlope, createCornerPoint)
 
 import Geometry.Radius(squaredOff)
@@ -288,13 +287,21 @@ createBottomFacesLengthenY inOrigin radii angles {-xSlope ySlope-} lengthenFacto
      ]
 
 
-{-
-Used to expand a radial shape along the y-axis. Expands away from the origin to keep it centered.
+{- |
+Used to square off and expand a radial shape along the y-axis. Expands away from the origin, along the y-axis, to keep it centered.
+
+To expand it away from the orign at separate rates see:
+createBottomFacesSquaredOffLengthenYSeparately
 -}
 --ToDo: Replace all logic to a call to the new createBottomFacesSquaredOffLengthenYSeparately, passing in lengthenFactor/2
-createBottomFacesSquaredOffLengthenY :: Origin -> [Radius] -> [Angle] -> Slope -> Slope -> Power -> LengthenFactor  -> [CornerPoints]
-createBottomFacesSquaredOffLengthenY inOrigin radii angles xSlope ySlope power lengthenFactor  =
-  let --should this have been createLeftLine
+createBottomFacesSquaredOffLengthenY :: Origin -> [Radius] -> [Angle] ->  Power -> LengthenFactor  -> [CornerPoints]
+createBottomFacesSquaredOffLengthenY    inOrigin  radii       angles      power    lengthenFactor  =
+  let
+      squaredRadii = [
+                       squaredOff power radius' angle'
+                       | radius' <- radii
+                       | angle' <- angles
+                     ]
       createLeftLine (Angle angle') cube
         | angle' <= 90 =
             F1 (transposeY ((+)(negate $ lengthenFactor/2)) $ f1 cube)
@@ -308,14 +315,12 @@ createBottomFacesSquaredOffLengthenY inOrigin radii angles xSlope ySlope power l
   in
     
      (transposeY ((+)(negate $ lengthenFactor/2))
-      (createCornerPointSquaredOff 
+      (createCornerPoint 
         (F4)
         inOrigin
-        (head radii)
+        (head squaredRadii)
         (head angles)
-        xSlope
-        ySlope
-        power
+        
       )
      )
       +++
@@ -323,21 +328,19 @@ createBottomFacesSquaredOffLengthenY inOrigin radii angles xSlope ySlope power l
      +++>
      [ createLeftLine angle
        (
-        (createCornerPointSquaredOff 
+        (createCornerPoint 
          (F1)
           inOrigin
           radius
           angle
-          xSlope
-          ySlope
-          power
+          
         ) 
         +++
         B1 inOrigin
        )
       
        | angle <- tail angles
-       | radius <- tail radii
+       | radius <- tail squaredRadii
      ]
 
 

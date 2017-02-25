@@ -103,7 +103,7 @@ squaredOffCylinder    radius    origin    angles     height    power  =
 
 squaredOffYLengthenedCylinder :: Radius -> Origin -> [Angle] -> Height  -> Power -> LengthenFactor -> [CornerPoints]
 squaredOffYLengthenedCylinder    radius    origin    angles     height     power    lengthenFactor      =
-  createBottomFacesSquaredOffLengthenY origin [radius | x <- [1..]] angles flatXSlope flatYSlope power lengthenFactor 
+  createBottomFacesSquaredOffLengthenY origin [radius | x <- [1..]] angles power lengthenFactor 
   |@+++#@|
   (upperFaceFromLowerFace . (transposeZ (+height)))
 
