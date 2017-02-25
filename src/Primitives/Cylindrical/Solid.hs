@@ -112,7 +112,7 @@ Create a solid cylinder, squared off, lengthened along the Y axis. The amount le
 -}  
 cylinderSolidNoSlopeSquaredOffLengthenYSeparately :: Radius -> Origin -> [Angle] -> Height  -> Power -> LengthenFactor -> LengthenFactor -> [CornerPoints]
 cylinderSolidNoSlopeSquaredOffLengthenYSeparately    radius    origin    angles     height     power    lengthenNegYFactor lengthenPosYFactor      =
-  createBottomFacesSquaredOffLengthenYSeparately origin [radius | x <- [1..]] angles flatXSlope flatYSlope power lengthenNegYFactor lengthenPosYFactor
+  createBottomFacesSquaredOffLengthenYSeparately origin [radius | x <- [1..]] angles power lengthenNegYFactor lengthenPosYFactor
   |@+++#@|
   (upperFaceFromLowerFace . (transposeZ (+height)))
 

@@ -293,65 +293,22 @@ Used to square off and expand a radial shape along the y-axis. Expands away from
 To expand it away from the orign at separate rates see:
 createBottomFacesSquaredOffLengthenYSeparately
 -}
---ToDo: Replace all logic to a call to the new createBottomFacesSquaredOffLengthenYSeparately, passing in lengthenFactor/2
 createBottomFacesSquaredOffLengthenY :: Origin -> [Radius] -> [Angle] ->  Power -> LengthenFactor  -> [CornerPoints]
 createBottomFacesSquaredOffLengthenY    inOrigin  radii       angles      power    lengthenFactor  =
-  let
-      squaredRadii = [
+  createBottomFacesSquaredOffLengthenYSeparately inOrigin  radii       angles      power    lengthenFactor lengthenFactor
+
+{- |
+Used to expand a radial shape along the y-axis. Expands away from the origin to keep it centered like createBottomFacesSquaredOffLengthenY,
+except that the amount it moves in the pos and neg y directions, is controlled separately.
+-}
+createBottomFacesSquaredOffLengthenYSeparately :: Origin -> [Radius] -> [Angle] -> Power -> LengthenFactor -> LengthenFactor  -> [CornerPoints]
+createBottomFacesSquaredOffLengthenYSeparately inOrigin radii angles power lengthenNegYFactor lengthenPosYFactor =
+  let squaredRadii = [
                        squaredOff power radius' angle'
                        | radius' <- radii
                        | angle' <- angles
                      ]
-      createLeftLine (Angle angle') cube
-        | angle' <= 90 =
-            F1 (transposeY ((+)(negate $ lengthenFactor/2)) $ f1 cube)
-            +++ (B1 $ b1 cube)
-        | angle' <= 270 =
-            F1 (transposeY (+(lengthenFactor/2)) $ f1 cube)
-            +++ (B1 $ b1 cube)
-        | otherwise =
-            F1 (transposeY ((+)(negate $lengthenFactor/2)) $ f1 cube)
-            +++ (B1 $ b1 cube)
-  in
     
-     (transposeY ((+)(negate $ lengthenFactor/2))
-      (createCornerPoint 
-        (F4)
-        inOrigin
-        (head squaredRadii)
-        (head angles)
-        
-      )
-     )
-      +++
-      B4 inOrigin
-     +++>
-     [ createLeftLine angle
-       (
-        (createCornerPoint 
-         (F1)
-          inOrigin
-          radius
-          angle
-          
-        ) 
-        +++
-        B1 inOrigin
-       )
-      
-       | angle <- tail angles
-       | radius <- tail squaredRadii
-     ]
-
-
-{- |
-Used to expand a radial shape along the y-axis. Expands away from the origin to keep it centered like createBottomFacesSquaredOffLengthenYSeparately,
-except that the amount it moves in the pos and neg y directions, can be done separately.
--}
-
-createBottomFacesSquaredOffLengthenYSeparately :: Origin -> [Radius] -> [Angle] -> Slope -> Slope -> Power -> LengthenFactor -> LengthenFactor  -> [CornerPoints]
-createBottomFacesSquaredOffLengthenYSeparately inOrigin radii angles xSlope ySlope power lengthenNegYFactor lengthenPosYFactor =
-  let --should this have been createLeftLine
       createLeftLine (Angle angle') cube
         | angle' <= 90 =
             F1 (transposeY ((+)(negate $ lengthenNegYFactor/2)) $ f1 cube)
@@ -365,14 +322,12 @@ createBottomFacesSquaredOffLengthenYSeparately inOrigin radii angles xSlope ySlo
   in
     
      (transposeY ((+)(negate $ lengthenNegYFactor/2))
-      (createCornerPointSquaredOff 
+      (createCornerPoint
         (F4)
         inOrigin
-        (head radii)
+        (head squaredRadii)
         (head angles)
-        xSlope
-        ySlope
-        power
+        
       )
      )
       +++
@@ -380,19 +335,17 @@ createBottomFacesSquaredOffLengthenYSeparately inOrigin radii angles xSlope ySlo
      +++>
      [ createLeftLine angle
        (
-        (createCornerPointSquaredOff 
+        (createCornerPoint
          (F1)
           inOrigin
           radius
           angle
-          xSlope
-          ySlope
-          power
+          
         ) 
         +++
         B1 inOrigin
        )
       
        | angle <- tail angles
-       | radius <- tail radii
+       | radius <- tail squaredRadii
      ]
