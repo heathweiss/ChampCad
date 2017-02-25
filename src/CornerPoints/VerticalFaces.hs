@@ -5,7 +5,8 @@ module CornerPoints.VerticalFaces(
   createHorizontallyAlignedCubes, createHorizontallyAlignedCubesNoSlope,
   createLeftFacesMultiColumns, createLeftFacesMultiColumnsNoSlope, createVerticalWalls,
   TransposeFactor(..)) where
-import CornerPoints.Create(Slope(..), Origin(..), createCornerPoint, Angle(..), flatXSlope, flatYSlope)
+import CornerPoints.Create(Slope(..), Origin(..),  Angle(..), flatXSlope, flatYSlope)
+import CornerPoints.Composable(createCornerPoint, addSlope)
 import CornerPoints.CornerPoints(CornerPoints(..), (+++>), (+++), (|+++|))
 import CornerPoints.Transpose (transposeZ)
 import CornerPoints.Points(Point(..))
@@ -75,26 +76,34 @@ createVerticalFaces origin (SingleDegreeRadii degree' radii') xSlope ySlope zTra
   --zipWith  (\x y -> transposeZ ((-x)+) y  ) --negating x causes the z_axis to decrease from the top, as it should.
   -- zTransposeFactor --this should be an infinit of the height for each pixel, measured from topOrigin.
    let topFrontPoint =
-         (createCornerPoint
-           (topFrontConstructor)
-           origin
-           (head $ radii') 
-           (Angle degree')
-           xSlope
-           ySlope
+         (addSlope
+            xSlope
+            ySlope
+            (Angle degree')
+            origin $
+            createCornerPoint
+              (topFrontConstructor)
+              origin
+              (head $ radii') 
+              (Angle degree')
+           
          )
        topBackPoint =  topBackConstructor origin
 
        topLine = topFrontPoint +++ topBackPoint
 
        bottomLines =
-         [(createCornerPoint
-            (btmFrontConstructor)
-            (transposeZ (+(-currZVal)) origin)  --topOrigin
-            currRadius
-            (Angle degree')
-            xSlope
-            ySlope
+         [(addSlope
+             xSlope
+             ySlope
+             (Angle degree')
+             (transposeZ (+(-currZVal)) origin)   $
+             createCornerPoint
+               (btmFrontConstructor)
+               (transposeZ (+(-currZVal)) origin)  --topOrigin
+               currRadius
+               (Angle degree')
+            
           ) 
           +++
           btmBackConstructor (transposeZ (+(-currZVal)) origin)  --topOrigin
@@ -106,7 +115,6 @@ createVerticalFaces origin (SingleDegreeRadii degree' radii') xSlope ySlope zTra
        topLine
        +++>
        bottomLines
-   
 
 -- |Create a column of RightFace
 createRightFaces :: Origin -> SingleDegreeRadii -> Slope -> Slope -> [TransposeFactor] -> [CornerPoints]
