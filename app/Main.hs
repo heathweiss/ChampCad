@@ -20,7 +20,7 @@ import Examples.Primitives.Cube(writeJoinerStlFile)
 
 import Examples.Diffs.MTLDiff(generateUnionCubesStl)
 
-import Examples.ShoeLift.SnowBoardBoot (writeRearSlopedTread, writeRearBoot, writeForwardBoot)
+import Examples.ShoeLift.SnowBoardBoot (writeRearSlopedTread, writeRearBoot, writeForwardBoot, writeRearRoundedToeTread)
 --import System.Environment
 
 
@@ -31,7 +31,7 @@ main = do
  --loadMDRAndPassToProcessor (read $ head x) (read $ head $ tail x)
 
  
-  generateUnionCubesStl 
+  writeRearSlopedTread 
   
   
   

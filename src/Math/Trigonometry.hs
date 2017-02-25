@@ -4,7 +4,8 @@ radiansToDegrees,
 --upperYValueOfWedge,
 sinDegrees,
 cosDegrees,
-atanDegrees) where
+atanDegrees,
+coTanDegrees) where
 
 
 {-
@@ -31,6 +32,13 @@ Prelude cos uses radians. This puts a wrapper around it to pass in degrees.
 
 cosDegrees :: Double -> Double
 cosDegrees degrees = cos $ degreesToRadians degrees
+
+tanDegrees :: Double -> Double
+tanDegrees degrees = tan $ degreesToRadians degrees
+
+--never tested or tried
+coTanDegrees :: Double -> Double
+coTanDegrees degrees = 1/(tanDegrees degrees)
 
 --get the angle in degrees, using atan.
 atanDegrees :: Double -> Double -> Double

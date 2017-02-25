@@ -9,14 +9,15 @@ module CornerPoints.HorizontalFaces(
   createBottomFacesLengthenY,
   createBottomFacesSquaredOffLengthenYSeparately,
   )where
-import CornerPoints.Create( Slope(..), Origin(..), createCornerPoint, createCornerPointSquaredOff, Angle(..))
+import CornerPoints.Create( Slope(..), Origin(..), createCornerPointSquaredOff, Angle(..))
 import CornerPoints.CornerPoints(CornerPoints(..), (+++>), (+++), (|+++|), (|@+++#@|))
 import CornerPoints.Points(Point(..))
 import CornerPoints.Radius(Radius(..))
 import CornerPoints.FaceExtraction (extractFrontFace, extractTopFace,extractBottomFace)
 import CornerPoints.FaceConversions(backFaceFromFrontFace, upperFaceFromLowerFace, lowerFaceFromUpperFace )
 import CornerPoints.Transpose (transposeZ, transposeY)
-import qualified CornerPoints.Composable  as Com (createCornerPoint)
+--import qualified CornerPoints.Composable  as Com (createCornerPoint)
+import CornerPoints.Composable(addSlope, createCornerPoint)
 
 import Geometry.Radius(squaredOff)
 
@@ -77,40 +78,12 @@ Examples.Diffs.MTLDiff
 -}
 createBottomFaces :: Origin -> [Radius] -> [Angle] -> {-Slope -> Slope ->-} [CornerPoints]
 createBottomFaces inOrigin radii angles {-xSlope ySlope-}  =
-    (Com.createCornerPoint
-      (F4)
-      inOrigin
-      (head radii)
-      (head angles)
-      --xSlope
-      --ySlope
-    ) 
-    +++
-    B4 inOrigin
-    +++>
-    [(Com.createCornerPoint
-      (F1)
-      inOrigin
-      radius
-      angle
-      --xSlope
-      --ySlope
-     ) 
-     +++
-     B1 inOrigin
-       | angle <- tail angles
-       | radius <- tail radii
-    ]
-{-orig
-createBottomFaces :: Origin -> [Radius] -> [Angle] -> Slope -> Slope -> [CornerPoints]
-createBottomFaces inOrigin radii angles xSlope ySlope  =
     (createCornerPoint
       (F4)
       inOrigin
       (head radii)
       (head angles)
-      xSlope
-      ySlope
+      
     ) 
     +++
     B4 inOrigin
@@ -120,16 +93,13 @@ createBottomFaces inOrigin radii angles xSlope ySlope  =
       inOrigin
       radius
       angle
-      xSlope
-      ySlope
+      
      ) 
      +++
      B1 inOrigin
        | angle <- tail angles
        | radius <- tail radii
     ]
-
--}
 {- |
 Create [BottomFaces] that have modified radii that are squared off by the Geometry.Radius.squaredOff function.
 -}
@@ -142,7 +112,7 @@ createBottomFacesSquaredOff    inOrigin  radii       angles      power  =
            | angle'  <- angles
         ]
   in
-    (Com.createCornerPoint
+    (createCornerPoint
       (F4)
       inOrigin
       (head radiiSquared)
@@ -151,7 +121,7 @@ createBottomFacesSquaredOff    inOrigin  radii       angles      power  =
     +++
     B4 inOrigin
     +++>
-    [(Com.createCornerPoint 
+    [(createCornerPoint 
       (F1)
       inOrigin
       radius
@@ -165,23 +135,32 @@ createBottomFacesSquaredOff    inOrigin  radii       angles      power  =
 
 createBottomFacesWithVariableSlope :: Origin -> [Radius] -> [Angle] -> [Slope] -> [Slope] -> [CornerPoints]
 createBottomFacesWithVariableSlope inOrigin inRadius inAngles xSlope ySlope  =
-    (createCornerPoint
-      (F4)
-      inOrigin
-      (head inRadius) 
-      (head inAngles)
+    (addSlope
       (head xSlope)
       (head ySlope)
+      (head inAngles)
+      inOrigin $
+      createCornerPoint
+       (F4)
+       inOrigin
+       (head inRadius) 
+       (head inAngles)
+       
     ) 
     +++
     B4 inOrigin
     +++>
-    [(createCornerPoint
-      (F1)
-      inOrigin
-      currRadius
-      angle
-      currXSlope currYSlope
+    [(addSlope
+        currXSlope
+        currYSlope
+        angle
+        inOrigin $
+        createCornerPoint
+         (F1)
+         inOrigin
+         currRadius
+         angle
+         
      ) 
      +++
      B1 inOrigin
@@ -191,12 +170,12 @@ createBottomFacesWithVariableSlope inOrigin inRadius inAngles xSlope ySlope  =
        | currYSlope <- tail ySlope
     ]
 
-{---------------------------------------------------------------- createTopFaces ----------------------------
+{------------------------------------------------------------------ createTopFaces ----------------------------
 
 -}
 createTopFaces :: Origin -> [Radius] -> [Angle] -> [CornerPoints]
 createTopFaces inOrigin radii angles   =
-    (Com.createCornerPoint
+    (createCornerPoint
       (F3)
       inOrigin
       (head radii)
@@ -206,7 +185,7 @@ createTopFaces inOrigin radii angles   =
     +++
     B3 inOrigin
     +++>
-    [(Com.createCornerPoint
+    [(createCornerPoint
       (F2)
       inOrigin
       radius
@@ -220,54 +199,35 @@ createTopFaces inOrigin radii angles   =
     ]
 
 
-createTopFaces' :: Origin -> [Radius] -> [Angle] -> Slope -> Slope -> [CornerPoints]
-createTopFaces' inOrigin inRadius inAngles xSlope ySlope  =
-     (createCornerPoint
-      (F3)
-      inOrigin
-      (head inRadius) 
-      (head inAngles)
-      xSlope ySlope
-    ) 
-    +++
-    B3 inOrigin
-    +++>
-    [(createCornerPoint
-      (F2)
-      inOrigin
-      currRadius
-      angle
-      xSlope
-      ySlope
-     ) 
-     +++
-     B2 inOrigin
-       | angle <- tail inAngles
-       | currRadius <- tail inRadius
-    ]
 
---ToDo: change over to [Angles] instead of  [Double]
 createTopFacesWithVariableSlope :: Origin -> [Radius] -> [Angle] -> [Slope] -> [Slope] -> [CornerPoints]
 createTopFacesWithVariableSlope    origin    radii        angles    xSlopes      ySlopes  =
-    (createCornerPoint
-      (F3)
-      origin
-      (head radii) 
-      
-      ((head angles))
+    (addSlope
       (head xSlopes)
       (head ySlopes)
+      (head angles)
+      origin $
+      createCornerPoint
+       (F3)
+       origin
+       (head radii) 
+       (head angles)
+      
     ) 
     +++
     B3 origin
     +++>
-    [(createCornerPoint
-      (F2)
-      origin
-      currRadius
-      (currAngle)
-      currXSlope
-      currYSlope
+    [(addSlope
+       currXSlope
+       currYSlope
+       currAngle
+       origin $
+       createCornerPoint
+        (F2)
+        origin
+        currRadius
+        currAngle
+      
      ) 
      +++
      B2 origin
@@ -276,8 +236,6 @@ createTopFacesWithVariableSlope    origin    radii        angles    xSlopes     
        | currXSlope <- tail xSlopes
        | currYSlope <- tail ySlopes
     ]
-
-
 
 
 
@@ -299,7 +257,7 @@ createBottomFacesLengthenY inOrigin radii angles {-xSlope ySlope-} lengthenFacto
   in
     
      (transposeY ((+)(negate $ lengthenFactor/2))
-      (Com.createCornerPoint
+      (createCornerPoint
         (F4)
         inOrigin
         (head radii)
@@ -313,7 +271,7 @@ createBottomFacesLengthenY inOrigin radii angles {-xSlope ySlope-} lengthenFacto
      +++>
      [ createRightLine angle
        (
-        (Com.createCornerPoint
+        (createCornerPoint
          (F1)
           inOrigin
           radius

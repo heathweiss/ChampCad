@@ -159,8 +159,7 @@ addSlope    xSlope   ySlope   xyAngle  origin   cpoint =
                                  
                                  
     zAdjusted =
-       --let length = (radius (composer^.xyRadius)) * (sinDegrees (slope currentSlope))
-       let length = adjustedRadius * (sinDegrees (slope currentSlope))
+       let length = (radius xyRadius) * (sinDegrees (slope currentSlope))
            z_axis' = z_axis (origin)
        in
           case currentSlope of

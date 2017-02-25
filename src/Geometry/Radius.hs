@@ -90,13 +90,15 @@ calcultateDistance    point1   point2  =
   let
       distance :: Point -> Point -> Point
       distance    (Point x y z)    (Point x1 y1 z1) =
-        Point (abs $ x - x1) (abs $ y - y1) (abs $ z - z1)
+        --Point (abs $ x - x1) (abs $ y - y1) (abs $ z - z1)
+        Point (x - x1) (y - y1) (z - z1)
       p = distance point1 point2
       x = x_axis p
       y = y_axis p
       z = z_axis p
   in
-      Radius $ sqrt (x**2 + y**2 + z**2) 
+      Radius $ sqrt (x**2 + y**2 + z**2)
+      
   
 
 type Power = Double

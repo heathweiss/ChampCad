@@ -4,7 +4,7 @@ Snowboard boot.
 
 A single piece lift, done by measuring the radii off of graph paper.
 -}
-module Examples.ShoeLift.SnowBoardBoot (writeRearSlopedTread, writeRearBoot, writeForwardBoot) where
+module Examples.ShoeLift.SnowBoardBoot (writeRearSlopedTread, writeRearBoot, writeForwardBoot, writeRearRoundedToeTread) where
 
 import Scan.ParseJuicy( getRedLaserLineSingleImage, removeLeftOfCenterPixels, getThePixelsRightOfCenter,  reduceScanRows, reduceScan,
                        calculateRadiusFrom, calculatePixelsPerMillmeter)

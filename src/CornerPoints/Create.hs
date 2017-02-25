@@ -1,4 +1,14 @@
 {-# LANGUAGE ParallelListComp #-}
+{- |
+Creates a radial shape using polar cood's.
+
+ degrees start at the negative y axis, and rotates clockwise into the x axis.
+
+
+-}
+
+
+
 module CornerPoints.Create(
   slopeAdjustedForVerticalAngle,
   adjustRadiusForSlope,
@@ -18,56 +28,10 @@ module CornerPoints.Create(
   ) where
 import CornerPoints.Points(Point(..))
 import CornerPoints.CornerPoints(CornerPoints(..), (+++), )
-import Math.Trigonometry(sinDegrees, cosDegrees)
+import Math.Trigonometry(sinDegrees, cosDegrees, coTanDegrees)
 import CornerPoints.Transpose (transposeZ)
 import CornerPoints.Radius(Radius(..))
 import Geometry.CornerPoints(squaredOffAdjustmentFunction)
-
-{--------------------overview----------------------------------------
-Creates a radial shape using polar cood's.
-
- degrees is as the max neg y axis, and rotates clockwise into the pos x axis.
-
-
-safari books: Triginometry 3rd edition is a good ref.
--}
-
-
-{-
-For trig xy calculations, the neg/pos aspect of y will depend upon the current quadrant of the xy plane
-
-
-setYPolarityForQuadrant :: QuadrantAngle -> Double -> Double
-setYPolarityForQuadrant angle val = case getCurrentQuadrant angle of
-                                     Quadrant1 -> negate val
-                                     Quadrant2 -> val
-                                     Quadrant3 -> val
-                                     Quadrant4 -> negate val
--}
-        
-
-{-
-Change slope and xy angle into a single Slope value.
-Change radius into a Radius
-
-Given:
-cPoint : (Point-> CornerPoints)
--A CornerPoints constructor such as F1
-
-adjustedRadius: Radius: 
--The radius, after being adjusted for slope
--Should get rid of this, and do the calculations inside createCornerPoint.
- This would simplify calling this function.
- It was used before for pattern matching, but that is no longer done.
- However, will need to pass in xSlope and ySlope, instead of just the xySlope
-
-slope: Slope:
-The slope, having already been adjusted for x/y slopes and xy quadrant
-
-orign: Point
--The starting point which gets adjusted to give the return point. That way, this point can be created relative to some position, instead of at an origin of 0 0 0
-
--}
 
 type Power = Double
 
@@ -436,15 +400,7 @@ Shorten the radius on the xy plane, for the changes in the z plane.
 As per standard 3D polar to cartesian conversion methods.
 -}
 adjustRadiusForSlope :: Radius -> Slope -> Radius 
---adjustRadiusForSlope (Radius radius) (PosSlope xySlope) = UpRadius $ radius * (cosDegrees (xySlope))
 adjustRadiusForSlope (Radius radius) xySlope = Radius $ radius * (cosDegrees (slope xySlope))
-{-
-adjustRadiusForSlope :: Radius -> Slope -> Radius 
-adjustRadiusForSlope (Radius radius) (PosSlope xySlope) = UpRadius $ radius * (cosDegrees (xySlope))
-adjustRadiusForSlope (Radius radius) (NegSlope xySlope) = DownRadius $ radius * (cosDegrees (xySlope))
--}
-
-  
 
 --ToDo: Figure out a more logical place/module to put the AngleRadius functionality.
 

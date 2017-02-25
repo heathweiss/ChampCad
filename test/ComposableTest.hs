@@ -2,7 +2,7 @@ module ComposableTest(composableTestDo) where
 
 import Test.HUnit hiding (State)
 
-import CornerPoints.Composable (createCornerPoint, Origin(..), createBottomFaces, Composable(..),
+import CornerPoints.Composable (createCornerPoint, Origin(..), Composable(..),
                                 composableDefault, runComposer, createCornerPointComposable, createBottomFacesComposable, createTopFacesComposable,
                                 createCornerPointComposableSloped, createComposable)
 import CornerPoints.CornerPoints(CornerPoints(..))
