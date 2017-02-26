@@ -1,8 +1,8 @@
 {-# LANGUAGE ParallelListComp #-}
 {-# LANGUAGE TemplateHaskell #-}
-module CornerPoints.Composable (createCornerPoint, Origin(..), createTopFaces, Composable(..),
+module CornerPoints.Composable (createCornerPoint, Origin(..), {-createTopFaces,-} Composable(..),
                                 composableDefault, runComposer, createCornerPointComposable, createBottomFacesComposable, createTopFacesComposable,
-                                createCornerPointComposableSloped, createComposable, addSlope, createTopFacesSloped, createBottomFacesSloped) where
+                                createCornerPointComposableSloped, createComposable, addSlope, {-createTopFacesSloped,-} createBottomFacesSloped) where
 
 
 
@@ -300,7 +300,7 @@ createBottomFacesSloped inOrigin radii angles xSlope ySlope  =
        | angle <- tail angles
        | radius <- tail radii
     ]
-
+{-
 createTopFaces :: Origin -> [Radius] -> [Angle] -> [CornerPoints]
 createTopFaces inOrigin radii angles   =
     (createCornerPoint
@@ -325,7 +325,8 @@ createTopFaces inOrigin radii angles   =
        | angle <- tail angles
        | radius <- tail radii
     ]
-
+-}
+{-
 createTopFacesSloped :: Origin -> [Radius] -> [Angle] -> Slope -> Slope -> [CornerPoints]
 createTopFacesSloped inOrigin radii angles xSlope ySlope =
    (addSlope xSlope ySlope (head angles) inOrigin $
@@ -352,7 +353,7 @@ createTopFacesSloped inOrigin radii angles xSlope ySlope =
        | angle <- tail angles
        | radius <- tail radii
     ]
-  
+-}
 {- |
 Creates [CornerPoints.BottomFace] from a [Composable]
 inComposables must be made up of the proper CornerPoints types which is:

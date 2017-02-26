@@ -7,7 +7,7 @@ import Stl.StlFileWriter(writeStlToFile)
 import Primitives.Cubical( rectangularSolidNoSlope)
 import CornerPoints.Radius(Radius(..))
 import CornerPoints.Points(Point(..))
-import CornerPoints.Create( Slope(..), Origin(..), createCornerPoint, createCornerPointSquaredOff, Angle(..))
+import CornerPoints.Create( Slope(..), Origin(..), createCornerPointSquaredOff, Angle(..))
 
 writeJoinerStlFile = writeStlToFile stlFile
 stlFile = newStlShape "joiner cube" rectangleTriangles

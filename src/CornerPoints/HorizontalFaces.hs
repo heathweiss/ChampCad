@@ -1,6 +1,7 @@
 {-# LANGUAGE ParallelListComp #-}
 module CornerPoints.HorizontalFaces(
   createTopFaces,
+  createTopFacesSloped,
   createBottomFaces,
   createTopFacesWithVariableSlope,
   createBottomFacesWithVariableSlope,
@@ -197,6 +198,32 @@ createTopFaces inOrigin radii angles   =
        | radius <- tail radii
     ]
 
+createTopFacesSloped :: Origin -> [Radius] -> [Angle] -> Slope -> Slope -> [CornerPoints]
+createTopFacesSloped inOrigin radii angles xSlope ySlope =
+   (addSlope xSlope ySlope (head angles) inOrigin $
+    createCornerPoint
+      (F3)
+      inOrigin
+      (head radii)
+      (head angles)
+      
+    ) 
+    +++
+    B3 inOrigin
+    +++>
+    [ (addSlope xSlope ySlope angle inOrigin $
+      createCornerPoint
+      (F2)
+      inOrigin
+      radius
+      angle
+      
+     ) 
+     +++
+     B2 inOrigin
+       | angle <- tail angles
+       | radius <- tail radii
+    ]
 
 
 createTopFacesWithVariableSlope :: Origin -> [Radius] -> [Angle] -> [Slope] -> [Slope] -> [CornerPoints]
