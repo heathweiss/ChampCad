@@ -10,7 +10,7 @@ module CornerPoints.HorizontalFaces(
   createBottomFacesLengthenY,
   createBottomFacesSquaredOffLengthenYSeparately,
   )where
-import CornerPoints.Create( Slope(..), Origin(..), createCornerPointSquaredOff, Angle(..))
+import CornerPoints.Create( Slope(..), Origin(..), createCornerPointSquaredOff)
 import CornerPoints.CornerPoints(CornerPoints(..), (+++>), (+++), (|+++|), (|@+++#@|))
 import CornerPoints.Points(Point(..))
 import CornerPoints.Radius(Radius(..))
@@ -20,6 +20,7 @@ import CornerPoints.Transpose (transposeZ, transposeY)
 import CornerPoints.Composable(addSlope, createCornerPoint)
 
 import Geometry.Radius(squaredOff)
+import Geometry.Angle(Angle(..), rotateAngle, getQuadrantAngle, RotateFactor(..))
 
 type Thickness = Double
 type Height = Double

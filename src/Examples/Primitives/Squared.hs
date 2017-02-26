@@ -5,12 +5,12 @@ import Builder.Monad(BuilderError(..), cornerPointsErrorHandler, buildCubePoints
 
 import CornerPoints.CornerPoints(CornerPoints(..))
 import CornerPoints.Radius(Radius(..), )
-import CornerPoints.Create(Angle(..))
 import CornerPoints.HorizontalFaces(createTopFaces,  createBottomFaces)
 import CornerPoints.Points(Point(..))
 import CornerPoints.MeshGeneration(autoGenerateEachCube)
 
 import Geometry.Radius(doubleCylinderZip)
+import Geometry.Angle(Angle(..), rotateAngle, getQuadrantAngle, RotateFactor(..))
 
 import Control.Monad.Trans.Except
 import Control.Monad.Trans.Maybe

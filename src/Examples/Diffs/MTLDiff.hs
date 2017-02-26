@@ -13,7 +13,7 @@ import Builder.Monad(BuilderError(..), cornerPointsErrorHandler, buildCubePoints
 
 import CornerPoints.Radius(Radius(..))
 import CornerPoints.HorizontalFaces(createBottomFaces, createTopFaces)
-import CornerPoints.Create(Angle(..), Origin(..))
+import CornerPoints.Create(Origin(..))
 import CornerPoints.CornerPoints((|@+++#@|), (|+++|),  CornerPoints(..), (+++), getCornerPointsWithIndex)
 import CornerPoints.Points(Point(..))
 import CornerPoints.MeshGeneration(autoGenerateEachCube)
@@ -23,6 +23,7 @@ import CornerPoints.FaceConversions(toBackFace, reverseNormal, toFrontFace, back
 import CornerPoints.FaceExtraction(extractFrontFace, extractFrontLeftLine, extractFrontRightLine, extractLeftFace,
                                   extractRightFace, extractBackRightLine, extractBackLeftLine, extractBackFace, extractBackLeftLine)
 
+import Geometry.Angle(Angle(..), rotateAngle, getQuadrantAngle, RotateFactor(..))
 
 import Stl.StlCornerPoints((|+++^|), Faces(..))
 import Stl.StlBase (StlShape(..), newStlShape)

@@ -1,21 +1,24 @@
 {-# LANGUAGE ParallelListComp #-}
 module MathPolarTest (mathPolarTestDo) where
+
 import Test.HUnit
+
 import CornerPoints.CornerPoints(CornerPoints(..), (+++))
 import CornerPoints.Points(Point(..))
 import CornerPoints.Create(
   slopeAdjustedForVerticalAngle,
   adjustRadiusForSlope,
-  
   Slope(..),
-  Angle(..),
   flatXSlope,
   flatYSlope,
   )
 import CornerPoints.Composable(createCornerPoint, addSlope)
-import Math.Trigonometry(sinDegrees,cosDegrees)
 import CornerPoints.Radius(Radius(..))
+
+import Math.Trigonometry(sinDegrees,cosDegrees)
+
 import Geometry.Radius(calcultateDistance)
+import Geometry.Angle(Angle(..), rotateAngle, getQuadrantAngle, RotateFactor(..))
 
 mathPolarTestDo = do
 

@@ -1,12 +1,16 @@
 {-# LANGUAGE ParallelListComp #-}
 module HorizontalFacesTest (horizontalFacesTestDo) where
+
 import Test.HUnit
+
 import CornerPoints.HorizontalFaces(createBottomFaces, createBottomFacesWithVariableSlope, createTopFaces, createBottomFacesSquaredOffLengthenY,
                                    createBottomFacesSquaredOffLengthenYSeparately)
 import CornerPoints.CornerPoints(CornerPoints(..), (+++))
-import CornerPoints.Create(flatXSlope,flatYSlope, Slope(..), Angle(..))
+import CornerPoints.Create(flatXSlope,flatYSlope, Slope(..))
 import CornerPoints.Points(Point(..))
 import CornerPoints.Radius(Radius(..))
+
+import Geometry.Angle(Angle(..), rotateAngle, getQuadrantAngle, RotateFactor(..))
 
 horizontalFacesTestDo = do
     --------------------bottom/top faces------------------

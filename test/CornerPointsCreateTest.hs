@@ -1,5 +1,7 @@
 module CornerPointsCreateTest(cornerPointsCreateTestDo ) where
+
 import Test.HUnit
+
 import  CornerPoints.Create(
   slopeAdjustedForVerticalAngle,
   adjustRadiusForSlope,
@@ -8,18 +10,16 @@ import  CornerPoints.Create(
   flatXSlope,
   flatYSlope,
   Origin(..),
-  Angle(..),
   createCornerPointSquaredOff,
-  getQuadrantAngle,
-  Angle(..),
-  rotateAngle,
-  RotateFactor(..)
   )
 import CornerPoints.FaceConversions(backFaceFromFrontFace, upperFaceFromLowerFace, lowerFaceFromUpperFace )
 import CornerPoints.Transpose (transposeZ)
 import CornerPoints.CornerPoints(CornerPoints(..), (+++), (+++>), (|+++|), CornerPointsBuilder(..), (&+++#@), (|@+++#@|), (@+++#@))
 import CornerPoints.Points (Point(..))
 import CornerPoints.Radius(Radius(..))
+
+import Geometry.Angle(Angle(..), rotateAngle, getQuadrantAngle, RotateFactor(..))
+
 import Math.Trigonometry(sinDegrees, cosDegrees)
 
 

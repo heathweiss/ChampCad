@@ -12,13 +12,15 @@ import CornerPoints.VerticalFaces(createRightFaces, createLeftFaces, createLeftF
                                   createHorizontallyAlignedCubesNoSlope, createHorizontallyAlignedCubes)
 import CornerPoints.Points(Point(..))
 import CornerPoints.CornerPoints(CornerPoints(..), (+++), (|+++|), (|@+++#@|))
-import CornerPoints.Create(Slope(..), flatXSlope, flatYSlope, Angle(..), Origin(..))
+import CornerPoints.Create(Slope(..), flatXSlope, flatYSlope, Origin(..))
 import CornerPoints.FaceExtraction (extractFrontFace, extractTopFace,extractBottomFace, extractBackFace, extractFrontTopLine, extractBackTopLine)
 import CornerPoints.FaceConversions(backFaceFromFrontFace, upperFaceFromLowerFace, lowerFaceFromUpperFace, frontFaceFromBackFace )
 import CornerPoints.Transpose (transposeZ, transposeY, transposeX)
 import TypeClasses.Transposable(transpose)
 import CornerPoints.CornerPointsWithDegrees(CornerPointsWithDegrees(..), (@~+++#@),(@~+++@),(|@~+++@|), (|@~+++#@|), DegreeRange(..))
 import CornerPoints.MeshGeneration(autoGenerateEachCube)
+
+import Geometry.Angle(Angle(..), rotateAngle, getQuadrantAngle, RotateFactor(..))
 
 import Stl.StlCornerPoints((|+++^|), (||+++^||), Faces(..))
 import Stl.StlBase (StlShape(..), newStlShape)

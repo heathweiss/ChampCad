@@ -8,7 +8,9 @@ import CornerPoints.Composable (createCornerPoint, Origin(..), Composable(..),
 import CornerPoints.CornerPoints(CornerPoints(..))
 import CornerPoints.Points(Point(..))
 import CornerPoints.Radius(Radius(..))
-import CornerPoints.Create(Angle(..), Slope(..), flatXSlope, flatYSlope)
+import CornerPoints.Create(Slope(..), flatXSlope, flatYSlope)
+
+import Geometry.Angle(Angle(..), rotateAngle, getQuadrantAngle, RotateFactor(..))
 
 composableTestDo = do
   runTestTT createDefaultComposableWithCreateCornerPointComposable

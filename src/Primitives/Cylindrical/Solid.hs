@@ -6,7 +6,7 @@ module Primitives.Cylindrical.Solid(cylinder,
                                     squaredOffYLengthenedCylinder,
                                     squaredOffCylinder) where
 
-import CornerPoints.Create(Slope(..), Angle(..), flatXSlope, flatYSlope, Origin(..))
+import CornerPoints.Create(Slope(..), flatXSlope, flatYSlope, Origin(..))
 import CornerPoints.HorizontalFaces(createTopFaces, createBottomFaces, createTopFacesWithVariableSlope,
                                     createBottomFacesWithVariableSlope, createBottomFacesLengthenY,
                                     createBottomFacesSquaredOffLengthenY,
@@ -21,6 +21,7 @@ import CornerPoints.FaceConversions(lowerFaceFromUpperFace, backBottomLineFromBo
                                     backFaceFromFrontFace)
 
 import Geometry.Radius(squaredOff)
+import Geometry.Angle(Angle(..), rotateAngle, getQuadrantAngle, RotateFactor(..))
 
 import TypeClasses.Transposable(transposeZ)
 

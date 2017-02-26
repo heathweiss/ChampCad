@@ -10,7 +10,7 @@ import CornerPoints.VerticalFaces(createRightFaces, createLeftFaces, createLeftF
                                   createHorizontallyAlignedCubesNoSlope, createHorizontallyAlignedCubes)
 import CornerPoints.Points(Point(..))
 import CornerPoints.CornerPoints(CornerPoints(..), (+++), (|+++|), (|@+++#@|))
-import CornerPoints.Create(Slope(..), flatXSlope, flatYSlope, Angle(..))
+import CornerPoints.Create(Slope(..), flatXSlope, flatYSlope)
 import Stl.StlCornerPoints((|+++^|), (||+++^||), Faces(..))
 import Stl.StlBase (StlShape(..), newStlShape)
 import Stl.StlFileWriter(writeStlToFile)
@@ -22,6 +22,8 @@ import Helpers.List((++:))
 
 import TypeClasses.Transposable(transpose)
 import Helpers.DSL (ofThe, forThe, andThen, adjustedFor, andThe,)
+
+import Geometry.Angle(Angle(..), rotateAngle, getQuadrantAngle, RotateFactor(..))
 
 
 {----------------------------------------------------- overview------------------------------------------------------------

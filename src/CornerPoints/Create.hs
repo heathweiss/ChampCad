@@ -16,14 +16,12 @@ module CornerPoints.Create(
   flatXSlope,
   flatYSlope,
   Origin(..),
-  Angle(..),
   createCornerPointSquaredOff,
-  getQuadrantAngle,
   AngleRadius(..),
   extractAngles,
   extractRadii,
-  rotateAngle,
-  RotateFactor(..)
+  
+  
   ) where
 
 import CornerPoints.Points(Point(..))
@@ -33,6 +31,7 @@ import CornerPoints.Radius(Radius(..))
 
 import Geometry.CornerPoints(squaredOffAdjustmentFunction)
 --import  Geometry.Radius(calcultateDistance)
+import Geometry.Angle(Angle(..), rotateAngle, getQuadrantAngle, RotateFactor(..))
 
 import Math.Trigonometry(sinDegrees, cosDegrees, coTanDegrees)
 
@@ -183,7 +182,7 @@ They should be eliminated later, when I use quadrant correcting as per trig rule
 Angle:
 This will be the replacement for all of the others. It is simply a wrapper around Double.
 Once the others are gone, should make it a newtype, for efficiency.
--}
+
 --ToDo: Create a Angle module and move this there.
 data Angle =         Quadrant1Angle  { angle::Double}
                    | Quadrant2Angle  { angle::Double}
@@ -210,7 +209,7 @@ rotateAngle rotateFactor (Angle angle') =
                    True -> --Angle $ rotated - 360
                            rotateAngle rotateFactor (Angle $ angle' - 360)
                    False -> Angle rotated
-
+-}
 {-
 Used for:
 Neg/Pos XY Slope: 
@@ -254,7 +253,7 @@ Each quadrant will be 90 degrees with Quadrant 1 being 0-90 degrees.
 The resulting angle is such that, for all quadrants:
  -use sin to calculate x-axis
  -use cos to calculate y-axis
--}
+
 getQuadrantAngle :: Angle ->  Angle
 getQuadrantAngle (Angle currAngle )
   | currAngle < 0 = getQuadrantAngle (Angle (360 - currAngle))
@@ -264,7 +263,7 @@ getQuadrantAngle (Angle currAngle )
   | currAngle <= 360 = Quadrant4Angle (360 - currAngle)
   | currAngle > 360 = getQuadrantAngle (Angle(currAngle - 360))
 
-
+-}
 
 {-
 Functions for calculating the current Z plane angle. It is a combination of the slope,

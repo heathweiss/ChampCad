@@ -22,7 +22,7 @@ import Stl.StlFileWriter(writeStlToFile)
 import Stl.StlCornerPointsWithDegrees(FacesWithRange(..))
 
 import CornerPoints.CornerPoints(CornerPoints(..), (+++), (|+++|), (|@+++#@|), (&+++#@), CornerPointsBuilder(..))
-import CornerPoints.Create(Slope(..), flatXSlope, flatYSlope, Angle(..))
+import CornerPoints.Create(Slope(..), flatXSlope, flatYSlope)
 import CornerPoints.CornerPointsWithDegrees(CornerPointsWithDegrees(..), (@~+++#@),(@~+++@),(|@~+++@|), (|@~+++#@|), DegreeRange(..))
 import CornerPoints.VerticalFaces(createHorizontallyAlignedCubesNoSlope)
 import CornerPoints.Radius(resetMultiDegreeRadiiIfNullWithPreviousValue, MultiDegreeRadii(..), SingleDegreeRadii(..), Radius(..), )
@@ -30,6 +30,8 @@ import CornerPoints.Points(Point(..))
 import CornerPoints.FaceExtraction(extractBottomFace, extractTopFace  )
 import CornerPoints.FaceConversions(lowerFaceFromUpperFace, upperFaceFromLowerFace)
 import CornerPoints.Transpose(transposeZ, transposeY)
+
+import Geometry.Angle(Angle(..), rotateAngle, getQuadrantAngle, RotateFactor(..))
 
 import Builder.Sequence(newCornerPointsWith5DegreesBuilder, newCornerPointsWithDegreesBuilder, (||@~+++^||), (@~+++@|>) )
 

@@ -1,14 +1,21 @@
 {-# LANGUAGE ParallelListComp #-}
 module Examples.Primitives.Cylinders(slopedToppedCylinder, solidCylinderSquared, solidCylinderLengthenY, walledCylinderSquared) where
+
 import qualified Primitives.Cylindrical.Walled as Walled (cylinder, squaredCylinder, squaredYLengthenedCylinder) 
 import  Primitives.Cylindrical.Solid(yLengthenedCylinder, squaredOffCylinder, squaredOffYLengthenedCylinder, slopedTopCylinder)
+
 import CornerPoints.Radius(Radius(..))
 import CornerPoints.Points(Point(..))
+import CornerPoints.Create(Slope(..))
+import CornerPoints.Transpose(transposeY)
+
+
 import Stl.StlCornerPoints((|+++^|), (||+++^||), Faces(..))
 import Stl.StlBase (StlShape(..), newStlShape)
 import Stl.StlFileWriter(writeStlToFile)
-import CornerPoints.Create(Angle(..), Slope(..))
-import CornerPoints.Transpose(transposeY)
+
+
+import Geometry.Angle(Angle(..), rotateAngle, getQuadrantAngle, RotateFactor(..))
 
 angles = (map (Angle) [0,10..360])
 

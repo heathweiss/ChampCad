@@ -10,11 +10,12 @@ import CornerPoints.Points(Point(..))
 import CornerPoints.CornerPoints(CornerPoints(..), (+++), (+++>), (|+++|), (|@+++#@|))
 import CornerPoints.Transpose (transposeZ)
 import CornerPoints.Radius(Radius(..))
-import CornerPoints.Create(Angle(..), Slope(..), getQuadrantAngle, slopeAdjustedForVerticalAngle, adjustRadiusForSlope)
+import CornerPoints.Create({-Angle(..),-} Slope(..), {-getQuadrantAngle,-} slopeAdjustedForVerticalAngle, adjustRadiusForSlope)
 
 
 import Geometry.CornerPoints(squaredOffAdjustmentFunction)
 import  Geometry.Radius(calcultateDistance)
+import Geometry.Angle(Angle(..), rotateAngle, getQuadrantAngle, RotateFactor(..))
 
 import Math.Trigonometry(sinDegrees, cosDegrees)
 

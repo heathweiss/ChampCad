@@ -11,7 +11,7 @@ module Primitives.Cylindrical.Walled(
   slopedCylinder
   ) where
 
-import CornerPoints.Create(slopeAdjustedForVerticalAngle, Slope(..), Angle(..), flatXSlope, flatYSlope, Origin(..))
+import CornerPoints.Create(slopeAdjustedForVerticalAngle, Slope(..), flatXSlope, flatYSlope, Origin(..))
 import CornerPoints.HorizontalFaces(createTopFaces, createBottomFaces,
                                     createTopFacesWithVariableSlope, createBottomFacesWithVariableSlope,
                                     createTopFaces, createBottomFacesSquaredOff,
@@ -25,6 +25,8 @@ import CornerPoints.FaceConversions(lowerFaceFromUpperFace, backBottomLineFromBo
 import CornerPoints.Radius(Radius(..))
 import CornerPoints.Transpose (transposeZ)
 import TypeClasses.Transposable(TransposePoint, transposeX, transposeY, transposeZ, TransposeLength, transpose)
+
+import Geometry.Angle(Angle(..), rotateAngle, getQuadrantAngle, RotateFactor(..))
 
 type Thickness = Double
 type Height = Double

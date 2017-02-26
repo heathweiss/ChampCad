@@ -7,9 +7,8 @@ Test in test/GeometryRadiusTest
 -}
 module Geometry.Radius(doubleCylinderZip, doubleCylinder, squaredOff, calcultateDistance) where
 
+import Geometry.Angle(Angle(..), getQuadrantAngle)
 
-
-import CornerPoints.Create(Angle(..), getQuadrantAngle)
 import CornerPoints.Radius(Radius(..))
 import CornerPoints.Points(Point(..) )
 
