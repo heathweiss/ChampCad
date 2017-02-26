@@ -12,7 +12,6 @@ import CornerPoints.HorizontalFaces(createTopFaces, createBottomFaces, createTop
                                     createBottomFacesSquaredOffLengthenY,
                                     createBottomFacesSquaredOffLengthenYSeparately
                                    )
-import qualified CornerPoints.Composable  as Com (createBottomFacesSloped, )
 import CornerPoints.CornerPoints(CornerPoints(..), (+++), (|+++|), (|@+++#@|))
 import CornerPoints.Radius(Radius(..))
 import CornerPoints.Transpose (transposeZ)

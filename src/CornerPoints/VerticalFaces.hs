@@ -5,8 +5,8 @@ module CornerPoints.VerticalFaces(
   createHorizontallyAlignedCubes, createHorizontallyAlignedCubesNoSlope,
   createLeftFacesMultiColumns, createLeftFacesMultiColumnsNoSlope, createVerticalWalls,
   TransposeFactor(..)) where
-import CornerPoints.Create(Origin(..))
-import CornerPoints.Composable(createCornerPoint{-, addSlope-})
+import CornerPoints.Create(Origin(..), createCornerPoint)
+--import CornerPoints.Composable(createCornerPoint{-, addSlope-})
 import CornerPoints.CornerPoints(CornerPoints(..), (+++>), (+++), (|+++|))
 import CornerPoints.Transpose (transposeZ)
 import CornerPoints.Points(Point(..))

@@ -12,6 +12,7 @@ import CornerPoints.Transpose (transposeZ)
 import CornerPoints.CornerPoints(CornerPoints(..), (+++), (+++>), (|+++|), CornerPointsBuilder(..), (&+++#@), (|@+++#@|), (@+++#@))
 import CornerPoints.Points (Point(..))
 import CornerPoints.Radius(Radius(..))
+import CornerPoints.Create(createCornerPoint)
 
 import Geometry.Angle(Angle(..), rotateAngle, getQuadrantAngle, RotateFactor(..))
 import Geometry.Slope(Slope(..), flatXSlope, flatYSlope, slopeAdjustedForVerticalAngle)
@@ -38,6 +39,7 @@ cornerPointsCreateTestDo = do
   runTestTT rotateBackToBounds
   runTestTT rotateForwardTwiceBeyondBounds
   runTestTT rotateBackTwiceBeyondBounds
+  runTestTT createCornerPointTest
   
 cubePoints = (BottomFace
               {f1 = Point {x_axis = 0.0, y_axis = 1.0, z_axis = 0.0}, f4 = Point {x_axis = 1.0, y_axis = 1.0, z_axis = 0.0},
@@ -133,3 +135,13 @@ rotateBackToBounds = TestCase $ assertEqual
   "rotateBackToBounds"
   (Angle 0)
   (rotateAngle ((-10) :: RotateFactor) (Angle 10))
+
+createCornerPointTest = TestCase $ assertEqual
+  "createCornerPointTest"
+  ([F1 (Point 0 (-10) 0),
+    F1 (Point 0 (10) 0)
+   ])
+  ([createCornerPoint (F1) (Point 0 0 0) (Radius 10) (Angle 0),
+    createCornerPoint (F1) (Point 0 0 0) (Radius 10) (Angle 180)
+   ]
+  )

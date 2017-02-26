@@ -8,10 +8,6 @@ import Examples.OpenBionicsCom.OpenBionicsDotComDesignWork (fullLengthSocketWith
                                                   )
 import Examples.Primitives.Squared(cylinderWithSquaredRadiiStlGenerator)
 
-import Examples.Primitives.ComposableExample(createCylinderComposableSlopedStlGenerator, createCylinderComposableSlopedCumulativeCornerPoints,
-                                            createDoubleCylinderComposableCumulativeCornerPoints, createDoubleCylinderComposableStlGenerator,
-                                            createDoubleCylinderSquaredStlGenerator, createDoubleCylinderSquaredCumulativeCornerPoints,
-                                            createDoubleCylinderSquaredAndSlopedStlGenerator, createDoubleCylinderSquaredAndSlopedCumulativeCornerPoints)
 import Examples.Primitives.Cylinders(slopedToppedCylinder, solidCylinderSquared, solidCylinderLengthenY, solidCylinderSquared, walledCylinderSquared)
 
 import Examples.Scan.WalkerSocketDesignWork(loadMDRAndPassToProcessor)

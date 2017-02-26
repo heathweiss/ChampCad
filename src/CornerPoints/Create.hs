@@ -16,6 +16,7 @@ module CornerPoints.Create(
   AngleRadius(..),
   extractAngles,
   extractRadii,
+  createCornerPoint
   ) where
 
 import CornerPoints.Points(Point(..))
@@ -34,6 +35,65 @@ import Math.Trigonometry(sinDegrees, cosDegrees, coTanDegrees)
 type Power = Double
 
 
+{-
+Create a CornerPoint from raw values, including a CornerPoints constructor.
+Differs from CornerPoints.Create.createCornerPoint in that it does not use Slope.
+This should eventually replace CornerPoints.Create.createCornerPoint.
+-}
+--ToDo: Replace CornerPoints.Create.createCornerPoint with this version so Slope is no longer required.
+createCornerPoint :: (Point-> CornerPoints) -> Origin -> Radius ->  Angle -> CornerPoints
+createCornerPoint cPoint origin horizRadius verticalAngle   =
+                             let 
+                                 --currentSlope = slopeAdjustedForVerticalAngle xSlope ySlope verticalAngle
+                                                                                      
+                                 --radiusAdjustedForSlope = radius (adjustRadiusForSlope horizRadius currentSlope)
+
+                                 baseOfAngle = (angle $ getQuadrantAngle verticalAngle)
+                                 sinOfVerticalAngle = sinDegrees baseOfAngle
+                                 cosOfVerticalAngle = cosDegrees baseOfAngle
+                                 
+                                 setXaxis =
+                                   --let length = radiusAdjustedForSlope * sinOfVerticalAngle
+                                   let length = (radius horizRadius) * sinOfVerticalAngle
+                                       x_axis' = x_axis origin
+                                   in
+                                      
+                                    case getQuadrantAngle verticalAngle of
+                                      (Quadrant1Angle _) -> x_axis' + length
+                                      (Quadrant2Angle _) -> x_axis' + length
+                                      (Quadrant3Angle _) -> x_axis' - length
+                                      (Quadrant4Angle _) -> x_axis' - length
+
+                                 
+                                 setYaxis =
+                                   --let length = radiusAdjustedForSlope * cosOfVerticalAngle
+                                   let length = (radius horizRadius) * cosOfVerticalAngle
+                                       y_axis' = y_axis origin
+                                   in
+                                     
+                                    case getQuadrantAngle verticalAngle of
+                                      (Quadrant1Angle _) -> y_axis' - length
+                                      (Quadrant2Angle _) -> y_axis' + length
+                                      (Quadrant3Angle _) -> y_axis' + length
+                                      (Quadrant4Angle _) -> y_axis' - length
+                                   
+
+
+                                 setZaxis = z_axis origin
+                                 {-
+                                 setZaxis'' = 
+                                   let -- length = (radius horizRadius) * (sinDegrees (slope currentSlope))
+                                       z_axis' = z_axis origin
+                                   in
+                                    case currentSlope of
+                                     --(PosSlope _) -> z_axis' +  length
+                                     (PosSlope _) -> z_axis' +  horizRadius
+                                     --(NegSlope _)  -> z_axis' - length
+                                     (NegSlope _)  -> z_axis' - horizRadius
+                                 
+                                 -}
+                             in       
+                                 cPoint (Point setXaxis setYaxis setZaxis )
 
 
 

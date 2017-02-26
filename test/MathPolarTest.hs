@@ -5,10 +5,7 @@ import Test.HUnit
 
 import CornerPoints.CornerPoints(CornerPoints(..), (+++))
 import CornerPoints.Points(Point(..))
-import CornerPoints.Create(
-  adjustRadiusForSlope,
-  )
-import CornerPoints.Composable(createCornerPoint)
+import CornerPoints.Create(adjustRadiusForSlope, createCornerPoint)
 import CornerPoints.Radius(Radius(..))
 import CornerPoints.Slope(addSlope)
 

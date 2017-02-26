@@ -3,6 +3,7 @@ module CornerPoints.HorizontalFaces(
   createTopFaces,
   createTopFacesSloped,
   createBottomFaces,
+  createBottomFacesSloped,
   createTopFacesWithVariableSlope,
   createBottomFacesWithVariableSlope,
   createBottomFacesSquaredOff,
@@ -10,14 +11,14 @@ module CornerPoints.HorizontalFaces(
   createBottomFacesLengthenY,
   createBottomFacesSquaredOffLengthenYSeparately,
   )where
-import CornerPoints.Create(Origin(..), createCornerPointSquaredOff)
+import CornerPoints.Create(Origin(..), createCornerPointSquaredOff, createCornerPoint)
 import CornerPoints.CornerPoints(CornerPoints(..), (+++>), (+++), (|+++|), (|@+++#@|))
 import CornerPoints.Points(Point(..))
 import CornerPoints.Radius(Radius(..))
 import CornerPoints.FaceExtraction (extractFrontFace, extractTopFace,extractBottomFace)
 import CornerPoints.FaceConversions(backFaceFromFrontFace, upperFaceFromLowerFace, lowerFaceFromUpperFace )
 import CornerPoints.Transpose (transposeZ, transposeY)
-import CornerPoints.Composable(createCornerPoint)
+--import CornerPoints.Composable(createCornerPoint)
 import CornerPoints.Slope(addSlope)
 
 import Geometry.Radius(squaredOff)
@@ -103,6 +104,34 @@ createBottomFaces inOrigin radii angles {-xSlope ySlope-}  =
        | angle <- tail angles
        | radius <- tail radii
     ]
+
+createBottomFacesSloped :: Origin -> [Radius] -> [Angle] ->  Slope -> Slope -> [CornerPoints]
+createBottomFacesSloped inOrigin radii angles xSlope ySlope  =
+    (addSlope xSlope ySlope (head angles) inOrigin $
+     createCornerPoint
+      (F4)
+      inOrigin
+      (head radii)
+      (head angles)
+      
+    ) 
+    +++
+    B4 inOrigin
+    +++>
+    [(addSlope xSlope ySlope (head angles) inOrigin $
+      createCornerPoint
+      (F1)
+      inOrigin
+      radius
+      angle
+      
+     ) 
+     +++
+     B1 inOrigin
+       | angle <- tail angles
+       | radius <- tail radii
+    ]
+
 {- |
 Create [BottomFaces] that have modified radii that are squared off by the Geometry.Radius.squaredOff function.
 -}
