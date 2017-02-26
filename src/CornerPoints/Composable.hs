@@ -2,7 +2,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 module CornerPoints.Composable (createCornerPoint, Origin(..), {-createTopFaces,-} Composable(..),
                                 composableDefault, runComposer, createCornerPointComposable, createBottomFacesComposable, createTopFacesComposable,
-                                createCornerPointComposableSloped, createComposable, addSlope, {-createTopFacesSloped,-} createBottomFacesSloped) where
+                                createCornerPointComposableSloped, createComposable, {-addSlope,-} {-createTopFacesSloped,-} createBottomFacesSloped) where
 
 
 
@@ -117,8 +117,8 @@ createCornerPointComposableSloped xSlope      ySlope   composer =
 {- |
 Add a slope to a CornerPoionts
 need to be able to figure out the radius.
-
 -}
+
 addSlope :: Slope -> Slope -> Angle -> Point -> CornerPoints -> CornerPoints
 addSlope    xSlope   ySlope   xyAngle  origin   cpoint =
   let 

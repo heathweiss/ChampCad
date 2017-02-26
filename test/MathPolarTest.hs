@@ -8,8 +8,9 @@ import CornerPoints.Points(Point(..))
 import CornerPoints.Create(
   adjustRadiusForSlope,
   )
-import CornerPoints.Composable(createCornerPoint, addSlope)
+import CornerPoints.Composable(createCornerPoint)
 import CornerPoints.Radius(Radius(..))
+import CornerPoints.Slope(addSlope)
 
 import Math.Trigonometry(sinDegrees,cosDegrees)
 

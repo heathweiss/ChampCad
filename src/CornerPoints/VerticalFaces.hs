@@ -6,14 +6,16 @@ module CornerPoints.VerticalFaces(
   createLeftFacesMultiColumns, createLeftFacesMultiColumnsNoSlope, createVerticalWalls,
   TransposeFactor(..)) where
 import CornerPoints.Create(Origin(..))
-import CornerPoints.Composable(createCornerPoint, addSlope)
+import CornerPoints.Composable(createCornerPoint{-, addSlope-})
 import CornerPoints.CornerPoints(CornerPoints(..), (+++>), (+++), (|+++|))
 import CornerPoints.Transpose (transposeZ)
 import CornerPoints.Points(Point(..))
 import CornerPoints.Radius(Radius(..), SingleDegreeRadii(..), Degree(..), MultiDegreeRadii(..))
 import TypeClasses.Transposable( TransposeLength, transpose)
 import CornerPoints.FaceExtraction (extractFrontFace, extractTopFace,extractBottomFace)
-import CornerPoints.FaceConversions(backFaceFromFrontFace)                           
+import CornerPoints.FaceConversions(backFaceFromFrontFace)
+import CornerPoints.Slope(addSlope)
+
 
 import Geometry.Angle(Angle(..), rotateAngle, getQuadrantAngle, RotateFactor(..))
 import Geometry.Slope(Slope(..), flatXSlope, flatYSlope, slopeAdjustedForVerticalAngle)

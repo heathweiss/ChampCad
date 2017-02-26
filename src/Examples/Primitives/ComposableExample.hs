@@ -5,7 +5,7 @@ module Examples.Primitives.ComposableExample(createCylinderComposableSlopedStlGe
                                             createDoubleCylinderSquaredAndSlopedStlGenerator, createDoubleCylinderSquaredAndSlopedCumulativeCornerPoints ) where
 
 import CornerPoints.Composable (createCornerPoint, Origin(..), Composable(..), composableDefault, createCornerPointComposable,
-                               createBottomFacesComposable, createCornerPointComposableSloped,  createTopFacesComposable, createComposable, addSlope)
+                               createBottomFacesComposable, createCornerPointComposableSloped,  createTopFacesComposable, createComposable)
 import CornerPoints.HorizontalFaces(createBottomFaces, createTopFaces, createTopFacesSloped)
 import CornerPoints.Radius(Radius(..))
 import CornerPoints.CornerPoints(CornerPoints(..), (+++), (|+++|), (|@+++#@|), (+++>))
@@ -16,6 +16,7 @@ import CornerPoints.FaceConversions(backFaceFromFrontFace, upperFaceFromLowerFac
 import CornerPoints.Transpose (transposeZ, transposeY, transposeX, )
 import CornerPoints.Points(Point(..))
 import CornerPoints.MeshGeneration(autoGenerateEachCube)
+import CornerPoints.Slope(addSlope)
 
 import TypeClasses.Transposable(transpose)
 
