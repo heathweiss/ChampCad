@@ -3,12 +3,7 @@ module CornerPointsCreateTest(cornerPointsCreateTestDo ) where
 import Test.HUnit
 
 import  CornerPoints.Create(
-  slopeAdjustedForVerticalAngle,
   adjustRadiusForSlope,
-  
-  Slope(..),
-  flatXSlope,
-  flatYSlope,
   Origin(..),
   createCornerPointSquaredOff,
   )
@@ -19,6 +14,7 @@ import CornerPoints.Points (Point(..))
 import CornerPoints.Radius(Radius(..))
 
 import Geometry.Angle(Angle(..), rotateAngle, getQuadrantAngle, RotateFactor(..))
+import Geometry.Slope(Slope(..), flatXSlope, flatYSlope, slopeAdjustedForVerticalAngle)
 
 import Math.Trigonometry(sinDegrees, cosDegrees)
 

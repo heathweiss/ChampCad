@@ -88,6 +88,7 @@ library
                        Geometry.Radius
                        Geometry.CornerPoints
                        Geometry.Angle
+                       Geometry.Slope
 
   build-depends:       base >= 4.7 && < 5
                      , HUnit >=1.2.5.2

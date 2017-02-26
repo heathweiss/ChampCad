@@ -6,11 +6,7 @@ import Test.HUnit
 import CornerPoints.CornerPoints(CornerPoints(..), (+++))
 import CornerPoints.Points(Point(..))
 import CornerPoints.Create(
-  slopeAdjustedForVerticalAngle,
   adjustRadiusForSlope,
-  Slope(..),
-  flatXSlope,
-  flatYSlope,
   )
 import CornerPoints.Composable(createCornerPoint, addSlope)
 import CornerPoints.Radius(Radius(..))
@@ -19,6 +15,7 @@ import Math.Trigonometry(sinDegrees,cosDegrees)
 
 import Geometry.Radius(calcultateDistance)
 import Geometry.Angle(Angle(..), rotateAngle, getQuadrantAngle, RotateFactor(..))
+import Geometry.Slope(Slope(..), flatXSlope, flatYSlope, slopeAdjustedForVerticalAngle)
 
 mathPolarTestDo = do
 

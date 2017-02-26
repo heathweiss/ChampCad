@@ -4,7 +4,6 @@ module Examples.ShoeLift.GeoxShoe where
 import CornerPoints.Radius(Radius(..), buildSymmetricalRadius)
 import CornerPoints.HorizontalFaces(createTopFaces)
 import CornerPoints.Points(Point(..))
-import CornerPoints.Create(flatXSlope, flatYSlope, Slope(..))
 import CornerPoints.CornerPointsWithDegrees(CornerPointsWithDegrees(..), (@~+++#@),(@~+++@),(|@~+++@|), (|@~+++#@|), DegreeRange(..))
 import CornerPoints.CornerPoints((|@+++#@|), (|+++|), CornerPoints(..), (+++), (+++>))
 import CornerPoints.FaceExtraction(extractTopFace, extractBottomFace, extractFrontFace, extractBackFace, extractLeftFace, extractRightFace)
@@ -15,6 +14,7 @@ import CornerPoints.Degree(Degree(..))
 import TypeClasses.Transposable(transposeZ, transposeY)
 
 import Geometry.Angle(Angle(..), rotateAngle, getQuadrantAngle, RotateFactor(..))
+import Geometry.Slope(Slope(..), flatXSlope, flatYSlope, slopeAdjustedForVerticalAngle)
 
 --external libraries
 import qualified Flow as Flw

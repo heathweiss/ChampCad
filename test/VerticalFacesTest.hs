@@ -5,12 +5,13 @@ import CornerPoints.VerticalFaces(createRightFaces, createRightFacesNoSlope, cre
                                   createHorizontallyAlignedCubes, createHorizontallyAlignedCubesNoSlope ,
                                   createLeftFacesMultiColumns, createLeftFacesMultiColumnsNoSlope,TransposeFactor,
                                   createVerticalWalls, createVerticalFaces)
-import CornerPoints.Create(Slope(..), Origin(..), flatXSlope, flatYSlope)
+import CornerPoints.Create(Origin(..))
 import CornerPoints.CornerPoints(CornerPoints(..))
 import CornerPoints.Points(Point(..))
 import CornerPoints.Radius(MultiDegreeRadii(..), Radius(..), SingleDegreeRadii(..), Degree(..))
 
 import Geometry.Angle(Angle(..), rotateAngle, getQuadrantAngle, RotateFactor(..))
+import Geometry.Slope(Slope(..), flatXSlope, flatYSlope, slopeAdjustedForVerticalAngle)
 
 import TypeClasses.Transposable(transpose)
 

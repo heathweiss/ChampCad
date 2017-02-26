@@ -11,14 +11,16 @@ import qualified  CornerPoints.VerticalFaces  as Vertical (
   createLeftFacesMultiColumns, createLeftFacesMultiColumnsNoSlope, {-createVerticalWalls,-}
   TransposeFactor(..))
 import CornerPoints.Radius(SingleDegreeRadii(..), Radius(..), MultiDegreeRadii(..))
-import CornerPoints.Create(flatXSlope, flatYSlope, Slope(..), Origin(..))
+import CornerPoints.Create(Origin(..))
 import CornerPoints.CornerPointsWithDegrees(CornerPointsWithDegrees(..),(+++~>),(|+++~|), (+++~), DegreeRange(..))
 import CornerPoints.CornerPoints(CornerPoints(..),)
 import CornerPoints.Points (Point(..))
 import CornerPoints.FaceExtractionWithDegrees (extractFrontFace)
 import CornerPoints.FaceConversionsWithDegrees (backFaceFromFrontFace)
+
 import Test.HUnit
 
+import Geometry.Slope(Slope(..), flatXSlope, flatYSlope, slopeAdjustedForVerticalAngle)
 
 --make type signatures more readable
 type Degree = Double

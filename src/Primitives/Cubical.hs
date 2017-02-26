@@ -17,11 +17,12 @@ import CornerPoints.FaceConversions(
   frontTopLineFromBackTopLine,
   bottomFrontLineFromBackBottomLine)
 import  Math.Trigonometry(atanDegrees)
-import CornerPoints.Create( Slope(..), Origin(..),  createCornerPointSquaredOff)
+import CornerPoints.Create(Origin(..),  createCornerPointSquaredOff)
 import CornerPoints.Radius(Radius(..))
 import CornerPoints.HorizontalFaces(createTopFaces, createBottomFaces, createTopFacesWithVariableSlope,  createBottomFacesWithVariableSlope)
 
 import Geometry.Angle(Angle(..), rotateAngle, getQuadrantAngle, RotateFactor(..))
+import Geometry.Slope(Slope(..), flatXSlope, flatYSlope, slopeAdjustedForVerticalAngle)
 
 type ZHeight = Double
 type XWidth = Double

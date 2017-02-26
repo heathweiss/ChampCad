@@ -5,7 +5,7 @@ module CornerPoints.VerticalFaces(
   createHorizontallyAlignedCubes, createHorizontallyAlignedCubesNoSlope,
   createLeftFacesMultiColumns, createLeftFacesMultiColumnsNoSlope, createVerticalWalls,
   TransposeFactor(..)) where
-import CornerPoints.Create(Slope(..), Origin(..),  {-Angle(..),-} flatXSlope, flatYSlope)
+import CornerPoints.Create(Origin(..))
 import CornerPoints.Composable(createCornerPoint, addSlope)
 import CornerPoints.CornerPoints(CornerPoints(..), (+++>), (+++), (|+++|))
 import CornerPoints.Transpose (transposeZ)
@@ -16,6 +16,7 @@ import CornerPoints.FaceExtraction (extractFrontFace, extractTopFace,extractBott
 import CornerPoints.FaceConversions(backFaceFromFrontFace)                           
 
 import Geometry.Angle(Angle(..), rotateAngle, getQuadrantAngle, RotateFactor(..))
+import Geometry.Slope(Slope(..), flatXSlope, flatYSlope, slopeAdjustedForVerticalAngle)
 
 ----------------------------------------- create left/right faces from Scan datatype------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 

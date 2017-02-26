@@ -6,11 +6,11 @@ import Test.HUnit
 import CornerPoints.HorizontalFaces(createBottomFaces, createBottomFacesWithVariableSlope, createTopFaces, createBottomFacesSquaredOffLengthenY,
                                    createBottomFacesSquaredOffLengthenYSeparately)
 import CornerPoints.CornerPoints(CornerPoints(..), (+++))
-import CornerPoints.Create(flatXSlope,flatYSlope, Slope(..))
 import CornerPoints.Points(Point(..))
 import CornerPoints.Radius(Radius(..))
 
 import Geometry.Angle(Angle(..), rotateAngle, getQuadrantAngle, RotateFactor(..))
+import Geometry.Slope(Slope(..), flatXSlope, flatYSlope, slopeAdjustedForVerticalAngle)
 
 horizontalFacesTestDo = do
     --------------------bottom/top faces------------------

@@ -10,9 +10,10 @@ import Primitives.Cubical( rectangularSolidNoSlope)
 
 import CornerPoints.Radius(Radius(..))
 import CornerPoints.Points(Point(..))
-import CornerPoints.Create( Slope(..), Origin(..), createCornerPointSquaredOff)
+import CornerPoints.Create(Origin(..), createCornerPointSquaredOff)
 
 import Geometry.Angle(Angle(..), rotateAngle, getQuadrantAngle, RotateFactor(..))
+import Geometry.Slope(Slope(..), flatXSlope, flatYSlope, slopeAdjustedForVerticalAngle)
 
 writeJoinerStlFile = writeStlToFile stlFile
 stlFile = newStlShape "joiner cube" rectangleTriangles

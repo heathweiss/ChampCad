@@ -9,7 +9,6 @@ import CornerPoints.Composable (createCornerPoint, Origin(..), Composable(..), c
 import CornerPoints.HorizontalFaces(createBottomFaces, createTopFaces, createTopFacesSloped)
 import CornerPoints.Radius(Radius(..))
 import CornerPoints.CornerPoints(CornerPoints(..), (+++), (|+++|), (|@+++#@|), (+++>))
-import CornerPoints.Create(Slope(..))
 import CornerPoints.FaceExtraction (extractFrontFace, extractTopFace,extractBottomFace, extractBackFace, extractFrontTopLine, extractBackTopLine,
                                     extractBackBottomLine, extractBackTopLine, extractBottomFrontLine)
 import CornerPoints.FaceConversions(backFaceFromFrontFace, upperFaceFromLowerFace, lowerFaceFromUpperFace, frontFaceFromBackFace,
@@ -22,6 +21,7 @@ import TypeClasses.Transposable(transpose)
 
 import Geometry.Radius(doubleCylinderZip, doubleCylinder, squaredOff)
 import Geometry.Angle(Angle(..), rotateAngle, getQuadrantAngle, RotateFactor(..))
+import Geometry.Slope(Slope(..), flatXSlope, flatYSlope, slopeAdjustedForVerticalAngle)
 
 import Stl.StlCornerPoints((|+++^|), (||+++^||), Faces(..))
 import Stl.StlBase (StlShape(..), newStlShape)

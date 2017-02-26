@@ -6,7 +6,6 @@ import  Primitives.Cylindrical.Solid(yLengthenedCylinder, squaredOffCylinder, sq
 
 import CornerPoints.Radius(Radius(..))
 import CornerPoints.Points(Point(..))
-import CornerPoints.Create(Slope(..))
 import CornerPoints.Transpose(transposeY)
 
 
@@ -16,6 +15,7 @@ import Stl.StlFileWriter(writeStlToFile)
 
 
 import Geometry.Angle(Angle(..), rotateAngle, getQuadrantAngle, RotateFactor(..))
+import Geometry.Slope(Slope(..), flatXSlope, flatYSlope, slopeAdjustedForVerticalAngle)
 
 angles = (map (Angle) [0,10..360])
 
