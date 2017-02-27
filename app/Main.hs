@@ -6,11 +6,11 @@ import Examples.OpenBionicsCom.OpenBionicsDotComDesignWork (fullLengthSocketWith
                                                   topOfSocketStlGenerator, joinerShaftStlGenerator,
                                                   shortSocketToLargeShaftStlGenerator, wristToLargeShaftStlGenerator
                                                   )
-import Examples.Primitives.Squared(cylinderWithSquaredRadiiStlGenerator)
+import Examples.Primitives.Squared(cylinderWithSquaredRadiiStlGenerator, )
 
 import Examples.Primitives.Cylinders(slopedToppedCylinder, solidCylinderSquared, solidCylinderLengthenY, solidCylinderSquared, walledCylinderSquared)
 
-import Examples.Scan.WalkerSocketDesignWork(loadMDRAndPassToProcessor)
+import Examples.Scan.WalkerSocketDesignWork(loadMDRAndPassToProcessor, socketWithRiserStlGenerator)
 
 import Examples.Primitives.Cube(writeJoinerStlFile)
 
@@ -27,7 +27,7 @@ main = do
  --loadMDRAndPassToProcessor (read $ head x) (read $ head $ tail x)
 
  
-  loadMDRAndPassToProcessor 
+  socketWithRiserStlGenerator 
   
   
   

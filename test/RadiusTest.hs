@@ -1,9 +1,9 @@
 {-# LANGUAGE ParallelListComp #-}
 module RadiusTest(radisuTestDo) where
 import Test.HUnit
-import CornerPoints.Radius(Radius(..), SingleDegreeRadii(..), Degree(..), MultiDegreeRadii(..), resetMultiDegreeRadiiIfNull,
-                          extractSingle, extractList, rotateMDR, setRadiusIfNull,  resetSingleDegreeRadiiIfNull,
-                          setRadiusWithPrecedingValueIfNull, resetMultiDegreeRadiiIfNullWithPreviousValue, 
+import CornerPoints.Radius(Radius(..), SingleDegreeRadii(..), Degree(..), MultiDegreeRadii(..), {-resetMultiDegreeRadiiIfNull,-}
+                          extractSingle, extractList, rotateSDR, setRadiusIfNull,  resetSingleDegreeRadiiIfNull,
+                          setRadiusWithPrecedingValueIfNull, {-resetMultiDegreeRadiiIfNullWithPreviousValue,-} resetSingleDegreeRadiiIfNullWithPreviousValue,
                           transposeMDRList, extractSDRWithinRange, transformSDRWithList, extractMaybeRadii, extractMaybeSDR,
                           singleDegreeRadiiListToMap)
 
@@ -48,8 +48,7 @@ radisuTestDo = do
  
 
  runTestTT resetSingleDegreeRadiiNaNTest
- runTestTT resetMultiDegreeRadiiNaNTest
- runTestTT resetMultiDegreeRadiiNullWithPreviousValueTest
+ runTestTT resetSingleDegreeRadiiNullWithPreviousValueTest
 
 -- =============================== work on transposing an mdr using >><<===================
 {-
@@ -153,41 +152,21 @@ singleDegreeRadiiListToMapTest = TestCase $ assertEqual
    in extractMaybeSDR $ sdrMap^.at (0.0)
   )
 -- =============================== end: work on transposing an mdr using Flow ===================
-resetMultiDegreeRadiiNaNTest  = TestCase $ assertEqual 
-  "resetMultiDegreeRadiiNaNTest"
-  (MultiDegreeRadii
-   "myName"
-   [(SingleDegreeRadii 0 (map (Radius) [1,2])),
-    (SingleDegreeRadii 0 (map (Radius) [3,44]))
-   ]
-  )
-  (resetMultiDegreeRadiiIfNull 44
-   
-    ( MultiDegreeRadii
-      "myName"
-      [(SingleDegreeRadii 0 [Radius 1, Radius 2]),
-       (SingleDegreeRadii 0 [Radius 3, Radius (averageValueOf [])])
-      ]
-    )
-  )
 
-resetMultiDegreeRadiiNullWithPreviousValueTest  = TestCase $ assertEqual 
-  "resetMultiDegreeRadiiNullWithPreviousValueTest"
-  (MultiDegreeRadii
-   "myName"
+resetSingleDegreeRadiiNullWithPreviousValueTest  = TestCase $ assertEqual 
+  "resetSingleDegreeRadiiNullWithPreviousValueTest"
+  (
    [(SingleDegreeRadii 0 (map (Radius) [1,2])),
     (SingleDegreeRadii 0 (map (Radius) [3,3]))
    ]
   )
-  (resetMultiDegreeRadiiIfNullWithPreviousValue 44
-   
-    ( MultiDegreeRadii
-      "myName"
-      [(SingleDegreeRadii 0 [Radius 1, Radius 2]),
-       (SingleDegreeRadii 0 [Radius 3, Radius (averageValueOf [])])
-      ]
-    )
+  (map (resetSingleDegreeRadiiIfNullWithPreviousValue 44)
+       [
+         (SingleDegreeRadii 0 [Radius 1, Radius 2]),
+         (SingleDegreeRadii 0 [Radius 3, Radius (averageValueOf [])])
+       ]
   )
+
 
 resetSingleDegreeRadiiNaNTest  = TestCase $ assertEqual 
   "resetSingleDegreeRadiiNaNTest"
@@ -222,11 +201,19 @@ setRadiusIfNotNullTest = TestCase $ assertEqual
   (setRadiusIfNull 1 $ Radius 2)
 
 {-The first and last [Radius] must always match, which is why a [Radius0] was eliminated, and an extra [Radius 20] was created.-}
+{-
 rotateMultiDegreeRadiiTest = TestCase $ assertEqual 
   "rotateMultiDegreeRadiiTest"
   (MultiDegreeRadii "name" [SingleDegreeRadii 0 [Radius 20], SingleDegreeRadii 10 [Radius 0], SingleDegreeRadii 20 [Radius 10],SingleDegreeRadii 30 [Radius 20]])
   (rotateMDR  (MultiDegreeRadii "name" [SingleDegreeRadii 0 [Radius 0], SingleDegreeRadii 10 [Radius 10], SingleDegreeRadii 20 [Radius 20],SingleDegreeRadii 30 [Radius 0]]))
-  
+-}
+rotateMultiDegreeRadiiTest = TestCase $ assertEqual 
+  "rotateMultiDegreeRadiiTest"
+  (MultiDegreeRadii "name" [SingleDegreeRadii 0 [Radius 20], SingleDegreeRadii 10 [Radius 0], SingleDegreeRadii 20 [Radius 10],SingleDegreeRadii 30 [Radius 20]])
+  ((MultiDegreeRadii "name" $
+    rotateSDR
+    [SingleDegreeRadii 0 [Radius 0], SingleDegreeRadii 10 [Radius 10], SingleDegreeRadii 20 [Radius 20],SingleDegreeRadii 30 [Radius 0]])
+  )
 
 transposeRadiusTest = TestCase $ assertEqual
   "transposeRadiusTest"

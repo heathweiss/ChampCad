@@ -5,7 +5,7 @@ import Scan.ParseJuicy(getRedLaserLineSingleImage, removeLeftOfCenterPixels, get
 import Data.Word(Word8)
 import qualified Data.ByteString.Lazy as BL
 import Data.Aeson
-import CornerPoints.Radius(MultiDegreeRadii(..), SingleDegreeRadii(..), Radius(..),extractSingle, extractList, resetMultiDegreeRadiiIfNull)
+import CornerPoints.Radius(MultiDegreeRadii(..), SingleDegreeRadii(..), Radius(..),extractSingle, extractList, resetSingleDegreeRadiiIfNull )
 import CornerPoints.VerticalFaces(createRightFaces, createLeftFaces, createLeftFacesMultiColumns, 
                                   createHorizontallyAlignedCubesNoSlope, createHorizontallyAlignedCubes)
 import CornerPoints.Points(Point(..))
@@ -62,7 +62,8 @@ resetJsonFileMDRNaN = do
   case (decode contents) of
    
       Just (MultiDegreeRadii name' degrees') ->
-        let multiDegreeRadii = resetMultiDegreeRadiiIfNull 2000 $ MultiDegreeRadii name' degrees'
+        --let multiDegreeRadii = resetMultiDegreeRadiiIfNull 2000 $ MultiDegreeRadii name' degrees'
+        let multiDegreeRadii = MultiDegreeRadii name' $ map (resetSingleDegreeRadiiIfNull 2000) degrees'
         in  BL.writeFile "src/Data/scanFullData.json" $ encode $ multiDegreeRadii
         
       Nothing                                ->

@@ -5,9 +5,10 @@ Adds a layer of complexity for nothing.
 It is built in at a low level, and will be quite a bit of work to refactor out.
 -}
 
-module CornerPoints.Radius(Radius(..), SingleDegreeRadii(..), Degree(..), MultiDegreeRadii(..),resetMultiDegreeRadiiIfNull,
-                          extractSingle, extractList, rotateMDR, setRadiusIfNull, resetSingleDegreeRadiiIfNull,
-                          setRadiusWithPrecedingValueIfNull, resetMultiDegreeRadiiIfNullWithPreviousValue,
+module CornerPoints.Radius(Radius(..), SingleDegreeRadii(..), Degree(..), MultiDegreeRadii(..),
+                          extractSingle, extractList, rotateSDR, setRadiusIfNull, resetSingleDegreeRadiiIfNull,
+                          setRadiusWithPrecedingValueIfNull, 
+                          resetSingleDegreeRadiiIfNullWithPreviousValue,
                           buildSymmetricalRadius, transposeMDRList, extractSDRWithinRange,
                           transformSDRWithList, extractMaybeRadii, extractMaybeSDR, singleDegreeRadiiListToMap,
                           transformRangeOfSDR, transformMaybeSDR, transformMaybeSDRDegree, transformSDRDegree,
@@ -16,7 +17,7 @@ module CornerPoints.Radius(Radius(..), SingleDegreeRadii(..), Degree(..), MultiD
 import TypeClasses.Transposable( TransposeLength, transpose, TransposeWithList, transposeWithList)
 import Data.List(sortBy)
 import Data.Ord (Ordering(..), comparing)
-import CornerPoints.CornerPoints(CornerPoints(..))
+--import CornerPoints.CornerPoints(CornerPoints(..))
 
 import qualified Data.Map as M
 import qualified Data.Sequence as S
@@ -235,6 +236,16 @@ transposeMDRList    fx                         multiDegreeRadii    =
 -- |Rotate the radii clockwise on the xy plane.
 --  Shifts the [Radius] up to the next SingleDegreeRadii in the degrees field,
 --  while preserving the fact that the first and last degree must always having matching [Radius].
+rotateSDR  :: [SingleDegreeRadii]  -> [SingleDegreeRadii]
+rotateSDR (x:xs)  =
+  let rotateSDRRecur :: [Radius] -> [SingleDegreeRadii] -> [SingleDegreeRadii]
+      rotateSDRRecur radii'   (x:xs) =
+        (x {radii = radii'}) : (rotateSDRRecur (radii  x) xs)
+      rotateSDRRecur radii' [] = []
+  in
+       (x {radii = (radii $ last $ init xs)}) :  rotateSDRRecur (radii x) xs
+
+{- remove in favor of rotateSDR
 rotateMDR ::  MultiDegreeRadii -> MultiDegreeRadii
 rotateMDR     multiDegreeRadii   =
   let
@@ -252,16 +263,21 @@ rotateMDR     multiDegreeRadii   =
      
   in 
      multiDegreeRadii {degrees = (rotateSDR  (degrees multiDegreeRadii ))}
-
+-}
+{- remove in favor of mapping over SDR
 -- | Reset all Radii Null values with a default value
 resetMultiDegreeRadiiIfNull :: Double -> MultiDegreeRadii -> MultiDegreeRadii
 resetMultiDegreeRadiiIfNull resetValue (MultiDegreeRadii name' degrees') =
   MultiDegreeRadii name' $ map (resetSingleDegreeRadiiIfNull resetValue) degrees'
-
+-}
+{- can delete when all MultiDegreeRadii have been removed
 -- | Reset all Radii Null values with the previous Radius. Provide a starter Radius for start of list.
+
 resetMultiDegreeRadiiIfNullWithPreviousValue :: Double -> MultiDegreeRadii -> MultiDegreeRadii
 resetMultiDegreeRadiiIfNullWithPreviousValue resetValue (MultiDegreeRadii name' degrees') =
   MultiDegreeRadii name' $ map (resetSingleDegreeRadiiIfNullWithPreviousValue resetValue) degrees'
+-}
+
 
 class ExtractableRadius a  where
   -- |Know instances:

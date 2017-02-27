@@ -4,7 +4,7 @@ module Examples.OpenBionicsCom.OpenBionicsDotComDesignWork
         wristToLargeShaftStlGenerator) where
 
 
-import CornerPoints.Radius(MultiDegreeRadii(..), SingleDegreeRadii(..), Radius(..),extractSingle, extractList, rotateMDR, transposeMDRList,
+import CornerPoints.Radius(MultiDegreeRadii(..), SingleDegreeRadii(..), Radius(..),extractSingle, extractList, transposeMDRList,
                           extractSDRWithinRange, singleDegreeRadiiListToMap, transformSDRWithList, extractMaybeSDR,
                           transformRangeOfSDR, transformMaybeSDR, transformMaybeSDRDegree, transformSDRDegree)
   

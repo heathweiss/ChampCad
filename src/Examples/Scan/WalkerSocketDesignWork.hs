@@ -4,7 +4,7 @@ module Examples.Scan.WalkerSocketDesignWork(loadMDRAndPassToProcessor, socketWit
 Use the autogenerate stl in all functions.
 -}
 
-import CornerPoints.Radius(MultiDegreeRadii(..), SingleDegreeRadii(..), Radius(..),extractSingle, extractList, rotateMDR, transposeMDRList,
+import CornerPoints.Radius(MultiDegreeRadii(..), SingleDegreeRadii(..), Radius(..),extractSingle, extractList, rotateSDR, transposeMDRList,
                           {-transposeSDRList,-} extractSDRWithinRange, singleDegreeRadiiListToMap, transformSDRWithList, extractMaybeSDR,
                           transformRangeOfSDR, transformMaybeSDR, transformMaybeSDRDegree, transformSDRDegree)
   
@@ -106,7 +106,14 @@ loadMDRAndPassToProcessor  = do
             --enlarge it to fit over the socket already printed with WalkerSocket. 1st attempt at +2 was not quite big enough, trying 3.
             --rotate it to line up better with the riser, when using squared off function.
             --innerSleeveMDR = rotateMDR $ rotateMDR $ rotateMDR $ transpose (+3) $ reduceScan rowReductionFactor $ removeDefectiveTopRow (MultiDegreeRadii name' degrees')
-            innerSleeveMDR = (rotateMDR) . (rotateMDR) . (rotateMDR) .  (transpose (+3)) . (reduceScan rowReductionFactor) . removeDefectiveTopRow   $ (MultiDegreeRadii name' degrees')
+            --innerSleeveMDR = (rotateMDR) . (rotateMDR) . (rotateMDR) .  (transpose (+3)) . (reduceScan rowReductionFactor) . removeDefectiveTopRow   $ (MultiDegreeRadii name' degrees')
+            innerSleeveMDR =  (transpose (+3)) . (reduceScan rowReductionFactor) . removeDefectiveTopRow   $
+                               (MultiDegreeRadii
+                                  name'
+                                  
+                                  (rotateSDR . rotateSDR . rotateSDR $ degrees')
+                               )
+                                  --(map rotateSDR $ map rotateSDR $ map rotateSDR degrees'))
             --give it a thickness of 3 mm
             outerSleeveMDR = transpose (+3) innerSleeveMDR
             plateRadius = 24
@@ -727,7 +734,14 @@ socketWithRiserStlGenerator = do
             --Is it some combination with PixelsPerMillimeter that messes it up.
             --ToDo: Make a diff. version of reduceScan that perhaps uses mm instead of mod of some number.
             rowReductionFactor = 100::RowReductionFactor 
-            innerSleeveMDR = (rotateMDR) . (rotateMDR) . (rotateMDR) . (transpose (+3)) . (reduceScan rowReductionFactor) . removeDefectiveTopRow' $ (MultiDegreeRadii name' degrees')
+            --innerSleeveMDR = (rotateMDR) . (rotateMDR) . (rotateMDR) . (transpose (+3)) . (reduceScan rowReductionFactor) . removeDefectiveTopRow' $ (MultiDegreeRadii name' degrees')
+            innerSleeveMDR = (transpose (+3)) . (reduceScan rowReductionFactor) . removeDefectiveTopRow' $
+                              (MultiDegreeRadii
+                                name'
+                                --(map ((rotateSDR) . (rotateSDR) . (rotateSDR)) degrees'))
+                                --(map rotateSDR $ map rotateSDR $ map rotateSDR degrees'))
+                                (rotateSDR . rotateSDR . rotateSDR $ degrees')
+                              )
             outerSleeveMDR = transpose (+3) innerSleeveMDR
             cpoints =  ((execState $ runExceptT (socketWithRiser (degrees innerSleeveMDR) (degrees outerSleeveMDR)         rowReductionFactor    pixelsPerMM ) ) [])
         in  writeStlToFile $ newStlShape "socket with riser"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
