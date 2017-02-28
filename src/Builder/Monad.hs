@@ -17,6 +17,7 @@ Tests and example are in Tests.BuilderMonadTest
 
 module Builder.Monad (BuilderError(..),
                       cornerPointsErrorHandler, buildCubePointsList, buildCubePointsListWithAdd,
+                      buildCubePointsListSingle,
                        buildCubePointsListWithIOCpointsListBase,
                       CpointsStack, CpointsList) where
 
@@ -79,8 +80,14 @@ buildCubePointsList :: (CpointsList -> CpointsStack -> CpointsStack) -> String -
 buildCubePointsList pushToStack extraMsg cPoints cPoints' = 
   (buildCubePointsListOrFail pushToStack extraMsg cPoints cPoints') `catchError` cornerPointsErrorHandler
 
---curry in ++ which seems to be the only fx used so far.
+-- | Build [CornerPoints] from by [CornerPoints] (++) [CornerPoints].
 buildCubePointsListWithAdd = buildCubePointsList (++)
+
+-- | Build [CornerPoints] from a single list.
+buildCubePointsListSingle :: String -> CpointsList ->
+                       ExceptT BuilderError (State CpointsStack ) CpointsList
+buildCubePointsListSingle extraMsg cPoints =
+  buildCubePointsList (++) extraMsg [CornerPointsId | x <- [1..]] cPoints
   
 {- |
 Same as buildCornerPointsListOrFail, but only pushes list onto the stack if all the elements are CubePoints.
