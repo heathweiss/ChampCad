@@ -48,7 +48,9 @@ cornerPointsTestDo = do
   --isCubePoints and isCubePointsList tests
   runTestTT isCubePointsTest
   runTestTT isNotCubePointsTest
+  runTestTT isCubePointsWithNothingTest
   runTestTT isCubePointsListTest
+  runTestTT isCubePointsNothingListTest
   runTestTT isNotCubePointsListTest
 
   --error tests
@@ -68,11 +70,24 @@ isNotCubePointsTest = TestCase $ assertEqual
   False
   (isCubePoints (LeftFace  (Point 0 0 0)  (Point 0 0 1)  (Point 0 1 0) (Point 0 1 1) ))
 
+isCubePointsWithNothingTest = TestCase $ assertEqual
+  "isNotCubePointsTest"
+  True
+  (isCubePoints CornerPointsNothing)
+
 isCubePointsListTest = TestCase $ assertEqual
   "isCubePointsListTest"
   True
   (isCubePointsList [CubePoints (Point 1 1 1) (Point 1 1 1) (Point 1 1 1) (Point 1 1 1)
                                 (Point 1 1 1) (Point 1 1 1) (Point 1 1 1) (Point 1 1 1)])
+
+isCubePointsNothingListTest = TestCase $ assertEqual
+  "isCubePointsNothingListTest"
+  True
+  (isCubePointsList [CubePoints (Point 1 1 1) (Point 1 1 1) (Point 1 1 1) (Point 1 1 1)
+                                (Point 1 1 1) (Point 1 1 1) (Point 1 1 1) (Point 1 1 1),
+                     CornerPointsNothing
+                    ])
 
 isNotCubePointsListTest = TestCase $ assertEqual
   "isNotCubePointsListTest"

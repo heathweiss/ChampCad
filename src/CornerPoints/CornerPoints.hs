@@ -39,6 +39,9 @@ data CornerPoints =
         |
                CornerPointsId
         |
+               -- | Counts as a CubePoints in isCubePointsList and isCubePoints as used by Builder.Monad
+               CornerPointsNothing
+        |
                CubePoints 
 
         {       f1 :: Point,
@@ -230,6 +233,7 @@ findCornerPointsError cornerPoints = find cornerPointsError cornerPoints
 -- | True if CubePoints, otherwise false.
 isCubePoints :: CornerPoints -> Bool
 isCubePoints (CubePoints _ _ _ _ _ _ _ _) = True
+isCubePoints CornerPointsNothing = True
 isCubePoints _ = False
 
 
@@ -241,6 +245,7 @@ isCubePointsList :: [CornerPoints] -> Bool
 isCubePointsList cpoints =
   let isNotCubePoints :: CornerPoints -> Bool
       isNotCubePoints (CubePoints _ _ _ _ _ _ _ _)  = False
+      isNotCubePoints CornerPointsNothing = False
       isNotCubePoints _ = True
   in
    
@@ -377,7 +382,14 @@ instance Eq CornerPoints where
 
     CornerPointsError errMessage' == CornerPointsError errMessage'' =
       errMessage' == errMessage''
-    a == b = False
+
+    CornerPointsNothing == CornerPointsNothing = True
+    CornerPointsNothing == _ = False
+    _ == CornerPointsNothing = False
+
+    anyThingElse == isFalse = False
+
+    
 --------------------------------------------------- add cubes +++ ---------------------------------------------------
 ----------------------------------------------------------------------------------------------------------------------
 -- || between to lines means done to a list
@@ -640,7 +652,10 @@ anyCornerPoint +++ (CornerPointsId) = anyCornerPoint
 (BottomFrontLine _ _) +++ (BottomFrontLine _ _) = CornerPointsError "illegal BottomFrontLine +++ BottomFrontLine operation"
 (FrontTopLine _ _) +++ (FrontTopLine _ _) = CornerPointsError "illegal FrontTopLine +++ FrontTopLine operation"
 
-a +++ b = CornerPointsError "illegal +++ operation"
+(CornerPointsNothing) +++ _ = CornerPointsNothing
+_ +++ (CornerPointsNothing) = CornerPointsNothing
+
+anythingElse +++ isIllegal = CornerPointsError "illegal +++ operation"
 
 ----------------------------------------------- scale cubes/points ------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------
