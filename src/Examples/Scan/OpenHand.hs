@@ -1,5 +1,5 @@
 {-# LANGUAGE ParallelListComp #-}
-module Examples.Scan.OpenHand(socketWithRiserStlGenerator) where
+module Examples.Scan.OpenHand(socketWithRiserStlGenerator, socketWithRiserShowError) where
 
 import CornerPoints.Radius(MultiDegreeRadii(..), SingleDegreeRadii(..), Radius(..),extractSingle, extractList, rotateSDR, transposeMDRList,
                           {-transposeSDRList,-} extractSDRWithinRange, singleDegreeRadiiListToMap, transformSDRWithList, extractMaybeSDR,
@@ -13,10 +13,12 @@ import CornerPoints.Create(Origin(..))
 import CornerPoints.FaceExtraction (extractFrontFace, extractTopFace,extractBottomFace, extractBackFace, extractFrontTopLine, extractBackTopLine)
 import CornerPoints.FaceConversions(backFaceFromFrontFace, upperFaceFromLowerFace, lowerFaceFromUpperFace, frontFaceFromBackFace )
 import CornerPoints.Transpose (transposeZ, transposeY, transposeX)
-import TypeClasses.Transposable(transpose)
 import CornerPoints.CornerPointsWithDegrees(CornerPointsWithDegrees(..), (@~+++#@),(@~+++@),(|@~+++@|), (|@~+++#@|), DegreeRange(..))
 import CornerPoints.MeshGeneration(autoGenerateEachCube)
 import CornerPoints.HorizontalFaces(createTopFaces,  createBottomFaces)
+
+import TypeClasses.Transposable(transpose)
+
 
 import Geometry.Angle(Angle(..), rotateAngle, getQuadrantAngle, RotateFactor(..))
 import Geometry.Slope(Slope(..), flatXSlope, flatYSlope, slopeAdjustedForVerticalAngle)
@@ -42,6 +44,8 @@ import Helpers.List((++:),(++::))
 
 import Builder.Sequence((@~+++@|>))
 import Builder.List (newCornerPointsWith10DegreesBuilder, (||@~+++^||))
+import Builder.Monad(BuilderError(..), cornerPointsErrorHandler, buildCubePointsList,
+                     CpointsStack, CpointsList, buildCubePointsListWithAdd, buildCubePointsListSingle)
 
 import Stl.StlCornerPointsWithDegrees(FacesWithRange(..))
 
@@ -62,8 +66,7 @@ import Control.Monad.State
 import Control.Monad.Except
 import Control.Monad.Writer (WriterT, tell, execWriterT)
 import Control.Monad.Reader
-import Builder.Monad(BuilderError(..), cornerPointsErrorHandler, buildCubePointsList,
-                     CpointsStack, CpointsList, buildCubePointsListWithAdd)
+
 
 
 
@@ -92,33 +95,35 @@ socketWithRiser    innerSleeveSDR         outerSleeveSDR         rowReductionFac
       heightPerPixel = (1/ pixelsPerMM) * (fromIntegral rowReductionFactor)
       origin = (Point{x_axis=0, y_axis=0, z_axis=50})
       angles = (map (Angle) [0,10..360])
-      radii = [Radius x | x <- [20,20..]]
+      radii = [Radius x | x <- [15,15..]]
 
-  
+   
   mainCubes  <- buildCubePointsListWithAdd "mainCubes"
+                --take 3 is normal, but use more to see what is going on
                 (concat $ take 3 $ drop 1  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
                 [CornerPointsId | x <-[1..]]
   
   
-  getTop     <-  buildCubePointsListWithAdd "extrudeTop"
+  getTop     <- buildCubePointsListSingle "extrudeTop"
                 (map (lowerFaceFromUpperFace . extractTopFace) (head (drop 1 $ createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors))
                 )
-                [CornerPointsId | x <-[1..]]
-
+                
         
   newTop     <- buildCubePointsListWithAdd "newTop"
               --(createTopFaces (Point 0 0 100) (doubleCylinderZip radii angles) angles  )
                 ( map
                   (extractTopFace)
-                  ( cylinder
-                     (doubleCylinderZip radii angles)
-                     (doubleCylinderZip (map (transpose (+2) )   radii) angles)
-                     angles
-                     (Point 0 0 0)
-                     60
+                  ( let rotatedAngles = map (rotateAngle 110) angles
+                    in
+                     cylinder
+                      (doubleCylinderZip radii rotatedAngles)
+                      (doubleCylinderZip (map (transpose (+2) )   radii) rotatedAngles)
+                      angles
+                      (Point (-4) (-9) 0)
+                      60
                   )
                 )
-              ([CornerPointsNothing | x <-[1,2..10]] ++ [CornerPointsId | x <-[1..]])
+              ([CornerPointsId | x <-[1,2..8]] ++ [CornerPointsNothing | x <-[1,2..16]] ++ [CornerPointsId | x <-[1,2..]])
 
   
 
@@ -126,7 +131,7 @@ socketWithRiser    innerSleeveSDR         outerSleeveSDR         rowReductionFac
                    (getTop)
                    (newTop)
   
-  return mainCubes
+  return doubleTop
 
 --load the json file and call generate stl
 socketWithRiserStlGenerator :: IO ()
@@ -154,7 +159,31 @@ socketWithRiserStlGenerator = do
         putStrLn "File not decoded"
 
 
-
+socketWithRiserShowError :: IO ()
+socketWithRiserShowError = do
+  contents <- BL.readFile "src/Data/scanFullData.json"
+  
+  case (decode contents) of
+   
+      Just (MultiDegreeRadii name' degrees') ->
+        let --Changing this to 50 does not work. It should be made so this can be changed.
+            --Is it some combination with PixelsPerMillimeter that messes it up.
+            --ToDo: Make a diff. version of reduceScan that perhaps uses mm instead of mod of some number.
+            rowReductionFactor = 100::RowReductionFactor 
+            --innerSleeveMDR = (rotateMDR) . (rotateMDR) . (rotateMDR) . (transpose (+3)) . (reduceScan rowReductionFactor) . removeDefectiveTopRow' $ (MultiDegreeRadii name' degrees')
+            innerSleeveMDR = (transpose (+3)) . (reduceScan rowReductionFactor) . removeDefectiveTopRow' $
+                              (MultiDegreeRadii
+                                name'
+                                --(rotateSDR . rotateSDR . rotateSDR $ degrees')
+                                degrees'
+                              )
+            outerSleeveMDR = transpose (+3) innerSleeveMDR
+            --cpoints =  ((execState $ runExceptT (socketWithRiser (degrees innerSleeveMDR) (degrees outerSleeveMDR)         rowReductionFactor    pixelsPerMM ) ) [])
+            cpoints =  ((evalState $ runExceptT (socketWithRiser (degrees innerSleeveMDR) (degrees outerSleeveMDR)         rowReductionFactor    pixelsPerMM ) ) [])
+        in  --writeStlToFile $ newStlShape "socket with riser"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
+            print $ show cpoints
+      Nothing                                ->
+        putStrLn "File not decoded"
 
 
 
