@@ -12,7 +12,8 @@ import CornerPoints.VerticalFaces(createRightFaces, createLeftFaces, createLeftF
                                   createHorizontallyAlignedCubesNoSlope, createHorizontallyAlignedCubes)
 import CornerPoints.Points(Point(..))
 import CornerPoints.CornerPoints(CornerPoints(..), (+++), (|+++|), (|@+++#@|))
-import CornerPoints.Create(Origin(..), AngleRadius(..), extractAngles, extractRadii)
+import CornerPoints.Create(Origin(..))
+import Geometry.AngleRadius(AngleRadius(..), extractAngles, extractRadii,)
 import CornerPoints.FaceExtraction (extractFrontFace, extractTopFace,extractBottomFace, extractBackFace, extractFrontTopLine, extractBackTopLine,
                                     extractBackBottomLine, extractBackTopLine, extractBottomFrontLine)
 import CornerPoints.FaceConversions(backFaceFromFrontFace, upperFaceFromLowerFace, lowerFaceFromUpperFace, frontFaceFromBackFace,
@@ -172,10 +173,8 @@ shortSocketToLargeShaftStlGenerator = do
         putStrLn "File not decoded"
 
 -- ===============================================half inner/outer hand base============================
-{-
-
-
-connect together the inner/outer walls of the base of the hand(wrist). Wrist inner/outer walls will be different because:
+{- |
+Connect together the inner/outer walls of the base of the hand(wrist). Wrist inner/outer walls will be different because:
 The inner wall has 12 radii, as it is a 12 sided shape.
 This has to be matched up to a 36 sided shape, which is what the socket scan has, and which was used
 to take the shape of the wrist of the hand.
@@ -195,9 +194,6 @@ Shape of outer wrist could use some further adjustment.
 
 
 -}
-
-
-
 wristToLargeShaft :: ExceptT BuilderError (State CpointsStack ) CpointsList
 wristToLargeShaft = do
       
@@ -264,7 +260,7 @@ wristToLargeShaft = do
   
   return shaftBottomFaces
 
-
+-- | Out 
 wristToLargeShaftStlGenerator :: IO ()
 wristToLargeShaftStlGenerator = do
   let cpoints = ((execState $ runExceptT (wristToLargeShaft)) [])
