@@ -29,7 +29,7 @@ main = do
  --loadMDRAndPassToProcessor (read $ head x) (read $ head $ tail x)
 
  
-  socketWithRiserStlGenerator
+  writeJoinerStlFile
   --socketWithRiserShowError
   
   

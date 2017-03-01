@@ -1,4 +1,4 @@
-module Examples.OpenBionicsOrg.FingerJoints() where
+module Examples.OpenBionicsOrg.FingerJoints(writeJointStl) where
 
 
 
