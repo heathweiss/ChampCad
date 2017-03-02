@@ -6,7 +6,7 @@ import Examples.OpenBionicsCom.OpenBionicsDotComDesignWork (fullLengthSocketWith
                                                   topOfSocketStlGenerator, joinerShaftStlGenerator,
                                                   shortSocketToLargeShaftStlGenerator, wristToLargeShaftStlGenerator
                                                   )
-import Examples.Scan.OpenHand(wristAndDoubleCylinderStlGenerator, wristAndDoubleCylinderShowCubes)
+import Examples.OpenHand.Wrist(wristAndDoubleCylinderStlGenerator, wristAndDoubleCylinderShowCubes)
 
 import Examples.Primitives.Squared(cylinderWithSquaredRadiiStlGenerator, )
 

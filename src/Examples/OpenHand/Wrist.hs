@@ -1,5 +1,5 @@
 {-# LANGUAGE ParallelListComp #-}
-module Examples.Scan.OpenHand(wristAndDoubleCylinderStlGenerator, wristAndDoubleCylinderShowCubes) where
+module Examples.OpenHand.Wrist(wristAndDoubleCylinderStlGenerator, wristAndDoubleCylinderShowCubes) where
 
 import CornerPoints.Radius(MultiDegreeRadii(..), SingleDegreeRadii(..), Radius(..),extractSingle, extractList, rotateSDR, transposeMDRList,
                           {-transposeSDRList,-} extractSDRWithinRange, singleDegreeRadiiListToMap, transformSDRWithList, extractMaybeSDR,
