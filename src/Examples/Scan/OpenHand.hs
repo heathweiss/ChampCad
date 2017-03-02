@@ -1,5 +1,5 @@
 {-# LANGUAGE ParallelListComp #-}
-module Examples.Scan.OpenHand(socketWithRiserStlGenerator, socketWithRiserShowError) where
+module Examples.Scan.OpenHand(wristAndDoubleCylinderStlGenerator, wristAndDoubleCylinderShowCubes) where
 
 import CornerPoints.Radius(MultiDegreeRadii(..), SingleDegreeRadii(..), Radius(..),extractSingle, extractList, rotateSDR, transposeMDRList,
                           {-transposeSDRList,-} extractSDRWithinRange, singleDegreeRadiiListToMap, transformSDRWithList, extractMaybeSDR,
@@ -81,15 +81,11 @@ type Height = Double
 type Power = Double
 type LengthenYFactor = Double
 
-{-
-Socket which has a riser attached to the top. This allows the hose attachment/push plate to be attached to it.
-
-It differs from the original socketWithRiser, in that the riser is closed in, instead of half open.
-If it needs to be make open sided, see pushPlate on how to do it.
-It has not been printed yet, to test this new closed in system.
+{- |
+Wrist section that is topped off with a partial double cylinder.
 -}
-socketWithRiser :: [SingleDegreeRadii] -> [SingleDegreeRadii] -> RowReductionFactor -> PixelsPerMillimeter -> ExceptT BuilderError (State CpointsStack ) CpointsList
-socketWithRiser    innerSleeveSDR         outerSleeveSDR         rowReductionFactor    pixelsPerMM = do
+wristAndDoubleCylinder :: [SingleDegreeRadii] -> [SingleDegreeRadii] -> RowReductionFactor -> PixelsPerMillimeter -> ExceptT BuilderError (State CpointsStack ) CpointsList
+wristAndDoubleCylinder    innerSleeveSDR         outerSleeveSDR         rowReductionFactor    pixelsPerMM = do
   let extensionHeight = 30
       transposeFactors = [0,heightPerPixel.. ]
       heightPerPixel = (1/ pixelsPerMM) * (fromIntegral rowReductionFactor)
@@ -134,8 +130,8 @@ socketWithRiser    innerSleeveSDR         outerSleeveSDR         rowReductionFac
   return doubleTop
 
 --load the json file and call generate stl
-socketWithRiserStlGenerator :: IO ()
-socketWithRiserStlGenerator = do
+wristAndDoubleCylinderStlGenerator :: IO ()
+wristAndDoubleCylinderStlGenerator = do
   contents <- BL.readFile "src/Data/scanFullData.json"
   
   case (decode contents) of
@@ -153,14 +149,14 @@ socketWithRiserStlGenerator = do
                                 degrees'
                               )
             outerSleeveMDR = transpose (+3) innerSleeveMDR
-            cpoints =  ((execState $ runExceptT (socketWithRiser (degrees innerSleeveMDR) (degrees outerSleeveMDR)         rowReductionFactor    pixelsPerMM ) ) [])
+            cpoints =  ((execState $ runExceptT (wristAndDoubleCylinder (degrees innerSleeveMDR) (degrees outerSleeveMDR)         rowReductionFactor    pixelsPerMM ) ) [])
         in  writeStlToFile $ newStlShape "socket with riser"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
       Nothing                                ->
         putStrLn "File not decoded"
 
 
-socketWithRiserShowError :: IO ()
-socketWithRiserShowError = do
+wristAndDoubleCylinderShowCubes :: IO ()
+wristAndDoubleCylinderShowCubes = do
   contents <- BL.readFile "src/Data/scanFullData.json"
   
   case (decode contents) of
@@ -178,8 +174,8 @@ socketWithRiserShowError = do
                                 degrees'
                               )
             outerSleeveMDR = transpose (+3) innerSleeveMDR
-            --cpoints =  ((execState $ runExceptT (socketWithRiser (degrees innerSleeveMDR) (degrees outerSleeveMDR)         rowReductionFactor    pixelsPerMM ) ) [])
-            cpoints =  ((evalState $ runExceptT (socketWithRiser (degrees innerSleeveMDR) (degrees outerSleeveMDR)         rowReductionFactor    pixelsPerMM ) ) [])
+            --cpoints =  ((execState $ runExceptT (wristAndDoubleCylinder (degrees innerSleeveMDR) (degrees outerSleeveMDR)         rowReductionFactor    pixelsPerMM ) ) [])
+            cpoints =  ((evalState $ runExceptT (wristAndDoubleCylinder (degrees innerSleeveMDR) (degrees outerSleeveMDR)         rowReductionFactor    pixelsPerMM ) ) [])
         in  --writeStlToFile $ newStlShape "socket with riser"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
             print $ show cpoints
       Nothing                                ->

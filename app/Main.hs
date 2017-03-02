@@ -6,7 +6,7 @@ import Examples.OpenBionicsCom.OpenBionicsDotComDesignWork (fullLengthSocketWith
                                                   topOfSocketStlGenerator, joinerShaftStlGenerator,
                                                   shortSocketToLargeShaftStlGenerator, wristToLargeShaftStlGenerator
                                                   )
-import Examples.Scan.OpenHand(socketWithRiserStlGenerator, socketWithRiserShowError)
+import Examples.Scan.OpenHand(wristAndDoubleCylinderStlGenerator, wristAndDoubleCylinderShowCubes)
 
 import Examples.Primitives.Squared(cylinderWithSquaredRadiiStlGenerator, )
 
@@ -29,8 +29,7 @@ main = do
  --loadMDRAndPassToProcessor (read $ head x) (read $ head $ tail x)
 
  
-  writeJoinerStlFile
-  --socketWithRiserShowError
+  wristAndDoubleCylinderStlGenerator
   
   
   
