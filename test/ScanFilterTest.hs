@@ -4,6 +4,8 @@ import Scan.Filter(runningAverage, averageValueOf)
 import CornerPoints.Radius(Radius(..))
 
 scanFilterTestDo = do
+  putStrLn "\n\n" 
+  putStrLn "scanFilterTestDo tests"
   runTestTT filter2Test
   runTestTT filter3Test
 

@@ -4,6 +4,7 @@ radiansToDegrees,
 --upperYValueOfWedge,
 sinDegrees,
 cosDegrees,
+tanDegrees,
 atanDegrees,
 coTanDegrees) where
 

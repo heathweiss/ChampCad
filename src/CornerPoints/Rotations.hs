@@ -7,6 +7,8 @@ Does not work.
 
 Nothing changes when the stl is viewed. Need to re-think the logic.
 May be considerably more complicated than rotating the points.
+
+This can probably be deleted becuase of the work in Geometry.Rotation.
 -}
 
 rotateAlongYaxis90 :: CornerPoints -> CornerPoints

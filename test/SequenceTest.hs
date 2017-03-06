@@ -12,6 +12,8 @@ import qualified Helpers.Symmetrical.Sequence as SS (mirror, mirrorPlusMidPoint,
 import qualified Helpers.Symmetrical.List as SL (mirror, mirrorPlusMidPoint, mirrorMinusMidPoint)
                                                      
 sequenceTestDo = do
+  putStrLn "\n\n" 
+  putStrLn "sequenceTestDo tests"
   -- ================================================= Sequence =======================================
   let mirrorTestSeq = TestCase $ assertEqual
         "mirrorTestSeq"

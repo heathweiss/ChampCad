@@ -5,7 +5,7 @@ Examples: Examples.Primitives.ComposableExample
 
 Test in test/GeometryRadiusTest
 -}
-module Geometry.Radius(doubleCylinderZip, doubleCylinder, squaredOff, calcultateDistance) where
+module Geometry.Radius(doubleCylinderZip, doubleCylinder, squaredOff, calcultateDistance, calcultateXYDistance) where
 
 import Geometry.Angle(Angle(..), getQuadrantAngle)
 
@@ -98,6 +98,17 @@ calcultateDistance    point1   point2  =
   in
       Radius $ sqrt (x**2 + y**2 + z**2)
       
-  
+calcultateXYDistance :: Point -> Point -> Radius
+calcultateXYDistance    point1   point2  =
+  let
+      distance :: Point -> Point -> Point
+      distance    (Point x y z)    (Point x1 y1 z1) =
+        Point (x - x1) (y - y1) (z - z1)
+      p = distance point1 point2
+      x = x_axis p
+      y = y_axis p
+      z = z_axis p
+  in
+      Radius $ sqrt (x**2 + y**2)  
 
 type Power = Double

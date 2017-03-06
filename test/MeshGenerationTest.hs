@@ -12,7 +12,8 @@ import CornerPoints.FaceConversions(upperFaceFromLowerFace)
 import CornerPoints.MeshGeneration( doesOpposingFaceExistInList, doesSameFaceExistInList)
 
 meshGenerationTest = do
-
+  putStrLn "\n\n" 
+  putStrLn "meshGenerationTest tests"
   --create a test cube
   let btmFace = BottomFace (Point 0 0 0) (Point 0 1 0) (Point 1 0 0) (Point 1 1 0 )
       cube1 = btmFace +++ (upperFaceFromLowerFace $ transposeZ (+1) btmFace )

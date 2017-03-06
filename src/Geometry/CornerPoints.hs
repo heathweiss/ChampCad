@@ -1,6 +1,7 @@
 module Geometry.CornerPoints(squaredOffAdjustmentFunction) where
 
-{- Base on the idea taken from Christopher Olah's blog
+{- |
+Base on the idea taken from Christopher Olah's blog
 https://christopherolah.wordpress.com/2011/11/06/manipulation-of-implicit-functions-with-an-eye-on-cad/
 
 However, the function has been modified to cause a cylindrical shape to take on a square shape on the xy plane.

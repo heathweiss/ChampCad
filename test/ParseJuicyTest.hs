@@ -11,6 +11,8 @@ This is part of the orignal radial scanner which was not moved over from Tricad 
 -}
 
 parseJuicyTestDo = do
+  putStrLn "\n\n" 
+  putStrLn "parseJuicyTestDo tests"
   runTestTT calculateRadiusFromPixelsRightOfCenterTest
   
   runTestTT calculateMillimetersTest

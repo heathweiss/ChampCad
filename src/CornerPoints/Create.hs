@@ -23,7 +23,7 @@ import CornerPoints.Radius(Radius(..))
 
 import Geometry.CornerPoints(squaredOffAdjustmentFunction)
 --import  Geometry.Radius(calcultateDistance)
-import Geometry.Angle(Angle(..), rotateAngle, getQuadrantAngle, RotateFactor(..))
+import Geometry.Angle(Angle(..), getQuadrantAngle, RotateFactor(..))
 import Geometry.Slope(Slope(..), flatXSlope, flatYSlope, slopeAdjustedForVerticalAngle)
 import Geometry.Radius(calcultateDistance)
 
@@ -33,7 +33,6 @@ type Power = Double
 
 
 {-
-Create a CornerPoint from raw values, including a CornerPoints constructor.
 Differs from CornerPoints.Create.createCornerPoint in that it does not use Slope.
 This should eventually replace CornerPoints.Create.createCornerPoint.
 -}

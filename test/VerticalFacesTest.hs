@@ -16,6 +16,8 @@ import Geometry.Slope(Slope(..), flatXSlope, flatYSlope, slopeAdjustedForVertica
 import TypeClasses.Transposable(transpose)
 
 verticalFacesTestDo = do
+  putStrLn "\n\n" 
+  putStrLn "verticalFacesTestDo tests"
   runTestTT createRightFacesWithSlopeTest
   runTestTT createRightFacesNoSlopeTest
   runTestTT createLeftFacesWithSlopeTest
