@@ -6,7 +6,7 @@ import Examples.OpenBionicsCom.OpenBionicsDotComDesignWork (fullLengthSocketWith
                                                   topOfSocketStlGenerator, joinerShaftStlGenerator,
                                                   shortSocketToLargeShaftStlGenerator, wristToLargeShaftStlGenerator
                                                   )
-import Examples.OpenHand.Wrist(wristAndDoubleCylinderStlGenerator, wristAndDoubleCylinderShowCubes)
+import Examples.OpenHand.Wrist(wristAndDoubleCylinderStlGenerator, wristAndDoubleCylinderShowCubes, wristSquaredOffStlGenerator, wristSquaredOffShowCubes)
 
 import Examples.Primitives.Squared(cylinderWithSquaredRadiiStlGenerator, )
 
@@ -29,7 +29,7 @@ main = do
  --loadMDRAndPassToProcessor (read $ head x) (read $ head $ tail x)
 
  
-  wristAndDoubleCylinderStlGenerator
+  wristSquaredOffStlGenerator
   
   
   

@@ -20,6 +20,8 @@ import ScanFilterTest (scanFilterTestDo)
 import VerticalFacesTest(verticalFacesTestDo)
 import SequenceTest(sequenceTestDo)
 import GeometryRadiusTest(geometryRadiusTestDo)
+import AngleTest(angleTestDo)
+import VertexTest(vertexTestDo)
 
 --main :: IO ()
 main = do
@@ -43,3 +45,5 @@ main = do
   verticalFacesTestDo
   sequenceTestDo
   geometryRadiusTestDo
+  angleTestDo
+  vertexTestDo

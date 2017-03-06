@@ -90,6 +90,8 @@ library
                        Geometry.Angle
                        Geometry.Slope
                        Geometry.AngleRadius
+                       Geometry.Rotation
+                       Geometry.Vertex
 
   build-depends:       base >= 4.7 && < 5
                      , HUnit >=1.2.5.2
@@ -150,6 +152,8 @@ test-suite ChampCad-test
                        SlicerTest
                        VerticalFacesTest
                        GeometryRadiusTest
+                       AngleTest
+                       VertexTest
  
   build-depends:       base
                      , ChampCad
