@@ -56,6 +56,7 @@ library
                        Examples.Scan.WalkerSocketProcessScan
                        Examples.Scan.WalkerSocketDesignWork
                        Examples.OpenHand.Wrist
+                        Examples.OpenHand.MotorMount
                        Examples.OpenBionicsCom.OpenBionicsDotComDesignWork
                        -- Misc Shapes
                        --Examples.MiscShapes.RvVentCaps

@@ -7,6 +7,7 @@ import Examples.OpenBionicsCom.OpenBionicsDotComDesignWork (fullLengthSocketWith
                                                   shortSocketToLargeShaftStlGenerator, wristToLargeShaftStlGenerator
                                                   )
 import Examples.OpenHand.Wrist(wristAndDoubleCylinderStlGenerator, wristAndDoubleCylinderShowCubes, wristSquaredOffStlGenerator, wristSquaredOffShowCubes)
+import Examples.OpenHand.MotorMount(motorMountStlGenerator, motorMountShowCubes)
 
 import Examples.Primitives.Squared(cylinderWithSquaredRadiiStlGenerator, )
 
@@ -19,6 +20,7 @@ import Examples.Primitives.Cube(writeJoinerStlFile)
 import Examples.Diffs.MTLDiff(generateUnionCubesStl)
 
 import Examples.ShoeLift.SnowBoardBoot (writeRearSlopedTread, writeRearBoot, writeForwardBoot, writeRearRoundedToeTread)
+
 --import System.Environment
 
 
@@ -29,8 +31,8 @@ main = do
  --loadMDRAndPassToProcessor (read $ head x) (read $ head $ tail x)
 
  
-  wristSquaredOffStlGenerator
-  
+  --motorMountShowCubes
+  motorMountStlGenerator
   
   
   
