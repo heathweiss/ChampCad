@@ -32,7 +32,7 @@ import Stl.StlCornerPoints((|+++^|), (||+++^||), Faces(..))
 motorMount :: ExceptT BuilderError (State CpointsStack ) CpointsList
 motorMount = do
   let 
-      stdXWidth = 5
+      stdXWidth = 5.25
       borderWidth = 4
       sealWidth = 2
       
@@ -157,18 +157,19 @@ motorMount = do
   y6Layer <- buildCubePointsListWithAdd "y2Layer"
              (y5Layer)
              (map ((transposeY (+y6Width)) . extractFrontFace) y5Layer)
-
+  
   y1Z2Layer <- buildCubePointsListWithAdd "y1Z2Layer"
                (y1Layer)
                (
                  (map ((transposeZ (+z2Height)) . extractTopFace) y1Layer)
-               )
+            )
 
   y2Z2Layer <- buildCubePointsListWithAdd "y1Z2Layer"
                (y2Layer)
                (
                  (map ((transposeZ (+z2Height)) . extractTopFace) y2Layer)
                )
+  
 
   y3Z2Layer <- buildCubePointsListWithAdd "y1Z2Layer"
                (y3Layer)
@@ -225,21 +226,178 @@ motorMount = do
            y6Layer
            y6Z2TopFaces
 
-  y1Z3And4Layer
-         <- buildCubePointsListWithAdd "y1Z3And4Layer"
-               (y1Z2Layer)
-               (
-                 (map ((transposeZ (+(z3Height + z4Height))) . extractTopFace) y1Z2Layer)
-               )
+  y1Z3TopFaces
+          <- buildCubePointsListWithAdd "y1Z3TopFaces"
+             (map ((transposeZ (+(z3Height))) . extractTopFace) y1Z2Layer)
+             (
+             [CornerPointsId, CornerPointsId,
+              CornerPointsNothing, CornerPointsNothing,
+              CornerPointsId, CornerPointsId,
+              CornerPointsNothing,
+              CornerPointsId,
+              CornerPointsNothing, CornerPointsNothing,
+              CornerPointsId, CornerPointsId, CornerPointsId
+             ])
+
+  y1Z3Layer
+           <- buildCubePointsListWithAdd "y1Z3Layer"
+              y1Z3TopFaces
+              y1Z2Layer
+  
+
+
+  y2Z3TopFaces
+          <- buildCubePointsListWithAdd "y2Z3TopFaces"
+             (map ((transposeZ (+(z3Height))) . extractTopFace) y2Z2Layer)
+             (
+             [CornerPointsId, CornerPointsId,
+              CornerPointsNothing, CornerPointsNothing,
+              CornerPointsId, CornerPointsId,
+              CornerPointsNothing,
+              CornerPointsId,
+              CornerPointsNothing, CornerPointsNothing,
+              CornerPointsId, CornerPointsId, CornerPointsId
+             ])
 
   y2Z3Layer
-         <- buildCubePointsListWithAdd "y1Z3And4Layer"
-               (y2Z2Layer)
-               (
-                 (map ((transposeZ (+(z3Height))) . extractTopFace) y2Z2Layer)
-               )
-               
-  return y2Layer
+           <- buildCubePointsListWithAdd "y2Z3Layer"
+              y2Z3TopFaces
+              y2Z2Layer
+  
+  y3Z3TopFaces
+           <- buildCubePointsListWithAdd "y3Z3TopFaces"
+              (map ((transposeZ (+(z3Height))) . extractTopFace) y3Z2Layer)
+              [CornerPointsId, CornerPointsId,
+               CornerPointsNothing, CornerPointsNothing, CornerPointsNothing,
+               CornerPointsNothing, CornerPointsNothing, CornerPointsNothing,
+               CornerPointsNothing, CornerPointsNothing, CornerPointsNothing,
+               CornerPointsId, CornerPointsId
+              ]
+
+  y3Z3Layer
+          <- buildCubePointsListWithAdd "y3Z3Layer"
+             y3Z3TopFaces
+             y3Z2Layer
+
+  y4Z3TopFaces
+           <- buildCubePointsListWithAdd "y4Z3TopFaces"
+              (map ((transposeZ (+(z3Height))) . extractTopFace) y4Z2Layer)
+              [CornerPointsId, CornerPointsId,
+               CornerPointsNothing, CornerPointsNothing, CornerPointsNothing,
+               CornerPointsNothing, CornerPointsNothing, CornerPointsNothing,
+               CornerPointsNothing, CornerPointsNothing, CornerPointsNothing,
+               CornerPointsId, CornerPointsId
+              ]
+
+  y4Z3Layer
+          <- buildCubePointsListWithAdd "y4Z3Layer"
+             y4Z3TopFaces
+             y4Z2Layer
+
+  y5Z3Layer
+         <- buildCubePointsListWithAdd "y5Z3Layer"
+            (map ((transposeZ (+(z3Height))) . extractTopFace) y5Z2Layer)
+            y5Z2Layer
+{-
+  y6Z3And4Layer
+         <- buildCubePointsListWithAdd "y6Z3And4Layer"
+            (map ((transposeZ (+(z3Height+z4Height))) . extractTopFace) y6Z2Layer)
+            y6Z2Layer
+-}
+  y6Z3Layer
+         <- buildCubePointsListWithAdd "y6Z3Layer"
+            (map ((transposeZ (+(z3Height))) . extractTopFace) y6Z2Layer)
+            y6Z2Layer
+
+
+  y1Z4TopFaces
+          <- buildCubePointsListWithAdd "y1Z4TopFaces"
+             (map ((transposeZ (+(z4Height))) . extractTopFace) y1Z3Layer)
+             (
+             [CornerPointsId, CornerPointsId,
+              CornerPointsNothing, CornerPointsNothing,
+              CornerPointsId, CornerPointsId,
+              CornerPointsNothing,
+              CornerPointsId,
+              CornerPointsNothing, CornerPointsNothing,
+              CornerPointsId, CornerPointsId, CornerPointsId
+             ])
+  
+  y1Z4Layer
+           <- buildCubePointsListWithAdd "y1Z4Layer"
+              y1Z4TopFaces
+              y1Z3Layer
+  
+  y2Z4TopFaces
+        <- buildCubePointsListWithAdd "y2Z4TopFaces"
+           (map ((transposeZ (+(z4Height))) . extractTopFace) y2Z3Layer)
+           [CornerPointsId,
+            CornerPointsNothing, CornerPointsNothing, CornerPointsNothing,
+            CornerPointsNothing, CornerPointsNothing, CornerPointsNothing,
+            CornerPointsNothing, CornerPointsNothing, CornerPointsNothing,
+            CornerPointsNothing, CornerPointsNothing,
+            CornerPointsId
+           ]
+
+  y2Z4Layer
+       <- buildCubePointsListWithAdd "y2Z4Layer"
+          y2Z4TopFaces
+          y2Z3Layer
+
+  y3Z4TopFaces
+        <- buildCubePointsListWithAdd "y3Z4TopFaces"
+           (map ((transposeZ (+(z4Height))) . extractTopFace) y3Z3Layer)
+           [CornerPointsId,
+            CornerPointsNothing, CornerPointsNothing, CornerPointsNothing,
+            CornerPointsNothing, CornerPointsNothing, CornerPointsNothing,
+            CornerPointsNothing, CornerPointsNothing, CornerPointsNothing,
+            CornerPointsNothing, CornerPointsNothing,
+            CornerPointsId
+           ]
+
+  y3Z4Layer
+       <- buildCubePointsListWithAdd "y3Z4Layer"
+          y3Z4TopFaces
+          y3Z3Layer
+
+  y4Z4TopFaces
+        <- buildCubePointsListWithAdd "y4Z4TopFaces"
+           (map ((transposeZ (+(z4Height))) . extractTopFace) y4Z3Layer)
+           [CornerPointsId,
+            CornerPointsNothing, CornerPointsNothing, CornerPointsNothing,
+            CornerPointsNothing, CornerPointsNothing, CornerPointsNothing,
+            CornerPointsNothing, CornerPointsNothing, CornerPointsNothing,
+            CornerPointsNothing, CornerPointsNothing,
+            CornerPointsId
+           ]
+
+  y4Z4Layer
+       <- buildCubePointsListWithAdd "y4Z4Layer"
+          y4Z4TopFaces
+          y4Z3Layer
+
+  y5Z4TopFaces
+        <- buildCubePointsListWithAdd "y5Z4TopFaces"
+           (map ((transposeZ (+(z4Height))) . extractTopFace) y5Z3Layer)
+           [CornerPointsId,
+            CornerPointsNothing, CornerPointsNothing, CornerPointsNothing,
+            CornerPointsNothing, CornerPointsNothing, CornerPointsNothing,
+            CornerPointsNothing, CornerPointsNothing, CornerPointsNothing,
+            CornerPointsNothing, CornerPointsNothing,
+            CornerPointsId
+           ]
+
+  y5Z4Layer
+       <- buildCubePointsListWithAdd "y5Z4Layer"
+          y5Z4TopFaces
+          y5Z3Layer
+
+  y6Z4Layer
+         <- buildCubePointsListWithAdd "y6Z4Layer"
+            (map ((transposeZ (+(z4Height))) . extractTopFace) y6Z3Layer)
+            y6Z3Layer
+            
+  return y5Z4Layer
 
 
 motorMountStlGenerator :: IO ()
