@@ -132,6 +132,7 @@ instance TransposePoint CornerPoints where
   transposeX f (B4 b4 ) =
     B4 {b4=(transposeX f b4)}
 
+  transposeX f CornerPointsNothing = CornerPointsNothing
   ------------- y-axis -----------------
 
   transposeY _ (CornerPointsError err) = CornerPointsError err
@@ -254,6 +255,7 @@ instance TransposePoint CornerPoints where
   transposeY f (B4 b4 ) =
     B4 {b4=(transposeY f b4)}
 
+  transposeY f CornerPointsNothing = CornerPointsNothing
 
 
   ---------------- z-axis ----------------------
@@ -374,3 +376,5 @@ instance TransposePoint CornerPoints where
 
   transposeZ f (B4 b4 ) =
     B4 {b4=(transposeZ f b4)}
+
+  transposeZ f CornerPointsNothing = CornerPointsNothing

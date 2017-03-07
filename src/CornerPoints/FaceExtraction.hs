@@ -29,6 +29,8 @@ extractRightFace (CubePoints f1 f2 f3 f4 b1 b2 b3 b4) = RightFace b3 b4 f3 f4
 
 extractTopFace :: CornerPoints -> CornerPoints
 extractTopFace (CubePoints f1 f2 f3 f4 b1 b2 b3 b4) = TopFace b2 f2 b3 f3
+extractTopFace CornerPointsNothing = CornerPointsNothing
+
 
 extractBottomFrontLine (CubePoints f1 f2 f3 f4 b1 b2 b3 b4) = BottomFrontLine f1 f4
 extractBottomFrontLine (BottomFace b1 f1 b4 f4) = BottomFrontLine f1 f4
