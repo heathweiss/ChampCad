@@ -7,6 +7,7 @@ import Examples.OpenBionicsCom.OpenBionicsDotComDesignWork (fullLengthSocketWith
                                                   shortSocketToLargeShaftStlGenerator, wristToLargeShaftStlGenerator
                                                   )
 import Examples.OpenHand.Wrist(wristAndDoubleCylinderStlGenerator, wristAndDoubleCylinderShowCubes, wristSquaredOffStlGenerator, wristSquaredOffShowCubes)
+import Examples.OpenHand.SocketMount(socketMountStlGenerator, socketMountShowCubes, socketMountTestsDo, runGenMount)
 import Examples.OpenHand.MotorMount(motorMountStlGenerator, motorMountShowCubes)
 
 import Examples.Primitives.Squared(cylinderWithSquaredRadiiStlGenerator, )
@@ -24,16 +25,20 @@ import Examples.ShoeLift.SnowBoardBoot (writeRearSlopedTread, writeRearBoot, wri
 --import System.Environment
 
 
-
-main :: IO ()
+--let type of Main to be inferred for running embedded tests
+-- main :: IO ()
 main = do
  --x <-  getArgs
  --loadMDRAndPassToProcessor (read $ head x) (read $ head $ tail x)
 
  
-  --motorMountShowCubes
-  motorMountStlGenerator
+  
+  socketMountStlGenerator
+  --socketMountShowCubes
+  --socketMountTestsDo
+  --print $ show runGenMount
   
   
   
-  
+
+

@@ -1,5 +1,5 @@
 {- |
-The board onto which the motors and boards will be mounted.
+The container into which the motors and board will be mounted.
 -}
 
 module Examples.OpenHand.MotorMount(motorMountStlGenerator, motorMountShowCubes) where
