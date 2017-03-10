@@ -10,7 +10,7 @@ The ninja-flex will fit inside of it, and be attached to give it support and all
 
 -}
 
-module Examples.OpenHand.SocketMount(socketMountStlGenerator, socketMountShowCubes, socketMountTestsDo, runGenMount) where
+module Examples.OpenHand.SocketMount(socketMountStlGenerator, socketMountShowCubes, socketMountTestsDo) where
   
 import CornerPoints.Radius(MultiDegreeRadii(..), SingleDegreeRadii(..), Radius(..),extractSingle, extractList, rotateSDR, transposeMDRList,
                           {-transposeSDRList,-} extractSDRWithinRange, singleDegreeRadiiListToMap, transformSDRWithList, extractMaybeSDR,
@@ -96,21 +96,8 @@ type Height = Double
 type Power = Double
 type LengthenYFactor = Double
 
-rx = -50
-ry = -60
-lx = 5
-ly = -60
-ztop = 30
-zbtm = ztop - 10
-
-a = extractFrontRightLine mount1
-b = f12LineFromF34Line a
-c = b +++ a
-rightMount1 = b +++ a
-d = extractFrontLeftLine mount1
-e = f34LineFromF12Line d
-leftMount1 = d +++ e
-mount1 = 
+buildFrontFace :: Double -> Double -> Double -> Double -> Double -> Double -> CornerPoints
+buildFrontFace    ztop       zbtm     lx        ly        rx        ry =
                   (
                     (F2
                       (Point lx ly ztop)
@@ -131,64 +118,51 @@ mount1 =
                     )
                   )
 
+  
+
+
 {-
 Generate a list of mount faces, each being transposed downwards
 
 -}
-generateMounts :: CornerPoints -> [[CornerPoints]]
-generateMounts inMount =
+generateMounts :: Height -> CornerPoints -> [[CornerPoints]]
+generateMounts height frontFace =
   let 
-      a = extractFrontRightLine inMount
-      b = f12LineFromF34Line a
-      c = b +++ a
-      rightMount1 = b +++ a
-      d = extractFrontLeftLine inMount
-      e = f34LineFromF12Line d
-      leftMount1 = d +++ e
-
-      mountList =
-        [inMount, leftMount1 ]
-        ++
-        [CornerPointsNothing | x <-[1,2..29]]
-        ++
-        [rightMount1, rightMount1, rightMount1, rightMount1, rightMount1]
+     mountList = buildMountList frontFace
   in
-   --generateMounts' [mountList]
-   mountList : generateMounts' mountList []
-    
+     mountList : generateMounts' height  mountList []
 
-generateMounts' :: [CornerPoints] -> [[CornerPoints]] -> [[CornerPoints]]
---generateMounts'    currCpts          (x:xs) =
-generateMounts'    currCpts          xs  =
+--recursive call for generateMounts
+generateMounts' :: Height ->  [CornerPoints] -> [[CornerPoints]] -> [[CornerPoints]]
+generateMounts'    height      currCpts          xs  =
   let
     mountNew =
      (head currCpts)
      +++
-     ((transposeZ (+(-10))) . extractBottomFrontLine  $ head currCpts)
-   
-    a = extractFrontRightLine mountNew
-    b = f12LineFromF34Line a
-    c = b +++ a
-    rightMount1 = b +++ a
-    d = extractFrontLeftLine mountNew
-    e = f34LineFromF12Line d
-    leftMount1 = d +++ e
-    
-    mountList =
-     [mountNew, leftMount1 ]
-     ++
-     [CornerPointsNothing | x <-[1,2..29]]
-     ++
-     [rightMount1, rightMount1, rightMount1, rightMount1, rightMount1]
+     ((transposeZ (+(height))) . extractBottomFrontLine  $ head currCpts)
+
+    mountList = buildMountList mountNew
   in
-    --generateMounts' $ mountList : xs
-    --mountList : generateMounts' mountList (x:xs)
-   mountList : generateMounts' mountList (xs) 
+    mountList : generateMounts' height mountList (xs) 
 
---just to have a look at it.
-runGenMount :: [[CornerPoints]]
-runGenMount = take 2 $ generateMounts mount1
 
+buildMountList :: CornerPoints -> [CornerPoints]
+buildMountList frontFace =
+  let 
+      a = extractFrontRightLine frontFace
+      b = f12LineFromF34Line a
+      c = b +++ a
+      rightMount1 = b +++ a
+      d = extractFrontLeftLine frontFace
+      e = f34LineFromF12Line d
+      leftMount1 = d +++ e
+
+  in
+      [frontFace, leftMount1 ]
+      ++
+      [CornerPointsNothing | x <-[1,2..29]]
+      ++
+      [rightMount1, rightMount1, rightMount1, rightMount1, rightMount1]
 
 -- | The wrist and back strip of the socket, with a platform to attach the motor/board box.
 socketMount :: [SingleDegreeRadii] -> [SingleDegreeRadii] -> RowReductionFactor -> PixelsPerMillimeter -> ExceptT BuilderError (State CpointsStack ) CpointsList
@@ -242,8 +216,9 @@ socketMount    innerSleeveSDR         outerSleeveSDR         rowReductionFactor 
   
   let clist = --(take 2 $ drop 4  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
               (drop 4  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
-      bGen  = generateMounts mount1
-      
+      bGen  = --generateMounts (-10) mount1
+              generateMounts (-5.2) $ buildFrontFace 30   20   15 (-55) (-40) (-45)
+              --                                     ztop zbtm lx ly    rx    ry 
   handleCubes1
               <- buildCubePointsListWithAdd "handleCubes1"
                 --(concat $ take 2 $ drop 4  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
@@ -320,12 +295,9 @@ socketMountStlGenerator = do
   case (decode contents) of
    
       Just (MultiDegreeRadii name' degrees') ->
-        let --Changing this to 50 does not work. It should be made so this can be changed.
-            --Is it some combination with PixelsPerMillimeter that messes it up.
-            --ToDo: Make a diff. version of reduceScan that perhaps uses mm instead of mod of some number.
-            rowReductionFactor = 100::RowReductionFactor 
-            --innerSleeveMDR = (rotateMDR) . (rotateMDR) . (rotateMDR) . (transpose (+3)) . (reduceScan rowReductionFactor) . removeDefectiveTopRow' $ (MultiDegreeRadii name' degrees')
-            innerSleeveMDR = (transpose (+3)) . (reduceScan rowReductionFactor) . removeDefectiveTopRow' $
+        let rowReductionFactor = 100::RowReductionFactor
+            innerSleeveTransposeFactor = (+6) --3 is that starndard value. Make it 6 as this has to fit over the wrist and ninjaflex
+            innerSleeveMDR = (transpose innerSleeveTransposeFactor) . (reduceScan rowReductionFactor) . removeDefectiveTopRow' $
                               (MultiDegreeRadii
                                 name'
                                 --(rotateSDR . rotateSDR . rotateSDR $ degrees')
@@ -367,6 +339,10 @@ socketMountShowCubes = do
 
 removeDefectiveTopRow' :: MultiDegreeRadii -> MultiDegreeRadii
 removeDefectiveTopRow' (MultiDegreeRadii name' degrees') = MultiDegreeRadii name' [(SingleDegreeRadii degree'' (tail radii''))  | (SingleDegreeRadii degree'' radii'') <- degrees']
+
+
+-- ========================================================== local testing ==================================================
+mount1 = buildFrontFace   30         20       5         (-60)     (-50)     (-60)
 
 socketMountTestsDo = do
   runTestTT mount1BuilderTest
@@ -410,7 +386,7 @@ mount1BuilderTest =  TestCase $ assertEqual
                f3 = Point {x_axis = -50.0, y_axis = -60.0, z_axis = 30.0},
                f4 = Point {x_axis = -50.0, y_axis = -60.0, z_axis = 20.0}}]
 
-   (last $ take 1 $ generateMounts mount1)
+   (last $ take 1 $ generateMounts (-10) mount1)
 
 
 mount2BuilderTest =  TestCase $ assertEqual
@@ -451,7 +427,7 @@ mount2BuilderTest =  TestCase $ assertEqual
                f3 = Point {x_axis = -50.0, y_axis = -60.0, z_axis = 30.0},
                f4 = Point {x_axis = -50.0, y_axis = -60.0, z_axis = 20.0}}]
 
-  (last $ reverse $ take 2 $ generateMounts mount1)
+  (last $ reverse $ take 2 $ generateMounts (-10) mount1)
 
 
 -- ======================================================= test 2 with head =============================================================

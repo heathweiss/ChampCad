@@ -7,7 +7,7 @@ import Examples.OpenBionicsCom.OpenBionicsDotComDesignWork (fullLengthSocketWith
                                                   shortSocketToLargeShaftStlGenerator, wristToLargeShaftStlGenerator
                                                   )
 import Examples.OpenHand.Wrist(wristAndDoubleCylinderStlGenerator, wristAndDoubleCylinderShowCubes, wristSquaredOffStlGenerator, wristSquaredOffShowCubes)
-import Examples.OpenHand.SocketMount(socketMountStlGenerator, socketMountShowCubes, socketMountTestsDo, runGenMount)
+import Examples.OpenHand.SocketMount(socketMountStlGenerator, socketMountShowCubes, socketMountTestsDo)
 import Examples.OpenHand.MotorMount(motorMountStlGenerator, motorMountShowCubes)
 
 import Examples.Primitives.Squared(cylinderWithSquaredRadiiStlGenerator, )
@@ -33,11 +33,9 @@ main = do
 
  
   
-  socketMountStlGenerator
-  --socketMountShowCubes
+  --socketMountStlGenerator
   --socketMountTestsDo
-  --print $ show runGenMount
-  
+  wristSquaredOffStlGenerator
   
   
 
