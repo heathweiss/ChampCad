@@ -33,9 +33,9 @@ main = do
 
  
   
-  --socketMountStlGenerator
+  socketMountStlGenerator
   --socketMountTestsDo
-  wristSquaredOffStlGenerator
+  --wristSquaredOffStlGenerator
   
   
 

@@ -95,9 +95,10 @@ type Thickness = Double
 type Height = Double
 type Power = Double
 type LengthenYFactor = Double
+type Yslope = Double
 
-buildFrontFace :: Double -> Double -> Double -> Double -> Double -> Double -> CornerPoints
-buildFrontFace    ztop       zbtm     lx        ly        rx        ry =
+buildFrontFace :: Double -> Double -> Double -> Double -> Double -> Double -> Yslope -> CornerPoints
+buildFrontFace    ztop       zbtm     lx        ly        rx        ry        ySlope    =
                   (
                     (F2
                       (Point lx ly ztop)
@@ -110,59 +111,76 @@ buildFrontFace    ztop       zbtm     lx        ly        rx        ry =
                   +++
                   ( 
                     (F1
-                      (Point lx ly zbtm)
+                      (Point lx (ly + ySlope) zbtm)
                     )
                     +++
                     (F4
-                      (Point rx ry zbtm)
+                      (Point rx (ry + ySlope) zbtm)
                     )
                   )
-
-  
 
 
 {-
 Generate a list of mount faces, each being transposed downwards
 
 -}
-generateMounts :: Height -> CornerPoints -> [[CornerPoints]]
-generateMounts height frontFace =
+generateMounts :: Height -> Yslope -> CornerPoints -> [[CornerPoints]]
+generateMounts    height    ySlope    frontFace =
   let 
      mountList = buildMountList frontFace
   in
-     mountList : generateMounts' height  mountList []
+     mountList : generateMounts' height ySlope  mountList []
+
 
 --recursive call for generateMounts
-generateMounts' :: Height ->  [CornerPoints] -> [[CornerPoints]] -> [[CornerPoints]]
-generateMounts'    height      currCpts          xs  =
+generateMounts' :: Height -> Yslope ->  [CornerPoints] -> [[CornerPoints]] -> [[CornerPoints]]
+generateMounts'    height    ySlope     currCpts          xs  =
   let
     mountNew =
      (head currCpts)
      +++
-     ((transposeZ (+(height))) . extractBottomFrontLine  $ head currCpts)
+     ((transposeZ (+(height))) . (transposeY(+(ySlope))) . extractBottomFrontLine  $ head currCpts)
 
     mountList = buildMountList mountNew
   in
-    mountList : generateMounts' height mountList (xs) 
+    mountList : generateMounts' height ySlope mountList (xs) 
 
 
 buildMountList :: CornerPoints -> [CornerPoints]
 buildMountList frontFace =
   let 
-      a = extractFrontRightLine frontFace
-      b = f12LineFromF34Line a
-      c = b +++ a
-      rightMount1 = b +++ a
-      d = extractFrontLeftLine frontFace
-      e = f34LineFromF12Line d
-      leftMount1 = d +++ e
+      frontRightLine  = extractFrontRightLine frontFace
+      frontLeftLine = f12LineFromF34Line frontRightLine 
+      rightLineAsFace = frontLeftLine +++ frontRightLine 
+      frontLeftLine' = extractFrontLeftLine frontFace
+      frontRightLine' = f34LineFromF12Line frontLeftLine' 
+      leftLineAsFace = frontLeftLine' +++ frontRightLine'
 
   in
-      [frontFace, leftMount1 ]
+      [frontFace, leftLineAsFace ]
       ++
       [CornerPointsNothing | x <-[1,2..29]]
       ++
-      [rightMount1, rightMount1, rightMount1, rightMount1, rightMount1]
+      [rightLineAsFace, rightLineAsFace, rightLineAsFace, rightLineAsFace, rightLineAsFace]
+
+{-
+buildMountList :: CornerPoints -> [CornerPoints]
+buildMountList frontFace =
+  let 
+      frontRightLine  = extractFrontRightLine frontFace
+      frontLeftLine = f12LineFromF34Line frontRightLine 
+      rightLineAsFace = frontLeftLine +++ frontRightLine 
+      frontLeftLine' = extractFrontLeftLine frontFace
+      frontRightLine' = f34LineFromF12Line frontLeftLine' 
+      leftLineAsFace = frontLeftLine' +++ frontRightLine'
+
+  in
+      [frontFace, leftLineAsFace ]
+      ++
+      [CornerPointsNothing | x <-[1,2..29]]
+      ++
+      [rightLineAsFace, rightLineAsFace, rightLineAsFace, rightLineAsFace, rightLineAsFace]
+-}
 
 -- | The wrist and back strip of the socket, with a platform to attach the motor/board box.
 socketMount :: [SingleDegreeRadii] -> [SingleDegreeRadii] -> RowReductionFactor -> PixelsPerMillimeter -> ExceptT BuilderError (State CpointsStack ) CpointsList
@@ -188,12 +206,8 @@ socketMount    innerSleeveSDR         outerSleeveSDR         rowReductionFactor 
 
       backStripCutterCubesList = concat [backStripCutterCubes | x <-  [1..]]
 
-  {-
-  wristCubes  <- buildCubePointsListWithAdd "wristCubes"
-                (concat $ take 3 $ drop 1  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
-                [CornerPointsId | x <-[1..]]
-  -}
   
+  {-
   wristCubes1  <- buildCubePointsListWithAdd "wristCubes"
                 (head $ drop 1  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
                 [CornerPointsId | x <-[1..]]
@@ -202,90 +216,58 @@ socketMount    innerSleeveSDR         outerSleeveSDR         rowReductionFactor 
                 --(head $ drop 2  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
                 (concat $ take 2 $ drop 2  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
                 [CornerPointsId | x <-[1..]]
-  
- 
-                 
-      
-      
-  {-
-  platformWrist2
-             <- buildCubePointsListWithAdd "platformWrist2"
-                (wristCubes2)
-                ([mount1, leftMount1 ])
   -}
+  wristCubes   <- buildCubePointsListWithAdd "wristCubes"
+                --(head $ drop 2  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
+                (concat $ drop 1  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
+                ([CornerPointsId | x <-[1..108]] ++ backStripCutterCubesList)
   
+  let mounts = --generateMounts (-5.0) (-2) $ buildFrontFace 30   25   15 (-55) (-40) (-45) (-2)
+               generateMounts (-5.0) (-2) $ buildFrontFace 45   40   15   (-40) (-40) (-30) (-2)
+                                                         --ztop zbtm lx   ly    rx    ry     ySlope
+  wristMount
+             <- buildCubePointsListSingle "wristMount"
+                (concat $ 
+                   [gen1 |+++| gen2
+                    | gen1 <- (drop 1  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
+                    | gen2 <- mounts --generateMounts (-5.0) (-2) $ buildFrontFace 30   25   15 (-55) (-40) (-45) (-2)
+                   ]
+                )
+  {-
   let clist = --(take 2 $ drop 4  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
               (drop 4  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
       bGen  = --generateMounts (-10) mount1
-              generateMounts (-5.2) $ buildFrontFace 30   20   15 (-55) (-40) (-45)
-              --                                     ztop zbtm lx ly    rx    ry 
-  handleCubes1
+              --generateMounts (-5.2) $ buildFrontFace 30   20   15 (-55) (-40) (-45) (-2)
+              generateMounts (-5.0) (-2) $ buildFrontFace 30   {-20-}25   15 (-55) (-40) (-45) (-2)
+              --                                        ztop zbtm lx   ly    rx    ry  ySlope
+  -}
+  {-
+  handleCubes
               <- buildCubePointsListWithAdd "handleCubes1"
-                --(concat $ take 2 $ drop 4  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
                 (concat $ drop 4  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
                 backStripCutterCubesList
   
-  platformHandle1
-             <- buildCubePointsListSingle "platformWrist2"
+  handleMount
+             <- buildCubePointsListSingle "handleMount"
+                (concat $ 
+                   [gen1 |+++| gen2
+                    | gen1 <- (drop 4  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
+                    | gen2 <- mounts --generateMounts (-5.0) (-2) $ buildFrontFace 30   25   15 (-55) (-40) (-45) (-2)
+                   ]
+                )
+  -}
+  {- original 
+  handleMount
+             <- buildCubePointsListSingle "handleMount"
                 (concat $ 
                    [gen1 |+++| gen2
                     | gen1 <- clist
                     | gen2 <- bGen
                    ]
                 )
+  -}
   
-  {-
-  platformHandle1
-             <- buildCubePointsListWithAdd "platformWrist2"
-                (handleCubes1)
-                (concat $ generateMounts mount1)
-
-  
-  platformHandle1
-             <- buildCubePointsListWithAdd "platformWrist2"
-                (handleCubes1)
-                (concat $ generateMounts mount1)
-  -}
-  {-
-  platformHandle1
-             <- buildCubePointsListWithAdd "platformWrist2"
-                (handleCubes1)
-                ([mount1, leftMount1 ]
-                 ++
-                 [CornerPointsNothing | x <-[1,2..29]]
-                 ++
-                 [rightMount1, rightMount1, rightMount1, rightMount1, rightMount1]
-                )
-  -}
-  {-
-  handleCubes2
-              <- buildCubePointsListWithAdd "handleCubes2"
-                --take 3 is normal, but use more to see what is going on
-                (concat $ take 1 $ drop 5  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
-                backStripCutterCubes
-
-  platformFrontFaces
-             <- buildCubePointsListWithAdd "platformFrontFaces"
-                (handleCubes2)
-                (mount1)
-  {- generate all the handle layers in 1 pass.
-     But will I be able to match up the platform this way.
-     Leave this here till know if can remove.
-  allHandleCubes1
-              <- buildCubePointsListWithAdd "wristCubes"
-                --take 3 is normal, but use more to see what is going on
-                (concat $ drop 4  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
-                (concat $ repeat backStripCutterCubes)             
-  -}
-
-  {-
-  platformFrontFaces
-             <- buildCubePointsListWithAdd "platformFrontFaces"
-                (handleCubes2)
-                (mount1)
-  -}              
-  -}
-  return platformHandle1
+  return wristMount
 
 --load the json file and call generate stl
 socketMountStlGenerator :: IO ()
@@ -342,11 +324,13 @@ removeDefectiveTopRow' (MultiDegreeRadii name' degrees') = MultiDegreeRadii name
 
 
 -- ========================================================== local testing ==================================================
-mount1 = buildFrontFace   30         20       5         (-60)     (-50)     (-60)
+mount1 = buildFrontFace   30         20       5         (-60)     (-50)     (-60) 0
 
 socketMountTestsDo = do
   runTestTT mount1BuilderTest
   runTestTT mount2BuilderTest
+  runTestTT buildFrontFaceNoSlope
+  runTestTT buildFrontFaceWithSlope
 
 mount1BuilderTest =  TestCase $ assertEqual
    "mount1BuilderTest"
@@ -386,7 +370,8 @@ mount1BuilderTest =  TestCase $ assertEqual
                f3 = Point {x_axis = -50.0, y_axis = -60.0, z_axis = 30.0},
                f4 = Point {x_axis = -50.0, y_axis = -60.0, z_axis = 20.0}}]
 
-   (last $ take 1 $ generateMounts (-10) mount1)
+   --(last $ take 1 $ generateMounts (-10) mount1)
+   (last $ take 1 $ generateMounts (-10) (0) mount1)
 
 
 mount2BuilderTest =  TestCase $ assertEqual
@@ -427,7 +412,30 @@ mount2BuilderTest =  TestCase $ assertEqual
                f3 = Point {x_axis = -50.0, y_axis = -60.0, z_axis = 30.0},
                f4 = Point {x_axis = -50.0, y_axis = -60.0, z_axis = 20.0}}]
 
-  (last $ reverse $ take 2 $ generateMounts (-10) mount1)
+  --(last $ reverse $ take 2 $ generateMounts (-10) mount1)
+  (last $ reverse $ take 2 $ generateMounts (-10) 0 mount1)
 
+buildFrontFaceNoSlope = TestCase $ assertEqual 
+  "buildFrontFaceNoSlope"
+  (
+   FrontFace {
+      f1 = Point {x_axis = 15.0, y_axis = -55.0, z_axis = 20.0},
+      f2 = Point {x_axis = 15.0, y_axis = -55.0, z_axis = 30.0},
+      f3 = Point {x_axis = -40.0, y_axis = -45.0, z_axis = 30.0},
+      f4 = Point {x_axis = -40.0, y_axis = -45.0, z_axis = 20.0}}
 
+  )
+  (buildFrontFace 30   20   15 (-55) (-40) (-45) (0))
+
+buildFrontFaceWithSlope = TestCase $ assertEqual 
+  "buildFrontFaceWithSlope"
+  (
+   FrontFace {
+      f1 = Point {x_axis = 15.0, y_axis = -57.0, z_axis = 20.0},
+      f2 = Point {x_axis = 15.0, y_axis = -55.0, z_axis = 30.0},
+      f3 = Point {x_axis = -40.0, y_axis = -45.0, z_axis = 30.0},
+      f4 = Point {x_axis = -40.0, y_axis = -47.0, z_axis = 20.0}}
+
+  )
+  (buildFrontFace 30   20   15 (-55) (-40) (-45) (-2))
 -- ======================================================= test 2 with head =============================================================
