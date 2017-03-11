@@ -129,21 +129,20 @@ generateMounts    height    ySlope    frontFace =
   let 
      mountList = buildMountList frontFace
   in
-     mountList : generateMounts' height ySlope  mountList []
-
+     mountList : generateMounts' height ySlope  frontFace []
 
 --recursive call for generateMounts
-generateMounts' :: Height -> Yslope ->  [CornerPoints] -> [[CornerPoints]] -> [[CornerPoints]]
-generateMounts'    height    ySlope     currCpts          xs  =
+generateMounts' :: Height -> Yslope ->  CornerPoints -> [[CornerPoints]] -> [[CornerPoints]]
+generateMounts'    height    ySlope     prevFrontFace          xs  =
   let
-    mountNew =
-     (head currCpts)
+    currFrontFace =
+     (prevFrontFace)
      +++
-     ((transposeZ (+(height))) . (transposeY(+(ySlope))) . extractBottomFrontLine  $ head currCpts)
+     ((transposeZ (+(height))) . (transposeY(+(ySlope))) . extractBottomFrontLine  $ prevFrontFace)
 
-    mountList = buildMountList mountNew
+    mountList = buildMountList currFrontFace
   in
-    mountList : generateMounts' height ySlope mountList (xs) 
+    mountList : generateMounts' height ySlope currFrontFace (xs) 
 
 
 buildMountList :: CornerPoints -> [CornerPoints]
@@ -157,30 +156,12 @@ buildMountList frontFace =
       leftLineAsFace = frontLeftLine' +++ frontRightLine'
 
   in
-      [frontFace, leftLineAsFace ]
+      [leftLineAsFace, leftLineAsFace ]
       ++
       [CornerPointsNothing | x <-[1,2..29]]
       ++
-      [rightLineAsFace, rightLineAsFace, rightLineAsFace, rightLineAsFace, rightLineAsFace]
+      [rightLineAsFace, rightLineAsFace,  rightLineAsFace , rightLineAsFace, frontFace ]
 
-{-
-buildMountList :: CornerPoints -> [CornerPoints]
-buildMountList frontFace =
-  let 
-      frontRightLine  = extractFrontRightLine frontFace
-      frontLeftLine = f12LineFromF34Line frontRightLine 
-      rightLineAsFace = frontLeftLine +++ frontRightLine 
-      frontLeftLine' = extractFrontLeftLine frontFace
-      frontRightLine' = f34LineFromF12Line frontLeftLine' 
-      leftLineAsFace = frontLeftLine' +++ frontRightLine'
-
-  in
-      [frontFace, leftLineAsFace ]
-      ++
-      [CornerPointsNothing | x <-[1,2..29]]
-      ++
-      [rightLineAsFace, rightLineAsFace, rightLineAsFace, rightLineAsFace, rightLineAsFace]
--}
 
 -- | The wrist and back strip of the socket, with a platform to attach the motor/board box.
 socketMount :: [SingleDegreeRadii] -> [SingleDegreeRadii] -> RowReductionFactor -> PixelsPerMillimeter -> ExceptT BuilderError (State CpointsStack ) CpointsList
@@ -207,23 +188,13 @@ socketMount    innerSleeveSDR         outerSleeveSDR         rowReductionFactor 
       backStripCutterCubesList = concat [backStripCutterCubes | x <-  [1..]]
 
   
-  {-
-  wristCubes1  <- buildCubePointsListWithAdd "wristCubes"
-                (head $ drop 1  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
-                [CornerPointsId | x <-[1..]]
-  
-  wristCubes2  <- buildCubePointsListWithAdd "wristCubes"
-                --(head $ drop 2  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
-                (concat $ take 2 $ drop 2  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
-                [CornerPointsId | x <-[1..]]
-  -}
   wristCubes   <- buildCubePointsListWithAdd "wristCubes"
                 --(head $ drop 2  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
                 (concat $ drop 1  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
                 ([CornerPointsId | x <-[1..108]] ++ backStripCutterCubesList)
   
-  let mounts = --generateMounts (-5.0) (-2) $ buildFrontFace 30   25   15 (-55) (-40) (-45) (-2)
-               generateMounts (-5.0) (-2) $ buildFrontFace 45   40   15   (-40) (-40) (-30) (-2)
+  let slope = (-2.5)
+      mounts = generateMounts (-5.0) (slope) $ buildFrontFace 45   40   15   (-35) (-40) (-25) (slope)
                                                          --ztop zbtm lx   ly    rx    ry     ySlope
   wristMount
              <- buildCubePointsListSingle "wristMount"
@@ -233,39 +204,6 @@ socketMount    innerSleeveSDR         outerSleeveSDR         rowReductionFactor 
                     | gen2 <- mounts --generateMounts (-5.0) (-2) $ buildFrontFace 30   25   15 (-55) (-40) (-45) (-2)
                    ]
                 )
-  {-
-  let clist = --(take 2 $ drop 4  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
-              (drop 4  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
-      bGen  = --generateMounts (-10) mount1
-              --generateMounts (-5.2) $ buildFrontFace 30   20   15 (-55) (-40) (-45) (-2)
-              generateMounts (-5.0) (-2) $ buildFrontFace 30   {-20-}25   15 (-55) (-40) (-45) (-2)
-              --                                        ztop zbtm lx   ly    rx    ry  ySlope
-  -}
-  {-
-  handleCubes
-              <- buildCubePointsListWithAdd "handleCubes1"
-                (concat $ drop 4  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
-                backStripCutterCubesList
-  
-  handleMount
-             <- buildCubePointsListSingle "handleMount"
-                (concat $ 
-                   [gen1 |+++| gen2
-                    | gen1 <- (drop 4  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
-                    | gen2 <- mounts --generateMounts (-5.0) (-2) $ buildFrontFace 30   25   15 (-55) (-40) (-45) (-2)
-                   ]
-                )
-  -}
-  {- original 
-  handleMount
-             <- buildCubePointsListSingle "handleMount"
-                (concat $ 
-                   [gen1 |+++| gen2
-                    | gen1 <- clist
-                    | gen2 <- bGen
-                   ]
-                )
-  -}
   
   return wristMount
 
