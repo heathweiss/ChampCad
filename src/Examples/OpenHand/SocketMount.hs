@@ -1,4 +1,5 @@
 {-# LANGUAGE ParallelListComp #-}
+{-# LANGUAGE DeriveGeneric #-}
 {- |
 
 The section of the socket which will have platform to attach the motor mount to.
@@ -71,6 +72,13 @@ import qualified Data.Foldable as F
 import qualified Flow as Flw
 import Control.Lens
 
+{-
+import qualified Data.ByteString.Char8 as BS
+import qualified Data.Yaml as Y
+import GHC.Generics
+import Data.Aeson
+-}
+
 --import qualified Test.HUnit as T
 import Test.HUnit hiding (State)
 
@@ -84,6 +92,8 @@ import Control.Monad.State
 import Control.Monad.Except
 import Control.Monad.Writer (WriterT, tell, execWriterT)
 import Control.Monad.Reader
+
+
 
 pixelsPerMM = 696/38
 type RowReductionFactor = Int
@@ -161,6 +171,8 @@ buildMountList frontFace =
       [CornerPointsNothing | x <-[1,2..29]]
       ++
       [rightLineAsFace, rightLineAsFace,  rightLineAsFace , rightLineAsFace, frontFace ]
+
+
 
 
 -- | The wrist and back strip of the socket, with a platform to attach the motor/board box.
