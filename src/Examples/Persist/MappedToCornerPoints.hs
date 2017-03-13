@@ -48,6 +48,7 @@ import Persistable.Mapping (Surface(..), BackBottomLineP(..), BackTopLineP(..), 
 --connection string
 databaseName = "MappedToCornerPoints.sql"
 
+
 {-
 initializeDatabase :: IO ()
 initializeDatabase = runSqlite databaseName $ do
