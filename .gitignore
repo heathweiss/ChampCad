@@ -29,5 +29,4 @@ src/Data/scanImages/*.JPG
 parallelProcess.eventlog
 /.project
 README.md~
-*.sql
 *.md~
