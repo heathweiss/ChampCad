@@ -1,5 +1,14 @@
 {-# LANGUAGE ParallelListComp #-}
-{-# LANGUAGE DeriveGeneric #-}
+--for persist
+{-# LANGUAGE EmptyDataDecls             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
 {- |
 
 The section of the socket which will have platform to attach the motor mount to.
@@ -11,7 +20,9 @@ The ninja-flex will fit inside of it, and be attached to give it support and all
 
 -}
 
-module Examples.OpenHand.SocketMount(socketMountStlGenerator, socketMountShowCubes, socketMountTestsDo) where
+module Examples.OpenHand.SocketMount(socketMountStlGenerator, socketMountShowCubes, socketMountTestsDo,
+                                     initializeDatabase, insertMount, viewMountByName, setCurrentMount,
+                                     showFaceDimensions, generateSocketMountStlUsingDbValues) where
   
 import CornerPoints.Radius(MultiDegreeRadii(..), SingleDegreeRadii(..), Radius(..),extractSingle, extractList, rotateSDR, transposeMDRList,
                           {-transposeSDRList,-} extractSDRWithinRange, singleDegreeRadiiListToMap, transformSDRWithList, extractMaybeSDR,
@@ -72,12 +83,7 @@ import qualified Data.Foldable as F
 import qualified Flow as Flw
 import Control.Lens
 
-{-
-import qualified Data.ByteString.Char8 as BS
-import qualified Data.Yaml as Y
-import GHC.Generics
-import Data.Aeson
--}
+
 
 --import qualified Test.HUnit as T
 import Test.HUnit hiding (State)
@@ -93,7 +99,11 @@ import Control.Monad.Except
 import Control.Monad.Writer (WriterT, tell, execWriterT)
 import Control.Monad.Reader
 
-
+-- for persist
+import Control.Monad.IO.Class  (liftIO)
+import Database.Persist
+import Database.Persist.Sqlite
+import Database.Persist.TH
 
 pixelsPerMM = 696/38
 type RowReductionFactor = Int
@@ -106,6 +116,117 @@ type Height = Double
 type Power = Double
 type LengthenYFactor = Double
 type Yslope = Double
+
+-- =================================== database =====================================================
+databaseName = "src/Examples/OpenHand/SocketMount.sql"
+
+share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
+Mount
+   name String
+   UniqueName name
+   desc String
+  deriving Show
+
+FaceSlope
+  slope Double
+  mountId MountId
+  MountIdForFaceSlope mountId
+ deriving Show
+
+FaceDimensions
+  zTop Double
+  zBtm Double
+  leftx Double
+  lefty Double
+  rightx Double
+  righty Double
+  mountId MountId
+  MountIdForFaceDimensions mountId
+ deriving Show
+
+CurrentMount
+  mountId MountId
+ deriving Show
+|]
+
+initializeDatabase :: IO ()
+initializeDatabase = runSqlite databaseName $ do
+       
+    runMigration migrateAll
+    liftIO $ putStrLn "db initializes"
+
+insertMount :: IO ()
+insertMount  = runSqlite databaseName $ do
+  mountId <- insert $ Mount "mount 1" "fits upright motors with board over top"
+  insert $ FaceSlope (-2) mountId
+  insert $ FaceDimensions 50 45 15 (-35) (-40) (-25) mountId
+  liftIO $ putStrLn "mounts inserted"
+
+--testing
+viewMountByName :: IO ()
+viewMountByName = runSqlite databaseName $ do
+  maybeMount <- getBy $ UniqueName "mount 1"
+  case maybeMount of
+    Nothing -> liftIO $ putStrLn "Just kidding, not really there"
+    Just (Entity mountId mount) -> liftIO $ print mount
+
+
+
+
+setCurrentMount :: IO ()
+setCurrentMount = runSqlite databaseName $ do
+  maybeMount <- getBy $ UniqueName "mount 1"
+  case maybeMount of
+    Nothing -> liftIO $ putStrLn "mount not found"
+    Just (Entity mountId mount) -> do
+      insert $ CurrentMount $  mountId
+      liftIO $ putStrLn "current mount set"
+      
+showFaceDimensions :: IO ()
+showFaceDimensions = runSqlite databaseName $ do
+  maybeMount <- getBy $ UniqueName "mount 1"
+  case maybeMount of
+    Nothing -> liftIO $ putStrLn "mount not found"
+    Just (Entity mountId mount) -> do
+      maybeDimension <- (getBy $ MountIdForFaceDimensions mountId  )
+      case maybeDimension of
+        Nothing -> liftIO $ putStrLn "dimensions not found"
+        Just (Entity dimensionId dimension) -> do
+          liftIO $ print dimension
+         
+generateSocketMountStlUsingDbValues :: IO ()
+generateSocketMountStlUsingDbValues = runSqlite databaseName $ do
+  maybeMount <- getBy $ UniqueName "mount 1"
+  case maybeMount of
+    Nothing -> liftIO $ putStrLn "mount not found"
+    Just (Entity mountId mount) -> do
+      maybeDimension <- (getBy $ MountIdForFaceDimensions mountId  )
+      case maybeDimension of
+        Nothing -> liftIO $ putStrLn "dimensions not found"
+        Just (Entity dimensionId dimension) -> do
+          maybeFaceSlope <- getBy $ MountIdForFaceSlope mountId
+          case maybeFaceSlope of
+            Nothing -> liftIO $ putStrLn "face slope not found"
+            Just (Entity faceSlopeId faceSlope) -> do
+              liftIO $ socketMountStlGenerator dimension faceSlope
+              liftIO $ putStrLn "socket mount stl should be output"
+
+{-befor FaceSlope
+useFaceDimensionsWithSocketMount :: IO ()
+useFaceDimensionsWithSocketMount = runSqlite databaseName $ do
+  maybeMount <- getBy $ UniqueName "mount 1"
+  case maybeMount of
+    Nothing -> liftIO $ putStrLn "mount not found"
+    Just (Entity mountId mount) -> do
+      maybeDimension <- (getBy $ MountIdForFaceDimensions mountId  )
+      case maybeDimension of
+        Nothing -> liftIO $ putStrLn "dimensions not found"
+        Just (Entity dimensionId dimension) -> do
+          liftIO $ socketMountStlGenerator dimension
+          liftIO $ putStrLn "socke mount stl should be output"
+
+-}
+ -- =================================== face/mount builder =====================================
 
 buildFrontFace :: Double -> Double -> Double -> Double -> Double -> Double -> Yslope -> CornerPoints
 buildFrontFace    ztop       zbtm     lx        ly        rx        ry        ySlope    =
@@ -176,8 +297,11 @@ buildMountList frontFace =
 
 
 -- | The wrist and back strip of the socket, with a platform to attach the motor/board box.
-socketMount :: [SingleDegreeRadii] -> [SingleDegreeRadii] -> RowReductionFactor -> PixelsPerMillimeter -> ExceptT BuilderError (State CpointsStack ) CpointsList
-socketMount    innerSleeveSDR         outerSleeveSDR         rowReductionFactor    pixelsPerMM = do
+socketMount :: [SingleDegreeRadii] -> [SingleDegreeRadii] -> RowReductionFactor -> PixelsPerMillimeter ->
+               FaceDimensions -> FaceSlope ->
+               ExceptT BuilderError (State CpointsStack ) CpointsList
+socketMount    innerSleeveSDR         outerSleeveSDR         rowReductionFactor    pixelsPerMM
+               (FaceDimensions zTop_ zBtm_ leftx_ lefty_ rightx_ righty_ _) (FaceSlope slope_ _) = do
   let extensionHeight = 30
       transposeFactors = [0,heightPerPixel.. ]
       heightPerPixel = (1/ pixelsPerMM) * (fromIntegral rowReductionFactor)
@@ -201,27 +325,26 @@ socketMount    innerSleeveSDR         outerSleeveSDR         rowReductionFactor 
 
   
   wristCubes   <- buildCubePointsListWithAdd "wristCubes"
-                --(head $ drop 2  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
                 (concat $ drop 1  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
                 ([CornerPointsId | x <-[1..108]] ++ backStripCutterCubesList)
   
-  let slope = (-2.5)
-      mounts = generateMounts (-5.0) (slope) $ buildFrontFace 45   40   15   (-35) (-40) (-25) (slope)
-                                                         --ztop zbtm lx   ly    rx    ry     ySlope
+  let mounts = generateMounts (-5.0) (slope_) $ buildFrontFace zTop_ zBtm_ leftx_ lefty_ rightx_ righty_ (slope_)
+                                                            --ztop  zbtm  lx     ly     rx      ry      ySlope
   wristMount
              <- buildCubePointsListSingle "wristMount"
                 (concat $ 
                    [gen1 |+++| gen2
                     | gen1 <- (drop 1  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
-                    | gen2 <- mounts --generateMounts (-5.0) (-2) $ buildFrontFace 30   25   15 (-55) (-40) (-45) (-2)
+                    | gen2 <- mounts 
                    ]
                 )
   
   return wristMount
 
---load the json file and call generate stl
-socketMountStlGenerator :: IO ()
-socketMountStlGenerator = do
+
+--load the scan file and generate stl
+socketMountStlGenerator :: FaceDimensions -> FaceSlope -> IO ()
+socketMountStlGenerator faceDimensions faceSlope = do
   contents <- BL.readFile "src/Data/scanFullData.json"
   
   case (decode contents) of
@@ -232,42 +355,35 @@ socketMountStlGenerator = do
             innerSleeveMDR = (transpose innerSleeveTransposeFactor) . (reduceScan rowReductionFactor) . removeDefectiveTopRow' $
                               (MultiDegreeRadii
                                 name'
-                                --(rotateSDR . rotateSDR . rotateSDR $ degrees')
                                 degrees'
                               )
             outerSleeveMDR = transpose (+3) innerSleeveMDR
-            cpoints =  ((execState $ runExceptT (socketMount (degrees innerSleeveMDR) (degrees outerSleeveMDR)         rowReductionFactor    pixelsPerMM ) ) [])
+            cpoints =  ((execState $ runExceptT (socketMount (degrees innerSleeveMDR) (degrees outerSleeveMDR)
+                                                 rowReductionFactor    pixelsPerMM faceDimensions faceSlope) ) [])
         in  writeStlToFile $ newStlShape "socket with riser"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
       Nothing                                ->
         putStrLn "File not decoded"
 
-
-socketMountShowCubes :: IO ()
-socketMountShowCubes = do
+-- | load the scan file, generate socket with mount, and show current cubes from state.
+socketMountShowCubes :: FaceDimensions -> FaceSlope -> IO ()
+socketMountShowCubes faceDimensions faceSlope = do
   contents <- BL.readFile "src/Data/scanFullData.json"
   
   case (decode contents) of
    
       Just (MultiDegreeRadii name' degrees') ->
-        let --Changing this to 50 does not work. It should be made so this can be changed.
-            --Is it some combination with PixelsPerMillimeter that messes it up.
-            --ToDo: Make a diff. version of reduceScan that perhaps uses mm instead of mod of some number.
-            rowReductionFactor = 100::RowReductionFactor 
-            --innerSleeveMDR = (rotateMDR) . (rotateMDR) . (rotateMDR) . (transpose (+3)) . (reduceScan rowReductionFactor) . removeDefectiveTopRow' $ (MultiDegreeRadii name' degrees')
+        let rowReductionFactor = 100::RowReductionFactor 
             innerSleeveMDR = (transpose (+3)) . (reduceScan rowReductionFactor) . removeDefectiveTopRow' $
                               (MultiDegreeRadii
                                 name'
-                                --(rotateSDR . rotateSDR . rotateSDR $ degrees')
                                 degrees'
                               )
             outerSleeveMDR = transpose (+3) innerSleeveMDR
-            --cpoints =  ((execState $ runExceptT (socketMount (degrees innerSleeveMDR) (degrees outerSleeveMDR)         rowReductionFactor    pixelsPerMM ) ) [])
-            cpoints =  ((evalState $ runExceptT (socketMount (degrees innerSleeveMDR) (degrees outerSleeveMDR)         rowReductionFactor    pixelsPerMM ) ) [])
-        in  --writeStlToFile $ newStlShape "socket with riser"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
-            print $ show cpoints
+            cpoints =  ((evalState $ runExceptT (socketMount (degrees innerSleeveMDR) (degrees outerSleeveMDR)
+                                                 rowReductionFactor    pixelsPerMM faceDimensions faceSlope ) ) [])
+        in  print $ show cpoints
       Nothing                                ->
         putStrLn "File not decoded"
-
 
 removeDefectiveTopRow' :: MultiDegreeRadii -> MultiDegreeRadii
 removeDefectiveTopRow' (MultiDegreeRadii name' degrees') = MultiDegreeRadii name' [(SingleDegreeRadii degree'' (tail radii''))  | (SingleDegreeRadii degree'' radii'') <- degrees']
