@@ -22,7 +22,7 @@ The ninja-flex will fit inside of it, and be attached to give it support and all
 
 module Examples.OpenHand.SocketMount(socketMountStlGenerator, socketMountShowCubes, socketMountTestsDo,
                                      initializeDatabase, insertMount, viewMountByName, setCurrentMount,
-                                     showFaceDimensions, generateSocketMountStlUsingDbValues) where
+                                     generateSocketMountStlUsingDbValues) where
   
 import CornerPoints.Radius(MultiDegreeRadii(..), SingleDegreeRadii(..), Radius(..),extractSingle, extractList, rotateSDR, transposeMDRList,
                           {-transposeSDRList,-} extractSDRWithinRange, singleDegreeRadiiListToMap, transformSDRWithList, extractMaybeSDR,
@@ -149,12 +149,14 @@ CurrentMount
  deriving Show
 |]
 
+-- | Initialize a new database with all tables. Will alter tables of existing db.
 initializeDatabase :: IO ()
 initializeDatabase = runSqlite databaseName $ do
        
     runMigration migrateAll
     liftIO $ putStrLn "db initializes"
 
+-- | Insert a new Mount, FaceSlope, and FaceDimensions into the database. Sqlite browser will not do this.
 insertMount :: IO ()
 insertMount  = runSqlite databaseName $ do
   mountId <- insert $ Mount "mount 1" "fits upright motors with board over top"
@@ -162,7 +164,7 @@ insertMount  = runSqlite databaseName $ do
   insert $ FaceDimensions 50 45 15 (-35) (-40) (-25) mountId
   liftIO $ putStrLn "mounts inserted"
 
---testing
+--View a Mount in the Db. Probably useless not that there is a CurrentMount.
 viewMountByName :: IO ()
 viewMountByName = runSqlite databaseName $ do
   maybeMount <- getBy $ UniqueName "mount 1"
@@ -172,7 +174,7 @@ viewMountByName = runSqlite databaseName $ do
 
 
 
-
+-- | Set the current Mount in the database. Can be done directlly in sqlite browser. 
 setCurrentMount :: IO ()
 setCurrentMount = runSqlite databaseName $ do
   maybeMount <- getBy $ UniqueName "mount 1"
@@ -181,7 +183,8 @@ setCurrentMount = runSqlite databaseName $ do
     Just (Entity mountId mount) -> do
       insert $ CurrentMount $  mountId
       liftIO $ putStrLn "current mount set"
-      
+
+-- Have a look at the FaceDimensions from the db
 showFaceDimensions :: IO ()
 showFaceDimensions = runSqlite databaseName $ do
   maybeMount <- getBy $ UniqueName "mount 1"
@@ -193,7 +196,8 @@ showFaceDimensions = runSqlite databaseName $ do
         Nothing -> liftIO $ putStrLn "dimensions not found"
         Just (Entity dimensionId dimension) -> do
           liftIO $ print dimension
-         
+          
+-- | Generate the socket stl, using database values.         
 generateSocketMountStlUsingDbValues :: IO ()
 generateSocketMountStlUsingDbValues = runSqlite databaseName $ do
   maybeMount <- getBy $ UniqueName "mount 1"
@@ -211,22 +215,7 @@ generateSocketMountStlUsingDbValues = runSqlite databaseName $ do
               liftIO $ socketMountStlGenerator dimension faceSlope
               liftIO $ putStrLn "socket mount stl should be output"
 
-{-befor FaceSlope
-useFaceDimensionsWithSocketMount :: IO ()
-useFaceDimensionsWithSocketMount = runSqlite databaseName $ do
-  maybeMount <- getBy $ UniqueName "mount 1"
-  case maybeMount of
-    Nothing -> liftIO $ putStrLn "mount not found"
-    Just (Entity mountId mount) -> do
-      maybeDimension <- (getBy $ MountIdForFaceDimensions mountId  )
-      case maybeDimension of
-        Nothing -> liftIO $ putStrLn "dimensions not found"
-        Just (Entity dimensionId dimension) -> do
-          liftIO $ socketMountStlGenerator dimension
-          liftIO $ putStrLn "socke mount stl should be output"
-
--}
- -- =================================== face/mount builder =====================================
+ -- =============================================== face/mount builder =====================================
 
 buildFrontFace :: Double -> Double -> Double -> Double -> Double -> Double -> Yslope -> CornerPoints
 buildFrontFace    ztop       zbtm     lx        ly        rx        ry        ySlope    =
@@ -294,7 +283,7 @@ buildMountList frontFace =
       [rightLineAsFace, rightLineAsFace,  rightLineAsFace , rightLineAsFace, frontFace ]
 
 
-
+-- ========================================= Builder ====================================================
 
 -- | The wrist and back strip of the socket, with a platform to attach the motor/board box.
 socketMount :: [SingleDegreeRadii] -> [SingleDegreeRadii] -> RowReductionFactor -> PixelsPerMillimeter ->
@@ -365,6 +354,8 @@ socketMountStlGenerator faceDimensions faceSlope = do
         putStrLn "File not decoded"
 
 -- | load the scan file, generate socket with mount, and show current cubes from state.
+--   This has not yet been implemented with the db. See socketMountStlGenerator on how to do this.
+--   It already has the database objects added.
 socketMountShowCubes :: FaceDimensions -> FaceSlope -> IO ()
 socketMountShowCubes faceDimensions faceSlope = do
   contents <- BL.readFile "src/Data/scanFullData.json"

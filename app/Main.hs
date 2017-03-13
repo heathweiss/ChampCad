@@ -8,7 +8,7 @@ import Examples.OpenBionicsCom.OpenBionicsDotComDesignWork (fullLengthSocketWith
                                                   )
 import Examples.OpenHand.Wrist(wristAndDoubleCylinderStlGenerator, wristAndDoubleCylinderShowCubes, wristSquaredOffStlGenerator, wristSquaredOffShowCubes)
 import Examples.OpenHand.SocketMount(socketMountStlGenerator, socketMountShowCubes, socketMountTestsDo, generateSocketMountStlUsingDbValues,
-                                     initializeDatabase, insertMount, viewMountByName, setCurrentMount, showFaceDimensions )
+                                     initializeDatabase, insertMount, viewMountByName, setCurrentMount )
 import Examples.OpenHand.MotorMount(motorMountStlGenerator, motorMountShowCubes)
 
 import Examples.Primitives.Squared(cylinderWithSquaredRadiiStlGenerator, )
@@ -37,7 +37,6 @@ main = do
   --insertMount
   --setCurrentMount
   --viewMountByName
-  --showFaceDimensions
   generateSocketMountStlUsingDbValues
   --socketMountStlGenerator
   --socketMountTestsDo
