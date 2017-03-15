@@ -22,7 +22,7 @@ This varies, depending on the face in question. Eg: FrontFace vs BackFace. See e
 for the particular implementation.
 -}
 
-{- ============================= to do =============================================
+{- ToDo:
 Any faces which have been reduced to a line, should not be shown.
 EG: On a solid radial shape, the center is made up of BackFace, all of which are a single line.
 Currently, used Faces constructor without a BackFace, fixes this. But it should be automatic,
