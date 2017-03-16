@@ -18,7 +18,7 @@ import CornerPoints.CornerPoints((|@+++#@|), (|+++|),  CornerPoints(..), (+++), 
 import CornerPoints.Points(Point(..))
 import CornerPoints.MeshGeneration(autoGenerateEachCube)
 import CornerPoints.FaceConversions(toBackFace, reverseNormal, toFrontFace, backFaceFromFrontFace, frontFaceFromBackFace,
-                                    f12LineFromF34Line, f34LineFromF12Line, b12LineFromF12Line, b34LineFromF34Line,
+                                    toFrontLeftLine, f34LineFromF12Line, b12LineFromF12Line, b34LineFromF34Line,
                                     )
 import CornerPoints.FaceExtraction(extractFrontFace, extractFrontLeftLine, extractFrontRightLine, extractLeftFace,
                                   extractRightFace, extractBackRightLine, extractBackLeftLine, extractBackFace, extractBackLeftLine)

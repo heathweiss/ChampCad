@@ -36,7 +36,7 @@ import CornerPoints.Create(Origin(..), createCornerPoint)
 import CornerPoints.FaceExtraction (extractFrontFace, extractTopFace,extractBottomFace, extractBackFace, extractFrontTopLine,
                                     extractBackTopLine, extractRightFace, extractFrontRightLine, extractFrontLeftLine, extractBottomFrontLine)
 import CornerPoints.FaceConversions(backFaceFromFrontFace, upperFaceFromLowerFace, lowerFaceFromUpperFace, frontFaceFromBackFace,
-                                    f12LineFromF34Line, f34LineFromF12Line )
+                                    {-f12LineFromF34Line,-}toFrontLeftLine, f34LineFromF12Line )
 import CornerPoints.Transpose (transposeZ, transposeY, transposeX)
 import CornerPoints.CornerPointsWithDegrees(CornerPointsWithDegrees(..), (@~+++#@),(@~+++@),(|@~+++@|), (|@~+++#@|), DegreeRange(..))
 import CornerPoints.MeshGeneration(autoGenerateEachCube)
@@ -269,7 +269,7 @@ buildMountList :: CornerPoints -> [CornerPoints]
 buildMountList frontFace =
   let 
       frontRightLine  = extractFrontRightLine frontFace
-      frontLeftLine = f12LineFromF34Line frontRightLine 
+      frontLeftLine = {-f12LineFromF34Line-}toFrontLeftLine frontRightLine 
       rightLineAsFace = frontLeftLine +++ frontRightLine 
       frontLeftLine' = extractFrontLeftLine frontFace
       frontRightLine' = f34LineFromF12Line frontLeftLine' 
