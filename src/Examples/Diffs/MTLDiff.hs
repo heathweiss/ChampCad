@@ -33,6 +33,9 @@ buildCubePointsListWithAdd  = buildCubePointsList (++)
 buildCubePointsListWithNoAdd = buildCubePointsList (\newCubes cubeStack -> cubeStack)
 idList = [CornerPointsId | x <-[1..]]
 
+-- ===============================================================================================================================================================
+-- ===================================================toBackFace has changed. May cause this to break.============================================================
+-- ===============================================================================================================================================================
 
 --angles for small/large shapes
 angles = map Angle [0,45]
