@@ -34,10 +34,11 @@ main = do
  --x <-  getArgs
  --loadMDRAndPassToProcessor (read $ head x) (read $ head $ tail x)
 
-  testCubeStlGenerator
-  --testCubeShowCubes
-  --flexSocketStlGenerator
+  --testCubeStlGenerator
   --flexiSocketTestsDo
+  --testCubeShowCubes
+  flexSocketStlGenerator
+  
   
   
 
