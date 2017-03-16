@@ -10,6 +10,7 @@ import Examples.OpenHand.Wrist(wristAndDoubleCylinderStlGenerator, wristAndDoubl
 import Examples.OpenHand.SocketMount(socketMountStlGenerator, socketMountShowCubes, socketMountTestsDo, generateSocketMountStlUsingDbValues,
                                      initializeDatabase, insertMount, viewMountByName, setCurrentMount )
 import Examples.OpenHand.MotorMount(motorMountStlGenerator, motorMountShowCubes)
+import Examples.OpenHand.FlexiSocket(flexiSocketTestsDo, flexSocketStlGenerator, testCubeStlGenerator, testCubeShowCubes)
 
 import Examples.Primitives.Squared(cylinderWithSquaredRadiiStlGenerator, )
 
@@ -33,14 +34,10 @@ main = do
  --x <-  getArgs
  --loadMDRAndPassToProcessor (read $ head x) (read $ head $ tail x)
 
-  --initializeDatabase
-  --insertMount
-  --setCurrentMount
-  --viewMountByName
-  generateSocketMountStlUsingDbValues
-  --socketMountStlGenerator
-  --socketMountTestsDo
-  --wristSquaredOffStlGenerator
+  testCubeStlGenerator
+  --testCubeShowCubes
+  --flexSocketStlGenerator
+  --flexiSocketTestsDo
   
   
 

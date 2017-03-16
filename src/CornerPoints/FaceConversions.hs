@@ -11,9 +11,13 @@ module CornerPoints.FaceConversions(
   backBottomLineFromBottomFrontLine,
   frontTopLineFromBackTopLine,
   bottomFrontLineFromBackBottomLine,
-    backFaceFromFrontFace,
+  backFaceFromFrontFace,
   toBackFace,
   toFrontFace,
+  toFrontTopLine,
+  toBottomFrontLine,
+  toFrontLeftLine,
+  toFrontRightLine,
   rigthtFaceFromLeftFace,
   leftFaceFromRigthFace,
   reverseNormal,
@@ -23,21 +27,58 @@ module CornerPoints.FaceConversions(
 import CornerPoints.CornerPoints (CornerPoints(..), (+++))
 
 
-{- | Convert faces of cube. Tests are in Tests.FaceConversionsTest and Tests.FaceExtractAndConvertTest.
-     Example in Examples.Diffs.FirstDiff (if it still exits).
+{- |
+Convert faces of cube. Tests are in Tests.FaceConversionsTest and Tests.FaceExtractAndConvertTest.
+Example in Examples.Diffs.FirstDiff (if it still exits).
 
-     Used for adding cubes together.
-     Used to embed a cube inside 1 or more other cubes.
+Rules for conversions:
 
-     ToDo: Write moretests.
+Conversions fall into 2 categories, adjacent and non-adjacent.
 
-           Some functions reverse normals, while others do not.
-           eg: frontFaceFromBackFace vs toBackFace(with FrontFace passed in.)
-           Should they be in separate modules. Or should none of them reverse the normals,
-           and instead, reverseNormal would have to be called when required.
-           For instance, frontFaceFromBackFace would become: reverseNormal . toFrontFace
+Adjacent: The original line/face is connected to the target line/face.
+Eg: TopFace and FrontFace are joined through the FrontTopLine
+Eg: FrontTopLine and FrontLeftLine are joined through F2
+
+Non-adjacent: Points/Lines/Faces which are not connected
+Eg: All points are non-adjacent
+Eg: FrontFace and BackFace
+Eg: TopFrontLine and BackTopLine
+
+Adjacent joins:
+The common point/line which connects them, will remain unchanged.
+Eg: TopFace and FrontFace are connected through the FrontTopLine.
+    The FrontTopLine will remain the same. The FrontFace would have it's BottomFrontLine
+    set to the BackTopLine of the TopFace
+Eg: FrontTopLine and LeftFrontLine are connected with through F2.
+    F2 will remain the same with the FrontTopLine F3 becoming the F1 fo the LeftFrontLine
+
+Non-adjacent joins:
+The line/face gets pushed straight accross.
+At this point it will be:
+1: done
+Eg: All points are non-adjecent and simply get re-assigned. Such as F1 becomes F2.
+Eg: FrontFace to a BackFace. F1 to B1; F2 to B2 ...
+
+2: adjacent; Follow adjacent rules.
+
+3: still non-adjacent
+Eg: TopFrontLine to BackBottomLine;
+    1st push through to BackTopLine. F2 to B2; F3 to B3
+    Then push to BackBottomLine; B2 to B1; B3 to B4
+
+Eg: TopFrontLine to BackLeftLine:
+    Push through to BackTopLine; F2 to B2; F3 to B3
+    BackTopLine is adjacent to BackLeftLine, so follow adjacent rules.
+
+
+That being said: Many of these functions were created before these rules and may not obey.
+They will be changed in the future.
+
+           
+
 -}
-
+-- ToDo: Write more tests.
+-- ToDo: Make sure all comply with conversion rules.
 
 {- |Converts BottomFace to TopFace. Reverses normal so it no longer faces outwards from the original cube.
 Used to add cubes together.
@@ -67,6 +108,7 @@ Lines will result in a backFace with either no width or no height. So it is a Ba
 Typically used for the back face of a radial shape, where all back faces represent a single point at the origin
 of the shape.
 -}
+--ToDo: Do not comply with rules. Used in MTLDiff example.
 toBackFace :: CornerPoints -> CornerPoints
 toBackFace (RightFace b3 b4 f3 f4) = BackFace b4 b3  f3 f4 
 toBackFace (LeftFace b1 b2 f1 f2) = BackFace f1 f2 b2 b1
@@ -76,12 +118,29 @@ toBackFace (FrontFace f1 f2 f3 f4) = BackFace f4 f3 f2 f1
 toBackFace (BackRightLine b3 b4) = BackFace b4 b3 b3 b4
 toBackFace (BackLeftLine b1 b2) = BackFace b1 b2 b2 b1
 
+-- ToDo: Finish pattern matches. Test
 
+toBottomFrontLine :: CornerPoints -> CornerPoints
+toBottomFrontLine (F2 f2) = BottomFrontLine f2 f2
+toBottomFrontLine (FrontTopLine f2 f3) = BottomFrontLine  f3 f2
+
+-- ToDo: Finish pattern matches. Test
+toFrontTopLine :: CornerPoints -> CornerPoints
+toFrontTopLine (F4 f4) = FrontTopLine f4 f4
+toFrontTopLine (F3 f3) = FrontTopLine f3 f3
+toFrontTopLine (BottomFrontLine f1 f4) = FrontTopLine  f4 f1 
+
+toFrontFace :: CornerPoints -> CornerPoints
 toFrontFace(RightFace b3 b4 f3 f4) = FrontFace f4 f3 b3 b4
 toFrontFace(LeftFace b1 b2 f1 f2) = FrontFace b1 b2 f2 f1
 toFrontFace (FrontLeftLine f1 f2) = FrontFace f1 f2 f2 f1
 toFrontFace (FrontRightLine f3 f4) = FrontFace f4 f3 f3 f4
 
+toFrontLeftLine :: CornerPoints -> CornerPoints
+toFrontLeftLine (FrontRightLine f3 f4) = FrontLeftLine f4 f3
+
+toFrontRightLine :: CornerPoints -> CornerPoints
+toFrontRightLine (F4 f4) = FrontRightLine f4 f4
 
 f23LineFromF14Line :: CornerPoints -> CornerPoints
 f23LineFromF14Line (BottomFrontLine f1 f4) = FrontTopLine f1 f4
@@ -125,4 +184,6 @@ bottomFrontLineFromBackBottomLine (BackBottomLine b1 b4) = BottomFrontLine b1 b4
 reverseNormal :: CornerPoints -> CornerPoints
 reverseNormal (FrontFace f1 f2 f3 f4) = FrontFace f4 f3 f2 f1
 reverseNormal (BackFace b1 b2 b3 b4)  = BackFace b4 b3 b2 b1
-
+reverseNormal (BottomFrontLine f1 f4) = (BottomFrontLine f4 f1)
+reverseNormal (FrontRightLine f3 f4)  = (FrontRightLine f4 f3)
+reverseNormal (FrontLeftLine f1 f2)   = FrontLeftLine f2 f1

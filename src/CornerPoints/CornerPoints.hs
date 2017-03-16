@@ -606,6 +606,8 @@ anyCornerPoint +++ (CornerPointsId) = anyCornerPoint
 (F3 f3) +++ (F2 f2) =
     FrontTopLine {f2=f2, f3=f3}
 
+(F3 f3) +++ (F4 f4) = FrontRightLine f3 f4
+
 (F3 f3) +++ (B3 b3) =
     (TopRightLine b3 f3)
 
