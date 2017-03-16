@@ -591,6 +591,9 @@ anyCornerPoint +++ (CornerPointsId) = anyCornerPoint
 (F1 f1) +++ (B1 b1) =
     BottomLeftLine b1 f1
 
+(F1 f1) +++ (F2 f2) =
+  FrontLeftLine f1 f2
+
 (B1 b1) +++ (F1 f1) =
     BottomLeftLine b1 f1
 
@@ -607,6 +610,8 @@ anyCornerPoint +++ (CornerPointsId) = anyCornerPoint
     FrontTopLine {f2=f2, f3=f3}
 
 (F3 f3) +++ (F4 f4) = FrontRightLine f3 f4
+
+(F4 f4) +++ (F3 f3) = FrontRightLine f3 f4
 
 (F3 f3) +++ (B3 b3) =
     (TopRightLine b3 f3)

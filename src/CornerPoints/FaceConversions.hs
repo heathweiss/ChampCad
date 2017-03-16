@@ -1,7 +1,7 @@
 module CornerPoints.FaceConversions(
   upperFaceFromLowerFace,
   f23LineFromF14Line,
-  f12LineFromF34Line,
+  --f12LineFromF34Line,
   f34LineFromF12Line,
   b12LineFromF12Line,
   b34LineFromF34Line,
@@ -45,12 +45,13 @@ Eg: FrontFace and BackFace
 Eg: TopFrontLine and BackTopLine
 
 Adjacent joins:
-The common point/line which connects them, will remain unchanged.
-Eg: TopFace and FrontFace are connected through the FrontTopLine.
-    The FrontTopLine will remain the same. The FrontFace would have it's BottomFrontLine
-    set to the BackTopLine of the TopFace
-Eg: FrontTopLine and LeftFrontLine are connected with through F2.
-    F2 will remain the same with the FrontTopLine F3 becoming the F1 fo the LeftFrontLine
+The line/face gets rotated through the commont point/line
+Eg: FrontFace to a TopFace:
+    FrontFace:TopFrontLine gets rotated to the TopFace:BackTopLine
+    FrontFace:BottomFrontLine gets rotated to the TopFace:FrontTopLine
+Eg: TopFrontLine to FrontLeftLine:
+    TopFrontLine:F2 to FrontLeftLine:F1
+    TopFrontLine:F3 to FrontLeftLine:F2
 
 Non-adjacent joins:
 The line/face gets pushed straight accross.
@@ -75,6 +76,16 @@ That being said: Many of these functions were created before these rules and may
 They will be changed in the future.
 
            
+
+-}
+{-alternative conversions system considered.
+Adjacent joins:
+The common point/line which connects them, will remain unchanged.
+Eg: TopFace and FrontFace are connected through the FrontTopLine.
+    The FrontTopLine will remain the same. The FrontFace would have it's BottomFrontLine
+    set to the BackTopLine of the TopFace
+Eg: FrontTopLine and LeftFrontLine are connected with through F2.
+    F2 will remain the same with the FrontTopLine F3 becoming the F1 fo the LeftFrontLine
 
 -}
 -- ToDo: Write more tests.
@@ -114,21 +125,50 @@ toBackFace (RightFace b3 b4 f3 f4) = BackFace b4 b3  f3 f4
 toBackFace (LeftFace b1 b2 f1 f2) = BackFace f1 f2 b2 b1
 toBackFace (FrontRightLine f3 f4) = BackFace f4 f3 f3 f4
 toBackFace (FrontLeftLine f1 f2) = BackFace f1 f2 f2 f1
+--toBackFace (FrontFace f1 f2 f3 f4) = BackFace f4 f3 f2 f1
+toBackFace (FrontFace f1 f2 f3 f4) = BackFace f1 f2 f3 f4
+toBackFace (BackRightLine b3 b4) = BackFace b4 b3 b3 b4
+toBackFace (BackLeftLine b1 b2) = BackFace b1 b2 b2 b1
+
+{- Before changing to comply with rules.
+toBackFace :: CornerPoints -> CornerPoints
+toBackFace (RightFace b3 b4 f3 f4) = BackFace b4 b3  f3 f4 
+toBackFace (LeftFace b1 b2 f1 f2) = BackFace f1 f2 b2 b1
+toBackFace (FrontRightLine f3 f4) = BackFace f4 f3 f3 f4
+toBackFace (FrontLeftLine f1 f2) = BackFace f1 f2 f2 f1
 toBackFace (FrontFace f1 f2 f3 f4) = BackFace f4 f3 f2 f1
 toBackFace (BackRightLine b3 b4) = BackFace b4 b3 b3 b4
 toBackFace (BackLeftLine b1 b2) = BackFace b1 b2 b2 b1
+-}
 
 -- ToDo: Finish pattern matches. Test
 
 toBottomFrontLine :: CornerPoints -> CornerPoints
 toBottomFrontLine (F2 f2) = BottomFrontLine f2 f2
-toBottomFrontLine (FrontTopLine f2 f3) = BottomFrontLine  f3 f2
+--before complying to rules
+--toBottomFrontLine (FrontTopLine f2 f3) = BottomFrontLine  f3 f2
+--now complies
+toBottomFrontLine (FrontTopLine f2 f3)   = BottomFrontLine  f2 f3
+toBottomFrontLine (FrontRightLine f3 f4) = BottomFrontLine f4 f3
+toBottomFrontLine (F4 f4)                = BottomFrontLine f4 f4
+toBottomFrontLine (F3 f3)                = BottomFrontLine f3 f3
+toBottomFrontLine (F1 f1)                = BottomFrontLine f1 f1
+toBottomFrontLine (FrontLeftLine f1 f2)  = BottomFrontLine f2 f1
 
 -- ToDo: Finish pattern matches. Test
 toFrontTopLine :: CornerPoints -> CornerPoints
 toFrontTopLine (F4 f4) = FrontTopLine f4 f4
 toFrontTopLine (F3 f3) = FrontTopLine f3 f3
-toFrontTopLine (BottomFrontLine f1 f4) = FrontTopLine  f4 f1 
+toFrontTopLine (FrontRightLine f3 f4) = FrontTopLine f3 f4
+toFrontTopLine (F1 f1) = FrontTopLine f1 f1
+toFrontTopLine (F2 f2) = FrontTopLine f2 f2
+toFrontTopLine (FrontLeftLine f1 f2) = FrontTopLine f1 f2
+
+
+--before rules
+--toFrontTopLine (BottomFrontLine f1 f4) = FrontTopLine  f4 f1
+--complies to rules
+toFrontTopLine (BottomFrontLine f1 f4) = FrontTopLine  f1 f4
 
 toFrontFace :: CornerPoints -> CornerPoints
 toFrontFace(RightFace b3 b4 f3 f4) = FrontFace f4 f3 b3 b4
@@ -145,9 +185,10 @@ toFrontRightLine (F4 f4) = FrontRightLine f4 f4
 f23LineFromF14Line :: CornerPoints -> CornerPoints
 f23LineFromF14Line (BottomFrontLine f1 f4) = FrontTopLine f1 f4
 
+{- replaced by toFrontLeftLine
 f12LineFromF34Line :: CornerPoints -> CornerPoints
 f12LineFromF34Line (FrontRightLine f3 f4) = FrontLeftLine f4 f3
-
+-}
 f34LineFromF12Line :: CornerPoints -> CornerPoints
 f34LineFromF12Line (FrontLeftLine f1 f2) = FrontRightLine f2 f1
 
@@ -187,3 +228,4 @@ reverseNormal (BackFace b1 b2 b3 b4)  = BackFace b4 b3 b2 b1
 reverseNormal (BottomFrontLine f1 f4) = (BottomFrontLine f4 f1)
 reverseNormal (FrontRightLine f3 f4)  = (FrontRightLine f4 f3)
 reverseNormal (FrontLeftLine f1 f2)   = FrontLeftLine f2 f1
+reverseNormal (FrontTopLine f2 f3)    = FrontTopLine f3 f2

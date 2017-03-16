@@ -77,10 +77,12 @@ extractLeftFace (CubePoints f1 f2 f3 f4 b1 b2 b3 b4) = LeftFace b1 b2 f1 f2
 extractF1 :: CornerPoints -> CornerPoints
 extractF1 (BottomFrontLine f1 f4) = F1 f1
 extractF1 (FrontLeftLine f1 f2) = F1 f1
+extractF1 (CubePoints f1 _ _ _ _ _ _ _) = F1 f1
 
 extractF2 :: CornerPoints -> CornerPoints
 extractF2 (FrontTopLine f2 f3) = F2 f2
 extractF2 (FrontLeftLine f1 f2) = F2 f2
+extractF2 (CubePoints _ f2 _ _ _ _ _ _) = F2 f2
 
 extractF3 :: CornerPoints -> CornerPoints
 extractF3 (FrontTopLine f2 f3) = F3 f3
