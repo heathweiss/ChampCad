@@ -148,12 +148,13 @@ toBottomFrontLine (F2 f2) = BottomFrontLine f2 f2
 --before complying to rules
 --toBottomFrontLine (FrontTopLine f2 f3) = BottomFrontLine  f3 f2
 --now complies
-toBottomFrontLine (FrontTopLine f2 f3)   = BottomFrontLine  f2 f3
-toBottomFrontLine (FrontRightLine f3 f4) = BottomFrontLine f4 f3
-toBottomFrontLine (F4 f4)                = BottomFrontLine f4 f4
-toBottomFrontLine (F3 f3)                = BottomFrontLine f3 f3
-toBottomFrontLine (F1 f1)                = BottomFrontLine f1 f1
-toBottomFrontLine (FrontLeftLine f1 f2)  = BottomFrontLine f2 f1
+toBottomFrontLine (FrontTopLine f2 f3)    = BottomFrontLine  f2 f3
+toBottomFrontLine (FrontRightLine f3 f4)  = BottomFrontLine f4 f3
+toBottomFrontLine (F4 f4)                 = BottomFrontLine f4 f4
+toBottomFrontLine (F3 f3)                 = BottomFrontLine f3 f3
+toBottomFrontLine (F1 f1)                 = BottomFrontLine f1 f1
+toBottomFrontLine (FrontLeftLine f1 f2)   = BottomFrontLine f2 f1
+toBottomFrontLine (BottomFrontLine f1 f4) = BottomFrontLine f1 f4
 
 -- ToDo: Finish pattern matches. Test
 toFrontTopLine :: CornerPoints -> CornerPoints
@@ -163,6 +164,7 @@ toFrontTopLine (FrontRightLine f3 f4) = FrontTopLine f3 f4
 toFrontTopLine (F1 f1) = FrontTopLine f1 f1
 toFrontTopLine (F2 f2) = FrontTopLine f2 f2
 toFrontTopLine (FrontLeftLine f1 f2) = FrontTopLine f1 f2
+toFrontTopLine (FrontTopLine f2 f3)  = FrontTopLine f2 f3
 
 
 --before rules
