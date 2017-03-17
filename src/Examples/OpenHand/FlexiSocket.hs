@@ -174,68 +174,73 @@ cutTheDiamond cube =
 
 cutTheDiamondTopFace :: CornerPoints -> CornerPoints
 cutTheDiamondTopFace cube  =
-  let cubeFrontTopLine = extractFrontTopLine cube
-      f2NewAsBtmFace = toBottomFrontLine (cutTheDiamondF2ShiftedIn cube) 
-      f2NewFrontFace = cubeFrontTopLine +++ f2NewAsBtmFace
-      f2NewBackFace = (transposeY (+(-10))) . {-reverseNormal .-} toBackFace $ f2NewFrontFace
+  let frontFace = cutTheDiamondFrontBase
+                    (id) (id)
+                    (cutTheDiamondF2ShiftedIn cube)
+                    (extractFrontTopLine cube)
+      backFace = (transposeY (+(-10))) . {-reverseNormal .-} toBackFace $ frontFace
 
-  in f2NewBackFace +++ f2NewFrontFace
+  in backFace +++ frontFace 
 
 cutTheDiamondTopRightCorner :: CornerPoints -> CornerPoints
 cutTheDiamondTopRightCorner cube =
-  let f2F3AsBtmFace = {-reverseNormal .-} toBottomFrontLine $ ((cutTheDiamondF2ShiftedIn cube) +++ (cutTheDiamondF3ShiftedIn cube))
-      f3AsTopFace = toFrontTopLine $ extractF3 cube
-      frontFace = f2F3AsBtmFace +++ f3AsTopFace
+  let frontFace = cutTheDiamondFrontBase
+                    (id) (id)
+                    ((cutTheDiamondF2ShiftedIn cube) +++ (cutTheDiamondF3ShiftedIn cube))
+                    (extractF3 cube)
       backFace  = (transposeY (+(-10))) . {-reverseNormal $-} toBackFace $ frontFace
   in  frontFace +++ backFace
 
 cutTheDiamondRightFace :: CornerPoints -> CornerPoints
 cutTheDiamondRightFace cube =
-  let f3AsBtmFrontLine = toBottomFrontLine $ cutTheDiamondF3ShiftedIn cube
-      frontTopLine     = toFrontTopLine . extractFrontRightLine $ cube
-      frontFace        = f3AsBtmFrontLine +++ frontTopLine
+  let frontFace        = cutTheDiamondFrontBase (id) (id) (cutTheDiamondF3ShiftedIn cube) (extractFrontRightLine $ cube)
       backFace         = (transposeY (+(-10))) . toBackFace $ frontFace
   in  backFace +++ frontFace
 
 cutTheDiamondBtmRightCorner :: CornerPoints -> CornerPoints
 cutTheDiamondBtmRightCorner cube =
-  let f3f4AsBtmFrontLine = reverseNormal . toBottomFrontLine $ ((cutTheDiamondF4ShiftedIn cube) +++ (cutTheDiamondF3ShiftedIn cube))
-      f4AsFrontTopLine = toFrontTopLine $ extractF4 cube
-      frontFace = f3f4AsBtmFrontLine +++ f4AsFrontTopLine
+  let frontFace = cutTheDiamondFrontBase (reverseNormal) (id)
+                                         ((cutTheDiamondF4ShiftedIn cube) +++ (cutTheDiamondF3ShiftedIn cube))
+                                         (extractF4 cube)
       backFace = (transposeY (+(-10))) . toBackFace $ frontFace
   in  backFace +++ frontFace
 
-
 cutTheDiamondBtmFace :: CornerPoints -> CornerPoints
 cutTheDiamondBtmFace cube =
-  let cubeBtmFrontLineAsTopLine = reverseNormal . toFrontTopLine . extractBottomFrontLine $ cube
-      f4AsBtmFrontLine = toBottomFrontLine (cutTheDiamondF4ShiftedIn cube)
-      frontFace   = cubeBtmFrontLineAsTopLine +++ f4AsBtmFrontLine
+  let frontFace = cutTheDiamondFrontBase (id) (reverseNormal) (cutTheDiamondF4ShiftedIn cube) (extractBottomFrontLine $ cube)
       backFace    = (transposeY (+(-10))) . toBackFace $ frontFace
   in backFace +++ frontFace
 
 cutTheDiamondBtmLeftCorner :: CornerPoints -> CornerPoints
 cutTheDiamondBtmLeftCorner cube =
-  let btmFrontLine = reverseNormal $ (cutTheDiamondF1ShiftedIn cube) +++ (cutTheDiamondF4ShiftedIn cube)
-      topFrontLine = toFrontTopLine $ extractF1 cube
-      frontFace    = btmFrontLine +++ topFrontLine
-      backFace     = (transposeY (+(-10))) . toBackFace $ frontFace
-  in  backFace +++ frontFace
+  let frontFace      = cutTheDiamondFrontBase
+                         (reverseNormal) (id)
+                         ((cutTheDiamondF1ShiftedIn cube) +++ (cutTheDiamondF4ShiftedIn cube))
+                         (extractF1 cube)
       
-cutTheDiamondLeftFace :: CornerPoints -> CornerPoints
-cutTheDiamondLeftFace cube =
-  let btmFrontLine = toBottomFrontLine (cutTheDiamondF1ShiftedIn cube)
-      topFrontLine = toFrontTopLine ((extractF1 cube) +++ (extractF2 cube))
-      frontFace    = btmFrontLine +++ topFrontLine
       backFace     = (transposeY (+(-10))) . toBackFace $ frontFace
   in  backFace +++ frontFace
 
+cutTheDiamondLeftFace :: CornerPoints -> CornerPoints
+cutTheDiamondLeftFace cube =
+  let frontFace = cutTheDiamondFrontBase (id) (id) (cutTheDiamondF1ShiftedIn cube) ((extractF1 cube) +++ (extractF2 cube)) 
+      backFace     = (transposeY (+(-10))) . toBackFace $ frontFace
+  in  backFace +++ frontFace
+
+cutTheDiamondFrontBase :: (CornerPoints -> CornerPoints) -> (CornerPoints -> CornerPoints)
+                       -> CornerPoints -> CornerPoints -> CornerPoints
+cutTheDiamondFrontBase    reverseBtm reverseTop btmPoints       topPoints       =
+  let btmFrontLine  = reverseBtm $ toBottomFrontLine  btmPoints
+      topFrontLine  = reverseTop $ toFrontTopLine topPoints
+  in  btmFrontLine +++ topFrontLine
+
 cutTheDiamondTopLeftCorner :: CornerPoints -> CornerPoints
 cutTheDiamondTopLeftCorner cube =
-  let btmFrontLine = reverseNormal $ toBottomFrontLine ((cutTheDiamondF1ShiftedIn cube) +++ (cutTheDiamondF2ShiftedIn cube))
-      topFrontLine = toFrontTopLine $ extractF2 cube
-      frontFace    = btmFrontLine +++ topFrontLine
-      backFace     = (transposeY (+(-10))) . toBackFace $ frontFace
+  let frontFace = cutTheDiamondFrontBase
+                    (reverseNormal) (id)
+                    ((cutTheDiamondF1ShiftedIn cube) +++ (cutTheDiamondF2ShiftedIn cube))
+                    (extractF2 cube)
+      backFace  = (transposeY (+(-10))) . toBackFace $ frontFace
   in  frontFace +++ backFace
 
 cutTheDiamondF1Centered :: CornerPoints -> CornerPoints
