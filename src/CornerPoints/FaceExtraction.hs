@@ -13,10 +13,8 @@ module CornerPoints.FaceExtraction (
  extractLeftFace,
  extractBackRightLine,
  extractBackLeftLine,
- extractF1,
- extractF2,
- extractF3,
- extractF4
+ extractF1, extractF2, extractF3, extractF4,
+ extractB1, extractB2, extractB3, extractB4
  ) where
 import CornerPoints.CornerPoints(CornerPoints(..))
 import CornerPoints.Points(Point(..))
@@ -93,3 +91,15 @@ extractF4 :: CornerPoints -> CornerPoints
 extractF4 (BottomFrontLine f1 f4) = F4 f4
 extractF4 (FrontRightLine f3 f4) = F4 f4
 extractF4 (CubePoints f1 f2 f3 f4 b1 b2 b3 b4) = F4 f4
+
+extractB1 :: CornerPoints -> CornerPoints
+extractB1 (CubePoints _ _ _ _ b1 _ _ _) = B1 b1
+
+extractB2 :: CornerPoints -> CornerPoints
+extractB2 (CubePoints _ _ _ _ _ b2 _ _) = B2 b2
+
+extractB3 :: CornerPoints -> CornerPoints
+extractB3 (CubePoints _ _ _ _ _ _ b3 _ ) = B3 b3
+
+extractB4 :: CornerPoints -> CornerPoints
+extractB4 (CubePoints _ _ _ _ _ _ _ b4 ) = B4 b4

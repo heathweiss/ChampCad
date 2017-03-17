@@ -18,6 +18,8 @@ module CornerPoints.FaceConversions(
   toBottomFrontLine,
   toFrontLeftLine,
   toFrontRightLine,
+  toBackBottomLine,
+  toBackTopLine,
   rigthtFaceFromLeftFace,
   leftFaceFromRigthFace,
   reverseNormal,
@@ -130,19 +132,17 @@ toBackFace (FrontFace f1 f2 f3 f4) = BackFace f1 f2 f3 f4
 toBackFace (BackRightLine b3 b4) = BackFace b4 b3 b3 b4
 toBackFace (BackLeftLine b1 b2) = BackFace b1 b2 b2 b1
 
-{- Before changing to comply with rules.
-toBackFace :: CornerPoints -> CornerPoints
-toBackFace (RightFace b3 b4 f3 f4) = BackFace b4 b3  f3 f4 
-toBackFace (LeftFace b1 b2 f1 f2) = BackFace f1 f2 b2 b1
-toBackFace (FrontRightLine f3 f4) = BackFace f4 f3 f3 f4
-toBackFace (FrontLeftLine f1 f2) = BackFace f1 f2 f2 f1
-toBackFace (FrontFace f1 f2 f3 f4) = BackFace f4 f3 f2 f1
-toBackFace (BackRightLine b3 b4) = BackFace b4 b3 b3 b4
-toBackFace (BackLeftLine b1 b2) = BackFace b1 b2 b2 b1
--}
+toBackBottomLine :: CornerPoints -> CornerPoints
+toBackBottomLine (BackBottomLine b1 b4) = (BackBottomLine b1 b4)
+toBackBottomLine (B2 b2) = BackBottomLine b2 b2
+toBackBottomLine (BackTopLine b2 b3) = BackBottomLine b2 b3
+
+toBackTopLine :: CornerPoints -> CornerPoints
+toBackTopLine (BackTopLine b2 b3) = BackTopLine b2 b3
+toBackTopLine (B3 b3) = BackTopLine b3 b3
+
 
 -- ToDo: Finish pattern matches. Test
-
 toBottomFrontLine :: CornerPoints -> CornerPoints
 toBottomFrontLine (F2 f2) = BottomFrontLine f2 f2
 --before complying to rules
@@ -155,6 +155,8 @@ toBottomFrontLine (F3 f3)                 = BottomFrontLine f3 f3
 toBottomFrontLine (F1 f1)                 = BottomFrontLine f1 f1
 toBottomFrontLine (FrontLeftLine f1 f2)   = BottomFrontLine f2 f1
 toBottomFrontLine (BottomFrontLine f1 f4) = BottomFrontLine f1 f4
+toBottomFrontLine (B2 b2)                 = BottomFrontLine b2 b2
+toBottomFrontLine _ = CornerPointsError "unhandled toBottomFrontLine pattern match"
 
 -- ToDo: Finish pattern matches. Test
 toFrontTopLine :: CornerPoints -> CornerPoints
