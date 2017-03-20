@@ -138,13 +138,15 @@ toBackBottomLine (B2 b2) = BackBottomLine b2 b2
 toBackBottomLine (BackTopLine b2 b3) = BackBottomLine b2 b3
 toBackBottomLine (BackRightLine b3 b4) = BackBottomLine b4 b3
 toBackBottomLine (B3 b3) = BackBottomLine b3 b3
+toBackBottomLine (B4 b4) = BackBottomLine b4 b4
+
 
 toBackTopLine :: CornerPoints -> CornerPoints
 toBackTopLine (BackTopLine b2 b3) = BackTopLine b2 b3
 toBackTopLine (B3 b3) = BackTopLine b3 b3
 toBackTopLine (BackRightLine b3 b4) = BackTopLine b3 b4
 toBackTopLine (B4 b4) = BackTopLine b4 b4
-
+toBackTopLine (BackBottomLine b1 b4) = BackTopLine b1 b4
 
 -- ToDo: Finish pattern matches. Test
 toBottomFrontLine :: CornerPoints -> CornerPoints
@@ -238,3 +240,4 @@ reverseNormal (FrontRightLine f3 f4)  = (FrontRightLine f4 f3)
 reverseNormal (FrontLeftLine f1 f2)   = FrontLeftLine f2 f1
 reverseNormal (FrontTopLine f2 f3)    = FrontTopLine f3 f2
 reverseNormal (BackBottomLine b1 b4)  = (BackBottomLine b4 b1) 
+reverseNormal (BackTopLine b2 b3)     = (BackTopLine b3 b2) 
