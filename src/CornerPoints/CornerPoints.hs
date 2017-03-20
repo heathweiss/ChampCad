@@ -625,6 +625,8 @@ anyCornerPoint +++ (CornerPointsId) = anyCornerPoint
 (B4 b4) +++ (F4 f4)  =
     (BottomRightLine b4 f4)
 
+(B4 b4) +++ (B3 b3) = BackRightLine b3 b4
+
 (F4 f4) +++ (F1 f1) =
     (BottomFrontLine f1 f4)
 
