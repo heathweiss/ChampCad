@@ -571,6 +571,9 @@ anyCornerPoint +++ (CornerPointsId) = anyCornerPoint
 (B1 b1) +++ (B4 b4) =
      BackBottomLine {b1=b1, b4=b4}
 
+(B1 b1) +++ (B2 b2) =
+  (BackLeftLine b1 b2)
+
 (B4 b4) +++ (B1 b1) =
     BackBottomLine {b1=b1, b4=b4}
 
