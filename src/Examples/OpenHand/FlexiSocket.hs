@@ -29,10 +29,10 @@ import CornerPoints.VerticalFaces(createRightFaces, createLeftFaces, createLeftF
 import CornerPoints.Points(Point(..))
 import CornerPoints.CornerPoints(CornerPoints(..), (+++), (|+++|), (|@+++#@|), (+++>))
 import CornerPoints.Create(Origin(..), createCornerPoint)
-import CornerPoints.FaceExtraction (extractFrontFace, extractTopFace,extractBottomFace, extractBackFace, extractFrontTopLine,
+import CornerPoints.FaceExtraction (extractFrontFace, extractTopFace,extractBottomFace, extractBackFace, extractFrontTopLine, extractBackBottomLine,
                                     extractBackTopLine, extractRightFace, extractFrontRightLine, extractFrontLeftLine, extractBottomFrontLine,
                                     extractF2, extractF3, extractF4, extractF1, extractB1, extractB2, extractB3, extractB4, extractBackRightLine)
-import CornerPoints.FaceConversions(backFaceFromFrontFace, upperFaceFromLowerFace, lowerFaceFromUpperFace, frontFaceFromBackFace,
+import CornerPoints.FaceConversions(backFaceFromFrontFace, upperFaceFromLowerFace, lowerFaceFromUpperFace, frontFaceFromBackFace, 
                                     f34LineFromF12Line, toBackFace, reverseNormal, toBottomFrontLine, toFrontTopLine,
                                     toFrontLeftLine, toFrontRightLine, toBackBottomLine, toBackTopLine)
 import CornerPoints.Transpose (transposeZ, transposeY, transposeX)
@@ -159,7 +159,7 @@ flexSocketStlGenerator  = do
       Nothing                                ->
         putStrLn "File not decoded"
 
--- ==================================================== test cube========================================================
+-- ========== test cube===========
 cutTheDiamond :: CornerPoints -> [CornerPoints]
 cutTheDiamond cube =
   [cutTheDiamondTopFace cube,
@@ -185,6 +185,14 @@ cutTheDiamondBackBase    reverseBtm reverseTop btmPoints       topPoints       =
       topBackLine  = reverseTop $ toBackTopLine topPoints
   in  btmBackLine +++ topBackLine
       
+-- ===============================================================================================================================================================================
+cutTheDiamondBtmFace :: CornerPoints -> CornerPoints
+cutTheDiamondBtmFace cube =
+  let frontFace = cutTheDiamondFrontBase (id) (reverseNormal) (cutTheDiamondF4ShiftedIn cube) (extractBottomFrontLine $ cube)
+      --backFace    = (transposeY (+(-10))) . toBackFace $ frontFace
+      backFace  = cutTheDiamondBackBase (id) (reverseNormal) (cutTheDiamondB4ShiftedIn cube) (extractBackBottomLine $ cube)
+  in backFace +++ frontFace
+     --backFace
 
 
 cutTheDiamondTopFace :: CornerPoints -> CornerPoints
@@ -221,12 +229,6 @@ cutTheDiamondBtmRightCorner cube =
                                          (extractF4 cube)
       backFace = cutTheDiamondBackBase (reverseNormal) (id) ((cutTheDiamondB4ShiftedIn cube) +++ (cutTheDiamondB3ShiftedIn cube)) (extractB4 cube)
   in  backFace +++ frontFace
-
-cutTheDiamondBtmFace :: CornerPoints -> CornerPoints
-cutTheDiamondBtmFace cube =
-  let frontFace = cutTheDiamondFrontBase (id) (reverseNormal) (cutTheDiamondF4ShiftedIn cube) (extractBottomFrontLine $ cube)
-      backFace    = (transposeY (+(-10))) . toBackFace $ frontFace
-  in backFace +++ frontFace
 
 cutTheDiamondBtmLeftCorner :: CornerPoints -> CornerPoints
 cutTheDiamondBtmLeftCorner cube =
@@ -522,6 +524,7 @@ flexiSocketTestsDo = do
   runTestTT cutTheDiamondB3ShiftedInTest
   runTestTT cutTheDiamond4ShiftedInTest
   runTestTT cutTheDiamondB4ShiftedInTest
+  runTestTT cutTheDiamondBtmFaceBrokenDownTest
 
 buildTestCubeTest = TestCase $ assertEqual 
   "buildTestCubeTest"
@@ -1054,6 +1057,11 @@ cutTheDiamondB4ShiftedInTest = TestCase $ assertEqual
   "cutTheDiamondB4ShiftedIn test"
   (B4 {b4 = Point {x_axis = 5.0, y_axis = 0.0, z_axis = 5.0}})
   (cutTheDiamondB4ShiftedIn testCube1)
+
+cutTheDiamondBtmFaceBrokenDownTest = TestCase $ assertEqual
+  "cutTheDiamondBtmFace broken down test"
+  (BackTopLine {b2 = Point {x_axis = 10.0, y_axis = 0.0, z_axis = 0.0}, b3 = Point {x_axis = 0.0, y_axis = 0.0, z_axis = 0.0}})
+  ((reverseNormal . toBackTopLine . extractBackBottomLine $ testCube1))
 {-
 testCube1 = 
   CubePoints {
