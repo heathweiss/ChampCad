@@ -10,7 +10,7 @@ import Examples.OpenHand.Wrist(wristAndDoubleCylinderStlGenerator, wristAndDoubl
 import Examples.OpenHand.SocketMount(socketMountStlGenerator, socketMountShowCubes, socketMountTestsDo, generateSocketMountStlUsingDbValues,
                                      initializeDatabase, insertMount, viewMountByName, setCurrentMount )
 import Examples.OpenHand.MotorMount(motorMountStlGenerator, motorMountShowCubes)
-import Examples.OpenHand.FlexiSocket(flexiSocketTestsDo, flexSocketStlGenerator, testCubeStlGenerator, testCubeShowCubes)
+import Examples.OpenHand.FlexiSocket(flexiSocketTestsDo, flexSocketStlGenerator, testCubeStlGenerator, testCubeShowCubes, testCubeRotatedStlGenerator)
 
 import Examples.Primitives.Squared(cylinderWithSquaredRadiiStlGenerator, )
 
@@ -35,9 +35,10 @@ main = do
  --loadMDRAndPassToProcessor (read $ head x) (read $ head $ tail x)
 
   --testCubeStlGenerator
-  flexiSocketTestsDo
+  --flexiSocketTestsDo
   --testCubeShowCubes
-  --flexSocketStlGenerator
+  flexSocketStlGenerator
+  --testCubeRotatedStlGenerator
   
   
   

@@ -17,7 +17,9 @@ Cut diamond(?) shapes in each cube to give it more flex, and allow it to breath 
 Will be printed in flexible filament.
 
 -}
-module Examples.OpenHand.FlexiSocket(flexiSocketTestsDo, flexSocketStlGenerator, testCubeStlGenerator, testCubeShowCubes) where
+module Examples.OpenHand.FlexiSocket(flexiSocketTestsDo, flexSocketStlGenerator,
+                                     testCubeStlGenerator, testCubeShowCubes,
+                                     testCubeRotatedStlGenerator) where
 
 import CornerPoints.Radius(MultiDegreeRadii(..), SingleDegreeRadii(..), Radius(..),extractSingle, extractList, rotateSDR, transposeMDRList,
                           {-transposeSDRList,-} extractSDRWithinRange, singleDegreeRadiiListToMap, transformSDRWithList, extractMaybeSDR,
@@ -184,16 +186,49 @@ cutTheDiamondBackBase    reverseBtm reverseTop btmPoints       topPoints       =
   let btmBackLine  = reverseBtm $ toBackBottomLine  btmPoints
       topBackLine  = reverseTop $ toBackTopLine topPoints
   in  btmBackLine +++ topBackLine
-      
+
 -- ===============================================================================================================================================================================
+cutTheDiamondTopLeftCorner :: CornerPoints -> CornerPoints
+cutTheDiamondTopLeftCorner cube =
+  let frontFace = cutTheDiamondFrontBase
+                    (reverseNormal) (id)
+                    ((cutTheDiamondF1ShiftedIn cube) +++ (cutTheDiamondF2ShiftedIn cube))
+                    (extractF2 cube)
+      --backFace  = (transposeY (+(-10))) . toBackFace $ frontFace
+      backFace = cutTheDiamondBackBase
+                   (reverseNormal) (id)
+                   ((cutTheDiamondB1ShiftedIn cube) +++ (cutTheDiamondB2ShiftedIn cube))
+                    (extractB2 cube)
+  in  frontFace +++ backFace
+
+cutTheDiamondLeftFace :: CornerPoints -> CornerPoints
+cutTheDiamondLeftFace cube =
+  let frontFace = cutTheDiamondFrontBase (id) (id) (cutTheDiamondF1ShiftedIn cube) ((extractF1 cube) +++ (extractF2 cube)) 
+      --backFace     = (transposeY (+(-10))) . toBackFace $ frontFace
+      backFace  = cutTheDiamondBackBase (id) (id) (cutTheDiamondB1ShiftedIn cube) ((extractB1 cube) +++ (extractB2 cube)) 
+  in  backFace +++ frontFace
+
+cutTheDiamondBtmLeftCorner :: CornerPoints -> CornerPoints
+cutTheDiamondBtmLeftCorner cube =
+  let frontFace      = cutTheDiamondFrontBase
+                         (reverseNormal) (id)
+                         ((cutTheDiamondF1ShiftedIn cube) +++ (cutTheDiamondF4ShiftedIn cube))
+                         (extractF1 cube)
+      
+      --backFace     = (transposeY (+(-10))) . toBackFace $ frontFace
+      
+      backFace = cutTheDiamondBackBase
+                         (reverseNormal) (id)
+                         ((cutTheDiamondB1ShiftedIn cube) +++ (cutTheDiamondB4ShiftedIn cube))
+                         (extractB1 cube)
+  in  backFace +++ frontFace
+      
 cutTheDiamondBtmFace :: CornerPoints -> CornerPoints
 cutTheDiamondBtmFace cube =
   let frontFace = cutTheDiamondFrontBase (id) (reverseNormal) (cutTheDiamondF4ShiftedIn cube) (extractBottomFrontLine $ cube)
-      --backFace    = (transposeY (+(-10))) . toBackFace $ frontFace
       backFace  = cutTheDiamondBackBase (id) (reverseNormal) (cutTheDiamondB4ShiftedIn cube) (extractBackBottomLine $ cube)
   in backFace +++ frontFace
-     --backFace
-
+     
 
 cutTheDiamondTopFace :: CornerPoints -> CornerPoints
 cutTheDiamondTopFace cube  =
@@ -230,33 +265,6 @@ cutTheDiamondBtmRightCorner cube =
       backFace = cutTheDiamondBackBase (reverseNormal) (id) ((cutTheDiamondB4ShiftedIn cube) +++ (cutTheDiamondB3ShiftedIn cube)) (extractB4 cube)
   in  backFace +++ frontFace
 
-cutTheDiamondBtmLeftCorner :: CornerPoints -> CornerPoints
-cutTheDiamondBtmLeftCorner cube =
-  let frontFace      = cutTheDiamondFrontBase
-                         (reverseNormal) (id)
-                         ((cutTheDiamondF1ShiftedIn cube) +++ (cutTheDiamondF4ShiftedIn cube))
-                         (extractF1 cube)
-      
-      backFace     = (transposeY (+(-10))) . toBackFace $ frontFace
-  in  backFace +++ frontFace
-
-cutTheDiamondLeftFace :: CornerPoints -> CornerPoints
-cutTheDiamondLeftFace cube =
-  let frontFace = cutTheDiamondFrontBase (id) (id) (cutTheDiamondF1ShiftedIn cube) ((extractF1 cube) +++ (extractF2 cube)) 
-      backFace     = (transposeY (+(-10))) . toBackFace $ frontFace
-  in  backFace +++ frontFace
-
-cutTheDiamondTopLeftCorner :: CornerPoints -> CornerPoints
-cutTheDiamondTopLeftCorner cube =
-  let frontFace = cutTheDiamondFrontBase
-                    (reverseNormal) (id)
-                    ((cutTheDiamondF1ShiftedIn cube) +++ (cutTheDiamondF2ShiftedIn cube))
-                    (extractF2 cube)
-      backFace  = (transposeY (+(-10))) . toBackFace $ frontFace
-  in  frontFace +++ backFace
-
-
-     
 cutTheDiamondF2Centered :: CornerPoints -> CornerPoints
 cutTheDiamondF2Centered cube =
   cutTheDiamond2Centered (extractF2) (extractF3) (F2) cube
@@ -311,7 +319,7 @@ cutTheDiamondD3Centered cube =
 
 cutTheDiamondF1ShiftedIn :: CornerPoints -> CornerPoints
 cutTheDiamondF1ShiftedIn cube =
-  offsetCornerPoints  0.25 0.5 0.5 (cutTheDiamondF1Centered cube) (cutTheDiamondF3Centered cube) (F1)
+  offsetCornerPoints  0.25 0.25 0.5 (cutTheDiamondF1Centered cube) (cutTheDiamondF3Centered cube) (F1)
 
 cutTheDiamondF2ShiftedIn :: CornerPoints -> CornerPoints
 cutTheDiamondF2ShiftedIn cube =
@@ -320,23 +328,28 @@ cutTheDiamondF2ShiftedIn cube =
 cutTheDiamondB2ShiftedIn :: CornerPoints -> CornerPoints
 cutTheDiamondB2ShiftedIn cube =
   cutTheDiamond2ShiftedIn (cutTheDiamondB2Centered) (cutTheDiamondB4Centered) (B2) cube
+
+cutTheDiamond1ShiftedIn :: (CornerPoints -> CornerPoints) -> (CornerPoints -> CornerPoints) -> (Point -> CornerPoints) -> CornerPoints -> CornerPoints
+cutTheDiamond1ShiftedIn    center1                           center3                           constructor                cube            =
+  offsetCornerPoints  0.25 0.25 0.5 (center1 cube) (center3 cube) constructor
+
+cutTheDiamondB1ShiftedIn :: CornerPoints -> CornerPoints
+cutTheDiamondB1ShiftedIn cube =
+  cutTheDiamond1ShiftedIn
+     --(cutTheDiamondB4Centered) (cutTheDiamondB2Centered) (B1) cube
+     (cutTheDiamondB1Centered) (cutTheDiamondB3Centered) (B1) cube
   
 cutTheDiamond2ShiftedIn :: (CornerPoints -> CornerPoints) -> (CornerPoints -> CornerPoints) -> (Point -> CornerPoints) -> CornerPoints -> CornerPoints
 cutTheDiamond2ShiftedIn    center2                           center4                           constructor                cube            =
-  offsetCornerPoints  0 0 0.25 (center2 cube) (center4 cube) constructor
+  offsetCornerPoints 0.5 0.5 0.25 {-0 0 0.25-} (center2 cube) (center4 cube) constructor
   
 cutTheDiamondF3ShiftedIn :: CornerPoints -> CornerPoints
 cutTheDiamondF3ShiftedIn cube =
   cutTheDiamond3ShiftedIn (cutTheDiamondF3Centered) (cutTheDiamondF1Centered) (F3) cube
-{-
-cutTheDiamondb3ShiftedIn :: CornerPoints -> CornerPoints
-cutTheDiamondb3ShiftedIn cube =
-  cutTheDiamond3ShiftedIn (cutTheDiamondF3Centered) (cutTheDiamondB1Centered) (B3) cube
--}
 
 cutTheDiamond3ShiftedIn :: (CornerPoints -> CornerPoints) -> (CornerPoints -> CornerPoints) -> (Point -> CornerPoints) -> CornerPoints -> CornerPoints
 cutTheDiamond3ShiftedIn    center3                           center1                           constructor                cube            =
-  offsetCornerPoints  0.25 0.5 0.5 (center3 cube) (center1 cube) constructor
+  offsetCornerPoints  0.25 0.25 0.5 (center3 cube) (center1 cube) constructor
 
 cutTheDiamondB3ShiftedIn :: CornerPoints -> CornerPoints
 cutTheDiamondB3ShiftedIn cube =
@@ -353,9 +366,9 @@ cutTheDiamondB4ShiftedIn cube =
 
 cutTheDiamondF4ShiftedIn :: CornerPoints -> CornerPoints
 cutTheDiamondF4ShiftedIn cube =
-  offsetCornerPoints 0 0 0.25 (cutTheDiamondF4Centered cube) (cutTheDiamondF2Centered cube) (F4)
+  offsetCornerPoints {-0 0 0.25-}0.5 0.5 0.25 (cutTheDiamondF4Centered cube) (cutTheDiamondF2Centered cube) (F4)
   
-testCube1 = 
+testCubeStandard = 
   CubePoints {
             f1 = Point {x_axis = 0.0, y_axis = 10.0, z_axis = 0.0},
             f2 = Point {x_axis = 0.0, y_axis = 10.0, z_axis = 20.0},
@@ -370,14 +383,9 @@ testCube :: ExceptT BuilderError (State CpointsStack ) CpointsList
 testCube = do
   
 
-  {-
-  cube
-    <- buildCubePointsListSingle "cube"
-          [cube']
-  -}
   cutterCubes <-
      buildCubePointsListSingle "cube"
-     (cutTheDiamond testCube1)
+     (cutTheDiamond testCubeStandard)
 
   return cutterCubes
 
@@ -391,6 +399,41 @@ testCubeShowCubes :: IO ()
 testCubeShowCubes = do
   let cpoints =  ((evalState $ runExceptT   testCube       ) [])
   print $ show cpoints
+
+
+testCubeRotated1QuadClockWise =
+  CubePoints {
+            f4 = Point {x_axis = 0.0, y_axis = 10.0, z_axis = 0.0},
+            f3 = Point {x_axis = 0.0, y_axis = 10.0, z_axis = 20.0},
+            b3 = Point {x_axis = 10.0, y_axis = 10.0, z_axis = 20.0},
+            b4 = Point {x_axis = 10.0, y_axis = 10.0, z_axis = 0.0},
+            f1 = Point {x_axis = 0.0, y_axis = 0.0, z_axis = 0.0},
+            f2 = Point {x_axis = 0.0, y_axis = 0.0, z_axis = 20.0},
+            b2 = Point {x_axis = 10.0, y_axis = 0.0, z_axis = 20.0},
+            b1 = Point {x_axis = 10.0, y_axis = 0.0, z_axis = 0.0}}
+
+testCubeRotated :: ExceptT BuilderError (State CpointsStack ) CpointsList
+testCubeRotated = do
+  
+
+  cutterCubes <-
+     buildCubePointsListSingle "cube"
+     (cutTheDiamond testCubeRotated1QuadClockWise)
+
+  return cutterCubes
+
+
+testCubeRotatedStlGenerator :: IO ()
+testCubeRotatedStlGenerator = do
+  let cpoints =  ((execState $ runExceptT   testCubeRotated       ) [])
+  writeStlToFile $ newStlShape "motorMount"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
+
+testCubeRotatedShowCubes :: IO ()
+testCubeRotatedShowCubes = do
+  let cpoints =  ((evalState $ runExceptT   testCubeRotated       ) [])
+  print $ show cpoints
+
+
   -- =================================================== centering functions  ===========================================
 {-
 The offset should always be adjusted in relation to the 1st point to keep everthing standard.
@@ -457,7 +500,10 @@ offsetCornerPoints    offsetX   offsetY   offsetZ   (B4 b4') (B2 b2')         co
   cornerPointConst $ offsetPoint offsetX   offsetY   offsetZ  b4' b2'
 
 offsetCornerPoints    offsetX   offsetY   offsetZ   (B1 b1')        (B2 b2')  cornerPointConst = 
-  cornerPointConst $ offsetPoint offsetX   offsetY   offsetZ  b1' b2' 
+  cornerPointConst $ offsetPoint offsetX   offsetY   offsetZ  b1' b2'
+
+offsetCornerPoints    offsetX   offsetY   offsetZ   (B1 b1')        (B3 b3')  cornerPointConst = 
+  cornerPointConst $ offsetPoint offsetX   offsetY   offsetZ  b1' b3' 
 
 offsetCornerPoints    offsetX   offsetY   offsetZ   (B4 b4')        (B3 b3')  cornerPointConst = 
   cornerPointConst $ offsetPoint offsetX   offsetY   offsetZ  b4' b3'
@@ -525,6 +571,13 @@ flexiSocketTestsDo = do
   runTestTT cutTheDiamond4ShiftedInTest
   runTestTT cutTheDiamondB4ShiftedInTest
   runTestTT cutTheDiamondBtmFaceBrokenDownTest
+  runTestTT cutTheDiamond1ShiftedInTest
+  runTestTT cutTheDiamondB1ShiftedInTest
+  runTestTT cutTheDiamondB4ShiftedInTest
+  runTestTT cutTheDiamondBtmLeftCornerBrokenDownTest
+  runTestTT cutTheDiamondF3CenteredRotatedTest
+  runTestTT cutTheDiamondF3ShiftedRotatedTest
+  
 
 buildTestCubeTest = TestCase $ assertEqual 
   "buildTestCubeTest"
@@ -761,8 +814,8 @@ cutDiamondTopFaceDissectedTest = TestCase $ assertEqual
 
   )
   (
-    let cubeFrontTopLine = extractFrontTopLine testCube1
-        cubeBtmFrontLine = extractBottomFrontLine testCube1
+    let cubeFrontTopLine = extractFrontTopLine testCubeStandard
+        cubeBtmFrontLine = extractBottomFrontLine testCubeStandard
         f2New = offsetCornerPoints  0.5 0.5 0.5 (extractF2 cubeFrontTopLine) (extractF3 cubeFrontTopLine) (F2)
         f4New = offsetCornerPoints  0.5 0.5 0.5 (extractF1 cubeBtmFrontLine) (extractF4 cubeBtmFrontLine) (F4)
         f2NewDropped = offsetCornerPoints  0 0 0.25 f2New f4New (F2)
@@ -788,27 +841,37 @@ cutDiamondTopFaceTest = TestCase $ assertEqual
                 b3 = Point {x_axis = 10.0, y_axis = 0.0, z_axis = 20.0},
                 b4 = Point {x_axis = 5.0, y_axis = 0.0, z_axis = 15.0}}
   )
-  (cutTheDiamondTopFace testCube1)
+  (cutTheDiamondTopFace testCubeStandard)
+
+cutTheDiamondF3CenteredRotatedTest  = TestCase $ assertEqual 
+  "cutTheDiamondF3CenteredTest rotated"
+  (F3 {f3 = Point {x_axis = 0.0, y_axis = 10.0, z_axis = 10.0}})
+  (cutTheDiamondF3Centered testCubeRotated1QuadClockWise)
+-- ====================================================================================================================
+cutTheDiamondF3ShiftedRotatedTest  = TestCase $ assertEqual 
+  "cutTheDiamondF3 shifted Test rotated"
+  (F3 {f3 = Point {x_axis = 0.0, y_axis = 7.5, z_axis = 10.0}})
+  (cutTheDiamondF3ShiftedIn testCubeRotated1QuadClockWise )
 
 cutTheDiamondF3CenteredTest  = TestCase $ assertEqual 
   "cutTheDiamondF3CenteredTest"
   (F3 {f3 = Point {x_axis = 10.0, y_axis = 10.0, z_axis = 10.0}})
-  (cutTheDiamondF3Centered testCube1)
+  (cutTheDiamondF3Centered testCubeStandard)
 
 cutTheDiamondF1CenteredTest = TestCase $ assertEqual 
   "cutTheDiamondF1CenteredTest"
   (F1 {f1 = Point {x_axis = 0.0, y_axis = 10.0, z_axis = 10.0}})
-  (cutTheDiamondF1Centered testCube1)
+  (cutTheDiamondF1Centered testCubeStandard)
 
 cutTheDiamondF4CenteredTest = TestCase $ assertEqual 
   "cutTheDiamondF4CenteredTest"
   (F4 {f4 = Point {x_axis = 5.0, y_axis = 10.0, z_axis = 0.0}})
-  (cutTheDiamondF4Centered testCube1)
+  (cutTheDiamondF4Centered testCubeStandard)
 
 cutTheDiamondF3ShiftedInTest = TestCase $ assertEqual 
   "cutTheDiamondF3ShiftedInTest"
   (F3 {f3 = Point {x_axis = 7.5, y_axis = 10.0, z_axis = 10}})
-  (cutTheDiamondF3ShiftedIn testCube1)
+  (cutTheDiamondF3ShiftedIn testCubeStandard)
 
 cutTheDiamondF3ShiftedInOffsetTest = TestCase $ assertEqual 
   "cutTheDiamondF3ShiftedInOffsetTest"
@@ -818,7 +881,7 @@ cutTheDiamondF3ShiftedInOffsetTest = TestCase $ assertEqual
 cutTheDiamondF1ShiftedInTest = TestCase $ assertEqual 
   "cutTheDiamondF1ShiftedInTest"
   (F1 {f1 = Point {x_axis = 2.5, y_axis = 10.0, z_axis = 10.0}})
-  (cutTheDiamondF1ShiftedIn testCube1)
+  (cutTheDiamondF1ShiftedIn testCubeStandard)
 
 cutTheDiamondTopRightCornerTest = TestCase $ assertEqual 
   "cutTheDiamondTopRightCornerTest"
@@ -850,7 +913,7 @@ cutTheDiamondTopRightCornerTest = TestCase $ assertEqual
 
 
   )
-  (cutTheDiamondTopRightCorner testCube1)
+  (cutTheDiamondTopRightCorner testCubeStandard)
 
 cutTheDiamondBtmFaceTest = TestCase $ assertEqual 
   "cutTheDiamondBtmFaceTest"
@@ -865,7 +928,8 @@ cutTheDiamondBtmFaceTest = TestCase $ assertEqual
 
 
   )
-  (cutTheDiamondBtmFace testCube1)
+  (cutTheDiamondBtmFace testCubeStandard)
+
 
 cutTheDiamondBtmRightCornerTest = TestCase $ assertEqual
   "cutTheDiamondBtmRightCornerTest"
@@ -885,7 +949,7 @@ cutTheDiamondBtmRightCornerTest = TestCase $ assertEqual
   )
   
 
-  (cutTheDiamondBtmRightCorner testCube1)
+  (cutTheDiamondBtmRightCorner testCubeStandard)
 
 cutTheDiamondRightFaceTest = TestCase $ assertEqual
   "cutTheDiamondRightFaceTest"
@@ -916,12 +980,12 @@ cutTheDiamondRightFaceTest = TestCase $ assertEqual
                 b2 = Point {x_axis = 10.0, y_axis = 0.0, z_axis = 20.0},
                 b3 = Point {x_axis = 10.0, y_axis = 0.0, z_axis = 0.0},
                 b4 = Point {x_axis = 7.5, y_axis = 0.0, z_axis = 10.0}}
-
+    
 
 
   )
-  (cutTheDiamondRightFace testCube1)
-
+  (cutTheDiamondRightFace testCubeStandard)
+-- =============================================================================================================================================================================================
 cutTheDiamondBtmLeftCornerTest = TestCase $ assertEqual
   "cutTheDiamondBtmLeftCornerTest"
   ( {-
@@ -938,10 +1002,18 @@ cutTheDiamondBtmLeftCornerTest = TestCase $ assertEqual
                 b2 = Point {x_axis = 0.0, y_axis = 0.0, z_axis = 0.0},
                 b3 = Point {x_axis = 0.0, y_axis = 0.0, z_axis = 0.0},
                 b4 = Point {x_axis = 2.5, y_axis = 0.0, z_axis = 10.0}}
-
+    {- but got
+    CubePoints {f1 = Point {x_axis = 5.0, y_axis = 10.0, z_axis = 5.0},
+                f2 = Point {x_axis = 0.0, y_axis = 10.0, z_axis = 0.0},
+                f3 = Point {x_axis = 0.0, y_axis = 10.0, z_axis = 0.0},
+                f4 = Point {x_axis = 2.5, y_axis = 10.0, z_axis = 10.0},
+                b1 = Point {x_axis = 5.0, y_axis = 0.0, z_axis = 5.0},
+                b2 = Point {x_axis = 0.0, y_axis = 0.0, z_axis = 0.0},
+                b3 = Point {x_axis = 0.0, y_axis = 0.0, z_axis = 0.0},    
+                b4 = Point {x_axis = 5.0, y_axis = 0.0, z_axis = 10.0}} b4 x should be 2.5   -}
   )
 
-  (cutTheDiamondBtmLeftCorner testCube1)
+  (cutTheDiamondBtmLeftCorner testCubeStandard)
 
 cutTheDiamondLeftFaceTest = TestCase $ assertEqual
   "cutTheDiamondLeftFaceTest"
@@ -962,7 +1034,7 @@ cutTheDiamondLeftFaceTest = TestCase $ assertEqual
 
 
   )
-  (cutTheDiamondLeftFace testCube1)
+  (cutTheDiamondLeftFace testCubeStandard)
 
 cutTheDiamondTopLeftCornerTest = TestCase $ assertEqual
   "cutTheDiamondTopLeftCornerTest"
@@ -981,7 +1053,7 @@ cutTheDiamondTopLeftCornerTest = TestCase $ assertEqual
                 b3 = Point {x_axis = 0.0, y_axis = 0.0, z_axis = 20.0},
                 b4 = Point {x_axis = 5.0, y_axis = 0.0, z_axis = 15.0}}
   )
-  (cutTheDiamondTopLeftCorner testCube1)
+  (cutTheDiamondTopLeftCorner testCubeStandard)
 
 cutTheDiamondBackBaseTopFaceTest = TestCase $ assertEqual
  "cutTheDiamondBackBaseTopFaceTest"
@@ -989,81 +1061,102 @@ cutTheDiamondBackBaseTopFaceTest = TestCase $ assertEqual
             b2 = Point {x_axis = 0.0, y_axis = 0.0, z_axis = 20.0},
             b3 = Point {x_axis = 10.0, y_axis = 0.0, z_axis = 20.0},
             b4 = Point {x_axis = 5.0, y_axis = 0.0, z_axis = 15.0}})
- (cutTheDiamondBackBase (id) (id) (cutTheDiamondB2ShiftedIn testCube1) (extractBackTopLine testCube1)
+ (cutTheDiamondBackBase (id) (id) (cutTheDiamondB2ShiftedIn testCubeStandard) (extractBackTopLine testCubeStandard)
  )
 
 cutTheDiamondB2ShiftedInTest = TestCase $ assertEqual
  "cutTheDiamondB2ShiftedInTest"
  (B2 {b2 = Point {x_axis = 5.0, y_axis = 0.0, z_axis = 15.0}})
- (cutTheDiamondB2ShiftedIn testCube1
+ (cutTheDiamondB2ShiftedIn testCubeStandard
  )
 
 cutTheDiamondB2CenteredTest = TestCase $ assertEqual
   "cutTheDiamondB2CenteredTest"
   (B2 {b2 = Point {x_axis = 5.0, y_axis = 0.0, z_axis = 20.0}})
-  (cutTheDiamondB2Centered testCube1)
+  (cutTheDiamondB2Centered testCubeStandard)
 
 cutTheDiamondB4CenteredTest = TestCase $ assertEqual
   "cutTheDiamondB4CenteredTest"
   (B4 {b4 = Point {x_axis = 5.0, y_axis = 0.0, z_axis = 0.0}})
-  (cutTheDiamondB4Centered testCube1 )
+  (cutTheDiamondB4Centered testCubeStandard )
 
 cutTheDiamond3CenteredForB3Test = TestCase $ assertEqual
   "test cutTheDiamond3Centered For B3"
   (B3 {b3 = Point {x_axis = 10.0, y_axis = 0.0, z_axis = 10.0}})
-  (cutTheDiamond3Centered (extractB3) (extractB4) (B3) testCube1)
+  (cutTheDiamond3Centered (extractB3) (extractB4) (B3) testCubeStandard)
 
 cutTheDiamondD3CenteredTest = TestCase $ assertEqual
   "cutTheDiamondD3Centered test"
   (B3 {b3 = Point {x_axis = 10.0, y_axis = 0.0, z_axis = 10.0}})
-  (cutTheDiamondD3Centered testCube1)
+  (cutTheDiamondD3Centered testCubeStandard)
 
 cutTheDiamond1CenteredTest = TestCase $ assertEqual
  "cutTheDiamond1Centered for B1"
  (B1 {b1 = Point {x_axis = 0.0, y_axis = 0.0, z_axis = 10.0}})
- (cutTheDiamond1Centered (extractB2) (extractB1) (B1) testCube1)
+ (cutTheDiamond1Centered (extractB2) (extractB1) (B1) testCubeStandard)
 
 cutTheDiamond1CenteredFrontTest = TestCase $ assertEqual
  "cutTheDiamond1Centered for F1"
  (F1 {f1 = Point {x_axis = 0.0, y_axis = 10.0, z_axis = 10.0}})
- (cutTheDiamond1Centered (extractF2) (extractF1) (F1) testCube1)
+ (cutTheDiamond1Centered (extractF2) (extractF1) (F1) testCubeStandard)
 
 cutTheDiamondB1CenteredTest = TestCase $ assertEqual
  "cutTheDiamondB1Centered test"
  (B1 {b1 = Point {x_axis = 0.0, y_axis = 0.0, z_axis = 10.0}})
- (cutTheDiamondB1Centered testCube1)
+ (cutTheDiamondB1Centered testCubeStandard)
 
 cutTheDiamond3ShiftedInAsF3Test = TestCase $ assertEqual
   "cutTheDiamond3ShiftedIn as F3"
   (F3 {f3 = Point {x_axis = 7.5, y_axis = 10.0, z_axis = 10.0}})
-  (cutTheDiamond3ShiftedIn (cutTheDiamondF3Centered) (cutTheDiamondF1Centered) (F3) testCube1)
+  (cutTheDiamond3ShiftedIn (cutTheDiamondF3Centered) (cutTheDiamondF1Centered) (F3) testCubeStandard)
 
 cutTheDiamondB3CenteredTest = TestCase $ assertEqual
   "cutTheDiamondB3Centered test"
   (B3 {b3 = Point {x_axis = 10.0, y_axis = 0.0, z_axis = 10.0}})
-  (cutTheDiamondB3Centered testCube1)
+  (cutTheDiamondB3Centered testCubeStandard)
 
 cutTheDiamondB3ShiftedInTest = TestCase $ assertEqual
   "cutTheDiamondB3ShiftedIn test"
   (B3 {b3 = Point {x_axis = 7.5, y_axis = 0.0, z_axis = 10.0}})
-  (cutTheDiamondB3ShiftedIn testCube1)
+  (cutTheDiamondB3ShiftedIn testCubeStandard)
 
 cutTheDiamond4ShiftedInTest = TestCase $ assertEqual
   "cutTheDiamond4ShiftedIn test"
   (B4 {b4 = Point {x_axis = 5.0, y_axis = 0.0, z_axis = 5.0}})
-  (cutTheDiamond4ShiftedIn (cutTheDiamondB4Centered) (cutTheDiamondB2Centered) (B4) testCube1)
-
-cutTheDiamondB4ShiftedInTest = TestCase $ assertEqual
-  "cutTheDiamondB4ShiftedIn test"
-  (B4 {b4 = Point {x_axis = 5.0, y_axis = 0.0, z_axis = 5.0}})
-  (cutTheDiamondB4ShiftedIn testCube1)
+  (cutTheDiamond4ShiftedIn (cutTheDiamondB4Centered) (cutTheDiamondB2Centered) (B4) testCubeStandard)
 
 cutTheDiamondBtmFaceBrokenDownTest = TestCase $ assertEqual
   "cutTheDiamondBtmFace broken down test"
   (BackTopLine {b2 = Point {x_axis = 10.0, y_axis = 0.0, z_axis = 0.0}, b3 = Point {x_axis = 0.0, y_axis = 0.0, z_axis = 0.0}})
-  ((reverseNormal . toBackTopLine . extractBackBottomLine $ testCube1))
+  ((reverseNormal . toBackTopLine . extractBackBottomLine $ testCubeStandard))
+
+cutTheDiamond1ShiftedInTest = TestCase $ assertEqual
+  "cutTheDiamond1ShiftedIn test"
+  (B1 {b1 = Point {x_axis = 5.0, y_axis = 0.0, z_axis = 10.0}})
+  (cutTheDiamond1ShiftedIn
+     (cutTheDiamondB4Centered)
+     (cutTheDiamondB2Centered)
+     (B1)
+     testCubeStandard
+  )
+
+cutTheDiamondB1ShiftedInTest = TestCase $ assertEqual
+  "cutTheDiamondB1ShiftedIn"
+  (B1 {b1 = Point {x_axis = 2.5, y_axis = 0.0, z_axis = 10.0}})
+  (cutTheDiamondB1ShiftedIn testCubeStandard)
+
+cutTheDiamondB4ShiftedInTest = TestCase $ assertEqual
+  "cutTheDiamondB4ShiftedIn test"
+  (B4 {b4 = Point {x_axis = 5.0, y_axis = 0.0, z_axis = 5.0}})
+  (cutTheDiamondB4ShiftedIn testCubeStandard)
+
+cutTheDiamondBtmLeftCornerBrokenDownTest = TestCase $ assertEqual
+  "cutTheDiamondBtmLeftCorner broken down = TestCase $ assertEqual"
+  ( --cutTheDiamondB1ShiftedIn
+    B1 {b1 = Point {x_axis = 2.5, y_axis = 0.0, z_axis = 10.0}})
+  ((cutTheDiamondB1ShiftedIn testCubeStandard))
 {-
-testCube1 = 
+testCubeStandard = 
   CubePoints {
             f1 = Point {x_axis = 0.0, y_axis = 10.0, z_axis = 0.0},
             f2 = Point {x_axis = 0.0, y_axis = 10.0, z_axis = 20.0},
