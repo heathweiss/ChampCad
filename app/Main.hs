@@ -6,11 +6,14 @@ import Examples.OpenBionicsCom.OpenBionicsDotComDesignWork (fullLengthSocketWith
                                                   topOfSocketStlGenerator, joinerShaftStlGenerator,
                                                   shortSocketToLargeShaftStlGenerator, wristToLargeShaftStlGenerator
                                                   )
-import Examples.OpenHand.Wrist(wristAndDoubleCylinderStlGenerator, wristAndDoubleCylinderShowCubes, wristSquaredOffStlGenerator, wristSquaredOffShowCubes)
+import Examples.OpenHand.Wrist(wristAndDoubleCylinderStlGenerator, wristAndDoubleCylinderShowCubes,
+                               wristSquaredOffStlGenerator, wristSquaredOffShowCubes, wristSquaredOffStlFromDbGenerator)
 import Examples.OpenHand.SocketMount(socketMountStlGenerator, socketMountShowCubes, socketMountTestsDo, generateSocketMountStlUsingDbValues,
                                      initializeDatabase, insertMount, viewMountByName, setCurrentMount )
 import Examples.OpenHand.MotorMount(motorMountStlGenerator, motorMountShowCubes)
-import Examples.OpenHand.FlexiSocket(flexiSocketTestsDo, flexSocketStlGenerator, testCubeStlGenerator, testCubeShowCubes, testCubeRotatedStlGenerator)
+import Examples.OpenHand.FlexiSocket(flexiSocketTestsDo, flexSocketStlGenerator, testCubeStlGenerator, testCubeShowCubes,
+                                     testCubeRotatedStlGenerator, flexSocketPlainStlGenerator, flexSocketPlainStlGeneratorDbStlGeneretor)
+import qualified Examples.OpenHand.Common  as C (initializeDatabase, insertDimensions, insertDefaultDimensions, seeCommonFactors)
 
 import Examples.Primitives.Squared(cylinderWithSquaredRadiiStlGenerator, )
 
@@ -34,13 +37,8 @@ main = do
  --x <-  getArgs
  --loadMDRAndPassToProcessor (read $ head x) (read $ head $ tail x)
 
-  --testCubeStlGenerator
-  --flexiSocketTestsDo
-  --testCubeShowCubes
-  flexSocketStlGenerator
-  --testCubeRotatedStlGenerator
-  
-  
-  
-
-
+  --flexSocketPlainStlGeneratorDbStlGeneretor
+  wristSquaredOffStlFromDbGenerator
+  --generateSocketMountStlUsingDbValues
+  --C.seeCommonFactors
+  --C.initializeDatabase

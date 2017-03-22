@@ -60,6 +60,7 @@ library
                        Examples.OpenHand.MotorMount
                        Examples.OpenHand.SocketMount
                        Examples.OpenHand.FlexiSocket
+                       Examples.OpenHand.Common
 
                        Examples.OpenBionicsCom.OpenBionicsDotComDesignWork
                        -- Misc Shapes
