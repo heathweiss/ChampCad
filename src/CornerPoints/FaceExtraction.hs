@@ -81,6 +81,7 @@ extractF2 :: CornerPoints -> CornerPoints
 extractF2 (FrontTopLine f2 f3) = F2 f2
 extractF2 (FrontLeftLine f1 f2) = F2 f2
 extractF2 (CubePoints _ f2 _ _ _ _ _ _) = F2 f2
+extractF2 (TopFace _ f2 _ _) = F2 f2
 
 extractF3 :: CornerPoints -> CornerPoints
 extractF3 (FrontTopLine f2 f3) = F3 f3

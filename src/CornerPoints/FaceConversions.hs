@@ -24,7 +24,7 @@ module CornerPoints.FaceConversions(
   leftFaceFromRigthFace,
   reverseNormal,
   frontFaceFromBackFace,
-  
+  toBottomFace,
 ) where
 import CornerPoints.CornerPoints (CornerPoints(..), (+++))
 
@@ -132,6 +132,9 @@ toBackFace (FrontFace f1 f2 f3 f4) = BackFace f1 f2 f3 f4
 toBackFace (BackRightLine b3 b4) = BackFace b4 b3 b3 b4
 toBackFace (BackLeftLine b1 b2) = BackFace b1 b2 b2 b1
 
+toBottomFace :: CornerPoints -> CornerPoints
+toBottomFace (TopFace b2 f2 b3 f3) = BottomFace b2 f2 b3 f3
+
 toBackBottomLine :: CornerPoints -> CornerPoints
 toBackBottomLine (BackBottomLine b1 b4) = (BackBottomLine b1 b4)
 toBackBottomLine (B2 b2) = BackBottomLine b2 b2
@@ -152,6 +155,7 @@ toBackTopLine (B4 b4) = BackTopLine b4 b4
 toBackTopLine (B1 b1) = BackTopLine b1 b1
 toBackTopLine (BackLeftLine b1 b2) = BackTopLine b1 b2
 toBackTopLine (B2 b2) = BackTopLine b2 b2
+toBackTopLine (FrontTopLine f2 f3) = BackTopLine f2 f3
 
 -- ToDo: Finish pattern matches. Test
 toBottomFrontLine :: CornerPoints -> CornerPoints
