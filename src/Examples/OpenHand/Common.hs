@@ -13,7 +13,7 @@
 Common functions and database values used by any/all modules in OpenHand
 -}
 
-module Examples.OpenHand.Common(initializeDatabase, insertDimensions, insertDefaultDimensions, Dimensions(..), commontDBName, uniqueDimensionName,
+module Examples.OpenHand.Common(initializeDatabase, insertDimensions, Dimensions(..), commontDBName, uniqueDimensionName,
                                flexOuterTranspose, CommonFactors(..), setMountCommonFactors, setFlexiSocketCommonFactors,
                                setWristCommonFactors, seeCommonFactors) where
 
@@ -63,40 +63,20 @@ insertDimensions :: IO ()
 insertDimensions     = runSqlite commontDBName $ do
   dimensionsId
             <- insert $ Dimensions
-               "no name dimensions" 
-               "put description here"
-               2 --flexInnerTransposeFactor Double
+               "sharkfin" 
+               "make it the same dimensions as the shark swim fin which fits him good in Mar/17"
+               3 --flexInnerTransposeFactor Double
                2 --flexThickness Double
                3 --mountThickness Double
                3 --wristThicknes' Double
                1 --wristDrop Int
                1 --wristTake Int
                4 --flexDrop Int
-               3 --flexTake Int
+               100 --flexTake Int
                1 --mountDrop Int
                100 --mountTake Int
-  --insert $ CurrentDimensions dimensionsId
   liftIO $ putStrLn "dimensions inserted"
 
-
-insertDefaultDimensions :: IO ()
-insertDefaultDimensions     = runSqlite commontDBName $ do
-  dimensionsId
-            <- insert $ Dimensions
-               "dimensions 1" 
-               "Wrist goes over top of the mount. Flex socket goes inside the mount"
-               2 --flexInnerTransposeFactor Double
-               2 --flexThickness Double
-               3 --mountThickness Double
-               3 --wristThicknes' Double
-               1 --wristDrop Int
-               1 --wristTake Int
-               4 --flexDrop Int
-               3 --flexTake Int
-               1 --mountDrop Int
-               100 --mountTake Int
-  --insert $ CurrentDimensions dimensionsId
-  liftIO $ putStrLn "dimensions inserted"
 
 
 flexOuterTranspose :: Double -> Double -> Double

@@ -4,22 +4,24 @@ module Main where
 --import Examples.Scan.WalkerSocketDesignWork(loadMDRAndPassToProcessor, socketWithRiserStlGenerator)
 import Examples.OpenBionicsCom.OpenBionicsDotComDesignWork (fullLengthSocketWithSmallShaftStlGenerator, wristToSmallShaftStlGenerator,
                                                   topOfSocketStlGenerator, joinerShaftStlGenerator,
-                                                  shortSocketToLargeShaftStlGenerator, wristToLargeShaftStlGenerator
+                                                 shortSocketToLargeShaftStlGenerator, wristToLargeShaftStlGenerator
                                                   )
 import Examples.OpenHand.Wrist(wristAndDoubleCylinderStlGenerator, wristAndDoubleCylinderShowCubes,
                                wristSquaredOffStlGenerator, wristSquaredOffShowCubes, wristSquaredOffStlFromDbGenerator)
 import Examples.OpenHand.SocketMount(socketMountStlGenerator, socketMountShowCubes, socketMountTestsDo, generateSocketMountStlUsingDbValues,
-                                     initializeDatabase, insertMount, viewMountByName, setCurrentMount )
-import Examples.OpenHand.MotorMount(motorMountStlGenerator, motorMountShowCubes)
-import Examples.OpenHand.FlexiSocket(flexiSocketTestsDo, flexSocketStlGenerator, testCubeStlGenerator, testCubeShowCubes,
-                                     testCubeRotatedStlGenerator, flexSocketPlainStlGenerator, flexSocketPlainStlGeneratorDbStlGeneretor)
-import qualified Examples.OpenHand.Common  as C (initializeDatabase, insertDimensions, insertDefaultDimensions, seeCommonFactors)
+                                     initializeDatabase, insertMount, viewMountByName, setCurrentMount, showFaceDimensions )
+import qualified Examples.OpenHand.MotorMount as M (motorMountHardCodedStlGenerator, motorMountHardCodedShowCubes,
+                                   initializeDatabase, insertMotorMount, motorMountRunGeneratorFromDB)
+import qualified Examples.OpenHand.FlexiSocket as Flex (flexiSocketTestsDo, flexSocketStlGenerator, testCubeStlGenerator, testCubeShowCubes,
+                                     testCubeRotatedStlGenerator, flexSocketPlainStlGenerator, flexSocketPlainStlGeneratorDbStlGeneretor,
+                                     initializeDatabase, insertFlexDimensions, flexSocketWithRiserDbStlGenerator)
+import qualified Examples.OpenHand.Common  as C (initializeDatabase, insertDimensions, seeCommonFactors)
 
 import Examples.Primitives.Squared(cylinderWithSquaredRadiiStlGenerator, )
 
 import Examples.Primitives.Cylinders(slopedToppedCylinder, solidCylinderSquared, solidCylinderLengthenY, solidCylinderSquared, walledCylinderSquared)
 
-import Examples.Scan.WalkerSocketDesignWork(loadMDRAndPassToProcessor, )
+import Examples.Scan.WalkerSocketDesignWork(loadMDRAndPassToProcessor)
 
 import Examples.Primitives.Cube(writeJoinerStlFile)
 
@@ -27,18 +29,23 @@ import Examples.Diffs.MTLDiff(generateUnionCubesStl)
 
 import Examples.ShoeLift.SnowBoardBoot (writeRearSlopedTread, writeRearBoot, writeForwardBoot, writeRearRoundedToeTread)
 
---import System.Environment
+import System.Environment
 
 
 --let type of Main to be inferred for running embedded tests
 -- main :: IO ()
 --main :: IO (Key CurrentMount)
 main = do
- --x <-  getArgs
+  let currentSocket = "sharkfin"
+  -- x <-  getArgs
  --loadMDRAndPassToProcessor (read $ head x) (read $ head $ tail x)
 
-  --flexSocketPlainStlGeneratorDbStlGeneretor
-  wristSquaredOffStlFromDbGenerator
+  --flexSocketPlainStlGeneratorDbStlGeneretor (head x)
+  --wristSquaredOffStlFromDbGenerator
   --generateSocketMountStlUsingDbValues
-  --C.seeCommonFactors
-  --C.initializeDatabase
+  --M.motorMountRunGeneratorFromDB (head x)
+  --M.motorMountRunGeneratorFromDB currentSocket
+  --C.insertDimensions
+  Flex.flexSocketWithRiserDbStlGenerator currentSocket
+  --Flex.insertFlexDimensions
+  

@@ -1,0 +1,29 @@
+=============================wrist ====================================
+print1:
+abs 220c
+bedtemp 100
+1 perim
+2 solid btm
+2 solid top
+10% honeycomb
+3mm thick
+printed nice
+
+print2:
+same as 1 except
+20% honeycomb
+
+=============================== flex socket====================
+abs test print
+50% honeycomb
+1 perim
+2 solid btm/top layers
+2 mm thick
+
+===================================  motor mount socket ========================================
+abs test print
+50% honeycomb
+1 perim
+2 solid btm/top layers
+3 mm thick
+flipped it over to print

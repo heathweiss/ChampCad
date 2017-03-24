@@ -20,7 +20,9 @@ Will be printed in flexible filament.
 module Examples.OpenHand.FlexiSocket(flexiSocketTestsDo, flexSocketStlGenerator,
                                      testCubeStlGenerator, testCubeShowCubes,
                                      testCubeRotatedStlGenerator, flexSocketPlainStlGenerator,
-                                     flexSocketPlainStlGeneratorDbStlGeneretor) where
+                                     flexSocketPlainStlGeneratorDbStlGeneretor,
+                                     initializeDatabase, insertFlexDimensions,
+                                     flexSocketWithRiserDbStlGenerator) where
 import Examples.OpenHand.Common(Dimensions(..), commontDBName, uniqueDimensionName, flexOuterTranspose, setFlexiSocketCommonFactors,
                                 Dimensions(..), CommonFactors(..) )
 
@@ -39,7 +41,7 @@ import CornerPoints.FaceExtraction (extractFrontFace, extractTopFace,extractBott
                                     extractF2, extractF3, extractF4, extractF1, extractB1, extractB2, extractB3, extractB4, extractBackRightLine)
 import CornerPoints.FaceConversions(backFaceFromFrontFace, upperFaceFromLowerFace, lowerFaceFromUpperFace, frontFaceFromBackFace, 
                                     f34LineFromF12Line, toBackFace, reverseNormal, toBottomFrontLine, toFrontTopLine,
-                                    toFrontLeftLine, toFrontRightLine, toBackBottomLine, toBackTopLine)
+                                    toFrontLeftLine, toFrontRightLine, toBackBottomLine, toBackTopLine, toBottomFace)
 import CornerPoints.Transpose (transposeZ, transposeY, transposeX)
 import CornerPoints.CornerPointsWithDegrees(CornerPointsWithDegrees(..), (@~+++#@),(@~+++@),(|@~+++@|), (|@~+++#@|), DegreeRange(..))
 import CornerPoints.MeshGeneration(autoGenerateEachCube)
@@ -120,12 +122,182 @@ type LengthenYFactor = Double
 type Yslope = Double
 type Offset = Double
 
+-- =====================================================database============================================================================
+-- =========================================================================================================================================
+--Data will be part of Common.sql
 
--- ======================================================== database ========================================
--- ================================================== plain socket generator =============================
+share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
+FlexDimensions
+   name String
+   UniqueFlexDimensionName name
+   desc String
+   riserHeight Double --z distance from btm to top of riser
+   socketToRiserHeight Double --height above socket, at which btm of riser starts
+   innerRiserRadius Double 
+   xAdjustment Double
+   yAdjustment Double
+  deriving Show
+|]
+
+-- | Initialize a new database with all tables. Will alter tables of existing db.
+initializeDatabase :: IO ()
+initializeDatabase = runSqlite commontDBName $ do
+       
+    runMigration migrateAll
+    liftIO $ putStrLn "flex sockt db initialized"
+
+-- | Insert a new flex socket Dimensions into the database.
+insertFlexDimensions :: IO ()
+insertFlexDimensions     = runSqlite commontDBName $ do
+  dimensionsId
+            <- insert $ FlexDimensions
+               "sharkfin" 
+               "make it the same dimensions as the shark swim fin which fits him good in Mar/17"
+               20 --riserHeighte
+               10 --socketToRiserHeight
+               20 --innerRiserRadius
+               0  --x adjust
+               (-10)--y adjust
+               
+  --insert $ CurrentDimensions dimensionsId
+  liftIO $ putStrLn "flex dimensions inserted"
+-- ===================================================socket with round riser ==============================================================
+-- =========================================================================================================================================
+{-
+Add a round riser to the top for joining to the finger joint section.
+The motor mount socket will glue to the outside of this, with no need to join up at the riser section.
+This riser, flexible material, should go over top of the finger joints riser, to give it strength, as finger section will be solid material.
+For now, does not used diamond cutter, as it does not yet work.
+
+Should be based on the socket made for the openBionics.com socket: Examples.OpenBionicsCom.OpenBionicsDotComDesignWork.shortSocketToLargeShaft
+-}
+
+flexSocketWithRiserDbStlGenerator :: String -> IO ()
+flexSocketWithRiserDbStlGenerator dimensionsName  = runSqlite commontDBName $ do
+  maybeCommonDimensions <- getBy $ uniqueDimensionName dimensionsName
+  maybeFlexDimensions <- getBy $ UniqueFlexDimensionName dimensionsName
+  case maybeCommonDimensions of
+        Nothing -> liftIO $ putStrLn "common dimensions not found"
+        Just (Entity commonDimensionsId commonDimensions) -> do
+          --liftIO $ flexSocketPlainStlGenerator $ setFlexiSocketCommonFactors commonDimensions
+          liftIO $ putStrLn "common dimensions found"
+          case maybeFlexDimensions of 
+           Nothing -> liftIO $ putStrLn "flex dimensions not found"
+           Just (Entity flexDimensionsId flexDimensions) -> do
+             liftIO $ putStrLn "flex dimensions found"
+             liftIO $ flexSocketWithRiserStlGenerator (setFlexiSocketCommonFactors commonDimensions) flexDimensions
+
+
+flexSocketWithRiserStlGenerator :: CommonFactors ->  FlexDimensions -> IO ()
+flexSocketWithRiserStlGenerator (CommonFactors innerTranspose outerTranspose drop' take' ) flexDimensions = do
+  contents <- BL.readFile "src/Data/scanFullData.json"
+  
+  case (decode contents) of
+   
+      Just (MultiDegreeRadii name' degrees') ->
+        let rowReductionFactor = 100::RowReductionFactor
+            innerSleeveMDR = (transpose (+ innerTranspose)) . (reduceScan rowReductionFactor) . removeDefectiveTopRow' $
+                              (MultiDegreeRadii
+                                name'
+                                degrees'
+                              )
+
+            outerSleeveMDR = transpose (+ (outerTranspose - innerTranspose) ) innerSleeveMDR
+            cpoints =  ((execState $ runExceptT (flexSocketWithRiser (degrees innerSleeveMDR) (degrees outerSleeveMDR)
+                                                 rowReductionFactor    pixelsPerMM
+                                                 (CommonFactors innerTranspose outerTranspose drop' take' )
+                                                 flexDimensions  ) ) [])
+        in  writeStlToFile $ newStlShape "socket with riser"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
+      Nothing                                ->
+        putStrLn "File not decoded"
+
+
+flexSocketWithRiser :: [SingleDegreeRadii] -> [SingleDegreeRadii] -> RowReductionFactor -> PixelsPerMillimeter ->
+                       CommonFactors ->  FlexDimensions ->
+                       ExceptT BuilderError (State CpointsStack ) CpointsList
+flexSocketWithRiser innerSleeveSDR         outerSleeveSDR         rowReductionFactor    pixelsPerMM 
+                    (CommonFactors innerTranspose outerTranspose drop' take' )
+                    (FlexDimensions _ _ riserHeight socketToRiserHeight innerRiserRadius xAdjust yAdjust)  = do
+   
+  let angles = map Angle  [0,10..360]
+      transposeFactors = [0,heightPerPixel.. ]
+      heightPerPixel = (1/ pixelsPerMM) * (fromIntegral rowReductionFactor)
+      origin = Point 0 0 50
+      getShaftOrigin :: Point -> Double -> Point
+      --getShaftOrigin socketOrigin newZ = socketOrigin {z_axis = newZ}
+      getShaftOrigin (Point x y z) newZ = Point (x + xAdjust) (y + yAdjust) newZ
+  {-
+  riserTopFaces
+    <- buildCubePointsListSingle "riserTopFaces"-}
+  mainSocket
+    <- buildCubePointsListSingle "wristCubes"
+             ( concat $ take take' $ drop drop'  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
+  
+  mainSocketTopFaces
+    <- buildCubePointsListSingle "mainSocketTopFaces"
+       (map (extractTopFace) $ head $ drop drop'  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
+  
+  let topOfSocketZaxis = z_axis . f2 . extractF2 $ head mainSocketTopFaces
+      shaftOrigin = (getShaftOrigin origin (topOfSocketZaxis + socketToRiserHeight))
+  
+  riserTransistionTopFrontLines
+    <- buildCubePointsListSingle "riserTransistionTopFrontLines"
+                       (map extractFrontTopLine
+                        (createTopFaces
+                          shaftOrigin
+                          (repeat $ Radius $ innerRiserRadius + (outerTranspose - innerTranspose))
+                          angles
+                          
+                        )
+                       )
+                       
+
+  
+  riserTransitionBackTopLines
+    <- buildCubePointsListSingle "riserTransitionBackTopLines"
+                       --(map (backTopLineFromFrontTopLine . extractFrontTopLine)
+                      (map (toBackTopLine . extractFrontTopLine)
+                        (createTopFaces
+                          shaftOrigin
+                          (repeat $ Radius innerRiserRadius)
+                          angles
+                          
+                        )
+                       )
+                       
+                   
+
+  
+  riserTransitionTopFaces
+    <- buildCubePointsListWithAdd "riserBtmFacesAsTopFaces"
+                       riserTransistionTopFrontLines
+                       riserTransitionBackTopLines
+
+  riserTransitionCubes
+    <- buildCubePointsListWithAdd "riserTransitionCubes"
+       riserTransitionTopFaces
+       (map (toBottomFace) mainSocketTopFaces)
+
+  riserCubes
+    <- buildCubePointsListWithAdd "riserCubes"
+       (map
+        (transposeZ (+riserHeight) )
+        riserTransitionTopFaces
+       )
+       (riserTransitionCubes)
+
+  
+  
+  return mainSocket
+
+       
+-- ================================================== plain socket generator ===============================================================
+-- =========================================================================================================================================
+
 {-
 Output a plain socket for testing.
 Does not use diamond cutter, as it does not yet work.
+Does not use a round riser for joining to other pieces, which is not good.
 -}
 flexSocketPlain :: [SingleDegreeRadii] -> [SingleDegreeRadii] -> RowReductionFactor -> PixelsPerMillimeter -> Int ->    Int ->
                ExceptT BuilderError (State CpointsStack ) CpointsList
@@ -133,14 +305,15 @@ flexSocketPlain    innerSleeveSDR         outerSleeveSDR         rowReductionFac
   let transposeFactors = [0,heightPerPixel.. ]
       heightPerPixel = (1/ pixelsPerMM) * (fromIntegral rowReductionFactor)
       origin = Point 0 0 50
+      
   
   cubes   <- buildCubePointsListSingle "wristCubes"
              --( concat $ take 3 $ drop 4  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
              ( concat $ take flexTake' $ drop flexDrop'  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
 
+  
   return cubes
 
---flexSocketPlainStlGenerator :: Double ->                 Double ->      Int ->    Int ->  IO ()
 flexSocketPlainStlGenerator :: CommonFactors ->                                            IO ()
 flexSocketPlainStlGenerator (CommonFactors innerTranspose outerTranspose drop' take' )     = do
   contents <- BL.readFile "src/Data/scanFullData.json"
@@ -149,91 +322,30 @@ flexSocketPlainStlGenerator (CommonFactors innerTranspose outerTranspose drop' t
    
       Just (MultiDegreeRadii name' degrees') ->
         let rowReductionFactor = 100::RowReductionFactor
-            --innerSleeveMDR = (transpose innerSleeveTransposeFactor) . (reduceScan rowReductionFactor) . removeDefectiveTopRow' $
-            --innerSleeveMDR = (transpose innerSleeveTransposeFactor) . (reduceScan rowReductionFactor) . removeDefectiveTopRow' $
             innerSleeveMDR = (transpose (+ innerTranspose)) . (reduceScan rowReductionFactor) . removeDefectiveTopRow' $
                               (MultiDegreeRadii
                                 name'
                                 degrees'
                               )
 
-            --outerSleeveTransposeFactor = (+3)
-            --outerSleeveTransposeFactor =  (+ (flexOuterTranspose flexInnerTransposeFactor' flexThickness'))
-            --outerSleeveMDR = transpose (outerSleeveTransposeFactor) innerSleeveMDR
             outerSleeveMDR = transpose (+ (outerTranspose - innerTranspose) ) innerSleeveMDR
             cpoints =  ((execState $ runExceptT (flexSocketPlain (degrees innerSleeveMDR) (degrees outerSleeveMDR)
                                                  rowReductionFactor    pixelsPerMM drop' take'  ) ) [])
         in  writeStlToFile $ newStlShape "socket with riser"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
       Nothing                                ->
         putStrLn "File not decoded"
-{-
---before CommonFactors
-flexSocketPlainStlGenerator :: Double ->                 Double ->      Int ->    Int ->  IO ()
-flexSocketPlainStlGenerator    flexInnerTransposeFactor' flexThickness' flexDrop' flexTake' = do
-  contents <- BL.readFile "src/Data/scanFullData.json"
-  
-  case (decode contents) of
-   
-      Just (MultiDegreeRadii name' degrees') ->
-        let rowReductionFactor = 100::RowReductionFactor
-            --innerSleeveTransposeFactor = (+6) --3 is that starndard value. Make it 6 as this has to fit over the wrist and ninjaflex
-            innerSleeveTransposeFactor = (+ flexInnerTransposeFactor')
-            innerSleeveMDR = (transpose innerSleeveTransposeFactor) . (reduceScan rowReductionFactor) . removeDefectiveTopRow' $
-                              (MultiDegreeRadii
-                                name'
-                                degrees'
-                              )
 
-            --outerSleeveTransposeFactor = (+3)
-            outerSleeveTransposeFactor =  (+ (flexOuterTranspose flexInnerTransposeFactor' flexThickness'))
-            outerSleeveMDR = transpose (outerSleeveTransposeFactor) innerSleeveMDR
-            cpoints =  ((execState $ runExceptT (flexSocketPlain (degrees innerSleeveMDR) (degrees outerSleeveMDR)
-                                                 rowReductionFactor    pixelsPerMM flexDrop' flexTake'  ) ) [])
-        in  writeStlToFile $ newStlShape "socket with riser"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
-      Nothing                                ->
-        putStrLn "File not decoded"
-
--}
-
-flexSocketPlainStlGeneratorDbStlGeneretor :: IO ()
-flexSocketPlainStlGeneratorDbStlGeneretor = runSqlite commontDBName $ do
-  maybeDimensions <- getBy $ uniqueDimensionName "dimensions 1"
+flexSocketPlainStlGeneratorDbStlGeneretor :: String -> IO ()
+flexSocketPlainStlGeneratorDbStlGeneretor dimensionsName = runSqlite commontDBName $ do
+  maybeDimensions <- getBy $ uniqueDimensionName dimensionsName
   case maybeDimensions of
         Nothing -> liftIO $ putStrLn "common dimensions not found"
-        --Just (Entity commonDimensionsId (Dimensions _ _  flexInnerTransposeFactor' flexThickness' _ _ _ _ flexDrop' flexTake' _ _)) -> do
         Just (Entity commonDimensionsId commonDimensions) -> do
-          --liftIO $ flexSocketPlainStlGenerator flexInnerTransposeFactor' flexThickness' flexDrop' flexTake'
           liftIO $ flexSocketPlainStlGenerator $ setFlexiSocketCommonFactors commonDimensions
           liftIO $ putStrLn "plain flex socket stl has been output"
 
-{-
--- before CommonFactors
-flexSocketPlainStlGeneratorDbStlGeneretor :: IO ()
-flexSocketPlainStlGeneratorDbStlGeneretor = runSqlite commontDBName $ do
-  maybeDimensions <- getBy $ uniqueDimensionName "dimensions 1"
-  case maybeDimensions of
-        Nothing -> liftIO $ putStrLn "common dimensions not found"
-        Just (Entity commonDimensionsId (Dimensions _ _  flexInnerTransposeFactor' flexThickness' _ _ _ _ flexDrop' flexTake' _ _)) -> do
-          liftIO $ flexSocketPlainStlGenerator flexInnerTransposeFactor' flexThickness' flexDrop' flexTake'
-          liftIO $ putStrLn "plain flex socket stl has been output"
--}
+
 -- =================================================cut diamond socket generator =======================================
-removeDefectiveTopRow' :: MultiDegreeRadii -> MultiDegreeRadii
-removeDefectiveTopRow' (MultiDegreeRadii name' degrees') = MultiDegreeRadii name' [(SingleDegreeRadii degree'' (tail radii''))  | (SingleDegreeRadii degree'' radii'') <- degrees']
-
-flexSocket :: [SingleDegreeRadii] -> [SingleDegreeRadii] -> RowReductionFactor -> PixelsPerMillimeter ->
-               ExceptT BuilderError (State CpointsStack ) CpointsList
-flexSocket    innerSleeveSDR         outerSleeveSDR         rowReductionFactor    pixelsPerMM = do
-  let transposeFactors = [0,heightPerPixel.. ]
-      heightPerPixel = (1/ pixelsPerMM) * (fromIntegral rowReductionFactor)
-      origin = Point 0 0 500
-
-  cubes   <- buildCubePointsListSingle "wristCubes"
-             ( concat $ map (cutTheDiamond)
-                            (concat $ take 2 $ drop 1  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
-             )
-
-  return cubes
 
 
 
@@ -617,7 +729,29 @@ offsetCornerPoints    offsetX   offsetY   offsetZ   (B2 b2')        (B1 b1')  co
 
 offsetCornerPoints    _ _ _  unhandled cornerpoints  _ =
   CornerPointsError "Missing pattern match for offsetCornerPoints"
--- ==================================================== local tests =========================================
+
+-- ========================================= socket general support functions========================================================
+-- ==================================================================================================================================
+removeDefectiveTopRow' :: MultiDegreeRadii -> MultiDegreeRadii
+removeDefectiveTopRow' (MultiDegreeRadii name' degrees') = MultiDegreeRadii name' [(SingleDegreeRadii degree'' (tail radii''))  | (SingleDegreeRadii degree'' radii'') <- degrees']
+
+flexSocket :: [SingleDegreeRadii] -> [SingleDegreeRadii] -> RowReductionFactor -> PixelsPerMillimeter ->
+               ExceptT BuilderError (State CpointsStack ) CpointsList
+flexSocket    innerSleeveSDR         outerSleeveSDR         rowReductionFactor    pixelsPerMM = do
+  let transposeFactors = [0,heightPerPixel.. ]
+      heightPerPixel = (1/ pixelsPerMM) * (fromIntegral rowReductionFactor)
+      origin = Point 0 0 500
+
+  cubes   <- buildCubePointsListSingle "wristCubes"
+             ( concat $ map (cutTheDiamond)
+                            (concat $ take 2 $ drop 1  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
+             )
+
+  return cubes
+
+-- ==================================================== local tests =================================================================
+-- ==================================================================================================================================
+-- ==================================================================================================================================
 flexiSocketTestsDo = do
   runTestTT buildTestCubeTest
   -- =offset xyz

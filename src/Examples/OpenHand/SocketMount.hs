@@ -22,7 +22,7 @@ The ninja-flex will fit inside of it, and be attached to give it support and all
 
 module Examples.OpenHand.SocketMount(socketMountStlGenerator, socketMountShowCubes, socketMountTestsDo,
                                      initializeDatabase, insertMount, viewMountByName, setCurrentMount,
-                                     generateSocketMountStlUsingDbValues) where
+                                     generateSocketMountStlUsingDbValues, showFaceDimensions) where
 
 import Examples.OpenHand.Common(Dimensions(..), commontDBName, uniqueDimensionName, CommonFactors(..), setMountCommonFactors)
 
@@ -35,7 +35,7 @@ import CornerPoints.VerticalFaces(createRightFaces, createLeftFaces, createLeftF
 import CornerPoints.Points(Point(..))
 import CornerPoints.CornerPoints(CornerPoints(..), (+++), (|+++|), (|@+++#@|), (+++>))
 import CornerPoints.Create(Origin(..), createCornerPoint)
-import CornerPoints.FaceExtraction (extractFrontFace, extractTopFace,extractBottomFace, extractBackFace, extractFrontTopLine,
+import CornerPoints.FaceExtraction (extractFrontFace, extractTopFace,extractBottomFace, extractBackFace, extractFrontTopLine, extractF2,
                                     extractBackTopLine, extractRightFace, extractFrontRightLine, extractFrontLeftLine, extractBottomFrontLine)
 import CornerPoints.FaceConversions(backFaceFromFrontFace, upperFaceFromLowerFace, lowerFaceFromUpperFace, frontFaceFromBackFace,
                                     {-f12LineFromF34Line,-}toFrontLeftLine, f34LineFromF12Line )
@@ -124,6 +124,40 @@ type Yslope = Double
 -- =================================== database =====================================================
 databaseName = "src/Examples/OpenHand/SocketMount.sql"
 
+{-
+Added in zHeight manually to the db as got error trying to add it to exsiting db.
+Did not want to delete the db as I did not want to lose my data.
+-}
+share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
+Mount
+   name String
+   UniqueName name
+   desc String
+  deriving Show
+
+FaceSlope
+  slope Double
+  mountId MountId
+  MountIdForFaceSlope mountId
+ deriving Show
+
+FaceDimensions
+  --zTop Double
+  --zBtm Double
+  zHeight Double default=5.0
+  leftx Double
+  lefty Double
+  rightx Double
+  righty Double
+  mountId MountId
+  MountIdForFaceDimensions mountId
+ deriving Show
+
+CurrentMount
+  mountId MountId
+ deriving Show
+|]
+{-before using dynamic z height
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 Mount
    name String
@@ -152,7 +186,7 @@ CurrentMount
   mountId MountId
  deriving Show
 |]
-
+-}
 -- | Initialize a new database with all tables. Will alter tables of existing db.
 initializeDatabase :: IO ()
 initializeDatabase = runSqlite databaseName $ do
@@ -165,9 +199,16 @@ insertMount :: IO ()
 insertMount  = runSqlite databaseName $ do
   mountId <- insert $ Mount "mount 1" "fits upright motors with board over top"
   insert $ FaceSlope (-2) mountId
+  insert $ FaceDimensions 5 15 (-35) (-40) (-25) mountId
+  liftIO $ putStrLn "mounts inserted"
+{-before calcl'd z
+insertMount :: IO ()
+insertMount  = runSqlite databaseName $ do
+  mountId <- insert $ Mount "mount 1" "fits upright motors with board over top"
+  insert $ FaceSlope (-2) mountId
   insert $ FaceDimensions 50 45 15 (-35) (-40) (-25) mountId
   liftIO $ putStrLn "mounts inserted"
-
+-}
 --View a Mount in the Db. Probably useless not that there is a CurrentMount.
 viewMountByName :: IO ()
 viewMountByName = runSqlite databaseName $ do
@@ -298,6 +339,57 @@ socketMount :: [SingleDegreeRadii] -> [SingleDegreeRadii] -> RowReductionFactor 
                FaceDimensions -> FaceSlope -> Int -> Int ->
                ExceptT BuilderError (State CpointsStack ) CpointsList
 socketMount    innerSleeveSDR         outerSleeveSDR         rowReductionFactor    pixelsPerMM
+               (FaceDimensions  zHeight_ leftx_ lefty_ rightx_ righty_ _) (FaceSlope slope_ _) drop' take' = do
+  let extensionHeight = 30
+      transposeFactors = [0,heightPerPixel.. ]
+      heightPerPixel = (1/ pixelsPerMM) * (fromIntegral rowReductionFactor)
+      origin = (Point{x_axis=0, y_axis=0, z_axis=50})
+      angles = (map (Angle) [0,10..360])
+      radii = repeat $ Radius 15 -- [Radius x | x <- [15,15..]] --
+      radiiSquared = --take 2 
+                     [squaredOff 3 radius' angle'
+                       | radius' <- radii
+                       | angle'  <- angles
+                     ]
+      backStripCutterCubes =
+        [CornerPointsId, CornerPointsId]
+        ++
+        [CornerPointsNothing | x <-[1,2..29]]
+        ++
+        --(repeat CornerPointsId)
+        [CornerPointsId | x <-[1,2..5]]
+
+      backStripCutterCubesList = concat [backStripCutterCubes | x <-  [1..]]
+
+  
+  wristCubes   <- buildCubePointsListWithAdd "wristCubes"
+                --(concat $ take take' $ drop 1  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
+                (concat $ take take' $ drop drop'  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
+                ([CornerPointsId | x <-[1..108]] ++ backStripCutterCubesList)
+  
+  --let mounts = generateMounts (-5.0) (slope_) $ buildFrontFace zTop_ zBtm_ leftx_ lefty_ rightx_ righty_ (slope_)
+  let
+    socketCubesForInnerMountWalls  = (take (take' - 3) $ drop (drop' + 2)  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
+    topOfMount = z_axis $ f2 $ extractF2 $ head $ head socketCubesForInnerMountWalls
+    --mounts = generateMounts (-5.0) (slope_) $ buildFrontFace {-zTop_-}topOfMount  {-zBtm_-}(topOfMount - 5) leftx_ lefty_ rightx_ righty_ (slope_)
+    mounts = generateMounts (- zHeight_) (slope_) $ buildFrontFace {-zTop_-}topOfMount  {-zBtm_-}(topOfMount - zHeight_) leftx_ lefty_ rightx_ righty_ (slope_)
+                                                            --ztop  zbtm  lx     ly     rx      ry      ySlope
+  wristMount
+             <- buildCubePointsListSingle "wristMount"
+                (concat $ 
+                   [gen1 |+++| gen2
+                    | gen1 <- socketCubesForInnerMountWalls -- (take (take' - 1) $ drop (drop' + 2)  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
+                    | gen2 <- mounts 
+                   ]
+                )
+  
+  return wristMount
+{-
+--before mount takeoff being from db
+socketMount :: [SingleDegreeRadii] -> [SingleDegreeRadii] -> RowReductionFactor -> PixelsPerMillimeter ->
+               FaceDimensions -> FaceSlope -> Int -> Int ->
+               ExceptT BuilderError (State CpointsStack ) CpointsList
+socketMount    innerSleeveSDR         outerSleeveSDR         rowReductionFactor    pixelsPerMM
                (FaceDimensions zTop_ zBtm_ leftx_ lefty_ rightx_ righty_ _) (FaceSlope slope_ _) drop' take' = do
   let extensionHeight = 30
       transposeFactors = [0,heightPerPixel.. ]
@@ -338,7 +430,7 @@ socketMount    innerSleeveSDR         outerSleeveSDR         rowReductionFactor 
                 )
   
   return wristMount
-
+-}
 
 --load the scan file and generate stl
 socketMountStlGenerator :: FaceDimensions -> FaceSlope -> CommonFactors -> IO ()

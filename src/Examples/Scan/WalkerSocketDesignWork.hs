@@ -129,7 +129,7 @@ loadMDRAndPassToProcessor  = do
             --pushPlate plateRadius power lengthenYFactor
             --generatePushPlateStl plateRadius power lengthenYFactor []
 
-            generatehosePlateStl plateRadius power lengthenYFactor []
+            --generatehosePlateStl plateRadius power lengthenYFactor []
             --showHosePlateError plateRadius power lengthenYFactor []
 
             ---------socket with sidemount quick release------------
@@ -142,7 +142,7 @@ loadMDRAndPassToProcessor  = do
 
             ------------------ hammerhead shark swim fin -----------------------------------
             --generateHammerHeadSharkHeadSectionStl (degrees innerSleeveMDRForSideMount) rowReductionFactor pixelsPerMM []
-            --generateHammerHeadSharkBodySectionStl (degrees innerSleeveMDRForSideMount) rowReductionFactor pixelsPerMM []
+            generateHammerHeadSharkBodySectionStl (degrees innerSleeveMDRForSideMount) rowReductionFactor pixelsPerMM []
             
       Nothing                                ->
         putStrLn "File not decoded"

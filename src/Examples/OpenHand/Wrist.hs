@@ -126,7 +126,7 @@ wristSquaredOff    innerSleeveSDR         outerSleeveSDR         rowReductionFac
       heightPerPixel = (1/ pixelsPerMM) * (fromIntegral rowReductionFactor)
       origin = (Point{x_axis=0, y_axis=0, z_axis=50})
       angles = (map (Angle) [0,10..360])
-      radii = repeat $ Radius 15 -- 15 looks to big to fit through outer socket
+      radii = repeat $ Radius 25 -- 15 was too small
       radiiSquared = --take 2 
                      [squaredOff 3 radius' angle'
                        | radius' <- radii
@@ -142,8 +142,14 @@ wristSquaredOff    innerSleeveSDR         outerSleeveSDR         rowReductionFac
 
   topOfWristAsLowerFaces
              <- buildCubePointsListSingle "extrudeTop"
+                (map (lowerFaceFromUpperFace . extractTopFace) (head (drop drop' $ createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors))
+                )
+  {-before drop from db
+  topOfWristAsLowerFaces
+             <- buildCubePointsListSingle "extrudeTop"
                 (map (lowerFaceFromUpperFace . extractTopFace) (head (drop 1 $ createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors))
                 )
+  -}
 
   let rotate' = 40
         

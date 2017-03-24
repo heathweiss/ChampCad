@@ -1,8 +1,25 @@
+--for persist
+{-# LANGUAGE EmptyDataDecls             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
 {- |
 The container into which the motors and board will be mounted.
 -}
 
-module Examples.OpenHand.MotorMount(motorMountStlGenerator, motorMountShowCubes) where
+module Examples.OpenHand.MotorMount(motorMountHardCodedStlGenerator, motorMountHardCodedShowCubes,
+                                   initializeDatabase, insertMotorMount, motorMountRunGeneratorFromDB) where
+
+-- for persist
+import Control.Monad.IO.Class  (liftIO)
+import Database.Persist
+import Database.Persist.Sqlite
+import Database.Persist.TH
 
 import Builder.Monad(BuilderError(..), cornerPointsErrorHandler, buildCubePointsList,
                      CpointsStack, CpointsList, buildCubePointsListWithAdd, buildCubePointsListSingle)
@@ -29,8 +46,307 @@ import Stl.StlBase (StlShape(..), newStlShape)
 import Stl.StlFileWriter(writeStlToFile)
 import Stl.StlCornerPoints((|+++^|), (||+++^||), Faces(..))
 
-motorMount :: ExceptT BuilderError (State CpointsStack ) CpointsList
-motorMount = do
+import Control.Lens
+-- ============================ database values motor mount==============================================================
+-- ======================================================================================================================
+-- ======================================================================================================================
+databaseName = "src/Examples/OpenHand/MotorMount.sql"
+
+share [mkPersist sqlSettings { mpsGenerateLenses = True }, mkMigrate "migrateAll"] [persistLowerCase|
+ MotorMount
+   name String
+   UniqueName name
+   desc String
+   x1Width Double
+   x2Width Double
+   x3Width  Double
+   x4Width  Double
+   x5Width  Double
+   x6Width  Double
+   x7Width  Double
+   x8Width  Double
+   x9Width  Double
+   x10Width Double
+   x11Width Double
+   x12Width Double
+   x13Width Double
+
+   y1Width Double
+   y2Width Double
+   y3Width Double
+   y4Width Double
+   y5Width Double
+   y6Width Double
+
+   z1Height Double
+   z2Height Double
+   z3Height Double
+   z4Height Double
+  deriving Show
+
+
+ |]
+
+-- | Initialize a new database with all tables. Will alter tables of existing db.
+initializeDatabase :: IO ()
+initializeDatabase = runSqlite databaseName $ do
+       
+    runMigration migrateAll
+    liftIO $ putStrLn "db initializes"
+
+-- | Insert a new Mount, FaceSlope, and FaceDimensions into the database. Sqlite browser will not do this.
+insertMotorMount :: IO ()
+insertMotorMount  = runSqlite databaseName $ do
+  let stdXWidth = 6
+      borderWidth = 4
+      sealWidth = 2
+      
+  mountId <- insert $ MotorMount
+    "mount 1"
+    "the orginal print which was too narrow and tall"
+    borderWidth --x1 width
+    sealWidth --x2 width
+    stdXWidth --x3Width 
+    stdXWidth --x4Width  
+    stdXWidth --x5Width  
+    stdXWidth --x6Width  
+    stdXWidth --x7Width  
+    stdXWidth --x8Width  
+    stdXWidth --x9Width  
+    stdXWidth --x10Width 
+    stdXWidth --x11Width  
+    sealWidth --x12Width  
+    borderWidth --x13Width
+
+    borderWidth --y1
+    sealWidth   --y2
+    25          --y3
+    40          --y4
+    sealWidth   --y5
+    borderWidth --y6
+
+    1 --z1Height 
+    22 --z2Height
+    15 --z3Height
+    2 --z4Height
+    
+  liftIO $ putStrLn "mount mount inserted"
+
+motorMountRunGeneratorFromDB :: String -> IO ()
+motorMountRunGeneratorFromDB mountName = runSqlite databaseName $ do
+  maybeMount <- getBy $ UniqueName mountName
+  case maybeMount of
+    Nothing -> liftIO $ putStrLn "Just kidding, not really there"
+    Just (Entity mountId mount) -> do
+      liftIO $ putStrLn "generator loading"
+      liftIO $ motorMountFromDbStlGenerator mount
+      
+
+motorMountFromDbStlGenerator :: MotorMount -> IO ()
+motorMountFromDbStlGenerator motorMount  = do
+  let cpoints =  ((execState $ runExceptT  $  motorMountFromDb  motorMount     ) [])
+  writeStlToFile $ newStlShape "motorMountHardCoded"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
+
+-- ============================================================= left off==========================================
+-- adjust width of x-axis for motors being on their sides.
+
+motorMountFromDb :: MotorMount ->  ExceptT BuilderError (State CpointsStack ) CpointsList
+--motorMountFromDb (MotorMount name desc x1Width x2Width x3Width x4Width x5Width ) = do
+motorMountFromDb motorMount = do
+  
+  y1x1BottomFaces
+         <- buildCubePointsListSingle "y1x1BottomFaces"
+            
+             [
+               ((B1 (Point 0 0 0)) +++ (B4 (Point (motorMount^.motorMountX1Width) 0 0)))
+               +++
+               --((F1 (Point 0 y1Width 0)) +++ (F4 (Point x1Width y1Width 0)))
+               ((F1 (Point 0 (motorMount^.motorMountY1Width) 0)) +++ (F4 (Point (motorMount^.motorMountX1Width) (motorMount^.motorMountY1Width) 0)))
+             ]
+  y1x1Cubes
+      <- buildCubePointsListWithAdd "y1x1Cubes"
+         (map ((transposeZ (+ (motorMount^.motorMountZ1Height))) . upperFaceFromLowerFace) y1x1BottomFaces)
+         y1x1BottomFaces
+
+  y1x2Cubes
+     <- buildCubePointsListWithAdd "y1x2Cubes"
+        (map ((transposeX (+(motorMount^.motorMountX2Width))) . extractRightFace) y1x1Cubes)
+        (y1x1Cubes)
+
+  y1x3Cubes
+     <- buildCubePointsListWithAdd "y1x3Cubes"
+        (map ((transposeX (+(motorMount^.motorMountX3Width))) . extractRightFace) y1x2Cubes)
+        (y1x2Cubes)
+
+  y1x4Cubes
+    <- buildCubePointsListWithAdd "y1x3Cubes"
+       (map ((transposeX (+(motorMount^.motorMountX4Width))) . extractRightFace) y1x3Cubes)
+        (y1x3Cubes)
+
+  y1x5Cubes
+    <- buildCubePointsListWithAdd "y1x3Cubes"
+       (map ((transposeX (+(motorMount^.motorMountX5Width))) . extractRightFace) y1x4Cubes)
+        (y1x4Cubes)
+
+  y1x6Cubes
+    <- buildCubePointsListWithAdd "y1x6Cubes"
+       (map ((transposeX (+(motorMount^.motorMountX6Width))) . extractRightFace) y1x5Cubes)
+        (y1x5Cubes)
+
+  y1x7Cubes
+    <- buildCubePointsListWithAdd "y1x7Cubes"
+       (map ((transposeX (+(motorMount^.motorMountX7Width))) . extractRightFace) y1x6Cubes)
+        (y1x6Cubes)
+
+  y1x8Cubes
+    <- buildCubePointsListWithAdd "y1x7Cubes"
+       (map ((transposeX (+(motorMount^.motorMountX8Width))) . extractRightFace) y1x7Cubes)
+        (y1x7Cubes)
+
+  y1x9Cubes
+    <- buildCubePointsListWithAdd "y1x7Cubes"
+       (map ((transposeX (+(motorMount^.motorMountX9Width))) . extractRightFace) y1x8Cubes)
+        (y1x8Cubes)
+
+  y1x10Cubes
+    <- buildCubePointsListWithAdd "y1x7Cubes"
+       (map ((transposeX (+(motorMount^.motorMountX10Width))) . extractRightFace) y1x9Cubes)
+        (y1x9Cubes)
+
+  y1x11Cubes
+    <- buildCubePointsListWithAdd "y1x7Cubes"
+       (map ((transposeX (+(motorMount^.motorMountX11Width))) . extractRightFace) y1x10Cubes)
+        (y1x10Cubes)
+
+  y1x12Cubes
+    <- buildCubePointsListWithAdd "y1x7Cubes"
+       (map ((transposeX (+(motorMount^.motorMountX12Width))) . extractRightFace) y1x11Cubes)
+        (y1x11Cubes)
+
+  y1x13Cubes
+    <- buildCubePointsListWithAdd "y1x7Cubes"
+       (map ((transposeX (+(motorMount^.motorMountX13Width))) . extractRightFace) y1x12Cubes)
+        (y1x12Cubes)
+
+  let y1Layer = y1x1Cubes  ++ y1x2Cubes ++ y1x3Cubes ++ y1x4Cubes ++ y1x5Cubes  ++y1x6Cubes ++ y1x7Cubes ++ y1x8Cubes ++ y1x9Cubes ++ y1x10Cubes ++ y1x11Cubes ++ y1x12Cubes ++ y1x13Cubes
+  --y1 layer 1 done.
+  --add rest of layer 1 y's by transposing along y axis
+  y2Layer <- buildCubePointsListWithAdd "y2Layer"
+             (y1Layer)
+             (map ((transposeY (+(motorMount^.motorMountY2Width))) . extractFrontFace) y1Layer)
+
+  y3Layer <- buildCubePointsListWithAdd "y2Layer"
+             (y2Layer)
+             (map ((transposeY (+(motorMount^.motorMountY3Width))) . extractFrontFace) y2Layer)
+
+  y4Layer <- buildCubePointsListWithAdd "y2Layer"
+             (y3Layer)
+             (map ((transposeY (+(motorMount^.motorMountY4Width))) . extractFrontFace) y3Layer)
+  
+  y5Layer <- buildCubePointsListWithAdd "y2Layer"
+             (y4Layer)
+             (map ((transposeY (+(motorMount^.motorMountY5Width))) . extractFrontFace) y4Layer)
+
+             --borderWidth
+  y6Layer <- buildCubePointsListWithAdd "y2Layer"
+             (y5Layer)
+             (map ((transposeY (+(motorMount^.motorMountY6Width))) . extractFrontFace) y5Layer)
+
+
+  -- ========== end of layer 1
+  -- ========== start of layer 2
+  y1Z2Layer <- buildCubePointsListWithAdd "y1Z2Layer"
+               (y1Layer)
+               (
+                 (map ((transposeZ (+(motorMount^.motorMountZ2Height))) . extractTopFace) y1Layer)
+            )
+
+  y2Z2Layer <- buildCubePointsListWithAdd "y1Z2Layer"
+               (y2Layer)
+               (
+                 (map ((transposeZ (+(motorMount^.motorMountZ2Height))) . extractTopFace) y2Layer)
+               )
+  
+
+  y3Z2TopFaces
+           <- buildCubePointsListWithAdd "y4Z2Layer"
+               (
+                 (map ((transposeZ (+(motorMount^.motorMountZ2Height))) . extractTopFace) y3Layer)
+               )
+               ([CornerPointsId, CornerPointsId, CornerPointsNothing,
+                 CornerPointsNothing, CornerPointsNothing, CornerPointsNothing,
+                 CornerPointsNothing,
+                 CornerPointsNothing, CornerPointsNothing, CornerPointsNothing,
+                 CornerPointsNothing, CornerPointsId, CornerPointsId
+                 ])
+
+  y3Z2Layer <- buildCubePointsListWithAdd "y1Z2Layer"
+               y3Layer
+               y3Z2TopFaces
+  {-
+  y3Z2Layer <- buildCubePointsListWithAdd "y1Z2Layer"
+               (y3Layer)
+               (
+                 (map ((transposeZ (+(motorMount^.motorMountZ2Height))) . extractTopFace) y3Layer)
+               )
+  -}
+  y4Z2TopFaces
+           <- buildCubePointsListWithAdd "y4Z2Layer"
+               (
+                 (map ((transposeZ (+(motorMount^.motorMountZ2Height))) . extractTopFace) y4Layer)
+               )
+               ([CornerPointsId, CornerPointsId, CornerPointsId,
+                 CornerPointsNothing, CornerPointsNothing, CornerPointsNothing,
+                 CornerPointsId,
+                 CornerPointsNothing, CornerPointsNothing, CornerPointsNothing,
+                 CornerPointsId, CornerPointsId, CornerPointsId
+                 ])
+
+  y4Z2Layer
+        <- buildCubePointsListWithAdd "y5Z2Layer"
+           y4Layer
+           y4Z2TopFaces
+
+  let y5y6z2EndPlateIds =
+                [CornerPointsId, CornerPointsId, CornerPointsId, CornerPointsId,
+                 CornerPointsNothing, 
+                 CornerPointsId, CornerPointsId, CornerPointsId,
+                 CornerPointsNothing, 
+                 CornerPointsId, CornerPointsId, CornerPointsId, CornerPointsId
+                 ]
+                
+  y5Z2TopFaces
+           <- buildCubePointsListWithAdd "y5Z2Layer"
+               (
+                 (map ((transposeZ (+(motorMount^.motorMountZ2Height))) . extractTopFace) y5Layer)
+               )
+               (y5y6z2EndPlateIds)
+
+  y5Z2Layer
+        <- buildCubePointsListWithAdd "y5Z2Layer"
+           y5Layer
+           y5Z2TopFaces
+
+  y6Z2TopFaces
+           <- buildCubePointsListWithAdd "y6Z2Layer"
+               (
+                 (map ((transposeZ (+(motorMount^.motorMountZ2Height))) . extractTopFace) y6Layer)
+               )
+               (y5y6z2EndPlateIds)
+
+  y6Z2Layer
+        <- buildCubePointsListWithAdd "y6Z2Layer"
+           y6Layer
+           y6Z2TopFaces
+
+       
+  return y1x13Cubes
+
+-- ============================ hard coded values motor mount============================================================
+-- ======================================================================================================================
+-- ======================================================================================================================
+motorMountHardCoded :: ExceptT BuilderError (State CpointsStack ) CpointsList
+motorMountHardCoded = do
   let 
       stdXWidth = 5.25
       borderWidth = 4
@@ -400,14 +716,14 @@ motorMount = do
   return y5Z4Layer
 
 
-motorMountStlGenerator :: IO ()
-motorMountStlGenerator = do
-  let cpoints =  ((execState $ runExceptT   motorMount       ) [])
-  writeStlToFile $ newStlShape "motorMount"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
+motorMountHardCodedStlGenerator :: IO ()
+motorMountHardCodedStlGenerator = do
+  let cpoints =  ((execState $ runExceptT   motorMountHardCoded       ) [])
+  writeStlToFile $ newStlShape "motorMountHardCoded"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
 
 
-motorMountShowCubes :: IO ()
-motorMountShowCubes = do
-  let cpoints =  ((evalState $ runExceptT   motorMount       ) [])
+motorMountHardCodedShowCubes :: IO ()
+motorMountHardCodedShowCubes = do
+  let cpoints =  ((evalState $ runExceptT   motorMountHardCoded       ) [])
   print $ show cpoints
   
