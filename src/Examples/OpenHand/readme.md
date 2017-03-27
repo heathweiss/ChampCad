@@ -13,6 +13,11 @@ print2:
 same as 1 except
 20% honeycomb
 
+print3:
+all dimensions out of the db
+-should fit the openBionics.com socket
+-same as 2 except 30% honeycomb
+
 =============================== flex socket====================
 abs test print
 50% honeycomb

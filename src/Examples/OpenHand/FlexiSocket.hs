@@ -21,8 +21,8 @@ module Examples.OpenHand.FlexiSocket(flexiSocketTestsDo, flexSocketStlGenerator,
                                      testCubeStlGenerator, testCubeShowCubes,
                                      testCubeRotatedStlGenerator, flexSocketPlainStlGenerator,
                                      flexSocketPlainStlGeneratorDbStlGeneretor,
-                                     initializeDatabase, insertFlexDimensions,
-                                     flexSocketWithRiserDbStlGenerator) where
+                                     initializeDatabase, insertFlexDimensions, FlexDimensions(..),
+                                     flexSocketWithRiserDbStlGenerator, uniqueFlexDimensionName) where
 import Examples.OpenHand.Common(Dimensions(..), commontDBName, uniqueDimensionName, flexOuterTranspose, setFlexiSocketCommonFactors,
                                 Dimensions(..), CommonFactors(..) )
 
@@ -139,12 +139,14 @@ FlexDimensions
   deriving Show
 |]
 
+uniqueFlexDimensionName = UniqueFlexDimensionName
+
 -- | Initialize a new database with all tables. Will alter tables of existing db.
 initializeDatabase :: IO ()
 initializeDatabase = runSqlite commontDBName $ do
        
     runMigration migrateAll
-    liftIO $ putStrLn "flex sockt db initialized"
+    liftIO $ putStrLn "flex socket db initialized"
 
 -- | Insert a new flex socket Dimensions into the database.
 insertFlexDimensions :: IO ()
@@ -153,7 +155,7 @@ insertFlexDimensions     = runSqlite commontDBName $ do
             <- insert $ FlexDimensions
                "sharkfin" 
                "make it the same dimensions as the shark swim fin which fits him good in Mar/17"
-               20 --riserHeighte
+               20 --riserHeight
                10 --socketToRiserHeight
                20 --innerRiserRadius
                0  --x adjust

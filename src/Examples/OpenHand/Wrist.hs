@@ -15,10 +15,13 @@ The wrist section attach to which will be attached:
  The main socket made out of semi-flex.
 -}
 module Examples.OpenHand.Wrist(wristAndDoubleCylinderStlGenerator, wristAndDoubleCylinderShowCubes, wristSquaredOffStlGenerator,
-                               wristSquaredOffShowCubes, wristSquaredOffStlFromDbGenerator) where
+                               wristSquaredOffShowCubes, wristSquaredOffStlFromDbGenerator, initializeDatabase, insertWristDimensions,
+                               wristWithRoundRiserDBGenerator) where
 
 import Examples.OpenHand.Common(Dimensions(..), commontDBName, uniqueDimensionName,
                                CommonFactors(..), setWristCommonFactors)
+import Examples.OpenHand.FlexiSocket(uniqueFlexDimensionName, FlexDimensions(..)) 
+
 
 -- for persist
 import Control.Monad.IO.Class  (liftIO)
@@ -82,6 +85,7 @@ import qualified Data.Foldable as F
 import qualified Flow as Flw
 import Control.Lens
 
+import Primitives.Cylindrical.Walled (cylinder, squaredYLengthenedCylinder)
 
 --for the Builder system, but does not work with Radial Degrees system.
 import Control.Monad.Trans.Except
@@ -116,8 +120,123 @@ rotate list = (last list) : (init list)
 rotateBack :: [a] -> [a]
 rotateBack (x:xs) = xs ++ [x]
 
+-- ==========================================================database=====================================================================================
+-- =======================================================================================================================================================
+share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
+WristDimensions
+   name String
+   UniqueWristDimensionName name
+   desc String
+   squaredOffRiserHeight Double --height above socket, at which btm of riser starts
+   radius Double --radius for the squared off section
+   power Double  --the power to apply to the square function
+   thickness Double --thickness of the wall
+   xAdjustment Double
+   yAdjustment Double
+   
+  deriving Show
+|]
+
+-- | Initialize a new database with all tables. Will alter tables of existing db.
+initializeDatabase :: IO ()
+initializeDatabase = runSqlite commontDBName $ do
+       
+    runMigration migrateAll
+    liftIO $ putStrLn "wrist dimensions db initialized"
+
+-- | Insert a new flex socket Dimensions into the database.
+insertWristDimensions :: IO ()
+insertWristDimensions     = runSqlite commontDBName $ do
+  dimensionsId
+            <- insert $ WristDimensions
+               "sharkfin" 
+               "make it the same dimensions as the shark swim fin which fits him good in Mar/17"
+               20 --squaredOffRiserHeight
+               20 --squaredOffRiserHeight
+               5 --power
+               3 --thickness
+               0 --x adjust
+               0 --y adjust
+
+               
+  --insert $ CurrentDimensions dimensionsId
+  liftIO $ putStrLn "wrist dimensions inserted"
+-- =======================================================================================================================================================
+-- ===============================================================round shaped riser======================================================================
+{-
+Use a round shaft for the riser, so that attachment to the socket is always the same, no matter how tall the socket is.
+
+
+-}
+wristWithRoundRiserDBGenerator :: String -> IO ()
+wristWithRoundRiserDBGenerator dimensionName = runSqlite commontDBName $ do
+  maybeCommonDimensions <- getBy $ uniqueDimensionName dimensionName
+  maybeFlexDimensions <- getBy $ uniqueFlexDimensionName dimensionName
+  maybeWristDimensions <- getBy $ UniqueWristDimensionName dimensionName
+  case maybeCommonDimensions of
+        Nothing -> liftIO $ putStrLn "common dimensions not found"
+        Just (Entity commonDimensionsId commonDimensions) -> do
+          --liftIO $ flexSocketPlainStlGenerator $ setFlexiSocketCommonFactors commonDimensions
+          liftIO $ putStrLn "common dimensions found"
+          case maybeFlexDimensions of 
+           Nothing -> liftIO $ putStrLn "flex dimensions not found"
+           Just (Entity flexDimensionsId flexDimensions) -> do
+             liftIO $ putStrLn "flex dimensions found"
+             case maybeWristDimensions of
+              Nothing -> liftIO $ putStrLn "maybeWristDimensions not found"
+              Just (Entity wristDimensionsId wristDimensions) -> do
+                liftIO $ putStrLn "wrist dimensions found"
+                liftIO $ wristWithRoundRiserStlGenerator flexDimensions wristDimensions
+
+wristWithRoundRiserStlGenerator :: FlexDimensions -> WristDimensions -> IO ()
+wristWithRoundRiserStlGenerator flexDimensions wristDimensions = 
+  let cpoints = execState ( runExceptT $ wristWithRoundRiser flexDimensions wristDimensions ) [] 
+  in
+      writeStlToFile $ newStlShape "wrist with round riser"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
+
+
+
+wristWithRoundRiser :: FlexDimensions -> WristDimensions -> ExceptT BuilderError (State CpointsStack ) CpointsList
+wristWithRoundRiser (FlexDimensions _ _ riserHeight _ innerRiserRadius _ _)
+                    (WristDimensions _ _ squaredOffRiserHeight radius power thickness xAdjust yAdjust) = do
+  let angles = (map (Angle) [0,10..360])
+      origin = Point 0 0 0
+      adjustOrigin inOrigin = inOrigin {x_axis = xAdjust, y_axis = yAdjust}
+
+  --cylinder that makes up the riser
+  riser <- buildCubePointsListSingle "riser"
+           (cylinder [(Radius (innerRiserRadius - thickness)) |x <- [1..]] [(Radius innerRiserRadius)|x <- [1..]]   angles  origin (riserHeight))
+
+  --cylinder that makes up the squared off finger joiner
+  --height will be riser height + joiner height
+  --extract the top faces and add to a cutter array
+  joinerTransitionTopFaces
+        <- buildCubePointsListWithAdd "joinerTransitionTopFaces"
+            (map (extractTopFace)
+              (squaredCylinder (repeat $ Radius radius) thickness (adjustOrigin origin) angles (riserHeight + (squaredOffRiserHeight/2)) power)
+            )
+            ([CornerPointsId | x <- [1..5]] ++
+             [CornerPointsNothing | x <- [1..26]] ++
+             [CornerPointsId | x <- [1..]]
+            )
+
+  joinerTransitionCubes
+       <- buildCubePointsListWithAdd "joinerCubes"
+                 joinerTransitionTopFaces
+                 riser
+
+  joinerStraightCubes
+       <- buildCubePointsListWithAdd "joinerStraightCubes"
+          (map ( (transposeZ (+ (squaredOffRiserHeight/2))) . extractTopFace) joinerTransitionCubes )
+          (joinerTransitionCubes)
+
+  return riser
+-- =======================================================================================================================================================
+-- ===============================================================socket shaped riser=====================================================================
 {- |
 Wrist section with a squared off partial riser, to which the fingers can be attached.
+The squared off section kicks off from the top of the socket which is a poor design.
+Depracted for the version that uses a round riser.
 -}
 wristSquaredOff :: [SingleDegreeRadii] -> [SingleDegreeRadii] -> RowReductionFactor -> PixelsPerMillimeter -> Int -> Int -> ExceptT BuilderError (State CpointsStack ) CpointsList
 wristSquaredOff    innerSleeveSDR         outerSleeveSDR         rowReductionFactor    pixelsPerMM            drop'   take' = do

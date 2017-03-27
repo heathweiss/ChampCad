@@ -6,8 +6,9 @@ import Examples.OpenBionicsCom.OpenBionicsDotComDesignWork (fullLengthSocketWith
                                                   topOfSocketStlGenerator, joinerShaftStlGenerator,
                                                  shortSocketToLargeShaftStlGenerator, wristToLargeShaftStlGenerator
                                                   )
-import Examples.OpenHand.Wrist(wristAndDoubleCylinderStlGenerator, wristAndDoubleCylinderShowCubes,
-                               wristSquaredOffStlGenerator, wristSquaredOffShowCubes, wristSquaredOffStlFromDbGenerator)
+import qualified  Examples.OpenHand.Wrist as W (wristAndDoubleCylinderStlGenerator, wristAndDoubleCylinderShowCubes,
+                               wristSquaredOffStlGenerator, wristSquaredOffShowCubes, wristSquaredOffStlFromDbGenerator,
+                               initializeDatabase, insertWristDimensions, wristWithRoundRiserDBGenerator)
 import Examples.OpenHand.SocketMount(socketMountStlGenerator, socketMountShowCubes, socketMountTestsDo, generateSocketMountStlUsingDbValues,
                                      initializeDatabase, insertMount, viewMountByName, setCurrentMount, showFaceDimensions )
 import qualified Examples.OpenHand.MotorMount as M (motorMountHardCodedStlGenerator, motorMountHardCodedShowCubes,
@@ -46,6 +47,8 @@ main = do
   --M.motorMountRunGeneratorFromDB (head x)
   --M.motorMountRunGeneratorFromDB currentSocket
   --C.insertDimensions
-  Flex.flexSocketWithRiserDbStlGenerator currentSocket
+  --Flex.flexSocketWithRiserDbStlGenerator currentSocket
   --Flex.insertFlexDimensions
-  
+  --W.insertWristDimensions --
+  --W.initializeDatabase
+  W.wristWithRoundRiserDBGenerator currentSocket
