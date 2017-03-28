@@ -30,3 +30,5 @@ parallelProcess.eventlog
 /.project
 README.md~
 *.md~
+*.sql-shm
+*.sql-wal
