@@ -57,26 +57,38 @@ share [mkPersist sqlSettings { mpsGenerateLenses = True }, mkMigrate "migrateAll
    name String
    UniqueName name
    desc String
-   x1Width Double
-   x2Width Double
-   x3Width  Double
+   leftWall Double
+   leftSeal Double
+   x1Width  Double
+   x2Width  Double
+   x3Width Double
    x4Width  Double
    x5Width  Double
    x6Width  Double
    x7Width  Double
    x8Width  Double
    x9Width  Double
-   x10Width Double
+   x10Width  Double
+   center Double
    x11Width Double
    x12Width Double
    x13Width Double
+   x14Width Double
+   x15Width Double
+   x16Width Double
+   x17Width Double
+   x18Width Double
+   x19Width Double
+   x20Width Double
+   rightSeal Double
+   rightWall Double
 
-   y1Width Double
-   y2Width Double
-   y3Width Double
-   y4Width Double
-   y5Width Double
-   y6Width Double
+   backWallWidth Double
+   backSealWidth Double
+   boardLength Double
+   motorLength Double
+   frontSealWidth Double
+   frontWallWidth Double
 
    z1Height Double
    z2Height Double
@@ -97,37 +109,49 @@ initializeDatabase = runSqlite databaseName $ do
 -- | Insert a new Mount, FaceSlope, and FaceDimensions into the database. Sqlite browser will not do this.
 insertMotorMount :: IO ()
 insertMotorMount  = runSqlite databaseName $ do
-  let stdXWidth = 6
-      borderWidth = 4
+  let stdXWidth = 2.5
+      borderWidth = 2
       sealWidth = 2
       
   mountId <- insert $ MotorMount
     "mount 1"
     "the orginal print which was too narrow and tall"
-    borderWidth --x1 width
-    sealWidth --x2 width
+    borderWidth --leftWall
+    sealWidth --leftSeal
+    stdXWidth --x1Width 
+    stdXWidth --x2Width
     stdXWidth --x3Width 
     stdXWidth --x4Width  
-    stdXWidth --x5Width  
-    stdXWidth --x6Width  
-    stdXWidth --x7Width  
-    stdXWidth --x8Width  
-    stdXWidth --x9Width  
-    stdXWidth --x10Width 
+    stdXWidth --x5Width
+    stdXWidth --x6Width
+    stdXWidth --x7Width
+    stdXWidth --x8Width
+    stdXWidth --x9Width
+    stdXWidth --10Width 
+    stdXWidth --center  
     stdXWidth --x11Width  
-    sealWidth --x12Width  
-    borderWidth --x13Width
+    stdXWidth --x12Width
+    stdXWidth --x13Width 
+    stdXWidth --x14Width
+    stdXWidth --x15Width
+    stdXWidth --x16Width
+    stdXWidth --x17Width
+    stdXWidth --x18Width
+    stdXWidth --x19Width
+    stdXWidth --x20Width
+    sealWidth --rightSeal  
+    borderWidth --rightWall
 
-    borderWidth --y1
-    sealWidth   --y2
-    25          --y3
-    40          --y4
-    sealWidth   --y5
-    borderWidth --y6
+    borderWidth --backWallWidth
+    sealWidth   --backSealWidth
+    25          --boardLength
+    40          --motorLength
+    sealWidth   --frontSealWidth
+    borderWidth --frontWallWidth
 
-    1 --z1Height 
-    22 --z2Height
-    15 --z3Height
+    0.2 --z1Height 
+    17 --z2Height
+    2 --z3Height
     2 --z4Height
     
   liftIO $ putStrLn "mount mount inserted"
@@ -150,6 +174,415 @@ motorMountFromDbStlGenerator motorMount  = do
 -- ============================================================= left off==========================================
 -- adjust width of x-axis for motors being on their sides.
 
+motorMountFromDb :: MotorMount ->  ExceptT BuilderError (State CpointsStack ) CpointsList
+--motorMountFromDb (MotorMount name desc x1Width x2Width x3Width x4Width x5Width ) = do
+motorMountFromDb (MotorMount _ _
+                             leftWall leftSeal
+                             x1Width x2Width x3Width x4Width x5Width x6Width x7Width x8Width x9Width x10Width
+                             centerWidth
+                             x11Width x12Width x13Width x14Width x15Width x16Width x17Width x18Width x19Width x20Width
+                             rightSeal rightWall
+                             backWallWidth backSealWidth boardLength motorLength frontSealWidth frontWallWidth
+                             z1Height z2Height z3Height z4Height )  = do
+  
+  backWallLeftWallBottomFaces
+         <- buildCubePointsListSingle "y1x1BottomFaces"
+            
+             [
+               ((B1 (Point 0 0 0)) +++ (B4 (Point (leftWall) 0 0)))
+               +++
+               --((F1 (Point 0 y1Width 0)) +++ (F4 (Point x1Width y1Width 0)))
+               ((F1 (Point 0 (backWallWidth) 0)) +++ (F4 (Point (leftWall) (backWallWidth) 0)))
+             ]
+  backWallLeftWallCubes
+      <- buildCubePointsListWithAdd "y1x1Cubes"
+         (map ((transposeZ (+ (z1Height))) . upperFaceFromLowerFace) backWallLeftWallBottomFaces)
+         backWallLeftWallBottomFaces
+
+  backWallLeftSealCubes
+     <- buildCubePointsListWithAdd "y1x2Cubes"
+        (map ((transposeX (+(leftSeal))) . extractRightFace) backWallLeftWallCubes)
+        (backWallLeftWallCubes)
+
+  backWallx1Cubes
+     <- buildCubePointsListWithAdd "y1x3Cubes"
+        (map ((transposeX (+(x1Width))) . extractRightFace) backWallLeftSealCubes)
+        (backWallLeftSealCubes)
+
+  backWallx2Cubes
+     <- buildCubePointsListWithAdd "y1x3Cubes"
+        (map ((transposeX (+(x2Width))) . extractRightFace) backWallx1Cubes)
+        (backWallx1Cubes)
+
+  backWallx3Cubes
+     <- buildCubePointsListWithAdd "y1x3Cubes"
+        (map ((transposeX (+(x3Width))) . extractRightFace) backWallx2Cubes)
+        (backWallx2Cubes)
+
+  backWallx4Cubes
+    <- buildCubePointsListWithAdd "y1x3Cubes"
+       (map ((transposeX (+(x4Width))) . extractRightFace) backWallx3Cubes)
+        (backWallx3Cubes)
+
+  backWallx5Cubes
+    <- buildCubePointsListWithAdd "y1x3Cubes"
+       (map ((transposeX (+(x5Width))) . extractRightFace) backWallx4Cubes)
+        (backWallx4Cubes)
+
+  backWallx6Cubes
+    <- buildCubePointsListWithAdd "y1x6Cubes"
+       (map ((transposeX (+(x6Width))) . extractRightFace) backWallx5Cubes)
+        (backWallx5Cubes)
+
+  backWallx7Cubes
+    <- buildCubePointsListWithAdd "y1x7Cubes"
+       (map ((transposeX (+(x7Width))) . extractRightFace) backWallx6Cubes)
+        (backWallx6Cubes)
+
+  backWallx8Cubes
+    <- buildCubePointsListWithAdd "y1x7Cubes"
+       (map ((transposeX (+(x8Width))) . extractRightFace) backWallx7Cubes)
+        (backWallx7Cubes)
+
+  backWallx9Cubes
+    <- buildCubePointsListWithAdd "y1x7Cubes"
+       (map ((transposeX (+(x9Width))) . extractRightFace) backWallx8Cubes)
+        (backWallx8Cubes)
+
+  backWallx10Cubes
+    <- buildCubePointsListWithAdd "y1x7Cubes"
+       (map ((transposeX (+(x10Width))) . extractRightFace) backWallx9Cubes)
+        (backWallx9Cubes)
+
+  backWallCenterCubes
+    <- buildCubePointsListWithAdd "y1x7Cubes"
+       (map ((transposeX (+(centerWidth))) . extractRightFace) backWallx10Cubes)
+        (backWallx10Cubes)
+  
+  backWallx11Cubes
+    <- buildCubePointsListWithAdd "y1x7Cubes"
+       (map ((transposeX (+(x11Width))) . extractRightFace) backWallCenterCubes)
+        (backWallCenterCubes)
+  
+  backWallx12Cubes
+    <- buildCubePointsListWithAdd "y1x7Cubes"
+       (map ((transposeX (+(x12Width))) . extractRightFace) backWallx11Cubes)
+        (backWallx11Cubes)
+
+  backWallx13Cubes
+    <- buildCubePointsListWithAdd "y1x7Cubes"
+       (map ((transposeX (+(x13Width))) . extractRightFace) backWallx12Cubes)
+        (backWallx12Cubes)
+
+  backWallx14Cubes
+    <- buildCubePointsListWithAdd "y1x7Cubes"
+       (map ((transposeX (+(x14Width))) . extractRightFace) backWallx13Cubes)
+        (backWallx13Cubes)
+
+  backWallx15Cubes
+    <- buildCubePointsListWithAdd "y1x7Cubes"
+       (map ((transposeX (+(x15Width))) . extractRightFace) backWallx14Cubes)
+        (backWallx14Cubes)
+  
+  backWallx16Cubes
+    <- buildCubePointsListWithAdd "y1x7Cubes"
+       (map ((transposeX (+(x16Width))) . extractRightFace) backWallx15Cubes)
+        (backWallx15Cubes)
+  
+  backWallx17Cubes
+    <- buildCubePointsListWithAdd "y1x7Cubes"
+       (map ((transposeX (+(x17Width))) . extractRightFace) backWallx16Cubes)
+        (backWallx16Cubes)
+
+  backWallx18Cubes
+    <- buildCubePointsListWithAdd "y1x7Cubes"
+       (map ((transposeX (+(x18Width))) . extractRightFace) backWallx17Cubes)
+        (backWallx17Cubes)
+
+  backWallx19Cubes
+    <- buildCubePointsListWithAdd "y1x7Cubes"
+       (map ((transposeX (+(x19Width))) . extractRightFace) backWallx18Cubes)
+        (backWallx18Cubes)
+
+  backWallx20Cubes
+    <- buildCubePointsListWithAdd "y1x7Cubes"
+       (map ((transposeX (+(x20Width))) . extractRightFace) backWallx19Cubes)
+        (backWallx19Cubes)
+
+  
+  backWallRightSealCubes
+    <- buildCubePointsListWithAdd "y1x7Cubes"
+       (map ((transposeX (+(rightSeal))) . extractRightFace) backWallx20Cubes)
+        (backWallx20Cubes)
+
+  backWallRightWallCubes
+    <- buildCubePointsListWithAdd "y1x7Cubes"
+       (map ((transposeX (+(rightWall))) . extractRightFace) backWallRightSealCubes)
+        (backWallRightSealCubes)
+
+  let btmBackWallRow = backWallLeftWallCubes ++ backWallLeftSealCubes
+              ++ backWallx1Cubes  ++ backWallx2Cubes ++ backWallx3Cubes ++ backWallx4Cubes ++ backWallx5Cubes  
+              ++ backWallx6Cubes ++ backWallx7Cubes ++ backWallx8Cubes ++ backWallx9Cubes ++ backWallx10Cubes
+              ++ backWallCenterCubes
+              ++ backWallx11Cubes ++ backWallx12Cubes ++ backWallx13Cubes ++ backWallx14Cubes ++ backWallx15Cubes
+              ++ backWallx16Cubes ++ backWallx17Cubes ++ backWallx18Cubes ++ backWallx19Cubes ++ backWallx20Cubes
+              ++ backWallRightSealCubes ++ backWallRightWallCubes
+  --y1 layer 1 done.
+  --add rest of layer 1 y's by transposing along y axis
+  btmBackSealRow <- buildCubePointsListWithAdd "btmBackSealRow"
+             (btmBackWallRow)
+             (map ((transposeY (+(backSealWidth))) . extractFrontFace) btmBackWallRow)
+
+  btmBoardRow <- buildCubePointsListWithAdd "y2Layer"
+             (btmBackSealRow)
+             (map ((transposeY (+(boardLength))) . extractFrontFace) btmBackSealRow)
+
+  btmMotorRow <- buildCubePointsListWithAdd "y2Layer"
+             (btmBoardRow)
+             (map ((transposeY (+(motorLength))) . extractFrontFace) btmBoardRow)
+  
+  btmFrontSealRow <- buildCubePointsListWithAdd "y2Layer"
+             (btmMotorRow)
+             (map ((transposeY (+(frontSealWidth))) . extractFrontFace) btmMotorRow)
+
+             --borderWidth
+  btmFrontWallRow <- buildCubePointsListWithAdd "y2Layer"
+             (btmFrontSealRow)
+             (map ((transposeY (+(frontWallWidth))) . extractFrontFace) btmFrontSealRow)
+
+
+  -- ========== end of z layer 1(bottom layer)
+  -- ========== start of layer 2
+  let backWallBackSealCutters =
+                [CornerPointsId, CornerPointsId, --left wall and seasl
+                 CornerPointsId, CornerPointsId, CornerPointsNothing, CornerPointsNothing, CornerPointsNothing,
+                 CornerPointsNothing, CornerPointsNothing, CornerPointsId, CornerPointsNothing, CornerPointsNothing,
+                 CornerPointsNothing, --center
+                 CornerPointsNothing, CornerPointsNothing, CornerPointsId, CornerPointsId, CornerPointsId,
+                 CornerPointsNothing, CornerPointsNothing, CornerPointsNothing, CornerPointsNothing, CornerPointsId,
+                 CornerPointsId, CornerPointsId --right wall and seasl                          
+                ]
+  backWallZ2TopFaces <- buildCubePointsListWithAdd "y1Z2Layer"
+               (
+                 (map ((transposeZ (+(z2Height))) . extractTopFace) btmBackWallRow)
+               )
+               backWallBackSealCutters
+               
+
+  backWallZ2Row <- buildCubePointsListWithAdd "backWallZ2Row"
+               backWallZ2TopFaces
+               (btmBackWallRow)
+  
+  backSealZ2TopFaces <- buildCubePointsListWithAdd "backSealZ2TopFaces"
+               (
+                 (map ((transposeZ (+(z2Height))) . extractTopFace) btmBackSealRow)
+               )
+               backWallBackSealCutters
+
+  backSealZ2Row <- buildCubePointsListWithAdd "backSealZ2Row"
+               backSealZ2TopFaces
+               (btmBackSealRow)
+  
+  boardZ2TopFaces
+           <- buildCubePointsListWithAdd "y4Z2Layer"
+               (
+                 (map ((transposeZ (+(z2Height))) . extractTopFace) btmBoardRow)
+               )
+               ([CornerPointsId, CornerPointsId, --left wall/seal
+                 CornerPointsNothing, CornerPointsNothing, CornerPointsNothing, CornerPointsNothing, CornerPointsNothing,
+                 CornerPointsNothing, CornerPointsNothing, CornerPointsNothing, CornerPointsNothing, CornerPointsNothing,
+                 CornerPointsNothing, --center
+                 CornerPointsNothing, CornerPointsNothing, CornerPointsNothing, CornerPointsNothing, CornerPointsNothing,
+                 CornerPointsNothing, CornerPointsNothing, CornerPointsNothing, CornerPointsNothing, CornerPointsNothing,
+                 CornerPointsId, CornerPointsId --right wall/seal
+                 ])
+  
+  boardZ2Row <- buildCubePointsListWithAdd "y1Z2Layer"
+               btmBoardRow
+               boardZ2TopFaces
+               
+  
+  motorZ2TopFaces
+           <- buildCubePointsListWithAdd "y4Z2Layer"
+               (
+                 (map ((transposeZ (+(z2Height))) . extractTopFace) btmMotorRow)
+               )
+               ([CornerPointsId, CornerPointsId, --left wall/seal
+                 CornerPointsNothing, CornerPointsNothing, CornerPointsNothing, CornerPointsNothing, CornerPointsNothing,
+                 CornerPointsNothing, CornerPointsNothing, CornerPointsNothing, CornerPointsNothing, CornerPointsNothing,
+                 CornerPointsId, --center
+                 CornerPointsNothing, CornerPointsNothing, CornerPointsNothing, CornerPointsNothing, CornerPointsNothing,
+                 CornerPointsNothing, CornerPointsNothing, CornerPointsNothing, CornerPointsNothing, CornerPointsNothing,
+                 CornerPointsId, CornerPointsId --right wall/seal
+                 ])
+
+  motorZ2Row
+        <- buildCubePointsListWithAdd "y5Z2Layer"
+           btmMotorRow
+           motorZ2TopFaces
+
+  let frontSealFrontWallCutters =
+                [CornerPointsId, CornerPointsId, --left wall/seal
+                 CornerPointsId, CornerPointsId, CornerPointsId, CornerPointsId, CornerPointsId,
+                 CornerPointsNothing, CornerPointsNothing, CornerPointsNothing, CornerPointsId, CornerPointsId,
+                 CornerPointsId, --center
+                 CornerPointsId, CornerPointsId, CornerPointsNothing, CornerPointsNothing, CornerPointsNothing,
+                 CornerPointsId, CornerPointsId, CornerPointsId, CornerPointsId, CornerPointsId,
+                 CornerPointsId, CornerPointsId --right wall/seal
+                 ]
+                
+  frontSealZ2TopFaces
+           <- buildCubePointsListWithAdd "y5Z2Layer"
+               (
+                 (map ((transposeZ (+(z2Height))) . extractTopFace) btmFrontSealRow)
+               )
+               (frontSealFrontWallCutters)
+
+  frontSealZ2Row
+        <- buildCubePointsListWithAdd "y5Z2Layer"
+           btmFrontSealRow
+           frontSealZ2TopFaces
+
+  frontWallZ2TopFaces
+           <- buildCubePointsListWithAdd "y6Z2Layer"
+               (
+                 (map ((transposeZ (+(z2Height))) . extractTopFace) btmFrontWallRow)
+               )
+               (frontSealFrontWallCutters)
+
+  frontWallZ2Row
+        <- buildCubePointsListWithAdd "y6Z2Layer"
+           btmFrontWallRow
+           frontWallZ2TopFaces
+
+  -- =================================================== layer 3:========================================
+  -- the seal layer on which the lid sits
+  backWallZ3Row <- buildCubePointsListWithAdd "y1Z3Layer"
+               (
+                 (map ((transposeZ (+(z3Height))) . extractTopFace) backWallZ2Row)
+               )
+               backWallZ2Row
+               
+
+  backSealZ3Row <- buildCubePointsListWithAdd "backSealZ2TopFaces"
+               (
+                 (map ((transposeZ (+(z3Height))) . extractTopFace) backSealZ2Row)
+               )
+               backSealZ2Row
+
+  boardZ3Row
+           <- buildCubePointsListWithAdd "y4Z2Layer"
+               (
+                 (map ((transposeZ (+(z3Height))) . extractTopFace) boardZ2Row)
+               )
+               (boardZ2Row)
+  
+  motorZ3Row
+           <- buildCubePointsListWithAdd "y4Z2Layer"
+               (
+                 (map ((transposeZ (+(z3Height))) . extractTopFace) motorZ2Row)
+                 |+++|
+                 motorZ2Row
+               )
+               ([CornerPointsId, CornerPointsId, --left wall/seal
+                 CornerPointsNothing, CornerPointsNothing, CornerPointsNothing, CornerPointsId, CornerPointsId,
+                 CornerPointsNothing, CornerPointsNothing, CornerPointsNothing, CornerPointsId, CornerPointsId,
+                 CornerPointsNothing, --center
+                 CornerPointsNothing, CornerPointsNothing, CornerPointsNothing, CornerPointsId, CornerPointsId,
+                 CornerPointsNothing, CornerPointsNothing, CornerPointsNothing, CornerPointsId, CornerPointsId,
+                 CornerPointsId, CornerPointsId --right wall/seal
+                 ]
+               )
+
+  
+  
+                
+  frontSealZ3Row
+           <- buildCubePointsListWithAdd "y5Z2Layer"
+               (
+                 (map ((transposeZ (+(z3Height))) . extractTopFace) frontSealZ2Row)
+               )
+               (frontSealZ2Row)
+
+  
+  
+  frontWallZ3Row
+           <- buildCubePointsListWithAdd "y6Z2Layer"
+               (
+                 (map ((transposeZ (+(z3Height))) . extractTopFace) frontWallZ2Row)
+               )
+               (frontWallZ2Row)
+
+  -- ===================== layer 4=================================================================================
+  -- top of outer wall
+  backWallZ4Row <- buildCubePointsListWithAdd "y1Z3Layer"
+               (
+                 (map ((transposeZ (+(z4Height))) . extractTopFace) backWallZ3Row)
+               )
+               backWallZ3Row
+               
+  let layer4Cutter =
+               [ CornerPointsId, CornerPointsNothing, --left wall/seal
+                 CornerPointsNothing, CornerPointsNothing, CornerPointsNothing, CornerPointsNothing, CornerPointsNothing,
+                 CornerPointsNothing, CornerPointsNothing, CornerPointsNothing, CornerPointsNothing, CornerPointsNothing,
+                 CornerPointsNothing, --center
+                 CornerPointsNothing, CornerPointsNothing, CornerPointsNothing, CornerPointsNothing, CornerPointsNothing,
+                 CornerPointsNothing, CornerPointsNothing, CornerPointsNothing, CornerPointsNothing, CornerPointsNothing,
+                 CornerPointsNothing, CornerPointsId --right wall/seal
+               ] 
+  backSealZ4Row <- buildCubePointsListWithAdd "backSealZ2TopFaces"
+               (
+                 (map ((transposeZ (+(z4Height))) . extractTopFace) backSealZ3Row)
+                 |+++|
+                 backSealZ3Row
+               )
+               layer4Cutter
+
+  boardZ4Row
+           <- buildCubePointsListWithAdd "y4Z2Layer"
+               (
+                 (map ((transposeZ (+(z4Height))) . extractTopFace) boardZ3Row)
+                 |+++|
+                 boardZ3Row
+               )
+               layer4Cutter
+  
+  motorZ4Row
+           <- buildCubePointsListWithAdd "y4Z2Layer"
+               (
+                 (map ((transposeZ (+(z4Height))) . extractTopFace) motorZ3Row)
+                 |+++|
+                 motorZ3Row
+               )
+               layer4Cutter
+               
+
+  
+  
+               
+  frontSealZ4Row
+           <- buildCubePointsListWithAdd "y5Z2Layer"
+               (
+                 (map ((transposeZ (+(z4Height))) . extractTopFace) frontSealZ3Row)
+                 |+++|
+                 frontSealZ3Row
+               )
+               (layer4Cutter)
+
+  
+  
+  frontWallZ4Row
+           <- buildCubePointsListWithAdd "y6Z2Layer"
+               (
+                 (map ((transposeZ (+(z4Height))) . extractTopFace) frontWallZ3Row)
+               )
+               (frontWallZ3Row)
+
+  
+  
+  
+  return backWallx10Cubes
+{-before pattern matching on MotorMount
 motorMountFromDb :: MotorMount ->  ExceptT BuilderError (State CpointsStack ) CpointsList
 --motorMountFromDb (MotorMount name desc x1Width x2Width x3Width x4Width x5Width ) = do
 motorMountFromDb motorMount = do
@@ -228,12 +661,12 @@ motorMountFromDb motorMount = do
        (map ((transposeX (+(motorMount^.motorMountX13Width))) . extractRightFace) y1x12Cubes)
         (y1x12Cubes)
 
-  let y1Layer = y1x1Cubes  ++ y1x2Cubes ++ y1x3Cubes ++ y1x4Cubes ++ y1x5Cubes  ++y1x6Cubes ++ y1x7Cubes ++ y1x8Cubes ++ y1x9Cubes ++ y1x10Cubes ++ y1x11Cubes ++ y1x12Cubes ++ y1x13Cubes
+  let y1Row = y1x1Cubes  ++ y1x2Cubes ++ y1x3Cubes ++ y1x4Cubes ++ y1x5Cubes  ++y1x6Cubes ++ y1x7Cubes ++ y1x8Cubes ++ y1x9Cubes ++ y1x10Cubes ++ y1x11Cubes ++ y1x12Cubes ++ y1x13Cubes
   --y1 layer 1 done.
   --add rest of layer 1 y's by transposing along y axis
   y2Layer <- buildCubePointsListWithAdd "y2Layer"
-             (y1Layer)
-             (map ((transposeY (+(motorMount^.motorMountY2Width))) . extractFrontFace) y1Layer)
+             (y1Row)
+             (map ((transposeY (+(motorMount^.motorMountY2Width))) . extractFrontFace) y1Row)
 
   y3Layer <- buildCubePointsListWithAdd "y2Layer"
              (y2Layer)
@@ -253,21 +686,36 @@ motorMountFromDb motorMount = do
              (map ((transposeY (+(motorMount^.motorMountY6Width))) . extractFrontFace) y5Layer)
 
 
-  -- ========== end of layer 1
+  -- ========== end of z layer 1(bottom layer)
   -- ========== start of layer 2
-  y1Z2Layer <- buildCubePointsListWithAdd "y1Z2Layer"
-               (y1Layer)
+  let y1y2z2CutterCubes =
+                [CornerPointsId, CornerPointsId, CornerPointsNothing,
+                 CornerPointsId, CornerPointsId, CornerPointsNothing,
+                 CornerPointsNothing,--center
+                 CornerPointsId, CornerPointsNothing, CornerPointsNothing,
+                 CornerPointsId, CornerPointsId, CornerPointsId
+                ]
+  y1Z2TopFaces <- buildCubePointsListWithAdd "y1Z2Layer"
                (
-                 (map ((transposeZ (+(motorMount^.motorMountZ2Height))) . extractTopFace) y1Layer)
-            )
+                 (map ((transposeZ (+(motorMount^.motorMountZ2Height))) . extractTopFace) y1Row)
+               )
+               y1y2z2CutterCubes
+               
 
-  y2Z2Layer <- buildCubePointsListWithAdd "y1Z2Layer"
-               (y2Layer)
+  y1Z2Layer <- buildCubePointsListWithAdd "y1Z2Layer"
+               y1Z2TopFaces
+               (y1Row)
+  
+  y2Z2TopFaces <- buildCubePointsListWithAdd "y1Z2Layer"
                (
                  (map ((transposeZ (+(motorMount^.motorMountZ2Height))) . extractTopFace) y2Layer)
                )
-  
+               y1y2z2CutterCubesn
 
+  y2Z2Layer <- buildCubePointsListWithAdd "y1Z2Layer"
+               y2Z2TopFaces
+               (y2Layer)
+  
   y3Z2TopFaces
            <- buildCubePointsListWithAdd "y4Z2Layer"
                (
@@ -279,27 +727,21 @@ motorMountFromDb motorMount = do
                  CornerPointsNothing, CornerPointsNothing, CornerPointsNothing,
                  CornerPointsNothing, CornerPointsId, CornerPointsId
                  ])
-
+  
   y3Z2Layer <- buildCubePointsListWithAdd "y1Z2Layer"
                y3Layer
                y3Z2TopFaces
-  {-
-  y3Z2Layer <- buildCubePointsListWithAdd "y1Z2Layer"
-               (y3Layer)
-               (
-                 (map ((transposeZ (+(motorMount^.motorMountZ2Height))) . extractTopFace) y3Layer)
-               )
-  -}
+  
   y4Z2TopFaces
            <- buildCubePointsListWithAdd "y4Z2Layer"
                (
                  (map ((transposeZ (+(motorMount^.motorMountZ2Height))) . extractTopFace) y4Layer)
                )
-               ([CornerPointsId, CornerPointsId, CornerPointsId,
+               ([CornerPointsId, CornerPointsId, CornerPointsNothing,
                  CornerPointsNothing, CornerPointsNothing, CornerPointsNothing,
                  CornerPointsId,
                  CornerPointsNothing, CornerPointsNothing, CornerPointsNothing,
-                 CornerPointsId, CornerPointsId, CornerPointsId
+                 CornerPointsNothing, CornerPointsId, CornerPointsId
                  ])
 
   y4Z2Layer
@@ -339,9 +781,14 @@ motorMountFromDb motorMount = do
            y6Layer
            y6Z2TopFaces
 
-       
+  -- ============== layer 3:
+  -- the layer on which the lid sits
+  
+  
   return y1x13Cubes
 
+
+-}
 -- ============================ hard coded values motor mount============================================================
 -- ======================================================================================================================
 -- ======================================================================================================================
@@ -451,11 +898,11 @@ motorMountHardCoded = do
        (map ((transposeX (+x13Width)) . extractRightFace) y1x12Cubes)
         (y1x12Cubes)
 
-  let y1Layer = y1x1Cubes  ++ y1x2Cubes ++ y1x3Cubes ++ y1x4Cubes ++ y1x5Cubes  ++y1x6Cubes ++ y1x7Cubes ++ y1x8Cubes ++ y1x9Cubes ++ y1x10Cubes ++ y1x11Cubes ++ y1x12Cubes ++ y1x13Cubes
+  let y1RowOfCubes = y1x1Cubes  ++ y1x2Cubes ++ y1x3Cubes ++ y1x4Cubes ++ y1x5Cubes  ++y1x6Cubes ++ y1x7Cubes ++ y1x8Cubes ++ y1x9Cubes ++ y1x10Cubes ++ y1x11Cubes ++ y1x12Cubes ++ y1x13Cubes
 
   y2Layer <- buildCubePointsListWithAdd "y2Layer"
-             (y1Layer)
-             (map ((transposeY (+sealWidth)) . extractFrontFace) y1Layer)
+             (y1RowOfCubes)
+             (map ((transposeY (+sealWidth)) . extractFrontFace) y1RowOfCubes)
 
   y3Layer <- buildCubePointsListWithAdd "y2Layer"
              (y2Layer)
@@ -475,9 +922,9 @@ motorMountHardCoded = do
              (map ((transposeY (+y6Width)) . extractFrontFace) y5Layer)
   
   y1Z2Layer <- buildCubePointsListWithAdd "y1Z2Layer"
-               (y1Layer)
+               (y1RowOfCubes)
                (
-                 (map ((transposeZ (+z2Height)) . extractTopFace) y1Layer)
+                 (map ((transposeZ (+z2Height)) . extractTopFace) y1RowOfCubes)
             )
 
   y2Z2Layer <- buildCubePointsListWithAdd "y1Z2Layer"

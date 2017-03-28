@@ -215,8 +215,8 @@ wristWithRoundRiser (FlexDimensions _ _ riserHeight _ innerRiserRadius _ _)
             (map (extractTopFace)
               (squaredCylinder (repeat $ Radius radius) thickness (adjustOrigin origin) angles (riserHeight + (squaredOffRiserHeight/2)) power)
             )
-            ([CornerPointsId | x <- [1..5]] ++
-             [CornerPointsNothing | x <- [1..26]] ++
+            ([CornerPointsId | x <- [1..6]] ++
+             [CornerPointsNothing | x <- [1..24]] ++
              [CornerPointsId | x <- [1..]]
             )
 
