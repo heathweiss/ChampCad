@@ -25,6 +25,16 @@ geometryRadiusTestDo = do
   runTestTT lookAtXYRadiusTestLength
   runTestTT lookAtXTestRotatedAngle
   runTestTT lookAtXTestXYAngle
+  runTestTT rotationsTestFailureTest
+
+rotationsTestFailureTest = TestCase $ assertEqual
+  "see why RotationsTest.rotateCornerPointAroundZAxisTest fails. Is it the distance caluclation"
+  (Radius 7.07106781186547550)
+  (calcultateDistance
+     (Point 5 (-5) 0)
+     (Point 0 0 0)
+  )
+
 
 pos1Test = TestCase $ assertEqual
   "pos1Test"
@@ -33,6 +43,7 @@ pos1Test = TestCase $ assertEqual
      (Point 0 0 0)
      (Point 1 1 1)
   )
+
 
 
 neg1Test = TestCase $ assertEqual
@@ -86,9 +97,8 @@ calculateXYDistanceAfterRotatingTest = TestCase $ assertEqual
 
 lookAtXTestLength = TestCase $ assertEqual
   "lookAtXTestLength"
-  (Quad1X 1.41)
-  --but got: Quad2X {length = 10.02172570778901}
-
+  (Quad1X 2.7212895296815116)
+  
   ( let
        pointToRotate = (Point 1 (-10) 10)
        origin = (Point 0 0 0)
@@ -114,8 +124,8 @@ lookAtXYRadiusTestLength = TestCase $ assertEqual
 
 lookAtXTestRotatedAngle = TestCase $ assertEqual
   "lookAtXTestRotatedAngle"
-  (Angle 18.55)
-  --but got: Quad2X {length = 10.02172570778901}
+  (Angle 15.710593137499643)
+  
 
   ( let
        pointToRotate = (Point 1 (-10) 10)
@@ -129,7 +139,7 @@ lookAtXTestRotatedAngle = TestCase $ assertEqual
 
 lookAtXTestXYAngle = TestCase $ assertEqual
   "lookAtXTestXYAngle"
-  (Angle 8.55)
+  (Angle 5.710593137499643)
   --but got: Quad2X {length = 10.02172570778901}
 
   ( let

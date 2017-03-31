@@ -15,7 +15,7 @@ import qualified Examples.OpenHand.MotorMount as M (motorMountHardCodedStlGenera
                                    initializeDatabase, insertMotorMount, motorMountRunGeneratorFromDB)
 import qualified Examples.OpenHand.FlexiSocket as Flex (flexiSocketTestsDo, flexSocketStlGenerator, testCubeStlGenerator, testCubeShowCubes,
                                      testCubeRotatedStlGenerator, flexSocketPlainStlGenerator, flexSocketPlainStlGeneratorDbStlGeneretor,
-                                     initializeDatabase, insertFlexDimensions, flexSocketWithRiserDbStlGenerator)
+                                     initializeDatabase, insertFlexDimensions, flexSocketWithRiserDbStlGenerator, flexSocketShowCurrentState)
 import qualified Examples.OpenHand.Common  as C (initializeDatabase, insertDimensions, seeCommonFactors)
 
 import Examples.Primitives.Squared(cylinderWithSquaredRadiiStlGenerator, )
@@ -37,7 +37,7 @@ import System.Environment
 -- main :: IO ()
 --main :: IO (Key CurrentMount)
 main = do
-  let currentSocket = "mount 1" -- "sharkfin" 
+  let currentSocket =  "mount 1" --"sharkfin" --
   -- x <-  getArgs
  --loadMDRAndPassToProcessor (read $ head x) (read $ head $ tail x)
 
@@ -47,10 +47,18 @@ main = do
   --M.initializeDatabase
   --M.insertMotorMount
   --M.motorMountRunGeneratorFromDB (head x)
-  M.motorMountRunGeneratorFromDB currentSocket
+  --M.motorMountRunGeneratorFromDB currentSocket
+  
   --C.insertDimensions
+  
   --Flex.flexSocketWithRiserDbStlGenerator currentSocket
   --Flex.insertFlexDimensions
+  Flex.flexiSocketTestsDo
+  --Flex.flexSocketStlGenerator
+  --Flex.flexSocketShowCurrentState
+  
   --W.insertWristDimensions --
   --W.initializeDatabase
   --W.wristWithRoundRiserDBGenerator currentSocket
+
+  

@@ -172,7 +172,9 @@ motorMountFromDbStlGenerator motorMount  = do
   writeStlToFile $ newStlShape "motorMountHardCoded"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
 
 -- ============================================================= left off==========================================
--- adjust width of x-axis for motors being on their sides.
+-- Needs a set of solid walls on each end to make it solid. Could put a 3mm layer for this.
+--Could also add a a 3mm shelf under the board using same 3mm layer. Would give lots of strenght.
+--Needs more height at top of board. Could do this by lowing the motor heights by 2mm
 
 motorMountFromDb :: MotorMount ->  ExceptT BuilderError (State CpointsStack ) CpointsList
 --motorMountFromDb (MotorMount name desc x1Width x2Width x3Width x4Width x5Width ) = do

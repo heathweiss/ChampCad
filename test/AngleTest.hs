@@ -32,6 +32,7 @@ angleTestDo = do
   runTestTT getQuadrant3_270Test
   runTestTT getQuadrant4Test
   runTestTT getQuadrant4_360Test
+  runTestTT getXYAngleTest1
 
 quad1CenteredTest = TestCase $ assertEqual
   "quad1CenteredTest"
@@ -79,6 +80,14 @@ quad4CenteredTest = TestCase $ assertEqual
   "quad4CenteredTest"
   (Angle 348.69006752597977)
   (getXYAngle (Point 0 0 0) (Point (-1) (-5) 0))
+
+getXYAngleTest1 = TestCase $ assertEqual
+  "try failing flexisocket problem"
+  (Angle 0)
+  (getXYAngle
+     (Point {x_axis = 5.0, y_axis = 10.0, z_axis = 20.0})
+     (Point {x_axis = 5.0, y_axis = 10.0, z_axis = 0.0})
+  )
 
 quad4ToQuad1RotateTest = TestCase $ assertEqual
   "quad4ToQuad1RotateTest"

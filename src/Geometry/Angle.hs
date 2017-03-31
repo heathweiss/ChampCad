@@ -89,9 +89,9 @@ getQuadrant (Quadrant2Angle _) = Quadrant2
 getQuadrant (Quadrant3Angle _) = Quadrant3
 getQuadrant (Quadrant4Angle _) = Quadrant4
 
--- | Calculate the current xy angle of a Point in reference to another point.
-getXYAngle :: Point -> Point -> Angle
-getXYAngle (Point x_origin y_origin z_origin) (Point x y z) 
+{- orig before x && y == 0 changes
+getXYAngle' :: Point -> Point -> Angle
+getXYAngle' (Point x_origin y_origin z_origin) (Point x y z) 
  
    | (x_axis centeredPoint) >= 0 =  -- has a positive X, therefore quad1/2
        case (y_axis centeredPoint) <= 0 of
@@ -113,20 +113,60 @@ getXYAngle (Point x_origin y_origin z_origin) (Point x y z)
                        (x - x_origin)
                        (y - y_origin)
                        (z - z_origin)
-
-
-{-orig before testing
+-}
+-- | Calculate the current xy angle of a Point in reference to another point.
 getXYAngle :: Point -> Point -> Angle
 getXYAngle (Point x_origin y_origin z_origin) (Point x y z) 
  
-   | (x_axis centeredPoint) > 0 =  
-       case (y_axis centeredPoint) < 0 of
-         True -> Angle (atanDegrees (abs $ y_axis centeredPoint) (x_axis centeredPoint))
-         False ->  Angle $ 90 +  (atanDegrees (y_axis centeredPoint) (x_axis centeredPoint))                 
-   | otherwise =
+   | ((x_axis centeredPoint) == 0) && ((x_axis centeredPoint) == 0) =
+         Angle 0
+   | (x_axis centeredPoint) >= 0 =  -- has a positive X, therefore quad1/2
+       case (y_axis centeredPoint) <= 0 of
+         --is quad1
+         True -> Angle (atanDegrees  (x_axis centeredPoint) (abs $ y_axis centeredPoint))
+                 
+         --is quad2
+         False ->  --Angle $ 90 +  (atanDegrees (y_axis centeredPoint) (x_axis centeredPoint))
+                   Angle $ 180 -  (atanDegrees  (x_axis centeredPoint) (y_axis centeredPoint))                 
+   | otherwise = --has neg X therefore quad3/4
         case (y_axis centeredPoint) >= 0 of
-          True -> Angle $ 180 +  (atanDegrees (y_axis centeredPoint) (abs $ x_axis centeredPoint))
-          False -> Angle $ 270 +  (atanDegrees (abs $ y_axis centeredPoint) (abs $ x_axis centeredPoint))
+          --quad3
+          True -> Angle $ 180 +  (atanDegrees  (abs $ x_axis centeredPoint) (y_axis centeredPoint))
+          --quad4
+          False -> --Angle $ 270 +  (atanDegrees  (abs $ x_axis centeredPoint) (abs $ y_axis centeredPoint))
+                   Angle $ 360 - (atanDegrees  (abs $ x_axis centeredPoint) (abs $ y_axis centeredPoint))
+   where
+     {-
+     handleY :: Double -> Double -> Angle
+     handleY x y 
+               | y < 0 -> (atanDegrees  (x) (abs $ y))
+               | y == 0 -> Angle 0
+               | otherwise -> (atanDegrees  (x) (y))-}
+                  
+     centeredPoint = Point
+                       (x - x_origin)
+                       (y - y_origin)
+                       (z - z_origin)
+
+{-orig before testing for flexi error
+getXYAngle :: Point -> Point -> Angle
+getXYAngle (Point x_origin y_origin z_origin) (Point x y z) 
+ 
+   | (x_axis centeredPoint) >= 0 =  -- has a positive X, therefore quad1/2
+       case (y_axis centeredPoint) <= 0 of
+         --is quad1
+         True -> Angle (atanDegrees  (x_axis centeredPoint) (abs $ y_axis centeredPoint))
+                 
+         --is quad2
+         False ->  --Angle $ 90 +  (atanDegrees (y_axis centeredPoint) (x_axis centeredPoint))
+                   Angle $ 180 -  (atanDegrees  (x_axis centeredPoint) (y_axis centeredPoint))                 
+   | otherwise = --has neg X therefore quad3/4
+        case (y_axis centeredPoint) >= 0 of
+          --quad3
+          True -> Angle $ 180 +  (atanDegrees  (abs $ x_axis centeredPoint) (y_axis centeredPoint))
+          --quad4
+          False -> --Angle $ 270 +  (atanDegrees  (abs $ x_axis centeredPoint) (abs $ y_axis centeredPoint))
+                   Angle $ 360 - (atanDegrees  (abs $ x_axis centeredPoint) (abs $ y_axis centeredPoint))
    where
      centeredPoint = Point
                        (x - x_origin)

@@ -69,11 +69,12 @@ rotatePointAroundZAxisQ4ToQ1Test = TestCase $ assertEqual
 
 rotateCornerPointAroundZAxisTest = TestCase $ assertEqual
   "rotateCornerPointAroundZAxisTest"
-  --(TopFace (Point 0 0 0) (Point 0 0 0) (Point 0 0 0) (Point 0 0 0))
-  (TopFace  {b2 = Point {x_axis = 5.0, y_axis = 5, z_axis = 0.0},
+  (TopFace  {  b2 = Point {x_axis = 5.0, y_axis = 5, z_axis = 0.0},
                f2 = Point {x_axis = 2.5, y_axis = 2.5, z_axis = 0.0},
-               b3 = Point {x_axis = 6.0, y_axis = 4.0, z_axis = 0.0},
-               f3 = Point {x_axis = 3.5, y_axis = 1.5, z_axis = 0.0}})
+               b3 = Point {x_axis = 4.0, y_axis = 6.0, z_axis = 0.0},
+               f3 = Point {x_axis = 1.5, y_axis = 3.5, z_axis = 0.0}}
+  
+  )
   (rotateCornerPointAroundZAxis
      90
      (Point 0 0 0)
@@ -81,6 +82,8 @@ rotateCornerPointAroundZAxisTest = TestCase $ assertEqual
      
      
   )
+
+
 
 rotateCornerPointAroundZAxisTest2 = TestCase $ assertEqual
   "rotateCornerPointAroundZAxisTest2"

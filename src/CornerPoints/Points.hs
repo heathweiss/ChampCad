@@ -49,7 +49,7 @@ axisEqual  a b
 
 instance Eq Point where
     Point x y z == Point xa ya za
-      |  (axisEqual x xa) && (axisEqual y ya)  &&(axisEqual z za) = True 
+      |  (axisEqual x xa) && (axisEqual y ya)  && (axisEqual z za) = True 
       | otherwise = False
 
 

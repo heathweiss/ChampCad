@@ -161,6 +161,7 @@ test-suite ChampCad-test
                        GeometryRadiusTest
                        AngleTest
                        VertexTest
+                       PointsTest
  
   build-depends:       base
                      , ChampCad

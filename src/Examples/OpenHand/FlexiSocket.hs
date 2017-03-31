@@ -17,7 +17,7 @@ Cut diamond(?) shapes in each cube to give it more flex, and allow it to breath 
 Will be printed in flexible filament.
 
 -}
-module Examples.OpenHand.FlexiSocket(flexiSocketTestsDo, flexSocketStlGenerator,
+module Examples.OpenHand.FlexiSocket(flexiSocketTestsDo, flexSocketStlGenerator, flexSocketShowCurrentState,
                                      testCubeStlGenerator, testCubeShowCubes,
                                      testCubeRotatedStlGenerator, flexSocketPlainStlGenerator,
                                      flexSocketPlainStlGeneratorDbStlGeneretor,
@@ -46,6 +46,10 @@ import CornerPoints.Transpose (transposeZ, transposeY, transposeX)
 import CornerPoints.CornerPointsWithDegrees(CornerPointsWithDegrees(..), (@~+++#@),(@~+++@),(|@~+++@|), (|@~+++#@|), DegreeRange(..))
 import CornerPoints.MeshGeneration(autoGenerateEachCube)
 import CornerPoints.HorizontalFaces(createTopFaces,  createBottomFaces, createTopFacesSquaredOff)
+
+import Geometry.Angle(RotateFactor, getXYAngle, Angle(..), getQuadrantAngle, rotateAngle)
+import Geometry.Radius(calcultateXYDistance)
+import Geometry.Vertex(getXWithQuadrant, getYWithQuadrant, Vertex(..), adjustPointAxis)
 
 import TypeClasses.Transposable(transpose)
 
@@ -373,6 +377,91 @@ flexSocketStlGenerator  = do
       Nothing                                ->
         putStrLn "File not decoded"
 
+
+flexSocketShowCurrentState :: IO ()
+flexSocketShowCurrentState = do
+  contents <- BL.readFile "src/Data/scanFullData.json"
+  
+  case (decode contents) of
+   
+      Just (MultiDegreeRadii name' degrees') ->
+        let rowReductionFactor = 100::RowReductionFactor
+            innerSleeveTransposeFactor = (+6) --3 is that starndard value. Make it 6 as this has to fit over the wrist and ninjaflex
+            innerSleeveMDR = (transpose innerSleeveTransposeFactor) . (reduceScan rowReductionFactor) . removeDefectiveTopRow' $
+                              (MultiDegreeRadii
+                                name'
+                                degrees'
+                              )
+            outerSleeveMDR = transpose (+3) innerSleeveMDR
+        in
+            print $ show ((evalState $ runExceptT (flexSocket (degrees innerSleeveMDR) (degrees outerSleeveMDR)
+                                                 rowReductionFactor    pixelsPerMM) ) [])
+        --in  --writeStlToFile $ newStlShape "socket with riser"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
+      Nothing                                ->
+        putStrLn "File not decoded"
+--  print $ show  ((evalState $ runExceptT (hammerHeadSharkHeadSection originalSDR rowReductionFactor pixelsPerMillimeter) ) inState)
+
+removeDefectiveTopRow' :: MultiDegreeRadii -> MultiDegreeRadii
+removeDefectiveTopRow' (MultiDegreeRadii name' degrees') = MultiDegreeRadii name' [(SingleDegreeRadii degree'' (tail radii''))  | (SingleDegreeRadii degree'' radii'') <- degrees']
+
+flexSocket :: [SingleDegreeRadii] -> [SingleDegreeRadii] -> RowReductionFactor -> PixelsPerMillimeter ->
+               ExceptT BuilderError (State CpointsStack ) CpointsList
+flexSocket    innerSleeveSDR         outerSleeveSDR         rowReductionFactor    pixelsPerMM = do
+  let transposeFactors = [0,heightPerPixel.. ]
+      heightPerPixel = (1/ pixelsPerMM) * (fromIntegral rowReductionFactor)
+      origin = Point 0 0 500
+
+  {-take just a few pieces of the diamond cuts.-}
+  cubes   <- buildCubePointsListSingle "wristCubes"
+             
+               (take 2 $ tail $ concat $  map (cutTheDiamond)
+                            (concat $ take 2 $ drop 1  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
+               )
+             
+  {- original top 2 layers with diamonds cut. Has errors.
+  cubes   <- buildCubePointsListSingle "wristCubes"
+             ( concat $ map (cutTheDiamond)
+                            (concat $ take 2 $ drop 1  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
+             )-}
+  
+  {-
+  --get the 1st cube to see its numbers
+  cubes   <- buildCubePointsListSingle "wristCubes"
+             ( --concat $ map (cutTheDiamond)
+               take 1 (concat $ take 2 $ drop 1  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
+             )-}
+  
+  return cubes
+
+{- The 1st cube of the socket, without any diamonds cut
+  CubePoints {f1 = Point {x_axis = 4.961580236616474, y_axis = -28.138519792497544, z_axis = 494.54022988505744},
+              f2 = Point {x_axis = 4.403832696848794, y_axis = -24.975376310276598, z_axis = 500.0},
+              f3 = Point {x_axis = 0.0, y_axis = -26.234224965706463, z_axis = 500.0},
+              f4 = Point {x_axis = 0.0, y_axis = -29.88294664396197, z_axis = 494.54022988505744},
+              b1 = Point {x_axis = 4.440635703615683, y_axis = -25.184096533460924, z_axis = 494.54022988505744},
+              b2 = Point {x_axis = 3.882888163848002, y_axis = -22.020953051239964, z_axis = 500.0},
+              b3 = Point {x_axis = 0.0, y_axis = -23.234224965706463, z_axis = 500.0},
+              b4 = Point {x_axis = 0.0, y_axis = -26.88294664396197, z_axis = 494.54022988505744}}-}
+
+{-should be to top center of the diamond, of 1st cube
+  CubePoints {f1 = Point {x_axis = 2.3413532333663167, y_axis = -27.30776692811064, z_axis = 498.63505747126436},
+              f2 = Point {x_axis = 4.403832696848794, y_axis = -24.975376310276598, z_axis = 500.0},
+              f3 = Point {x_axis = 0.0, y_axis = -26.234224965706463, z_axis = 500.0},
+              f4 = Point {x_axis = 2.3413532333663167, y_axis = -27.30776692811064, z_axis = 498.63505747126436},
+              b1 = Point {x_axis = 2.080880966865921, y_axis = -24.33055529859233, z_axis = 498.63505747126436},
+              b2 = Point {x_axis = 3.882888163848002, y_axis = -22.020953051239964, z_axis = 500.0},
+              b3 = Point {x_axis = 0.0, y_axis = -23.234224965706463, z_axis = 500.0},
+              b4 = Point {x_axis = 2.080880966865921, y_axis = -24.33055529859233, z_axis = 498.63505747126436}}-}
+
+{-the top right corner of diamond of 1st cube
+  CubePoints {f1 = Point {x_axis = 2.3413532333663167, y_axis = -27.30776692811064, z_axis = 498.63505747126436},
+              f2 = Point {x_axis = 0.0, y_axis = -26.234224965706463, z_axis = 500.0},
+              f3 = Point {x_axis = 0.0, y_axis = -26.234224965706463, z_axis = 500.0},
+              f4 = Point {x_axis = 1.1706766166831584, y_axis = -27.68317636647243, z_axis = 497.2701149425287},
+              b1 = Point {x_axis = 2.080880966865921, y_axis = -24.33055529859233, z_axis = 498.63505747126436},
+              b2 = Point {x_axis = 0.0, y_axis = -23.234224965706463, z_axis = 500.0},
+              b3 = Point {x_axis = 0.0, y_axis = -23.234224965706463, z_axis = 500.0},
+              b4 = Point {x_axis = 1.0404404834329608, y_axis = -24.694570551713273, z_axis = 497.2701149425287}}-}
 -- ========== test cube===========
 cutTheDiamond :: CornerPoints -> [CornerPoints]
 cutTheDiamond cube =
@@ -392,7 +481,14 @@ cutTheDiamondFrontBase    reverseBtm reverseTop btmPoints       topPoints       
   let btmFrontLine  = reverseBtm $ toBottomFrontLine  btmPoints
       topFrontLine  = reverseTop $ toFrontTopLine topPoints
   in  btmFrontLine +++ topFrontLine
-
+{-
+cutTheDiamondFrontBase :: (CornerPoints -> CornerPoints) -> (CornerPoints -> CornerPoints)
+                       -> CornerPoints -> CornerPoints -> CornerPoints
+cutTheDiamondFrontBase    reverseBtm reverseTop btmPoints       topPoints       =
+  let btmFrontLine  = reverseBtm $ toBottomFrontLine  btmPoints
+      topFrontLine  = reverseTop $ toFrontTopLine topPoints
+  in  btmFrontLine +++ topFrontLine
+-}
 cutTheDiamondBackBase :: (CornerPoints -> CornerPoints) -> (CornerPoints -> CornerPoints) -> CornerPoints -> CornerPoints -> CornerPoints
 cutTheDiamondBackBase    reverseBtm reverseTop btmPoints       topPoints       =
   let btmBackLine  = reverseBtm $ toBackBottomLine  btmPoints
@@ -446,8 +542,8 @@ cutTheDiamondTopFace :: CornerPoints -> CornerPoints
 cutTheDiamondTopFace cube  =
   let frontFace = cutTheDiamondFrontBase
                     (id) (id)
-                    (cutTheDiamondF2ShiftedIn cube)
-                    (extractFrontTopLine cube)
+                    (cutTheDiamondF2ShiftedIn cube) --F2
+                    (extractFrontTopLine cube) --FrontTopLine
       backFace = cutTheDiamondBackBase (id) (id) (cutTheDiamondB2ShiftedIn cube) (extractBackTopLine cube)
   in backFace +++ frontFace
      
@@ -462,7 +558,19 @@ cutTheDiamondTopRightCorner cube =
                     ((cutTheDiamondB2ShiftedIn cube) +++ (cutTheDiamondB3ShiftedIn cube))
                     (extractB3 cube)
   in  frontFace +++ backFace
-      
+{-how do I add frontTopLine to F3
+cutTheDiamondTopRightCorner :: CornerPoints -> CornerPoints
+cutTheDiamondTopRightCorner cube =
+  let frontFace = cutTheDiamondFrontBase
+                    (id) (id)
+                    ((cutTheDiamondF2ShiftedIn cube) +++ (cutTheDiamondF3ShiftedIn cube))
+                    (extractF3 cube)
+      backFace  = cutTheDiamondBackBase
+                    (id) (id)
+                    ((cutTheDiamondB2ShiftedIn cube) +++ (cutTheDiamondB3ShiftedIn cube))
+                    (extractB3 cube)
+  in  frontFace +++ backFace
+-}      
 cutTheDiamondRightFace :: CornerPoints -> CornerPoints
 cutTheDiamondRightFace cube =
   let frontFace  = cutTheDiamondFrontBase (id) (id) (cutTheDiamondF3ShiftedIn cube) (extractFrontRightLine $ cube)
@@ -650,7 +758,111 @@ testCubeRotatedShowCubes = do
 {-
 The offset should always be adjusted in relation to the 1st point to keep everthing standard.
 Otherwise the offset will differ depending on the angle around a radial shape.
+
+Must use the radial system as used by rotations.
+[
+ origin::Point --This is the 1st point to adjust from
+ pointAtFarEnd::Point --The second point.
+]
+|
+| calculate the angle
+|
+[
+angleBetweenPoints
+origin::Point
+pointAtFarEnd::Point
+]
+|
+|calculate distance between points
+|calulate shortened distance from origin
+[
+shortenedDistanceFromOrigin
+angleBetweenPoints
+origin::Point
+pointAtFarEnd::Point
+]
+|
+|calculate the new end point using:
+|-(adjustPointAxis (getXWithQuadrant angleBetweenPoints shortenedDistanceFromOrigin)) .
+| (adjustPointAxis (getYWithQuadrant angleBetweenPoints shortenedDistanceFromOrigin)) $ origin {z_axis = (z_axis origin)}
 -}
+offsetPoint :: Offset -> Offset -> Offset -> Point ->         Point -> Point
+offsetPoint    offsetX   offsetY   offsetZ  (Point x1 y1 z1) (Point x2 y2 z2) =
+  let
+     origin = Point x1 y1 z1
+     pointAtFarEnd = Point x2 y2 z2
+     angleBetweenPoints = getXYAngle origin pointAtFarEnd 
+     distanceFromOrigin =  calcultateXYDistance origin pointAtFarEnd
+     shortenedDistanceFromOrigin =  Radius $  (radius distanceFromOrigin)  * (offsetX)
+     --setZ = z1 + ((z1 - z2) * offsetZ * (-1))
+     --setZ = z1 + ((abs $ z2 - z1) * offsetZ)
+  in
+   {-
+   case ((Point x1 y1 0) == (Point x2 y2 0)) of
+     True ->   Point 100 100 100 -- x1 y1 z1
+     False ->  
+               (adjustPointAxis (getXWithQuadrant angleBetweenPoints shortenedDistanceFromOrigin)) .
+               (adjustPointAxis (getYWithQuadrant angleBetweenPoints shortenedDistanceFromOrigin))
+               $ origin {z_axis = setZ z1 z2 offsetZ}-}
+               (adjustPointAxis (getXWithQuadrant angleBetweenPoints shortenedDistanceFromOrigin)) .
+               (adjustPointAxis (getYWithQuadrant angleBetweenPoints shortenedDistanceFromOrigin))
+               $ origin {z_axis = setZ z1 z2 offsetZ}
+   
+{-
+offsetPoint :: Offset -> Offset -> Offset -> Point ->         Point -> Point
+offsetPoint    offsetX   offsetY   offsetZ  (Point x1 y1 z1) (Point x2 y2 z2) =
+  let
+     origin = Point x1 y1 z1
+     pointAtFarEnd = Point x2 y2 z2
+     angleBetweenPoints = getXYAngle origin pointAtFarEnd 
+     distanceFromOrigin =  calcultateXYDistance origin pointAtFarEnd
+     shortenedDistanceFromOrigin =  Radius $  (radius distanceFromOrigin)  * (offsetX)
+     setZ = z1 + ((z1 - z2) * offsetZ * (-1))
+        
+  in
+    (adjustPointAxis (getXWithQuadrant angleBetweenPoints shortenedDistanceFromOrigin)) .
+    (adjustPointAxis (getYWithQuadrant angleBetweenPoints shortenedDistanceFromOrigin))
+    $ origin {z_axis = setZ}
+-}
+setZ :: Double -> Double -> Double -> Double
+setZ    z1        z2        offset
+     | z1 > z2 =  z1 - (((abs $ z1 - z2) * offset))
+     | z1 < z2 =  z1 + (((abs $ z1 - z2) * offset))
+     | otherwise = z1
+
+ 
+
+seeAdjustedX :: Offset -> Point ->         Point -> Point
+seeAdjustedX    offsetX   (Point x1 y1 z1) (Point x2 y2 z2) =
+  let
+     origin = Point x1 y1 z1
+     pointAtFarEnd = Point x2 y2 z2
+     angleBetweenPoints = getXYAngle origin pointAtFarEnd 
+     distanceFromOrigin =  calcultateXYDistance origin pointAtFarEnd
+     shortenedDistanceFromOrigin =  Radius $  (radius distanceFromOrigin)  * (offsetX)
+     
+        
+  in
+    (adjustPointAxis (getXWithQuadrant angleBetweenPoints shortenedDistanceFromOrigin)) -- .
+    --(adjustPointAxis (getYWithQuadrant angleBetweenPoints shortenedDistanceFromOrigin))
+    $ origin
+    
+seeShortenedXYDistance  :: Point ->  Point -> Double ->     Radius
+seeShortenedXYDistance origin    pointAtFarEnd  offsetX =
+  let distanceFromOrigin = calcultateXYDistance origin pointAtFarEnd
+      
+  in
+    Radius $  (radius distanceFromOrigin)  * (1 - offsetX)
+
+seeXYDistance :: Point ->  Point ->      Radius
+seeXYDistance    origin    pointAtFarEnd =
+  calcultateXYDistance origin pointAtFarEnd
+
+seeAngle :: Point -> Point ->      Angle
+seeAngle origin      pointAtFarEnd =
+  
+     getXYAngle origin pointAtFarEnd 
+{-
 offsetPoint :: Offset -> Offset -> Offset -> Point ->         Point -> Point
 offsetPoint    offsetX   offsetY   offsetZ  (Point x1 y1 z1) (Point x2 y2 z2) =
   let
@@ -663,6 +875,7 @@ offsetPoint    offsetX   offsetY   offsetZ  (Point x1 y1 z1) (Point x2 y2 z2) =
   in
     Point setX setY setZ
 
+-}
 {-
 Offset CornerPoints, based on the underlying Points.
 Obeys the same rules as offsetPoint.
@@ -734,30 +947,23 @@ offsetCornerPoints    _ _ _  unhandled cornerpoints  _ =
 
 -- ========================================= socket general support functions========================================================
 -- ==================================================================================================================================
-removeDefectiveTopRow' :: MultiDegreeRadii -> MultiDegreeRadii
-removeDefectiveTopRow' (MultiDegreeRadii name' degrees') = MultiDegreeRadii name' [(SingleDegreeRadii degree'' (tail radii''))  | (SingleDegreeRadii degree'' radii'') <- degrees']
 
-flexSocket :: [SingleDegreeRadii] -> [SingleDegreeRadii] -> RowReductionFactor -> PixelsPerMillimeter ->
-               ExceptT BuilderError (State CpointsStack ) CpointsList
-flexSocket    innerSleeveSDR         outerSleeveSDR         rowReductionFactor    pixelsPerMM = do
-  let transposeFactors = [0,heightPerPixel.. ]
-      heightPerPixel = (1/ pixelsPerMM) * (fromIntegral rowReductionFactor)
-      origin = Point 0 0 500
-
-  cubes   <- buildCubePointsListSingle "wristCubes"
-             ( concat $ map (cutTheDiamond)
-                            (concat $ take 2 $ drop 1  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
-             )
-
-  return cubes
 
 -- ==================================================== local tests =================================================================
 -- ==================================================================================================================================
 -- ==================================================================================================================================
 flexiSocketTestsDo = do
+  runTestTT offsetZ1Test
+  runTestTT offsetZ2Test
+  runTestTT offsetZ3Test
+  runTestTT offsetZ4Test
   runTestTT buildTestCubeTest
   -- =offset xyz
   runTestTT offSetB2B4CornerPointsTest
+  runTestTT seeAdjustedXTest
+  runTestTT seeShortenedXYDistanceTest
+  runTestTT seeAngleTest
+  runTestTT seeXYDistanceTest
   runTestTT offsetXYZTest
   runTestTT offsetXYZReversedTest
   runTestTT offsetXYZTest1
@@ -811,6 +1017,11 @@ flexiSocketTestsDo = do
   runTestTT cutTheDiamondBtmLeftCornerBrokenDownTest
   runTestTT cutTheDiamondF3CenteredRotatedTest
   runTestTT cutTheDiamondF3ShiftedRotatedTest
+  runTestTT offset1stCubeFrontTopLineTest
+  runTestTT offset1stCubeBtmFrontLineTest
+  runTestTT offset1stCubeF2OfDiamond
+  runTestTT cutTheDiamondF2CenteredMainCube
+  runTestTT cutTheDiamond4CenteredTest
   
 
 buildTestCubeTest = TestCase $ assertEqual 
@@ -837,6 +1048,90 @@ buildTestCubeTest = TestCase $ assertEqual
 
 
 -- =================offset xyz ====================
+firstCubeOfSocket =
+  CubePoints {f1 = Point {x_axis = 4.961580236616474, y_axis = -28.138519792497544, z_axis = 494.54022988505744},
+              f2 = Point {x_axis = 4.403832696848794, y_axis = -24.975376310276598, z_axis = 500.0},
+              f3 = Point {x_axis = 0.0, y_axis = -26.234224965706463, z_axis = 500.0},
+              f4 = Point {x_axis = 0.0, y_axis = -29.88294664396197, z_axis = 494.54022988505744},
+              b1 = Point {x_axis = 4.440635703615683, y_axis = -25.184096533460924, z_axis = 494.54022988505744},
+              b2 = Point {x_axis = 3.882888163848002, y_axis = -22.020953051239964, z_axis = 500.0},
+              b3 = Point {x_axis = 0.0, y_axis = -23.234224965706463, z_axis = 500.0},
+              b4 = Point {x_axis = 0.0, y_axis = -26.88294664396197, z_axis = 494.54022988505744}
+             }
+  
+centerOfTopFrontlinePoint = Point {x_axis = 2.2000000000000006, y_axis = -25.6, z_axis = 500.0}
+centerOfTopFrontLine = F2 centerOfTopFrontlinePoint
+f2ShiftedIn = F2 $ Point 2.34 (-27.3) 498.64
+
+centerOfBtmFrontLinePoint = Point {x_axis = 2.48, y_axis = -29, z_axis = 494.54}
+
+offset1stCubeFrontTopLineTest = TestCase $ assertEqual
+  "cx center of front top line of 1st cube"
+  --(Point {x_axis = 2.2000000000000006, y_axis = -25.6, z_axis = 500.0})
+  centerOfTopFrontlinePoint
+  (offsetPoint
+     0.5 0.5 0.5
+     --(Point 4.4 (-24.97) 500)
+     --mainCubef2
+     (f2 $ extractF2 firstCubeOfSocket)
+     --(Point 0 (-26.23) 500)
+     --mainCubef4
+     (f4 $ extractF4 firstCubeOfSocket)
+  )
+
+cutTheDiamondF2CenteredMainCube = TestCase $ assertEqual
+  "use cutTheDiamondF2Centered to get f2 centered"
+  centerOfTopFrontLine
+  (cutTheDiamondF2Centered firstCubeOfSocket)
+  
+
+offset1stCubeBtmFrontLineTest = TestCase $ assertEqual
+  "cx center of btm front line of 1st cube"
+  --(Point {x_axis = 2.48, y_axis =               -29, z_axis = 494.54})
+  centerOfBtmFrontLinePoint
+
+  (offsetPoint
+     0.5 0.5 0.5
+     --(Point 4.96 (-28.12) 494.54)
+     (f1 $ extractF1 firstCubeOfSocket)
+     --(Point 0 (-29.88) 494.54)
+     (f4 $ extractF4 firstCubeOfSocket)
+  )
+
+cutTheDiamond4CenteredTest = TestCase $ assertEqual
+  "use cutTheDiamond4Centered to get center of btm front line"
+  (F1 centerOfBtmFrontLinePoint)
+  (cutTheDiamondF1Centered firstCubeOfSocket)
+
+
+cutTheDiamondF2ShiftedInOfFirstSocket = TestCase $ assertEqual
+  "get F2 shifted in with cutTheDiamondF2ShiftedIn"
+  f2ShiftedIn
+  (cutTheDiamondF2ShiftedIn firstCubeOfSocket)
+
+-- =========================================================================================================================================================
+--next: calculate the top face and make sure f2Shifted in is the same
+
+offset1stCubeF2OfDiamond = TestCase $ assertEqual
+  "see the f2 position the diamond"
+  (Point {x_axis = 2.3400000000000003, y_axis = -27.3, z_axis = 498.635})
+  (
+    let btmLine =
+         ( offsetPoint
+           0.5 0.5 0.5
+           (Point 4.96 (-28.12) 494.54)
+           (Point 0 (-29.88) 494.54)
+         )   
+        topLine =
+         (offsetPoint
+           0.5 0.5 0.5
+           (Point 4.4 (-24.97) 500)
+           (Point 0 (-26.23) 500)
+         )
+    in
+      offsetPoint 0.5 0.5 0.25 topLine btmLine
+ )
+
 offsetXYZTest = TestCase $ assertEqual 
   "offsetXYZTest"
   --75% of diff(10) = 7.5 75 750 respectively.
@@ -929,6 +1224,7 @@ offsetXYZReversedTest3 = TestCase $ assertEqual
      (Point   10    100    1000)
   )
 
+-- 1st error
 offsetXYZTest4 = TestCase $ assertEqual 
   "offsetXYZTest4"
   (Point 10 100 1000)
@@ -939,7 +1235,18 @@ offsetXYZTest4 = TestCase $ assertEqual
      (Point 10 100 1000)
      (Point 10 100 1000)
   )
-
+{-
+offsetXYZTest4 = TestCase $ assertEqual 
+  "offsetXYZTest4"
+  (Point 10 100 1000)
+  (offsetPoint
+     0.75
+     0.75
+     0.75
+     (Point 10 100 1000)
+     (Point 10 100 1000)
+  )
+-}
 offsetXYZTest5 = TestCase $ assertEqual 
   "offsetXYZTest5"
   (Point (-17.5) (-175) (-1750))
@@ -999,6 +1306,26 @@ offSetF2F3CornerPointsTest = TestCase $ assertEqual
      (F1)
   )
 
+seeAngleTest = TestCase $ assertEqual
+  "look at angle between 2 points"
+  (Angle 354.28940686250036)
+  (seeAngle (Point 20 200 2000) (Point 10 100 1000))
+
+seeXYDistanceTest  = TestCase $ assertEqual
+  "look at distance between 2 points"
+  (Radius 100.4987562112089)
+  (seeXYDistance (Point 20 200 2000) (Point 10 100 1000))
+
+seeShortenedXYDistanceTest  = TestCase $ assertEqual
+  "see the offset distance between points"
+  (Radius 100.4987562112089)
+  (seeShortenedXYDistance (Point 20 200 2000) (Point 10 100 1000) 0)
+
+seeAdjustedXTest = TestCase $ assertEqual
+  "look at the adjusted x axis"
+  (Point {x_axis = 20.0, y_axis = 200.0, z_axis = 2000.0})
+  (seeAdjustedX 0 (Point 20 200 2000) (Point 10 100 1000))
+
 offSetB2B4CornerPointsTest = TestCase $ assertEqual
   "used for top face"
   (B2 {b2 = Point {x_axis = 20.0, y_axis = 200.0, z_axis = 1750.0}})
@@ -1011,10 +1338,50 @@ offSetB2B4CornerPointsTest = TestCase $ assertEqual
      (B2)
   )
 -- =========================== cut the cube=======================
+offsetZ1Test = TestCase $ assertEqual
+ "z1 > z2 with 0.25 offset"
+ (15)
+ (let z1 = 20
+      z2 = 0
+      offsetZ = 0.25
+  in  --z1 + (negate ((abs $ z1 - z2) * offsetZ))
+      setZ z1 z2 offsetZ
+ )
+
+offsetZ2Test = TestCase $ assertEqual
+ "z1 < z2 with 0.25 offset"
+ (5)
+ (let z1 = 0
+      z2 = 20
+      offsetZ = 0.25
+  in  --z1 + (negate ((abs $ z1 - z2) * offsetZ))
+      setZ z1 z2 offsetZ
+ )
+
+offsetZ3Test = TestCase $ assertEqual
+ "z1 = z2 with 0.25 offset"
+ (20)
+ (let z1 = 20
+      z2 = 20
+      offsetZ = 0.25
+  in  --z1 + (negate ((abs $ z1 - z2) * offsetZ))
+      setZ z1 z2 offsetZ
+ )
+
+offsetZ4Test = TestCase $ assertEqual
+ "z1 > z2 with 0.5 offset"
+ (5)
+ (let z1 = 20
+      z2 = 0
+      offsetZ = 0.25
+  in  --z1 + (negate ((abs $ z1 - z2) * offsetZ))
+      setZ z1 z2 offsetZ
+ )
 
 
+--2nd pattern match error
 cutDiamondTopFaceDissectedTest = TestCase $ assertEqual 
-  "cutDiamondPiecesTest"
+  "break down offsetCornerPoints and us F2 F4"
   ( -- cubeFrontTopLine
     --FrontTopLine {f2 = Point {x_axis = 0.0, y_axis = 10.0, z_axis = 20.0},
     --              f3 = Point {x_axis = 10.0, y_axis = 10.0, z_axis = 20.0}}
@@ -1044,6 +1411,14 @@ cutDiamondTopFaceDissectedTest = TestCase $ assertEqual
                 b3 = Point {x_axis = 10.0, y_axis = 0.0, z_axis = 20.0},
                 b4 = Point {x_axis = 5.0, y_axis = 0.0, z_axis = 15.0}}
 
+    --f2New
+    {-F2 {f2 = Point {x_axis = 5.0, y_axis = 10.0, z_axis = 20.0}}-}
+    --f4New
+    {-F4 {f4 = Point {x_axis = 5.0, y_axis = 10.0, z_axis = 0.0}}-}
+    --f2NewDropped should have z = 15
+    {-
+    F2 {f2 = Point {x_axis = 5.0, y_axis = 10.0, z_axis = 20.0}}}-}
+    
 
 
   )
@@ -1052,15 +1427,28 @@ cutDiamondTopFaceDissectedTest = TestCase $ assertEqual
         cubeBtmFrontLine = extractBottomFrontLine testCubeStandard
         f2New = offsetCornerPoints  0.5 0.5 0.5 (extractF2 cubeFrontTopLine) (extractF3 cubeFrontTopLine) (F2)
         f4New = offsetCornerPoints  0.5 0.5 0.5 (extractF1 cubeBtmFrontLine) (extractF4 cubeBtmFrontLine) (F4)
-        f2NewDropped = offsetCornerPoints  0 0 0.25 f2New f4New (F2)
+        --f2NewDropped = offsetCornerPoints  0 0 0.25 f2New f4New (F2)
+        f2NewDropped = F2 $ offsetPoint 0.5 0.5 0.5 (f2 f2New) (f4 f4New)
         f4NewRaised  = offsetCornerPoints 0 0 0.25 f4New f2New (F4)
         f2NewAsBtmFace = toBottomFrontLine f2NewDropped
         f2NewFrontFace = cubeFrontTopLine +++ f2NewAsBtmFace
         f2NewBackFace = (transposeY (+(-10))) . {-reverseNormal .-} toBackFace $ f2NewFrontFace
     in  f2NewBackFace +++ f2NewFrontFace
-        
+        --f2NewDropped
         
   )
+{-
+testCubeStandard = 
+  CubePoints {
+            f1 = Point {x_axis = 0.0, y_axis = 10.0, z_axis = 0.0},
+            f2 = Point {x_axis = 0.0, y_axis = 10.0, z_axis = 20.0},
+            f3 = Point {x_axis = 10.0, y_axis = 10.0, z_axis = 20.0},
+            f4 = Point {x_axis = 10.0, y_axis = 10.0, z_axis = 0.0},
+            b1 = Point {x_axis = 0.0, y_axis = 0.0, z_axis = 0.0},
+            b2 = Point {x_axis = 0.0, y_axis = 0.0, z_axis = 20.0},
+            b3 = Point {x_axis = 10.0, y_axis = 0.0, z_axis = 20.0},
+            b4 = Point {x_axis = 10.0, y_axis = 0.0, z_axis = 0.0}}
+-}  
 
 
 cutDiamondTopFaceTest = TestCase $ assertEqual 

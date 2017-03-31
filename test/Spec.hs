@@ -22,6 +22,7 @@ import SequenceTest(sequenceTestDo)
 import GeometryRadiusTest(geometryRadiusTestDo)
 import AngleTest(angleTestDo)
 import VertexTest(vertexTestDo)
+import PointsTest(pointsTestDo)
 
 --main :: IO ()
 main = do
@@ -47,3 +48,4 @@ main = do
   geometryRadiusTestDo
   angleTestDo
   vertexTestDo
+  pointsTestDo
