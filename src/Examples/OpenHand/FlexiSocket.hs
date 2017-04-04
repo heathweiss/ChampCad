@@ -84,6 +84,7 @@ import Builder.Monad(BuilderError(..), cornerPointsErrorHandler, buildCubePoints
 
 import Stl.StlCornerPointsWithDegrees(FacesWithRange(..))
 
+import Data.Maybe(isNothing, fromJust)
 
 import qualified Data.Sequence as S
 import qualified Data.Map as M
@@ -414,7 +415,7 @@ flexSocket    innerSleeveSDR         outerSleeveSDR         rowReductionFactor  
   {-take just a few pieces of the diamond cuts.-}
   cubes   <- buildCubePointsListSingle "wristCubes"
              
-               (take 2 $ tail $ concat $  map (cutTheDiamond)
+               (take 5 $ tail $ concat $  map (cutTheDiamond)
                             (concat $ take 2 $ drop 1  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
                )
              
@@ -462,7 +463,138 @@ flexSocket    innerSleeveSDR         outerSleeveSDR         rowReductionFactor  
               b2 = Point {x_axis = 0.0, y_axis = -23.234224965706463, z_axis = 500.0},
               b3 = Point {x_axis = 0.0, y_axis = -23.234224965706463, z_axis = 500.0},
               b4 = Point {x_axis = 1.0404404834329608, y_axis = -24.694570551713273, z_axis = 497.2701149425287}}-}
--- ========== test cube===========
+
+
+
+-- ============================================================== New Diamond =========================================================
+-- ============================================================== New Diamond =========================================================
+-- ============================================================== New Diamond =========================================================
+data DiamondBuilder =
+  Diamond
+    {outerCube :: CornerPoints,
+     
+     topDiamondFace :: Maybe CornerPoints,
+     topDiamondCorner :: Maybe CornerPoints,
+     topCenterPoint :: Maybe Point,
+     topDiamondHorizontalOffsets :: OffSet,
+     topDiamondVertiacalOffsets :: OffSet,
+     
+     topRightDiamondFace :: Maybe CornerPoints,
+
+     rightDiamondFace :: Maybe CornerPoints,
+     rightCenterPoint ::  Maybe Point,
+     
+     bottomRightDiamondFace :: Maybe CornerPoints,
+     
+     bottomDiamondFace :: Maybe CornerPoints,
+     bottomDiamondCorner :: Maybe CornerPoints,
+     bottomCenterPoint :: Maybe Point,
+     bottomDiamondHorizontalOffsets :: OffSet,
+     bottomDiamondVerticalOffsets :: OffSet,
+
+     bottomLeftDiamondFace :: Maybe CornerPoints,
+     
+     leftDiamondFace :: Maybe CornerPoints,
+     
+     topLeftDiamondFace :: Maybe CornerPoints
+     
+     
+    }
+
+runDiamondBuilder :: DiamondBuilder -> [CornerPoints]
+runDiamondBuilder diamondBuilder
+  | isNothing $ topDiamondFace diamondBuilder = [CornerPointsError "topDiamondFace is Nothing "]
+  | isNothing $ bottomDiamondFace diamondBuilder = [CornerPointsError "bottomDiamondFace is Nothing "]
+  | otherwise = [(fromJust $ topDiamondFace diamondBuilder), (fromJust $ bottomDiamondFace diamondBuilder)]
+
+data OffSet =
+  OffSet {xOffset :: Double,
+          yOffset :: Double,
+          zOffset :: Double
+         }
+
+
+
+isTheDiamondDoneBase :: (DiamondBuilder -> DiamondBuilder) -> DiamondBuilder -> DiamondBuilder
+isTheDiamondDoneBase topDiamondFaceBuilder diamondBuilder
+  | (isNothing  $ topDiamondFace diamondBuilder) = topDiamondFaceBuilder diamondBuilder
+  | (isNothing  $ bottomDiamondFace diamondBuilder) = bottomDiamondFrontFaceBuilder diamondBuilder
+  | otherwise  = diamondBuilder
+
+
+isTheFrontDiamondDone :: DiamondBuilder -> DiamondBuilder
+isTheFrontDiamondDone diamondBuilder =
+  isTheDiamondDoneBase (topDiamondFrontFaceBuilder) diamondBuilder
+              
+
+
+topDiamondFaceBuilderBase :: (CornerPoints -> Point) -> (CornerPoints -> Point) -> (Point -> CornerPoints) -> (CornerPoints -> CornerPoints)
+                          -> (CornerPoints -> CornerPoints) -> (DiamondBuilder -> DiamondBuilder)
+                          -> (DiamondBuilder -> DiamondBuilder) -> DiamondBuilder -> DiamondBuilder
+topDiamondFaceBuilderBase point2Extractor point3Extractor topDiamondCornerConstructor extractTopLine toBottomLine bottomDiamondFaceBuilder isTheDiamondDone diamondBuilder =
+  let topCenterPoint' =  case isNothing $ topCenterPoint diamondBuilder of
+                           True -> 
+                             
+                             offsetPoint (xOffset $  topDiamondHorizontalOffsets diamondBuilder)
+                                         (yOffset $ topDiamondHorizontalOffsets diamondBuilder)
+                                         (zOffset $ topDiamondHorizontalOffsets diamondBuilder)
+                                         (point2Extractor $ outerCube diamondBuilder) (point3Extractor $ outerCube diamondBuilder)
+
+                           False -> fromJust $ topCenterPoint diamondBuilder
+  in
+  case (bottomCenterPoint diamondBuilder) of
+    Nothing ->  bottomDiamondFaceBuilder $ diamondBuilder {topCenterPoint = Just topCenterPoint'}
+    Just bottomCenterPoint' ->
+      let topDiamondCorner' =  topDiamondCornerConstructor $ offsetPoint' (topDiamondVertiacalOffsets diamondBuilder)  topCenterPoint' bottomCenterPoint'
+          topDiamondFace' = (extractTopLine $ outerCube diamondBuilder) +++ (toBottomLine $  topDiamondCorner')
+      in  isTheDiamondDone $ diamondBuilder {topDiamondFace = Just topDiamondFace', topDiamondCorner = Just topDiamondCorner'}
+          
+
+topDiamondFrontFaceBuilder :: DiamondBuilder -> DiamondBuilder
+topDiamondFrontFaceBuilder diamondBuilder =
+  topDiamondFaceBuilderBase (f2) (f3) (F2) (extractFrontTopLine) (toBottomFrontLine) (bottomDiamondFrontFaceBuilder) (isTheFrontDiamondDone) diamondBuilder
+
+{-
+topRightDiamondFaceBuilderBase :: DiamondBuilder -> DiamondBuilder
+topRightDiamondFaceBuilderBase diamondBuilder =
+  let rightCenterPoint' =
+        case isNothing $ rightCenterPoint diamondBuilder of
+          True ->
+            
+
+          False ->
+-}  
+      
+bottomDiamondFaceBuilderBase :: (CornerPoints -> Point) -> (CornerPoints -> Point) -> (Point -> CornerPoints) -> (CornerPoints -> CornerPoints)
+                             -> (CornerPoints -> CornerPoints) -> (CornerPoints -> CornerPoints)
+                             -> (DiamondBuilder -> DiamondBuilder) -> DiamondBuilder -> DiamondBuilder
+bottomDiamondFaceBuilderBase point1Extractor point4Extractor bottomDiamondCornerConstructor toTopLine extractBottomLine toBottomLine isTheDiamondDone diamondBuilder =
+  let bottomCenterPoint' =
+        case isNothing $ bottomCenterPoint diamondBuilder of
+          True ->  offsetPoint' (bottomDiamondHorizontalOffsets diamondBuilder)
+                                (point1Extractor $ outerCube diamondBuilder) (point4Extractor $ outerCube diamondBuilder)
+          False -> fromJust $ bottomCenterPoint diamondBuilder
+  in
+  case topCenterPoint diamondBuilder of
+    Nothing -> topDiamondFrontFaceBuilder $ diamondBuilder {bottomCenterPoint =  Just bottomCenterPoint'}
+    Just topCenterPoint' ->
+      let 
+          bottomDiamondCorner' = bottomDiamondCornerConstructor $ offsetPoint' (bottomDiamondVerticalOffsets diamondBuilder)  bottomCenterPoint' topCenterPoint'
+          bottomDiamondFace' =
+            (reverseNormal $ toTopLine $ extractBottomLine $ outerCube diamondBuilder)
+            +++
+            (toBottomLine bottomDiamondCorner')
+      in
+      isTheDiamondDone $ diamondBuilder {bottomCenterPoint = Just bottomCenterPoint', bottomDiamondFace = Just bottomDiamondFace', bottomDiamondCorner = Just bottomDiamondCorner'}
+
+bottomDiamondFrontFaceBuilder :: DiamondBuilder -> DiamondBuilder
+bottomDiamondFrontFaceBuilder diamondBuilder =
+  bottomDiamondFaceBuilderBase (f1) (f4) (F4) (toFrontTopLine) (extractBottomFrontLine) toBottomFrontLine (isTheFrontDiamondDone) diamondBuilder
+  
+  
+-- ============================================================== Orig Diamond =========================================================
+-- ============================================================== Orig Diamond =========================================================
+-- ============================================================== Orig Diamond =========================================================
 cutTheDiamond :: CornerPoints -> [CornerPoints]
 cutTheDiamond cube =
   [cutTheDiamondTopFace cube,
@@ -639,7 +771,7 @@ cutTheDiamondD3Centered cube =
 
 cutTheDiamondF1ShiftedIn :: CornerPoints -> CornerPoints
 cutTheDiamondF1ShiftedIn cube =
-  offsetCornerPoints  0.25 0.25 0.5 (cutTheDiamondF1Centered cube) (cutTheDiamondF3Centered cube) (F1)
+  offsetCornerPoints  0.25 0.25 0.25 (cutTheDiamondF1Centered cube) (cutTheDiamondF3Centered cube) (F1)
 
 cutTheDiamondF2ShiftedIn :: CornerPoints -> CornerPoints
 cutTheDiamondF2ShiftedIn cube =
@@ -651,7 +783,7 @@ cutTheDiamondB2ShiftedIn cube =
 
 cutTheDiamond1ShiftedIn :: (CornerPoints -> CornerPoints) -> (CornerPoints -> CornerPoints) -> (Point -> CornerPoints) -> CornerPoints -> CornerPoints
 cutTheDiamond1ShiftedIn    center1                           center3                           constructor                cube            =
-  offsetCornerPoints  0.25 0.25 0.5 (center1 cube) (center3 cube) constructor
+  offsetCornerPoints  0.25 0.25 0.25 (center1 cube) (center3 cube) constructor
 
 cutTheDiamondB1ShiftedIn :: CornerPoints -> CornerPoints
 cutTheDiamondB1ShiftedIn cube =
@@ -661,7 +793,7 @@ cutTheDiamondB1ShiftedIn cube =
   
 cutTheDiamond2ShiftedIn :: (CornerPoints -> CornerPoints) -> (CornerPoints -> CornerPoints) -> (Point -> CornerPoints) -> CornerPoints -> CornerPoints
 cutTheDiamond2ShiftedIn    center2                           center4                           constructor                cube            =
-  offsetCornerPoints 0.5 0.5 0.25 {-0 0 0.25-} (center2 cube) (center4 cube) constructor
+  offsetCornerPoints 0.25 0.25 0.25 {-0 0 0.25-} (center2 cube) (center4 cube) constructor
   
 cutTheDiamondF3ShiftedIn :: CornerPoints -> CornerPoints
 cutTheDiamondF3ShiftedIn cube =
@@ -669,7 +801,7 @@ cutTheDiamondF3ShiftedIn cube =
 
 cutTheDiamond3ShiftedIn :: (CornerPoints -> CornerPoints) -> (CornerPoints -> CornerPoints) -> (Point -> CornerPoints) -> CornerPoints -> CornerPoints
 cutTheDiamond3ShiftedIn    center3                           center1                           constructor                cube            =
-  offsetCornerPoints  0.25 0.25 0.5 (center3 cube) (center1 cube) constructor
+  offsetCornerPoints  0.25 0.25 0.25 (center3 cube) (center1 cube) constructor
 
 cutTheDiamondB3ShiftedIn :: CornerPoints -> CornerPoints
 cutTheDiamondB3ShiftedIn cube =
@@ -677,7 +809,7 @@ cutTheDiamondB3ShiftedIn cube =
 
 cutTheDiamond4ShiftedIn :: (CornerPoints -> CornerPoints) -> (CornerPoints -> CornerPoints) -> (Point -> CornerPoints) -> CornerPoints -> CornerPoints
 cutTheDiamond4ShiftedIn    center1                           center4                           constructor                cube            =
-  offsetCornerPoints 0.5 0.5 0.25 (center1 cube) (center4 cube) constructor
+  offsetCornerPoints 0.25 0.25 0.25 (center1 cube) (center4 cube) constructor
 
 cutTheDiamondB4ShiftedIn :: CornerPoints -> CornerPoints
 cutTheDiamondB4ShiftedIn cube =
@@ -686,7 +818,7 @@ cutTheDiamondB4ShiftedIn cube =
 
 cutTheDiamondF4ShiftedIn :: CornerPoints -> CornerPoints
 cutTheDiamondF4ShiftedIn cube =
-  offsetCornerPoints {-0 0 0.25-}0.5 0.5 0.25 (cutTheDiamondF4Centered cube) (cutTheDiamondF2Centered cube) (F4)
+  offsetCornerPoints {-0 0 0.25-}0.25 0.25 0.25 (cutTheDiamondF4Centered cube) (cutTheDiamondF2Centered cube) (F4)
   
 testCubeStandard = 
   CubePoints {
@@ -804,10 +936,12 @@ offsetPoint    offsetX   offsetY   offsetZ  (Point x1 y1 z1) (Point x2 y2 z2) =
                (adjustPointAxis (getXWithQuadrant angleBetweenPoints shortenedDistanceFromOrigin)) .
                (adjustPointAxis (getYWithQuadrant angleBetweenPoints shortenedDistanceFromOrigin))
                $ origin {z_axis = setZ z1 z2 offsetZ}-}
-               (adjustPointAxis (getXWithQuadrant angleBetweenPoints shortenedDistanceFromOrigin)) .
-               (adjustPointAxis (getYWithQuadrant angleBetweenPoints shortenedDistanceFromOrigin))
-               $ origin {z_axis = setZ z1 z2 offsetZ}
-   
+               --(adjustPointAxis (getXWithQuadrant angleBetweenPoints shortenedDistanceFromOrigin)) .
+               --(adjustPointAxis (getYWithQuadrant angleBetweenPoints shortenedDistanceFromOrigin))
+               -- $ origin {z_axis = setZ z1 z2 offsetZ}
+               Point (setAxis x1 x2 offsetX)
+                     (setAxis y1 y2 offsetY)
+                     (setAxis z1 z2 offsetZ)
 {-
 offsetPoint :: Offset -> Offset -> Offset -> Point ->         Point -> Point
 offsetPoint    offsetX   offsetY   offsetZ  (Point x1 y1 z1) (Point x2 y2 z2) =
@@ -824,6 +958,35 @@ offsetPoint    offsetX   offsetY   offsetZ  (Point x1 y1 z1) (Point x2 y2 z2) =
     (adjustPointAxis (getYWithQuadrant angleBetweenPoints shortenedDistanceFromOrigin))
     $ origin {z_axis = setZ}
 -}
+--version to work with the new DiamondBuilder
+offsetPoint' :: OffSet -> Point ->         Point -> Point
+offsetPoint'    offsets (Point x1 y1 z1) (Point x2 y2 z2) =
+  let
+     origin = Point x1 y1 z1
+     pointAtFarEnd = Point x2 y2 z2
+     angleBetweenPoints = getXYAngle origin pointAtFarEnd 
+     distanceFromOrigin =  calcultateXYDistance origin pointAtFarEnd
+     shortenedDistanceFromOrigin =  Radius $  (radius distanceFromOrigin)  * (xOffset offsets)
+     
+  in
+               Point (setAxis x1 x2 (xOffset offsets))
+                     (setAxis y1 y2 (yOffset offsets))
+                     (setAxis z1 z2 (zOffset offsets))
+
+
+setX :: Double -> Double -> Double -> Double
+setX    x1        x2        offset
+      | x1 == x2 = x1
+      | x1 < x2  = x1 + ((x2 - x1) * offset)
+      | x1 > x2  = x1 - ((x1 - x2) * offset)
+
+setAxis :: Double -> Double -> Double -> Double
+setAxis    axis1        axis2        offset
+      | axis1 == axis2 = axis1
+      | axis1 < axis2  = axis1 + ((axis2 - axis1) * offset)
+      | axis1 > axis2  = axis1 - ((axis1 - axis2) * offset)
+  
+
 setZ :: Double -> Double -> Double -> Double
 setZ    z1        z2        offset
      | z1 > z2 =  z1 - (((abs $ z1 - z2) * offset))
@@ -953,6 +1116,16 @@ offsetCornerPoints    _ _ _  unhandled cornerpoints  _ =
 -- ==================================================================================================================================
 -- ==================================================================================================================================
 flexiSocketTestsDo = do
+  runTestTT lookAtTopOfDiamondEmergent
+  runTestTT topOfDiamondFront
+  runTestTT btmOfDiamondCenterFrontPoint
+  runTestTT btmOfDiamondFrontF4ShiftedInt
+  runTestTT frontTopFaceTest
+  runTestTT frontBtmFaceTest
+  
+  runTestTT offsetY1
+  runTestTT offsetX1Test
+  runTestTT offsetX2Test
   runTestTT offsetZ1Test
   runTestTT offsetZ2Test
   runTestTT offsetZ3Test
@@ -979,7 +1152,9 @@ flexiSocketTestsDo = do
   runTestTT offsetUnhandledCornerPointsTest
   runTestTT offSetF1F4CornerPointsTest
   runTestTT offSetF2F3CornerPointsTest
+  
   -- cut some diamonds
+  runTestTT cutTheDiamondF2ShiftedInOfFirstSocket
   runTestTT cutDiamondTopFaceDissectedTest
   runTestTT cutDiamondTopFaceTest
   runTestTT cutTheDiamondBtmFaceTest
@@ -1061,9 +1236,102 @@ firstCubeOfSocket =
   
 centerOfTopFrontlinePoint = Point {x_axis = 2.2000000000000006, y_axis = -25.6, z_axis = 500.0}
 centerOfTopFrontLine = F2 centerOfTopFrontlinePoint
-f2ShiftedIn = F2 $ Point 2.34 (-27.3) 498.64
-
 centerOfBtmFrontLinePoint = Point {x_axis = 2.48, y_axis = -29, z_axis = 494.54}
+
+f2ShiftedIn = F2 $ Point 2.27 (-26.45) 498.64
+f4ShiftedIn = F4 $ Point 2.41 (-28.15) 495.91
+
+frontTopFaceOfFirstSocketCube  =
+     (FrontFace {f1 = Point {x_axis = 2.271634790895357, y_axis = -26.456283783051088, z_axis = 498.63505747126436},
+                 f2 = Point {x_axis = 4.403832696848794, y_axis = -24.975376310276598, z_axis = 500.0},
+                 f3 = Point {x_axis = 0.0, y_axis = -26.234224965706463, z_axis = 500.0},
+                 f4 = Point {x_axis = 2.271634790895357, y_axis = -26.456283783051088, z_axis = 498.63505747126436}})
+
+frontBottomFaceOfFirstSocketCube =
+  (FrontFace {f1 = Point {x_axis = 2.411071675837277, y_axis = -28.1592500731702, z_axis = 495.9051724137931},
+              f2 = Point {x_axis = 0.0, y_axis = -29.88294664396197, z_axis = 494.54022988505744},
+              f3 = Point {x_axis = 4.961580236616474, y_axis = -28.138519792497544, z_axis = 494.54022988505744},
+              f4 = Point {x_axis = 2.411071675837277, y_axis = -28.1592500731702, z_axis = 495.9051724137931}})
+
+-- =================================================================== emergent: ===============================================================
+diamondBuilderForFirstSocketCube =
+     (Diamond { outerCube = firstCubeOfSocket,
+                topDiamondFace = Nothing,
+                topDiamondCorner = Nothing,
+                topCenterPoint = Nothing,
+                topDiamondHorizontalOffsets = (OffSet 0.5 0.5 0.5),
+                topDiamondVertiacalOffsets = (OffSet 0.25 0.25 0.25),
+                topRightDiamondFace = Nothing,
+                rightDiamondFace = Nothing,
+                rightCenterPoint = Nothing,
+                bottomRightDiamondFace = Nothing,
+                bottomDiamondFace = Nothing,
+                bottomDiamondCorner = Nothing,
+                bottomCenterPoint = Nothing,
+                bottomDiamondHorizontalOffsets = (OffSet 0.5 0.5 0.5),
+                bottomDiamondVerticalOffsets = (OffSet 0.25 0.25 0.25),
+                bottomLeftDiamondFace = Nothing,
+                leftDiamondFace = Nothing,
+                topLeftDiamondFace = Nothing
+              }
+              
+              
+     )
+
+      
+lookAtTopOfDiamondEmergent = TestCase $ assertEqual
+  "look at the f1 of the top of diamond for first socket cube"
+  (Just $ centerOfTopFrontlinePoint)
+  (topCenterPoint $
+   isTheFrontDiamondDone
+   diamondBuilderForFirstSocketCube
+  )
+
+topOfDiamondFront = TestCase $ assertEqual
+  "look at the F2 of the top front of diamond for first socket cube"
+  (Just $ f2ShiftedIn )
+  (topDiamondCorner $
+   isTheFrontDiamondDone
+   diamondBuilderForFirstSocketCube
+  )
+
+btmOfDiamondCenterFrontPoint = TestCase $ assertEqual
+  "look at the center of the btm front of diamond for first socket cube"
+  (Just $ centerOfBtmFrontLinePoint)
+  (bottomCenterPoint $
+   isTheFrontDiamondDone
+   diamondBuilderForFirstSocketCube
+  )
+
+btmOfDiamondFrontF4ShiftedInt = TestCase $ assertEqual
+  "look at the F4 of diamond for first socket cube"
+  (Just $ f4ShiftedIn)
+  (bottomDiamondCorner $
+   isTheFrontDiamondDone
+   diamondBuilderForFirstSocketCube
+  )
+
+frontTopFaceTest = TestCase $ assertEqual
+  "look at the front top face of diamond for first socket cube"
+  (Just frontTopFaceOfFirstSocketCube)
+  
+  (topDiamondFace $
+   isTheFrontDiamondDone
+   diamondBuilderForFirstSocketCube
+  )
+
+frontBtmFaceTest = TestCase $ assertEqual
+  "look at the front btm face of diamond for first socket cube"
+  (Just frontBottomFaceOfFirstSocketCube)
+  
+  (bottomDiamondFace $
+   isTheFrontDiamondDone
+   diamondBuilderForFirstSocketCube
+  )
+-- =================================================================== :emergent ===============================================================
+
+
+
 
 offset1stCubeFrontTopLineTest = TestCase $ assertEqual
   "cx center of front top line of 1st cube"
@@ -1076,8 +1344,9 @@ offset1stCubeFrontTopLineTest = TestCase $ assertEqual
      (f2 $ extractF2 firstCubeOfSocket)
      --(Point 0 (-26.23) 500)
      --mainCubef4
-     (f4 $ extractF4 firstCubeOfSocket)
+     (f3 $ extractF3 firstCubeOfSocket)
   )
+  
 
 cutTheDiamondF2CenteredMainCube = TestCase $ assertEqual
   "use cutTheDiamondF2Centered to get f2 centered"
@@ -1338,6 +1607,27 @@ offSetB2B4CornerPointsTest = TestCase $ assertEqual
      (B2)
   )
 -- =========================== cut the cube=======================
+offsetX1Test = TestCase $ assertEqual
+  "offset X in positive direction"
+  (7.5)
+  (setAxis 5 10 0.5)
+-- =======================================================================================================================================================================
+offsetY1 = TestCase $ assertEqual
+  "check the y offset of the top front line centered of cube 1 of the socket"
+  (-25.60480063799153)
+  (setAxis
+    (-24.975376310276598)
+    (-26.234224965706463)
+    0.5 
+  )
+
+
+
+offsetX2Test = TestCase $ assertEqual
+  "offset X in negative direction"
+  (10.0)
+  (setAxis 15 5 0.5)
+
 offsetZ1Test = TestCase $ assertEqual
  "z1 > z2 with 0.25 offset"
  (15)
@@ -1345,7 +1635,7 @@ offsetZ1Test = TestCase $ assertEqual
       z2 = 0
       offsetZ = 0.25
   in  --z1 + (negate ((abs $ z1 - z2) * offsetZ))
-      setZ z1 z2 offsetZ
+      setAxis z1 z2 offsetZ
  )
 
 offsetZ2Test = TestCase $ assertEqual
@@ -1355,7 +1645,7 @@ offsetZ2Test = TestCase $ assertEqual
       z2 = 20
       offsetZ = 0.25
   in  --z1 + (negate ((abs $ z1 - z2) * offsetZ))
-      setZ z1 z2 offsetZ
+      setAxis z1 z2 offsetZ
  )
 
 offsetZ3Test = TestCase $ assertEqual
@@ -1365,17 +1655,17 @@ offsetZ3Test = TestCase $ assertEqual
       z2 = 20
       offsetZ = 0.25
   in  --z1 + (negate ((abs $ z1 - z2) * offsetZ))
-      setZ z1 z2 offsetZ
+      setAxis z1 z2 offsetZ
  )
 
 offsetZ4Test = TestCase $ assertEqual
  "z1 > z2 with 0.5 offset"
- (5)
+ (15)
  (let z1 = 20
       z2 = 0
       offsetZ = 0.25
   in  --z1 + (negate ((abs $ z1 - z2) * offsetZ))
-      setZ z1 z2 offsetZ
+      setAxis z1 z2 offsetZ
  )
 
 
