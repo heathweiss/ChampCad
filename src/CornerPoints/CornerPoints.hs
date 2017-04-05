@@ -519,6 +519,9 @@ anyCornerPoint +++ (CornerPointsId) = anyCornerPoint
 (BackBottomLine b1 b4) +++ (BackTopLine b2 b3) =
   BackFace b1 b2 b3 b4
 
+(BackTopLine b2 b3) +++ (BackBottomLine b1 b4) =
+  BackFace b1 b2 b3 b4
+
 (BottomFrontLine f1 f4) +++ (BackBottomLine b1 b4) =
      BottomFace b1 f1 b4 f4
 
