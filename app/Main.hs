@@ -53,8 +53,8 @@ main = do
   
   --Flex.flexSocketWithRiserDbStlGenerator currentSocket
   --Flex.insertFlexDimensions
-  Flex.flexiSocketTestsDo
-  --Flex.flexSocketStlGenerator
+  --Flex.flexiSocketTestsDo
+  Flex.flexSocketStlGenerator
   --Flex.flexSocketShowCurrentState
   
   --W.insertWristDimensions --

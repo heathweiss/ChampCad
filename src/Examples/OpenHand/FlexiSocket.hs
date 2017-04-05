@@ -412,13 +412,25 @@ flexSocket    innerSleeveSDR         outerSleeveSDR         rowReductionFactor  
       heightPerPixel = (1/ pixelsPerMM) * (fromIntegral rowReductionFactor)
       origin = Point 0 0 500
 
-  {-take just a few pieces of the diamond cuts.-}
+  {-take just a few pieces of the diamond cuts.
+    Uses the new diamond cutter.
+  
   cubes   <- buildCubePointsListSingle "wristCubes"
              
-               (take 5 $ tail $ concat $  map (cutTheDiamond)
+               (take 4 $ concat $  map (runFrontToBackDefualtDiamondBuilder)
                             (concat $ take 2 $ drop 1  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
-               )
+               )-}
+  {-take just a few pieces of the diamond cuts.
+    Uses the original diamond cutter -}
+  cubes   <- buildCubePointsListSingle "wristCubes"
              
+               (concat $  map (cutTheDiamond)
+                            (concat $ drop 1  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
+               )
+
+            
+
+
   {- original top 2 layers with diamonds cut. Has errors.
   cubes   <- buildCubePointsListSingle "wristCubes"
              ( concat $ map (cutTheDiamond)
@@ -483,6 +495,9 @@ data DiamondBuilder =
 
      rightDiamondFace :: Maybe CornerPoints,
      rightCenterPoint ::  Maybe Point,
+     rightDiamondCorner :: Maybe CornerPoints,
+     rightDiamondHorizontalOffsets :: OffSet,
+     rightDiamondVerticalOffsets :: OffSet,
      
      bottomRightDiamondFace :: Maybe CornerPoints,
      
@@ -495,17 +510,65 @@ data DiamondBuilder =
      bottomLeftDiamondFace :: Maybe CornerPoints,
      
      leftDiamondFace :: Maybe CornerPoints,
+     leftCenterPoint ::  Maybe Point,
      
      topLeftDiamondFace :: Maybe CornerPoints
      
      
     }
 
+-- |
+-- Create a defualt DiamondBuilder.
+-- Offsets are all set at 25% in form edges of containing cube.
+{- ================================================================================================================================
+Tests good.
+-}
+defaultDiamondBuilder :: CornerPoints -> DiamondBuilder
+defaultDiamondBuilder cube =
+      Diamond { outerCube = cube,
+                topDiamondFace = Nothing,
+                topDiamondCorner = Nothing,
+                topCenterPoint = Nothing,
+                topDiamondHorizontalOffsets = (OffSet 0.5 0.5 0.5),
+                topDiamondVertiacalOffsets = (OffSet 0.25 0.25 0.25),
+                topRightDiamondFace = Nothing,
+                rightDiamondFace = Nothing,
+                rightCenterPoint = Nothing,
+                rightDiamondCorner = Nothing,
+                rightDiamondHorizontalOffsets = (OffSet 0.25 0.25 0.25),
+                rightDiamondVerticalOffsets = (OffSet 0.5 0.5 0.5),
+                bottomRightDiamondFace = Nothing,
+                bottomDiamondFace = Nothing,
+                bottomDiamondCorner = Nothing,
+                bottomCenterPoint = Nothing,
+                bottomDiamondHorizontalOffsets = (OffSet 0.5 0.5 0.5),
+                bottomDiamondVerticalOffsets = (OffSet 0.25 0.25 0.25),
+                bottomLeftDiamondFace = Nothing,
+                leftDiamondFace = Nothing,
+                leftCenterPoint = Nothing,
+                topLeftDiamondFace = Nothing
+              }
+-- |
+-- Run a single DiamondBuilder and output the resulting [diamond cubes].
+-- If any of the cubes did not turn out, return a [CornerPointsError]
 runDiamondBuilder :: DiamondBuilder -> [CornerPoints]
 runDiamondBuilder diamondBuilder
   | isNothing $ topDiamondFace diamondBuilder = [CornerPointsError "topDiamondFace is Nothing "]
   | isNothing $ bottomDiamondFace diamondBuilder = [CornerPointsError "bottomDiamondFace is Nothing "]
   | otherwise = [(fromJust $ topDiamondFace diamondBuilder), (fromJust $ bottomDiamondFace diamondBuilder)]
+
+
+-- |
+-- Run the opposing DiamondBuilders, and add together the resulting [CornerPoints]
+
+runFrontToBackDefualtDiamondBuilder :: CornerPoints -> [CornerPoints]
+runFrontToBackDefualtDiamondBuilder cube =
+  let diamondBuilder = defaultDiamondBuilder cube
+  in
+  (runDiamondBuilder $ isTheFrontDiamondDone  diamondBuilder)
+  |+++|
+  (runDiamondBuilder $ isTheBackDiamondDone diamondBuilder)
+
 
 data OffSet =
   OffSet {xOffset :: Double,
@@ -514,20 +577,35 @@ data OffSet =
          }
 
 
-
-isTheDiamondDoneBase :: (DiamondBuilder -> DiamondBuilder) -> DiamondBuilder -> DiamondBuilder
-isTheDiamondDoneBase topDiamondFaceBuilder diamondBuilder
+{-
+A base used by Front and Back DiamondBuilders.
+If all the cubes of a diamond are good, return them, else the error of the bad cube.
+-}
+isTheDiamondDoneBase :: (DiamondBuilder -> DiamondBuilder) -> (DiamondBuilder -> DiamondBuilder)
+                     -> DiamondBuilder -> DiamondBuilder
+isTheDiamondDoneBase topDiamondFaceBuilder bottomDiamondFaceBuilder  diamondBuilder
   | (isNothing  $ topDiamondFace diamondBuilder) = topDiamondFaceBuilder diamondBuilder
-  | (isNothing  $ bottomDiamondFace diamondBuilder) = bottomDiamondFrontFaceBuilder diamondBuilder
+  | (isNothing  $ bottomDiamondFace diamondBuilder) = bottomDiamondFaceBuilder diamondBuilder
   | otherwise  = diamondBuilder
 
 
+-- |
+-- Use isTheDiamondDoneBase for FrontFaces.
 isTheFrontDiamondDone :: DiamondBuilder -> DiamondBuilder
 isTheFrontDiamondDone diamondBuilder =
-  isTheDiamondDoneBase (topDiamondFrontFaceBuilder) diamondBuilder
-              
+  isTheDiamondDoneBase (topDiamondFrontFaceBuilder) (bottomDiamondFrontFaceBuilder) diamondBuilder
 
+-- |
+-- Use isTheDiamondDoneBase for BackFaces.
+isTheBackDiamondDone :: DiamondBuilder -> DiamondBuilder
+isTheBackDiamondDone diamondBuilder =
+  isTheDiamondDoneBase (topDiamondBackFaceBuilder) (bottomDiamondBackFaceBuilder) diamondBuilder
 
+-- ==================================================== Top Diamond ==========================================================
+{-
+Base function used by Front and Back Faces.
+Use to create the top cube of the diamond, that goes from the top point of the diamond, to the top face of the outer cube.
+-}
 topDiamondFaceBuilderBase :: (CornerPoints -> Point) -> (CornerPoints -> Point) -> (Point -> CornerPoints) -> (CornerPoints -> CornerPoints)
                           -> (CornerPoints -> CornerPoints) -> (DiamondBuilder -> DiamondBuilder)
                           -> (DiamondBuilder -> DiamondBuilder) -> DiamondBuilder -> DiamondBuilder
@@ -549,22 +627,23 @@ topDiamondFaceBuilderBase point2Extractor point3Extractor topDiamondCornerConstr
           topDiamondFace' = (extractTopLine $ outerCube diamondBuilder) +++ (toBottomLine $  topDiamondCorner')
       in  isTheDiamondDone $ diamondBuilder {topDiamondFace = Just topDiamondFace', topDiamondCorner = Just topDiamondCorner'}
           
-
+-- |
+-- Use topDiamondFaceBuilderBase to build the FrontFace of the top cube.
 topDiamondFrontFaceBuilder :: DiamondBuilder -> DiamondBuilder
 topDiamondFrontFaceBuilder diamondBuilder =
   topDiamondFaceBuilderBase (f2) (f3) (F2) (extractFrontTopLine) (toBottomFrontLine) (bottomDiamondFrontFaceBuilder) (isTheFrontDiamondDone) diamondBuilder
 
-{-
-topRightDiamondFaceBuilderBase :: DiamondBuilder -> DiamondBuilder
-topRightDiamondFaceBuilderBase diamondBuilder =
-  let rightCenterPoint' =
-        case isNothing $ rightCenterPoint diamondBuilder of
-          True ->
-            
+-- |
+-- Use topDiamondFaceBuilderBase to build the BackFace of the top cube.
+topDiamondBackFaceBuilder :: DiamondBuilder -> DiamondBuilder
+topDiamondBackFaceBuilder diamondBuilder =
+  topDiamondFaceBuilderBase (b2) (b3) (B2) (extractBackTopLine) (toBackBottomLine) (bottomDiamondBackFaceBuilder) (isTheBackDiamondDone) diamondBuilder
 
-          False ->
--}  
-      
+-- =========================================================== Bottom Diamond =================================================================
+{-
+Base function used by Front and Back Faces.
+Use to create the bottom cube of the diamond, that goes from the bottom point of the diamond, to the bottom face of the outer cube.
+-}
 bottomDiamondFaceBuilderBase :: (CornerPoints -> Point) -> (CornerPoints -> Point) -> (Point -> CornerPoints) -> (CornerPoints -> CornerPoints)
                              -> (CornerPoints -> CornerPoints) -> (CornerPoints -> CornerPoints)
                              -> (DiamondBuilder -> DiamondBuilder) -> DiamondBuilder -> DiamondBuilder
@@ -587,11 +666,52 @@ bottomDiamondFaceBuilderBase point1Extractor point4Extractor bottomDiamondCorner
       in
       isTheDiamondDone $ diamondBuilder {bottomCenterPoint = Just bottomCenterPoint', bottomDiamondFace = Just bottomDiamondFace', bottomDiamondCorner = Just bottomDiamondCorner'}
 
+-- |
+-- Use bottomDiamondFaceBuilderBase to build the FrontFace of the bottom cube.
 bottomDiamondFrontFaceBuilder :: DiamondBuilder -> DiamondBuilder
 bottomDiamondFrontFaceBuilder diamondBuilder =
   bottomDiamondFaceBuilderBase (f1) (f4) (F4) (toFrontTopLine) (extractBottomFrontLine) toBottomFrontLine (isTheFrontDiamondDone) diamondBuilder
-  
-  
+
+-- |
+-- Use bottomDiamondFaceBuilderBase to build the BackFace of the bottom cube.
+bottomDiamondBackFaceBuilder :: DiamondBuilder -> DiamondBuilder
+bottomDiamondBackFaceBuilder diamondBuilder =
+  bottomDiamondFaceBuilderBase (b1) (b4) (B4) (toBackTopLine) (extractBackBottomLine) (toBackBottomLine) (isTheBackDiamondDone) diamondBuilder
+
+  -- ============================================================ Right Diamond =======================================================
+{-A base function for creating the Front and Back faces of the right side of the outer cube.
+Started as a copy of topDiamondFaceBuilderBase.
+Re-written but not tested.
+
+Needs: leftDiamondFaceBuilder
+ToDo: build the front/back functions.
+-}
+rightDiamondFaceBuilderBase :: (CornerPoints -> Point) -> (CornerPoints -> Point) -> (Point -> CornerPoints) -> (CornerPoints -> CornerPoints)
+                          -> (CornerPoints -> CornerPoints) -> (DiamondBuilder -> DiamondBuilder)
+                          -> (DiamondBuilder -> DiamondBuilder) -> DiamondBuilder -> DiamondBuilder
+rightDiamondFaceBuilderBase point3Extractor point4Extractor rightDiamondCornerConstructor extractTopLine toBottomLine leftDiamondFaceBuilder isTheDiamondDone diamondBuilder =
+  let rightCenterPoint' =  case isNothing $ rightCenterPoint diamondBuilder of
+                           True -> 
+                             
+                             offsetPoint (xOffset $ rightDiamondVerticalOffsets diamondBuilder)
+                                         (yOffset $ rightDiamondVerticalOffsets diamondBuilder)
+                                         (zOffset $ rightDiamondVerticalOffsets diamondBuilder)
+                                         (point3Extractor $ outerCube diamondBuilder) (point4Extractor $ outerCube diamondBuilder)
+
+                           False -> fromJust $ rightCenterPoint diamondBuilder
+  in
+  case (leftCenterPoint diamondBuilder) of
+    Nothing ->  leftDiamondFaceBuilder $ diamondBuilder {rightCenterPoint = Just rightCenterPoint'}
+    Just leftCenterPoint' ->
+      let rightDiamondCorner' =  rightDiamondCornerConstructor $ offsetPoint' (rightDiamondHorizontalOffsets diamondBuilder)  rightCenterPoint' leftCenterPoint'
+          rightDiamondFace' = (extractTopLine $ outerCube diamondBuilder) +++ (toBottomLine $  rightDiamondCorner')
+      in  isTheDiamondDone $ diamondBuilder {rightDiamondFace = Just rightDiamondFace', rightDiamondCorner = Just rightDiamondCorner'}
+          
+
+
+-- ============================================================ Left Diamond =========================================================
+--ToDo: create a base like rightDiamondFaceBuilderBase and the associated back/front builders.
+
 -- ============================================================== Orig Diamond =========================================================
 -- ============================================================== Orig Diamond =========================================================
 -- ============================================================== Orig Diamond =========================================================
@@ -1122,6 +1242,13 @@ flexiSocketTestsDo = do
   runTestTT btmOfDiamondFrontF4ShiftedInt
   runTestTT frontTopFaceTest
   runTestTT frontBtmFaceTest
+  runTestTT lookAtBackTopCenterPointOfDiamond
+  runTestTT topOfDiamondBack
+  runTestTT btmOfDiamondCenterBackPoint
+  runTestTT btmOfDiamondBackB4ShiftedInt
+  runTestTT backTopFaceTest
+  runTestTT btmOfDiamondBackB2ShiftedInt
+  runTestTT backBtmFaceTest
   
   runTestTT offsetY1
   runTestTT offsetX1Test
@@ -1152,6 +1279,7 @@ flexiSocketTestsDo = do
   runTestTT offsetUnhandledCornerPointsTest
   runTestTT offSetF1F4CornerPointsTest
   runTestTT offSetF2F3CornerPointsTest
+  
   
   -- cut some diamonds
   runTestTT cutTheDiamondF2ShiftedInOfFirstSocket
@@ -1233,7 +1361,7 @@ firstCubeOfSocket =
               b3 = Point {x_axis = 0.0, y_axis = -23.234224965706463, z_axis = 500.0},
               b4 = Point {x_axis = 0.0, y_axis = -26.88294664396197, z_axis = 494.54022988505744}
              }
-  
+-- front of cube dimensions  
 centerOfTopFrontlinePoint = Point {x_axis = 2.2000000000000006, y_axis = -25.6, z_axis = 500.0}
 centerOfTopFrontLine = F2 centerOfTopFrontlinePoint
 centerOfBtmFrontLinePoint = Point {x_axis = 2.48, y_axis = -29, z_axis = 494.54}
@@ -1253,38 +1381,42 @@ frontBottomFaceOfFirstSocketCube =
               f3 = Point {x_axis = 4.961580236616474, y_axis = -28.138519792497544, z_axis = 494.54022988505744},
               f4 = Point {x_axis = 2.411071675837277, y_axis = -28.1592500731702, z_axis = 495.9051724137931}})
 
--- =================================================================== emergent: ===============================================================
-diamondBuilderForFirstSocketCube =
-     (Diamond { outerCube = firstCubeOfSocket,
-                topDiamondFace = Nothing,
-                topDiamondCorner = Nothing,
-                topCenterPoint = Nothing,
-                topDiamondHorizontalOffsets = (OffSet 0.5 0.5 0.5),
-                topDiamondVertiacalOffsets = (OffSet 0.25 0.25 0.25),
-                topRightDiamondFace = Nothing,
-                rightDiamondFace = Nothing,
-                rightCenterPoint = Nothing,
-                bottomRightDiamondFace = Nothing,
-                bottomDiamondFace = Nothing,
-                bottomDiamondCorner = Nothing,
-                bottomCenterPoint = Nothing,
-                bottomDiamondHorizontalOffsets = (OffSet 0.5 0.5 0.5),
-                bottomDiamondVerticalOffsets = (OffSet 0.25 0.25 0.25),
-                bottomLeftDiamondFace = Nothing,
-                leftDiamondFace = Nothing,
-                topLeftDiamondFace = Nothing
-              }
-              
-              
-     )
+-- back of cube dimensions
+-- These have not been validated.
+centerOfTopBackLinePoint = Point {x_axis = 1.941444081924001, y_axis = -22.627589008473215, z_axis = 500.0}
+topBackDiamondCorner = B2 {b2 = Point {x_axis = 2.0111625243949613, y_axis = -23.479072153532773, z_axis = 498.63505747126436}}
+centerOfBtmBackLinePoint = Point {x_axis = 2.2203178518078417, y_axis = -26.033521588711444, z_axis = 494.54022988505744}
+--just a copy of b4ShiftedIn
+b2ShiftedIn = B2 {b2 = Point {x_axis = 2.0111625243949613, y_axis = -23.479072153532773, z_axis = 498.63505747126436}}
+b4ShiftedIn = B4 {b4 = Point {x_axis = 2.1505994093368814, y_axis = -25.182038443651887, z_axis = 495.9051724137931}}
+--needs proper values entered.
+backTopFaceOfFirstSocketCube =
+  BackFace {b1 = Point {x_axis = 2.0111625243949613, y_axis = -23.479072153532773, z_axis = 498.63505747126436},
+            b2 = Point {x_axis = 3.882888163848002, y_axis = -22.020953051239964, z_axis = 500.0},
+            b3 = Point {x_axis = 0.0, y_axis = -23.234224965706463, z_axis = 500.0},
+            b4 = Point {x_axis = 2.0111625243949613, y_axis = -23.479072153532773, z_axis = 498.63505747126436}}
 
-      
+backBtmFaceOfFirstSocketCube =
+  BackFace {b1 = Point {x_axis = 2.1505994093368814, y_axis = -25.182038443651887, z_axis = 495.9051724137931},
+            b2 = Point {x_axis = 0.0, y_axis = -26.88294664396197, z_axis = 494.54022988505744},
+            b3 = Point {x_axis = 4.440635703615683, y_axis = -25.184096533460924, z_axis = 494.54022988505744},
+            b4 = Point {x_axis = 2.1505994093368814, y_axis = -25.182038443651887, z_axis = 495.9051724137931}}
+-- =================================================================== emergent: ===============================================================
+
 lookAtTopOfDiamondEmergent = TestCase $ assertEqual
   "look at the f1 of the top of diamond for first socket cube"
   (Just $ centerOfTopFrontlinePoint)
   (topCenterPoint $
    isTheFrontDiamondDone
-   diamondBuilderForFirstSocketCube
+   (defaultDiamondBuilder firstCubeOfSocket )
+  )
+
+lookAtBackTopCenterPointOfDiamond = TestCase $ assertEqual
+  "look at the b1 of the back top of diamond for first socket cube"
+  (Just $ centerOfTopBackLinePoint)
+  (topCenterPoint $
+   isTheBackDiamondDone
+   (defaultDiamondBuilder firstCubeOfSocket )
   )
 
 topOfDiamondFront = TestCase $ assertEqual
@@ -1292,15 +1424,32 @@ topOfDiamondFront = TestCase $ assertEqual
   (Just $ f2ShiftedIn )
   (topDiamondCorner $
    isTheFrontDiamondDone
-   diamondBuilderForFirstSocketCube
+   (defaultDiamondBuilder firstCubeOfSocket )
   )
+
+topOfDiamondBack = TestCase $ assertEqual
+  "look at the B2 of the top  of diamond for first socket cube"
+  (Just $ topBackDiamondCorner )
+  (topDiamondCorner $
+   isTheBackDiamondDone
+   (defaultDiamondBuilder firstCubeOfSocket )
+  )
+
 
 btmOfDiamondCenterFrontPoint = TestCase $ assertEqual
   "look at the center of the btm front of diamond for first socket cube"
   (Just $ centerOfBtmFrontLinePoint)
   (bottomCenterPoint $
    isTheFrontDiamondDone
-   diamondBuilderForFirstSocketCube
+   (defaultDiamondBuilder firstCubeOfSocket )
+  )
+
+btmOfDiamondCenterBackPoint = TestCase $ assertEqual
+  "look at the center of the btm back of diamond for first socket cube"
+  (Just $ centerOfBtmBackLinePoint)
+  (bottomCenterPoint $
+   isTheBackDiamondDone
+   (defaultDiamondBuilder firstCubeOfSocket )
   )
 
 btmOfDiamondFrontF4ShiftedInt = TestCase $ assertEqual
@@ -1308,7 +1457,23 @@ btmOfDiamondFrontF4ShiftedInt = TestCase $ assertEqual
   (Just $ f4ShiftedIn)
   (bottomDiamondCorner $
    isTheFrontDiamondDone
-   diamondBuilderForFirstSocketCube
+   (defaultDiamondBuilder firstCubeOfSocket )
+  )
+
+btmOfDiamondBackB4ShiftedInt = TestCase $ assertEqual
+  "look at the B4 of diamond for first socket cube"
+  (Just $ b4ShiftedIn)
+  (bottomDiamondCorner $
+   isTheBackDiamondDone
+   (defaultDiamondBuilder firstCubeOfSocket )
+  )
+
+btmOfDiamondBackB2ShiftedInt = TestCase $ assertEqual
+  "look at the B2 of diamond for first socket cube"
+  (Just $ b2ShiftedIn)
+  (topDiamondCorner $
+   isTheBackDiamondDone
+   (defaultDiamondBuilder firstCubeOfSocket )
   )
 
 frontTopFaceTest = TestCase $ assertEqual
@@ -1317,7 +1482,16 @@ frontTopFaceTest = TestCase $ assertEqual
   
   (topDiamondFace $
    isTheFrontDiamondDone
-   diamondBuilderForFirstSocketCube
+   (defaultDiamondBuilder firstCubeOfSocket )
+  )
+
+backTopFaceTest = TestCase $ assertEqual
+  "look at the back top face of diamond for first socket cube"
+  (Just backTopFaceOfFirstSocketCube)
+  
+  (topDiamondFace $
+   isTheBackDiamondDone
+   (defaultDiamondBuilder firstCubeOfSocket )
   )
 
 frontBtmFaceTest = TestCase $ assertEqual
@@ -1326,7 +1500,16 @@ frontBtmFaceTest = TestCase $ assertEqual
   
   (bottomDiamondFace $
    isTheFrontDiamondDone
-   diamondBuilderForFirstSocketCube
+   (defaultDiamondBuilder firstCubeOfSocket )
+  )
+
+backBtmFaceTest = TestCase $ assertEqual
+  "look at the back btm face of diamond for first socket cube"
+  (Just backBtmFaceOfFirstSocketCube)
+  
+  (bottomDiamondFace $
+   isTheBackDiamondDone
+   (defaultDiamondBuilder firstCubeOfSocket )
   )
 -- =================================================================== :emergent ===============================================================
 
