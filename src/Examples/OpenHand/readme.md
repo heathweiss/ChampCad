@@ -25,6 +25,17 @@ abs test print
 2 solid btm/top layers
 2 mm thick
 
+
+cheetah flex with diamonds
+using sharkfin dimension
+
+1 perim
+nozzle temp 235
+bedtemp 40
+1 perim
+2 btm/top layers
+25% honeycomb infill
++2 transpose
 ===================================  motor mount socket ========================================
 abs test print
 50% honeycomb

@@ -37,7 +37,7 @@ import System.Environment
 -- main :: IO ()
 --main :: IO (Key CurrentMount)
 main = do
-  let currentSocket =  "mount 1" --"sharkfin" --
+  let currentSocket = "sharkfin" -- "mount 1" --
   -- x <-  getArgs
  --loadMDRAndPassToProcessor (read $ head x) (read $ head $ tail x)
 
@@ -51,10 +51,10 @@ main = do
   
   --C.insertDimensions
   
-  --Flex.flexSocketWithRiserDbStlGenerator currentSocket
+  Flex.flexSocketWithRiserDbStlGenerator currentSocket
   --Flex.insertFlexDimensions
   --Flex.flexiSocketTestsDo
-  Flex.flexSocketStlGenerator
+  --Flex.flexSocketStlGenerator
   --Flex.flexSocketShowCurrentState
   
   --W.insertWristDimensions --
