@@ -504,6 +504,24 @@ anyCornerPoint +++ (CornerPointsId) = anyCornerPoint
 (CubePoints f1 f2 f3 f4 b1 b2 b3 b4) +++ (RightFace b3t b4t f3t f4t) =
   CubePoints {b1=b4, b4=b4t, b2=b3, b3=b3t, f1=f4, f2=f3, f3=f3t, f4=f4t}
 
+(CubePoints f1 f2 f3 f4 b1 b2 b3 b4) +++ (FrontRightLine f3' f4') =
+  FrontFace f4 f3 f3' f4'
+
+(CubePoints f1 f2 f3 f4 b1 b2 b3 b4) +++ (BackRightLine b3' b4') =
+  BackFace b4 b3 b3' b4'
+
+(FrontFace f1 f2 f3 f4) +++ (FrontRightLine f3' f4') =
+  FrontFace f4 f3 f3' f4'
+
+(FrontFace f1 f2 f3 f4) +++ (FrontLeftLine f1' f2') =
+  FrontFace f1' f2' f2 f1
+
+(BackFace b1 b2 b3 b4) +++ (BackRightLine b3' b4') =
+  BackFace b4 b3 b3' b4'
+
+(BackFace b1 b2 b3 b4) +++ (BackLeftLine b1' b2') =
+   BackFace b1' b2' b2 b1
+
 (BackFace b1t b2t b3t b4t) +++ (CubePoints f1 f2 f3 f4 b1 b2 b3 b4) =
   CubePoints {b1=b1t, b2=b2t, b3=b3t, b4=b4t, f1=b1, f2=b2, f3=b3, f4=b4}
 
