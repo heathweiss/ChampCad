@@ -13,8 +13,8 @@ import Examples.OpenHand.SocketMount(socketMountStlGenerator, socketMountShowCub
                                      initializeDatabase, insertMount, viewMountByName, setCurrentMount, showFaceDimensions )
 import qualified Examples.OpenHand.MotorMount as M (motorMountHardCodedStlGenerator, motorMountHardCodedShowCubes,
                                    initializeDatabase, insertMotorMount, motorMountRunGeneratorFromDB)
-import qualified Examples.OpenHand.FlexiSocket as Flex (flexiSocketTestsDo, flexSocketStlGenerator, testCubeStlGenerator, testCubeShowCubes,
-                                     testCubeRotatedStlGenerator, flexSocketPlainStlGenerator, flexSocketPlainStlGeneratorDbStlGeneretor,
+import qualified Examples.OpenHand.FlexiSocket as Flex (flexSocketStlGenerator, {-testCubeStlGenerator, testCubeShowCubes,
+                                     testCubeRotatedStlGenerator,-} flexSocketPlainStlGenerator, flexSocketPlainStlGeneratorDbStlGeneretor,
                                      initializeDatabase, insertFlexDimensions, flexSocketWithRiserDbStlGenerator, flexSocketShowCurrentState)
 import qualified Examples.OpenHand.Common  as C (initializeDatabase, insertDimensions, seeCommonFactors)
 

@@ -23,6 +23,7 @@ import GeometryRadiusTest(geometryRadiusTestDo)
 import AngleTest(angleTestDo)
 import VertexTest(vertexTestDo)
 import PointsTest(pointsTestDo)
+import DiamondCutterTest(diamondCutterTestDo)
 
 --main :: IO ()
 main = do
@@ -49,3 +50,4 @@ main = do
   angleTestDo
   vertexTestDo
   pointsTestDo
+  diamondCutterTestDo

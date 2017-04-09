@@ -85,6 +85,7 @@ library
                        --Shapes
                        Primitives.Cylindrical.Walled, Primitives.Cubical
                        Primitives.Cylindrical.Solid
+                       Primitives.DiamondCutter
                        
                        --Scanning
                        Scan.Filter,
@@ -162,6 +163,7 @@ test-suite ChampCad-test
                        AngleTest
                        VertexTest
                        PointsTest
+                       DiamondCutterTest
  
   build-depends:       base
                      , ChampCad

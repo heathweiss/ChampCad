@@ -6,7 +6,7 @@ import Geometry.Angle(Angle(..), rotateAngle, getQuadrantAngle, RotateFactor(..)
 import CornerPoints.Points(Point(..))
 
 angleTestDo = do
-  putStrLn "\n\n" 
+  putStrLn "" 
   putStrLn "angleTestDo tests"
   runTestTT quad1CenteredTest
   runTestTT quad1X1Y10Test
