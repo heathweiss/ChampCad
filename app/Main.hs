@@ -9,13 +9,13 @@ import Examples.OpenBionicsCom.OpenBionicsDotComDesignWork (fullLengthSocketWith
 import qualified  Examples.OpenHand.Wrist as W (wristAndDoubleCylinderStlGenerator, wristAndDoubleCylinderShowCubes,
                                wristSquaredOffStlGenerator, wristSquaredOffShowCubes, wristSquaredOffStlFromDbGenerator,
                                initializeDatabase, insertWristDimensions, wristWithRoundRiserDBGenerator)
-import Examples.OpenHand.SocketMount(socketMountStlGenerator, socketMountShowCubes, socketMountTestsDo, generateSocketMountStlUsingDbValues,
+import qualified Examples.OpenHand.SocketMount as SM (socketMountStlGenerator, socketMountShowCubes, socketMountTestsDo, generateSocketMountStlUsingDbValues,
                                      initializeDatabase, insertMount, viewMountByName, setCurrentMount, showFaceDimensions )
 import qualified Examples.OpenHand.MotorMount as M (motorMountHardCodedStlGenerator, motorMountHardCodedShowCubes,
                                    initializeDatabase, insertMotorMount, motorMountRunGeneratorFromDB)
-import qualified Examples.OpenHand.FlexiSocket as Flex (flexSocketStlGenerator, {-testCubeStlGenerator, testCubeShowCubes,
-                                     testCubeRotatedStlGenerator,-} flexSocketPlainStlGenerator, flexSocketPlainStlGeneratorDbStlGeneretor,
-                                     initializeDatabase, insertFlexDimensions, flexSocketWithRiserDbStlGenerator, flexSocketShowCurrentState)
+import qualified Examples.OpenHand.FlexiSocket as Flex (flexSocketStlGenerator, flexSocketPlainStlGenerator, flexSocketPlainStlGeneratorDbStlGeneretor,
+                                     initializeDatabase, insertFlexDimensions, flexSocketWithRiserDbStlGenerator, flexSocketShowCurrentState,
+                                     flexBottomForSocketWithRiserDbStlGenerator)
 import qualified Examples.OpenHand.Common  as C (initializeDatabase, insertDimensions, seeCommonFactors)
 
 import Examples.Primitives.Squared(cylinderWithSquaredRadiiStlGenerator, )
@@ -41,6 +41,8 @@ main = do
   -- x <-  getArgs
  --loadMDRAndPassToProcessor (read $ head x) (read $ head $ tail x)
 
+  SM.generateSocketMountStlUsingDbValues currentSocket
+
   --flexSocketPlainStlGeneratorDbStlGeneretor (head x)
   --wristSquaredOffStlFromDbGenerator
   --generateSocketMountStlUsingDbValues
@@ -49,9 +51,10 @@ main = do
   --M.motorMountRunGeneratorFromDB (head x)
   --M.motorMountRunGeneratorFromDB currentSocket
   
-  --C.insertDimensions
-  
-  Flex.flexSocketWithRiserDbStlGenerator currentSocket
+ 
+
+  --Flex.flexBottomForSocketWithRiserDbStlGenerator currentSocket
+  --Flex.flexSocketWithRiserDbStlGenerator currentSocket
   --Flex.insertFlexDimensions
   --Flex.flexiSocketTestsDo
   --Flex.flexSocketStlGenerator
