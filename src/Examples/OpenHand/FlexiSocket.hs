@@ -22,7 +22,8 @@ module Examples.OpenHand.FlexiSocket(flexSocketStlGenerator, flexSocketShowCurre
                                      testCubeRotatedStlGenerator,-} flexSocketPlainStlGenerator,
                                      flexSocketPlainStlGeneratorDbStlGeneretor,
                                      initializeDatabase, insertFlexDimensions, FlexDimensions(..),
-                                     flexSocketWithRiserDbStlGenerator, uniqueFlexDimensionName) where
+                                     flexSocketWithRiserDbStlGenerator, uniqueFlexDimensionName,
+                                     flexBottomForSocketWithRiserDbStlGenerator) where
 
 import Examples.OpenHand.Common(Dimensions(..), commontDBName, uniqueDimensionName, flexOuterTranspose, setFlexiSocketCommonFactors,
                                 Dimensions(..), CommonFactors(..) )
@@ -64,7 +65,7 @@ import Scan.Filter(runningAverage, runningAvgSingleDegreeRadii)
 import Helpers.List((++:))
 
 import Primitives.Cylindrical.Walled(squaredYLengthenedCylinder, squaredCylinder, cylinder)
-import Primitives.DiamondCutter(DiamondBuilder(..), runDiamondBuilder, runFrontToBackDiamondBuilder, OffSet(..))
+import Primitives.DiamondCutter(DiamondBuilder(..), runDiamondBuilder, runFrontToBackDiamondBuilder, OffSet(..), defaultDiamondBuilder)
 
 import Data.Word(Word8)
 import qualified Data.ByteString.Lazy as BL
@@ -165,13 +166,18 @@ insertFlexDimensions     = runSqlite commontDBName $ do
                
   --insert $ CurrentDimensions dimensionsId
   liftIO $ putStrLn "flex dimensions inserted"
--- ===================================================socket with round riser ==============================================================
+-- ===================================================socket with round riser: top half==================================================
 -- =========================================================================================================================================
 {-
 Add a round riser to the top for joining to the finger joint section.
 The motor mount socket will glue to the outside of this, with no need to join up at the riser section.
 This riser, flexible material, should go over top of the finger joints riser, to give it strength, as finger section will be solid material.
-For now, does not used diamond cutter, as it does not yet work.
+
+Use the DiamondCutter on it.
+
+Output the top half of the socket with the riser because:
+The entire socket did not print. Pronsole said it was done printing file. Was it to big for RepRap/Marlin or Slic3r.
+So print this top half, and the bottom done separately.
 
 Should be based on the socket made for the openBionics.com socket: Examples.OpenBionicsCom.OpenBionicsDotComDesignWork.shortSocketToLargeShaft
 -}
@@ -236,11 +242,7 @@ flexSocketWithRiser innerSleeveSDR         outerSleeveSDR         rowReductionFa
              ( concat $ map (runFrontToBackDiamondBuilder flexSocketDiamondBuilder)
                ( concat $ take take' $ drop drop'  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
              )
-  {- without the diamond cutter
-  mainSocket
-    <- buildCubePointsListSingle "wristCubes"
-             ( concat $ take take' $ drop drop'  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
-  -}
+  
   
   mainSocketTopFaces
     <- buildCubePointsListSingle "mainSocketTopFaces"
@@ -317,7 +319,67 @@ flexSocketWithRiser innerSleeveSDR         outerSleeveSDR         rowReductionFa
   
   
   return mainSocket
+-- ================================================== bottom of socket with diamonds ======================================================
+-- ==========================================================================================================================================
 
+flexBottomForSocketWithRiserDbStlGenerator :: String -> IO ()
+flexBottomForSocketWithRiserDbStlGenerator dimensionsName  = runSqlite commontDBName $ do
+  maybeCommonDimensions <- getBy $ uniqueDimensionName dimensionsName
+  maybeFlexDimensions <- getBy $ UniqueFlexDimensionName dimensionsName
+  case maybeCommonDimensions of
+        Nothing -> liftIO $ putStrLn "common dimensions not found"
+        Just (Entity commonDimensionsId commonDimensions) -> do
+          --liftIO $ flexSocketPlainStlGenerator $ setFlexiSocketCommonFactors commonDimensions
+          liftIO $ putStrLn "common dimensions found"
+          liftIO $ flexBottomForSocketWithRiserStlGenerator (setFlexiSocketCommonFactors commonDimensions)
+          
+             
+
+flexBottomForSocketWithRiserStlGenerator :: CommonFactors ->  IO ()
+flexBottomForSocketWithRiserStlGenerator (CommonFactors innerTranspose outerTranspose drop' take' ) = do
+  contents <- BL.readFile "src/Data/scanFullData.json"
+  
+  case (decode contents) of
+   
+      Just (MultiDegreeRadii name' degrees') ->
+        let rowReductionFactor = 100::RowReductionFactor
+            innerSleeveMDR = (transpose (+ innerTranspose)) . (reduceScan rowReductionFactor) . removeDefectiveTopRow' $
+                              (MultiDegreeRadii
+                                name'
+                                degrees'
+                              )
+
+            outerSleeveMDR = transpose (+ (outerTranspose - innerTranspose) ) innerSleeveMDR
+            cpoints =  ((execState $ runExceptT (flexBottomForSocketWithRiser (degrees innerSleeveMDR) (degrees outerSleeveMDR)
+                                                 rowReductionFactor    pixelsPerMM
+                                                 (CommonFactors innerTranspose outerTranspose drop' take' )
+                                                   ) ) [])
+        in  writeStlToFile $ newStlShape "socket with riser"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
+      Nothing                                ->
+        putStrLn "File not decoded"
+
+
+flexBottomForSocketWithRiser :: [SingleDegreeRadii] -> [SingleDegreeRadii] -> RowReductionFactor -> PixelsPerMillimeter ->
+                       CommonFactors ->  
+                       ExceptT BuilderError (State CpointsStack ) CpointsList
+flexBottomForSocketWithRiser innerSleeveSDR         outerSleeveSDR         rowReductionFactor    pixelsPerMM 
+                    (CommonFactors innerTranspose outerTranspose drop' take' )  = do
+
+  let angles = map Angle  [0,10..360]
+      transposeFactors = [0,heightPerPixel.. ]
+      heightPerPixel = (1/ pixelsPerMM) * (fromIntegral rowReductionFactor)
+      origin = Point 0 0 50
+      layersUsedBySocketWithRiser = drop' + take'
+      mergeLayersOfSocket = concat
+      mergeDiamondSections = concat
+
+  mainSocket
+    <- buildCubePointsListSingle "wristCubes"
+             ( mergeDiamondSections $ map (runFrontToBackDiamondBuilder flexSocketDiamondBuilder)
+               ( mergeLayersOfSocket  $ drop layersUsedBySocketWithRiser  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
+             )
+
+  return mainSocket
        
 -- ================================================== plain socket generator ===============================================================
 -- =========================================================================================================================================
@@ -452,517 +514,26 @@ flexSocket    innerSleeveSDR         outerSleeveSDR         rowReductionFactor  
 
 
 
-
+{-
+edge offset of .2 seems to be the smallest can go and still have good print.
+Next smallest tried was .15.
+-}
 flexSocketDiamondBuilder :: CornerPoints -> DiamondBuilder
 flexSocketDiamondBuilder cube =
-  let defaultEdgeOffset = (OffSet 0.1 0.1 0.1)
+  let edgeOffset = (OffSet 0.2 0.2 0.2)
+      centerOffset = (OffSet 0.5 0.5 0.5)
+      defaultDiamond = defaultDiamondBuilder cube
   in
-      Diamond { outerCube = cube,
-                topDiamondFace = Nothing,
-                topDiamondCorner = Nothing,
-                topCenterPoint = Nothing,
-                topDiamondHorizontalOffsets = (OffSet 0.5 0.5 0.5),
-                topDiamondVertiacalOffsets = defaultEdgeOffset, --(OffSet 0.15 0.15 0.15),
-                topRightDiamondFace = Nothing,
-                rightDiamondFace = Nothing,
-                rightCenterPoint = Nothing,
-                rightDiamondCorner = Nothing,
-                rightDiamondHorizontalOffsets = defaultEdgeOffset, -- (OffSet 0.15 0.15 0.15),
-                rightDiamondVerticalOffsets = (OffSet 0.5 0.5 0.5),
-                bottomRightDiamondFace = Nothing,
-                bottomDiamondFace = Nothing,
-                bottomDiamondCorner = Nothing,
-                bottomCenterPoint = Nothing,
-                bottomDiamondHorizontalOffsets = (OffSet 0.5 0.5 0.5),
-                bottomDiamondVerticalOffsets = defaultEdgeOffset, --(OffSet 0.15 0.15 0.15),
-                bottomLeftDiamondFace = Nothing,
-
-                leftDiamondFace = Nothing,
-                leftCenterPoint = Nothing,
-                leftDiamondCorner = Nothing,
-                --try opposite values did not work: (OffSet 0.75 0.75 0.75),
-                leftDiamondHorizontalOffsets = defaultEdgeOffset, -- (OffSet 0.15 0.15 0.15),
-                leftDiamondVerticalOffsets  = (OffSet 0.5 0.5 0.5),
-                
-                topLeftDiamondFace = Nothing
-              }
-
-
--- ============================================================== Orig Diamond =========================================================
--- ============================================================== Orig Diamond =========================================================
--- ============================================================== Orig Diamond =========================================================
-{-
-cutTheDiamond :: CornerPoints -> [CornerPoints]
-cutTheDiamond cube =
-  [cutTheDiamondTopFace cube,
-   cutTheDiamondTopRightCorner cube,
-   cutTheDiamondRightFace cube,
-   cutTheDiamondBtmRightCorner cube,
-   cutTheDiamondBtmFace cube,
-   cutTheDiamondBtmLeftCorner cube,
-   cutTheDiamondLeftFace cube,
-   cutTheDiamondTopLeftCorner cube
-  ]
-
-cutTheDiamondFrontBase :: (CornerPoints -> CornerPoints) -> (CornerPoints -> CornerPoints)
-                       -> CornerPoints -> CornerPoints -> CornerPoints
-cutTheDiamondFrontBase    reverseBtm reverseTop btmPoints       topPoints       =
-  let btmFrontLine  = reverseBtm $ toBottomFrontLine  btmPoints
-      topFrontLine  = reverseTop $ toFrontTopLine topPoints
-  in  btmFrontLine +++ topFrontLine
-{-
-cutTheDiamondFrontBase :: (CornerPoints -> CornerPoints) -> (CornerPoints -> CornerPoints)
-                       -> CornerPoints -> CornerPoints -> CornerPoints
-cutTheDiamondFrontBase    reverseBtm reverseTop btmPoints       topPoints       =
-  let btmFrontLine  = reverseBtm $ toBottomFrontLine  btmPoints
-      topFrontLine  = reverseTop $ toFrontTopLine topPoints
-  in  btmFrontLine +++ topFrontLine
--}
-cutTheDiamondBackBase :: (CornerPoints -> CornerPoints) -> (CornerPoints -> CornerPoints) -> CornerPoints -> CornerPoints -> CornerPoints
-cutTheDiamondBackBase    reverseBtm reverseTop btmPoints       topPoints       =
-  let btmBackLine  = reverseBtm $ toBackBottomLine  btmPoints
-      topBackLine  = reverseTop $ toBackTopLine topPoints
-  in  btmBackLine +++ topBackLine
--}
--- ===============================================================================================================================================================================
-{-
-cutTheDiamondTopLeftCorner :: CornerPoints -> CornerPoints
-cutTheDiamondTopLeftCorner cube =
-  let frontFace = cutTheDiamondFrontBase
-                    (reverseNormal) (id)
-                    ((cutTheDiamondF1ShiftedIn cube) +++ (cutTheDiamondF2ShiftedIn cube))
-                    (extractF2 cube)
-      --backFace  = (transposeY (+(-10))) . toBackFace $ frontFace
-      backFace = cutTheDiamondBackBase
-                   (reverseNormal) (id)
-                   ((cutTheDiamondB1ShiftedIn cube) +++ (cutTheDiamondB2ShiftedIn cube))
-                    (extractB2 cube)
-  in  frontFace +++ backFace
-
-cutTheDiamondLeftFace :: CornerPoints -> CornerPoints
-cutTheDiamondLeftFace cube =
-  let frontFace = cutTheDiamondFrontBase (id) (id) (cutTheDiamondF1ShiftedIn cube) ((extractF1 cube) +++ (extractF2 cube)) 
-      --backFace     = (transposeY (+(-10))) . toBackFace $ frontFace
-      backFace  = cutTheDiamondBackBase (id) (id) (cutTheDiamondB1ShiftedIn cube) ((extractB1 cube) +++ (extractB2 cube)) 
-  in  backFace +++ frontFace
-
-cutTheDiamondBtmLeftCorner :: CornerPoints -> CornerPoints
-cutTheDiamondBtmLeftCorner cube =
-  let frontFace      = cutTheDiamondFrontBase
-                         (reverseNormal) (id)
-                         ((cutTheDiamondF1ShiftedIn cube) +++ (cutTheDiamondF4ShiftedIn cube))
-                         (extractF1 cube)
+      defaultDiamond
       
-      --backFace     = (transposeY (+(-10))) . toBackFace $ frontFace
-      
-      backFace = cutTheDiamondBackBase
-                         (reverseNormal) (id)
-                         ((cutTheDiamondB1ShiftedIn cube) +++ (cutTheDiamondB4ShiftedIn cube))
-                         (extractB1 cube)
-  in  backFace +++ frontFace
-      
-cutTheDiamondBtmFace :: CornerPoints -> CornerPoints
-cutTheDiamondBtmFace cube =
-  let frontFace = cutTheDiamondFrontBase (id) (reverseNormal) (cutTheDiamondF4ShiftedIn cube) (extractBottomFrontLine $ cube)
-      backFace  = cutTheDiamondBackBase (id) (reverseNormal) (cutTheDiamondB4ShiftedIn cube) (extractBackBottomLine $ cube)
-  in backFace +++ frontFace
-     
-
-cutTheDiamondTopFace :: CornerPoints -> CornerPoints
-cutTheDiamondTopFace cube  =
-  let frontFace = cutTheDiamondFrontBase
-                    (id) (id)
-                    (cutTheDiamondF2ShiftedIn cube) --F2
-                    (extractFrontTopLine cube) --FrontTopLine
-      backFace = cutTheDiamondBackBase (id) (id) (cutTheDiamondB2ShiftedIn cube) (extractBackTopLine cube)
-  in backFace +++ frontFace
-     
-cutTheDiamondTopRightCorner :: CornerPoints -> CornerPoints
-cutTheDiamondTopRightCorner cube =
-  let frontFace = cutTheDiamondFrontBase
-                    (id) (id)
-                    ((cutTheDiamondF2ShiftedIn cube) +++ (cutTheDiamondF3ShiftedIn cube))
-                    (extractF3 cube)
-      backFace  = cutTheDiamondBackBase
-                    (id) (id)
-                    ((cutTheDiamondB2ShiftedIn cube) +++ (cutTheDiamondB3ShiftedIn cube))
-                    (extractB3 cube)
-  in  frontFace +++ backFace
--}
-{-how do I add frontTopLine to F3
-cutTheDiamondTopRightCorner :: CornerPoints -> CornerPoints
-cutTheDiamondTopRightCorner cube =
-  let frontFace = cutTheDiamondFrontBase
-                    (id) (id)
-                    ((cutTheDiamondF2ShiftedIn cube) +++ (cutTheDiamondF3ShiftedIn cube))
-                    (extractF3 cube)
-      backFace  = cutTheDiamondBackBase
-                    (id) (id)
-                    ((cutTheDiamondB2ShiftedIn cube) +++ (cutTheDiamondB3ShiftedIn cube))
-                    (extractB3 cube)
-  in  frontFace +++ backFace
--}
-{-
-cutTheDiamondRightFace :: CornerPoints -> CornerPoints
-cutTheDiamondRightFace cube =
-  let frontFace  = cutTheDiamondFrontBase (id) (id) (cutTheDiamondF3ShiftedIn cube) (extractFrontRightLine $ cube)
-      backFace   = cutTheDiamondBackBase (id) (id) (cutTheDiamondB3ShiftedIn cube) (extractBackRightLine $ cube)
-  in  backFace +++ frontFace
-
-cutTheDiamondBtmRightCorner :: CornerPoints -> CornerPoints
-cutTheDiamondBtmRightCorner cube =
-  let frontFace = cutTheDiamondFrontBase (reverseNormal) (id)
-                                         ((cutTheDiamondF4ShiftedIn cube) +++ (cutTheDiamondF3ShiftedIn cube))
-                                         (extractF4 cube)
-      backFace = cutTheDiamondBackBase (reverseNormal) (id) ((cutTheDiamondB4ShiftedIn cube) +++ (cutTheDiamondB3ShiftedIn cube)) (extractB4 cube)
-  in  backFace +++ frontFace
-
-cutTheDiamondF2Centered :: CornerPoints -> CornerPoints
-cutTheDiamondF2Centered cube =
-  cutTheDiamond2Centered (extractF2) (extractF3) (F2) cube
-  
-cutTheDiamondB2Centered :: CornerPoints -> CornerPoints
-cutTheDiamondB2Centered cube =
-  cutTheDiamond2Centered (extractB2) (extractB3) (B2) cube
-
-cutTheDiamond2Centered :: (CornerPoints -> CornerPoints) -> (CornerPoints -> CornerPoints) -> (Point -> CornerPoints) -> CornerPoints -> CornerPoints
-cutTheDiamond2Centered     extract2                          extract3                         constructor                cube             =
-  offsetCornerPoints  0.5 0.5 0.5 (extract2 cube) (extract3 cube) (constructor)
-
-cutTheDiamondF3Centered :: CornerPoints -> CornerPoints
-cutTheDiamondF3Centered cube =
-  cutTheDiamond3Centered (extractF3) (extractF4) (F3) cube
-
-cutTheDiamondF4Centered :: CornerPoints -> CornerPoints
-cutTheDiamondF4Centered cube =
-  cutTheDiamond4Centered (extractF1) (extractF4)  (F4) cube
-
-cutTheDiamondB4Centered :: CornerPoints -> CornerPoints
-cutTheDiamondB4Centered cube =
-  cutTheDiamond4Centered (extractB1) (extractB4) (B4) cube
-
-cutTheDiamondF1Centered :: CornerPoints -> CornerPoints
-cutTheDiamondF1Centered cube =
-  cutTheDiamond1Centered (extractF2) (extractF1) (F1) cube
-
-cutTheDiamondB1Centered :: CornerPoints -> CornerPoints
-cutTheDiamondB1Centered cube  =
-  cutTheDiamond1Centered (extractB2) (extractB1) (B1) cube
-
-cutTheDiamond1Centered :: (CornerPoints -> CornerPoints) -> (CornerPoints -> CornerPoints) -> (Point -> CornerPoints) -> CornerPoints -> CornerPoints
-cutTheDiamond1Centered     extract2                          extract1                          constructor                cube             =
-  offsetCornerPoints  0.5 0.5 0.5 (extract2 cube) (extract1 cube) constructor
-
-cutTheDiamondB3Centered :: CornerPoints -> CornerPoints
-cutTheDiamondB3Centered cube =
-  cutTheDiamond3Centered (extractB3) (extractB4) (B3) cube
-
-cutTheDiamond3Centered :: (CornerPoints -> CornerPoints) -> (CornerPoints -> CornerPoints) -> (Point -> CornerPoints) -> CornerPoints -> CornerPoints
-cutTheDiamond3Centered    extract3                          extract4                           constructor                cube             =
-  offsetCornerPoints  0.5 0.5 0.5 (extract3 cube) (extract4 cube) constructor
-
-cutTheDiamond4Centered :: (CornerPoints -> CornerPoints) -> (CornerPoints -> CornerPoints) -> (Point -> CornerPoints) -> CornerPoints -> CornerPoints
-cutTheDiamond4Centered     extract1                          extract4                         constructor                cube             =
-  offsetCornerPoints  0.5 0.5 0.5 (extract1 cube) (extract4 cube) constructor
-
-cutTheDiamondD3Centered :: CornerPoints -> CornerPoints
-cutTheDiamondD3Centered cube =
-  cutTheDiamond3Centered (extractB3) (extractB4) (B3) cube
-
-cutTheDiamondF1ShiftedIn :: CornerPoints -> CornerPoints
-cutTheDiamondF1ShiftedIn cube =
-  offsetCornerPoints  0.25 0.25 0.25 (cutTheDiamondF1Centered cube) (cutTheDiamondF3Centered cube) (F1)
-
-cutTheDiamondF2ShiftedIn :: CornerPoints -> CornerPoints
-cutTheDiamondF2ShiftedIn cube =
-  cutTheDiamond2ShiftedIn (cutTheDiamondF2Centered) (cutTheDiamondF4Centered) (F2) cube
-
-cutTheDiamondB2ShiftedIn :: CornerPoints -> CornerPoints
-cutTheDiamondB2ShiftedIn cube =
-  cutTheDiamond2ShiftedIn (cutTheDiamondB2Centered) (cutTheDiamondB4Centered) (B2) cube
-
-cutTheDiamond1ShiftedIn :: (CornerPoints -> CornerPoints) -> (CornerPoints -> CornerPoints) -> (Point -> CornerPoints) -> CornerPoints -> CornerPoints
-cutTheDiamond1ShiftedIn    center1                           center3                           constructor                cube            =
-  offsetCornerPoints  0.25 0.25 0.25 (center1 cube) (center3 cube) constructor
-
-cutTheDiamondB1ShiftedIn :: CornerPoints -> CornerPoints
-cutTheDiamondB1ShiftedIn cube =
-  cutTheDiamond1ShiftedIn
-     --(cutTheDiamondB4Centered) (cutTheDiamondB2Centered) (B1) cube
-     (cutTheDiamondB1Centered) (cutTheDiamondB3Centered) (B1) cube
-  
-cutTheDiamond2ShiftedIn :: (CornerPoints -> CornerPoints) -> (CornerPoints -> CornerPoints) -> (Point -> CornerPoints) -> CornerPoints -> CornerPoints
-cutTheDiamond2ShiftedIn    center2                           center4                           constructor                cube            =
-  offsetCornerPoints 0.25 0.25 0.25 {-0 0 0.25-} (center2 cube) (center4 cube) constructor
-  
-cutTheDiamondF3ShiftedIn :: CornerPoints -> CornerPoints
-cutTheDiamondF3ShiftedIn cube =
-  cutTheDiamond3ShiftedIn (cutTheDiamondF3Centered) (cutTheDiamondF1Centered) (F3) cube
-
-cutTheDiamond3ShiftedIn :: (CornerPoints -> CornerPoints) -> (CornerPoints -> CornerPoints) -> (Point -> CornerPoints) -> CornerPoints -> CornerPoints
-cutTheDiamond3ShiftedIn    center3                           center1                           constructor                cube            =
-  offsetCornerPoints  0.25 0.25 0.25 (center3 cube) (center1 cube) constructor
-
-cutTheDiamondB3ShiftedIn :: CornerPoints -> CornerPoints
-cutTheDiamondB3ShiftedIn cube =
-  cutTheDiamond3ShiftedIn (cutTheDiamondB3Centered) (cutTheDiamondB1Centered) (B3) cube
-
-cutTheDiamond4ShiftedIn :: (CornerPoints -> CornerPoints) -> (CornerPoints -> CornerPoints) -> (Point -> CornerPoints) -> CornerPoints -> CornerPoints
-cutTheDiamond4ShiftedIn    center1                           center4                           constructor                cube            =
-  offsetCornerPoints 0.25 0.25 0.25 (center1 cube) (center4 cube) constructor
-
-cutTheDiamondB4ShiftedIn :: CornerPoints -> CornerPoints
-cutTheDiamondB4ShiftedIn cube =
-  cutTheDiamond4ShiftedIn (cutTheDiamondB4Centered) (cutTheDiamondB2Centered) (B4) cube
-  
-
-cutTheDiamondF4ShiftedIn :: CornerPoints -> CornerPoints
-cutTheDiamondF4ShiftedIn cube =
-  offsetCornerPoints {-0 0 0.25-}0.25 0.25 0.25 (cutTheDiamondF4Centered cube) (cutTheDiamondF2Centered cube) (F4)
-
-testCubeStandard = 
-  CubePoints {
-            f1 = Point {x_axis = 0.0, y_axis = 10.0, z_axis = 0.0},
-            f2 = Point {x_axis = 0.0, y_axis = 10.0, z_axis = 20.0},
-            f3 = Point {x_axis = 10.0, y_axis = 10.0, z_axis = 20.0},
-            f4 = Point {x_axis = 10.0, y_axis = 10.0, z_axis = 0.0},
-            b1 = Point {x_axis = 0.0, y_axis = 0.0, z_axis = 0.0},
-            b2 = Point {x_axis = 0.0, y_axis = 0.0, z_axis = 20.0},
-            b3 = Point {x_axis = 10.0, y_axis = 0.0, z_axis = 20.0},
-            b4 = Point {x_axis = 10.0, y_axis = 0.0, z_axis = 0.0}}
-  
-testCube :: ExceptT BuilderError (State CpointsStack ) CpointsList
-testCube = do
-  
-
-  cutterCubes <-
-     buildCubePointsListSingle "cube"
-     (cutTheDiamond testCubeStandard)
-
-  return cutterCubes
-
-
-testCubeStlGenerator :: IO ()
-testCubeStlGenerator = do
-  let cpoints =  ((execState $ runExceptT   testCube       ) [])
-  writeStlToFile $ newStlShape "motorMount"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
-
-testCubeShowCubes :: IO ()
-testCubeShowCubes = do
-  let cpoints =  ((evalState $ runExceptT   testCube       ) [])
-  print $ show cpoints
--}
-
-testCubeRotated1QuadClockWise =
-  CubePoints {
-            f4 = Point {x_axis = 0.0, y_axis = 10.0, z_axis = 0.0},
-            f3 = Point {x_axis = 0.0, y_axis = 10.0, z_axis = 20.0},
-            b3 = Point {x_axis = 10.0, y_axis = 10.0, z_axis = 20.0},
-            b4 = Point {x_axis = 10.0, y_axis = 10.0, z_axis = 0.0},
-            f1 = Point {x_axis = 0.0, y_axis = 0.0, z_axis = 0.0},
-            f2 = Point {x_axis = 0.0, y_axis = 0.0, z_axis = 20.0},
-            b2 = Point {x_axis = 10.0, y_axis = 0.0, z_axis = 20.0},
-            b1 = Point {x_axis = 10.0, y_axis = 0.0, z_axis = 0.0}}
-{-
-testCubeRotated :: ExceptT BuilderError (State CpointsStack ) CpointsList
-testCubeRotated = do
-  
-
-  cutterCubes <-
-     buildCubePointsListSingle "cube"
-     (cutTheDiamond testCubeRotated1QuadClockWise)
-
-  return cutterCubes
-
-
-testCubeRotatedStlGenerator :: IO ()
-testCubeRotatedStlGenerator = do
-  let cpoints =  ((execState $ runExceptT   testCubeRotated       ) [])
-  writeStlToFile $ newStlShape "motorMount"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
-
-testCubeRotatedShowCubes :: IO ()
-testCubeRotatedShowCubes = do
-  let cpoints =  ((evalState $ runExceptT   testCubeRotated       ) [])
-  print $ show cpoints
-
--}
-  -- =================================================== centering functions  ===========================================
-{-
-The offset should always be adjusted in relation to the 1st point to keep everthing standard.
-Otherwise the offset will differ depending on the angle around a radial shape.
-
-Must use the radial system as used by rotations.
-[
- origin::Point --This is the 1st point to adjust from
- pointAtFarEnd::Point --The second point.
-]
-|
-| calculate the angle
-|
-[
-angleBetweenPoints
-origin::Point
-pointAtFarEnd::Point
-]
-|
-|calculate distance between points
-|calulate shortened distance from origin
-[
-shortenedDistanceFromOrigin
-angleBetweenPoints
-origin::Point
-pointAtFarEnd::Point
-]
-|
-|calculate the new end point using:
-|-(adjustPointAxis (getXWithQuadrant angleBetweenPoints shortenedDistanceFromOrigin)) .
-| (adjustPointAxis (getYWithQuadrant angleBetweenPoints shortenedDistanceFromOrigin)) $ origin {z_axis = (z_axis origin)}
--}
-{-
-offsetPoint :: Offset -> Offset -> Offset -> Point ->         Point -> Point
-offsetPoint    offsetX   offsetY   offsetZ  (Point x1 y1 z1) (Point x2 y2 z2) =
-  let
-     origin = Point x1 y1 z1
-     pointAtFarEnd = Point x2 y2 z2
-     angleBetweenPoints = getXYAngle origin pointAtFarEnd 
-     distanceFromOrigin =  calcultateXYDistance origin pointAtFarEnd
-     shortenedDistanceFromOrigin =  Radius $  (radius distanceFromOrigin)  * (offsetX)
-     --setZ = z1 + ((z1 - z2) * offsetZ * (-1))
-     --setZ = z1 + ((abs $ z2 - z1) * offsetZ)
-  in
-   
-               -- $ origin {z_axis = setZ z1 z2 offsetZ}
-               Point (setAxis x1 x2 offsetX)
-                     (setAxis y1 y2 offsetY)
-                     (setAxis z1 z2 offsetZ)
--}
---version to work with the new DiamondBuilder
-
- 
-{-
-seeAdjustedX :: Offset -> Point ->         Point -> Point
-seeAdjustedX    offsetX   (Point x1 y1 z1) (Point x2 y2 z2) =
-  let
-     origin = Point x1 y1 z1
-     pointAtFarEnd = Point x2 y2 z2
-     angleBetweenPoints = getXYAngle origin pointAtFarEnd 
-     distanceFromOrigin =  calcultateXYDistance origin pointAtFarEnd
-     shortenedDistanceFromOrigin =  Radius $  (radius distanceFromOrigin)  * (offsetX)
-     
-        
-  in
-    (adjustPointAxis (getXWithQuadrant angleBetweenPoints shortenedDistanceFromOrigin)) -- .
-    --(adjustPointAxis (getYWithQuadrant angleBetweenPoints shortenedDistanceFromOrigin))
-    $ origin
-    
-seeShortenedXYDistance  :: Point ->  Point -> Double ->     Radius
-seeShortenedXYDistance origin    pointAtFarEnd  offsetX =
-  let distanceFromOrigin = calcultateXYDistance origin pointAtFarEnd
-      
-  in
-    Radius $  (radius distanceFromOrigin)  * (1 - offsetX)
-
-seeXYDistance :: Point ->  Point ->      Radius
-seeXYDistance    origin    pointAtFarEnd =
-  calcultateXYDistance origin pointAtFarEnd
-
-seeAngle :: Point -> Point ->      Angle
-seeAngle origin      pointAtFarEnd =
-  
-     getXYAngle origin pointAtFarEnd 
-{-
-offsetPoint :: Offset -> Offset -> Offset -> Point ->         Point -> Point
-offsetPoint    offsetX   offsetY   offsetZ  (Point x1 y1 z1) (Point x2 y2 z2) =
-  let
-     setX = x1 + (((x1 - x2) * offsetX * (-1)))
-        
-     setY = y1 + ((y1 - y2) * offsetY * (-1))
-        
-     setZ = z1 + ((z1 - z2) * offsetZ * (-1))
-        
-  in
-    Point setX setY setZ
-
--}
-{-
-Offset CornerPoints, based on the underlying Points.
-Obeys the same rules as offsetPoint.
-Uses a CornerPoints constructor to set the resulting CornerPoint 
--}
-offsetCornerPoints :: Offset -> Offset -> Offset -> CornerPoints -> CornerPoints -> (Point -> CornerPoints) -> CornerPoints
-offsetCornerPoints    offsetX   offsetY   offsetZ   (F1 f1')        (F4 f4')        cornerPointConst =
-  cornerPointConst $ offsetPoint offsetX   offsetY   offsetZ  f1' f4'
-
-offsetCornerPoints    offsetX   offsetY   offsetZ   (F1 f1')        (F3 f3')        cornerPointConst =
-  cornerPointConst $ offsetPoint offsetX   offsetY   offsetZ  f1' f3'   
- 
-offsetCornerPoints    offsetX   offsetY   offsetZ   (F2 f2')        (F3 f3')  cornerPointConst = 
-  cornerPointConst $ offsetPoint offsetX   offsetY   offsetZ  f2' f3'
-
-offsetCornerPoints    offsetX   offsetY   offsetZ   (F2 f2')        (F4 f4')  cornerPointConst = 
-  cornerPointConst $ offsetPoint offsetX   offsetY   offsetZ  f2' f4'
-
-offsetCornerPoints    offsetX   offsetY   offsetZ   (F2 f2')        (F1 f1')  cornerPointConst = 
-  cornerPointConst $ offsetPoint offsetX   offsetY   offsetZ  f2' f1'
-
-offsetCornerPoints    offsetX   offsetY   offsetZ   (F3 f3')  (F1 f1')                cornerPointConst =
-  cornerPointConst $ offsetPoint offsetX   offsetY   offsetZ  f3' f1'   
-
-offsetCornerPoints    offsetX   offsetY   offsetZ   (F4 f4') (F2 f2')   cornerPointConst = 
-  cornerPointConst $ offsetPoint offsetX   offsetY   offsetZ  f4' f2'
-
-offsetCornerPoints    offsetX   offsetY   offsetZ   (F1 f1')        (F2 f2')  cornerPointConst = 
-  cornerPointConst $ offsetPoint offsetX   offsetY   offsetZ  f1' f2' 
-
-offsetCornerPoints    offsetX   offsetY   offsetZ   (F4 f4')        (F3 f3')  cornerPointConst = 
-  cornerPointConst $ offsetPoint offsetX   offsetY   offsetZ  f4' f3'
-
-offsetCornerPoints    offsetX   offsetY   offsetZ (F3 f3') (F4 f4')  cornerPointConst = 
-  cornerPointConst $ offsetPoint offsetX   offsetY   offsetZ  f3' f4' 
-
-offsetCornerPoints    offsetX   offsetY   offsetZ   (B1 b1')        (B4 b4')        cornerPointConst =
-  cornerPointConst $ offsetPoint offsetX   offsetY   offsetZ  b1' b4'     
- 
-offsetCornerPoints    offsetX   offsetY   offsetZ   (B2 b2')        (B3 b3')  cornerPointConst = 
-  cornerPointConst $ offsetPoint offsetX   offsetY   offsetZ  b2' b3'
-
-offsetCornerPoints    offsetX   offsetY   offsetZ   (B2 b2')        (B4 b4')  cornerPointConst = 
-  cornerPointConst $ offsetPoint offsetX   offsetY   offsetZ  b2' b4'
-
-offsetCornerPoints    offsetX   offsetY   offsetZ   (B4 b4') (B2 b2')         cornerPointConst = 
-  cornerPointConst $ offsetPoint offsetX   offsetY   offsetZ  b4' b2'
-
-offsetCornerPoints    offsetX   offsetY   offsetZ   (B1 b1')        (B2 b2')  cornerPointConst = 
-  cornerPointConst $ offsetPoint offsetX   offsetY   offsetZ  b1' b2'
-
-offsetCornerPoints    offsetX   offsetY   offsetZ   (B1 b1')        (B3 b3')  cornerPointConst = 
-  cornerPointConst $ offsetPoint offsetX   offsetY   offsetZ  b1' b3' 
-
-offsetCornerPoints    offsetX   offsetY   offsetZ   (B4 b4')        (B3 b3')  cornerPointConst = 
-  cornerPointConst $ offsetPoint offsetX   offsetY   offsetZ  b4' b3'
-
-offsetCornerPoints    offsetX   offsetY   offsetZ   (B3 b3') (B4 b4')  cornerPointConst = 
-  cornerPointConst $ offsetPoint offsetX   offsetY   offsetZ  b3' b4'
-
-offsetCornerPoints    offsetX   offsetY   offsetZ   (B3 b3') (B1 b1')  cornerPointConst = 
-  cornerPointConst $ offsetPoint offsetX   offsetY   offsetZ  b3' b1'
-
-offsetCornerPoints    offsetX   offsetY   offsetZ   (B2 b2')        (B1 b1')  cornerPointConst = 
-  cornerPointConst $ offsetPoint offsetX   offsetY   offsetZ  b2' b1'
-
-offsetCornerPoints    _ _ _  unhandled cornerpoints  _ =
-  CornerPointsError "Missing pattern match for offsetCornerPoints"
--}
--- ========================================= socket general support functions========================================================
--- ==================================================================================================================================
-
-
--- ==================================================== local tests =================================================================
--- ==================================================================================================================================
--- ==================================================================================================================================
-
-
--- =================================================================== :emergent ===============================================================
-
-
-
+        {  
+           topDiamondHorizontalOffsets = centerOffset,
+           topDiamondVertiacalOffsets = edgeOffset,
+           rightDiamondHorizontalOffsets = edgeOffset, 
+           rightDiamondVerticalOffsets = centerOffset,
+           bottomDiamondHorizontalOffsets = centerOffset,
+           bottomDiamondVerticalOffsets = edgeOffset, 
+           leftDiamondHorizontalOffsets = edgeOffset, 
+           leftDiamondVerticalOffsets  = centerOffset
+        }
+              

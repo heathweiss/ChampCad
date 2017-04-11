@@ -1,5 +1,5 @@
 module Primitives.DiamondCutter(DiamondBuilder(..), runDiamondBuilder, runFrontToBackDiamondBuilder, OffSet(..),
-                               isTheFrontDiamondDone, isTheBackDiamondDone) where
+                               isTheFrontDiamondDone, isTheBackDiamondDone, defaultDiamondBuilder) where
 import CornerPoints.Points(Point(..))
 import CornerPoints.CornerPoints(CornerPoints(..), (+++), (|+++|), (|@+++#@|), (+++>))
 import CornerPoints.Create(Origin(..), createCornerPoint)
@@ -13,9 +13,9 @@ import CornerPoints.FaceConversions(backFaceFromFrontFace, upperFaceFromLowerFac
 
 
 import Data.Maybe(isNothing, fromJust, isJust)
--- ============================================================== New Diamond =========================================================
--- ============================================================== New Diamond =========================================================
--- ============================================================== New Diamond =========================================================
+
+--ToDo: Figure out why flexSocket always hava an error that has to be fixed with Netfabb.
+
 data DiamondBuilder =
   Diamond
     {outerCube :: CornerPoints,
@@ -148,6 +148,10 @@ isTheBackDiamondDone diamondBuilder =
 {-
 Base function used by Front and Back Faces.
 Use to create the top cube of the diamond, that goes from the top point of the diamond, to the top face of the outer cube.
+
+ToDo:
+ All these main builder base functions could be combined into a single function.
+ This would require the instances to have a bit more complicated functions ,via function composition, passed in.
 -}
 topDiamondFaceBuilderBase :: (CornerPoints -> Point) -> (CornerPoints -> Point) -> (Point -> CornerPoints) -> (CornerPoints -> CornerPoints)
                           -> (CornerPoints -> CornerPoints) -> (DiamondBuilder -> DiamondBuilder)
