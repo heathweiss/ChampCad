@@ -10,7 +10,7 @@ import qualified  Examples.OpenHand.Wrist as W (wristAndDoubleCylinderStlGenerat
                                wristSquaredOffStlGenerator, wristSquaredOffShowCubes, wristSquaredOffStlFromDbGenerator,
                                initializeDatabase, insertWristDimensions, wristWithRoundRiserDBGenerator)
 import qualified Examples.OpenHand.SocketMount as SM (socketMountStlGenerator, socketMountShowCubes, socketMountTestsDo, generateSocketMountStlUsingDbValues,
-                                     initializeDatabase, insertMount, viewMountByName, setCurrentMount, showFaceDimensions )
+                                     initializeDatabase, insertMount, viewMountByName, setCurrentMount, showFaceDimensions, showSocketMountCubesUsingDbValues )
 import qualified Examples.OpenHand.MotorMount as M (motorMountHardCodedStlGenerator, motorMountHardCodedShowCubes,
                                    initializeDatabase, insertMotorMount, motorMountRunGeneratorFromDB)
 import qualified Examples.OpenHand.FlexiSocket as Flex (flexSocketStlGenerator, flexSocketPlainStlGenerator, flexSocketPlainStlGeneratorDbStlGeneretor,
@@ -41,7 +41,8 @@ main = do
   -- x <-  getArgs
  --loadMDRAndPassToProcessor (read $ head x) (read $ head $ tail x)
 
-  SM.generateSocketMountStlUsingDbValues currentSocket
+  --SM.generateSocketMountStlUsingDbValues currentSocket
+  SM.showSocketMountCubesUsingDbValues currentSocket
 
   --flexSocketPlainStlGeneratorDbStlGeneretor (head x)
   --wristSquaredOffStlFromDbGenerator

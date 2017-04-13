@@ -22,7 +22,7 @@ The ninja-flex will fit inside of it, and be attached to give it support and all
 
 module Examples.OpenHand.SocketMount(socketMountStlGenerator, socketMountShowCubes, socketMountTestsDo,
                                      initializeDatabase, insertMount, viewMountByName, setCurrentMount,
-                                     generateSocketMountStlUsingDbValues, showFaceDimensions) where
+                                     generateSocketMountStlUsingDbValues, showFaceDimensions, showSocketMountCubesUsingDbValues) where
 
 import Examples.OpenHand.Common(Dimensions(..), commontDBName, uniqueDimensionName, CommonFactors(..), setMountCommonFactors)
 
@@ -159,37 +159,7 @@ CurrentMount
   mountId MountId
  deriving Show
 |]
-{- before renaming ySlope and add xSlope
-share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
-Mount
-   name String
-   UniqueName name
-   desc String
-  deriving Show
 
-FaceSlope
-  slope Double
-  mountId MountId
-  MountIdForFaceSlope mountId
- deriving Show
-
-FaceDimensions
-  --zTop Double
-  --zBtm Double
-  zHeight Double default=5.0
-  leftx Double
-  lefty Double
-  rightx Double
-  righty Double
-  mountId MountId
-  MountIdForFaceDimensions mountId
- deriving Show
-
-CurrentMount
-  mountId MountId
- deriving Show
-|]
--}
 -- | Initialize a new database with all tables. Will alter tables of existing db.
 initializeDatabase :: IO ()
 initializeDatabase = runSqlite socketMountDatabaseConnStr $ do
@@ -247,37 +217,37 @@ showFaceDimensions = runSqlite socketMountDatabaseConnStr $ do
 
  -- =============================================== face/mount builder =====================================
 {- Results are passed into generateMounts to build the 1st FrontFace of the mount.
-   Other functions will turn this into a 2D grid of FrontFaces's.
+   Other functions will turn this into a 2D grid of FrontFaces's to match all the target cubes of the socket.
 
 Given:
-  Use supplied values, on the location of the points, height, and slope of the FrontFace.
+  Location of the points, height, and slope of the FrontFace.
 
 Task:
   Build the FrontFace from the input values.
 
 Return:
   FrontFace: This is a wide Face that is the full width of the mount, and
-  the height is ~= height of single layer of socket, as given by $ ztop - zbtm
+  the height is ~= height of single layer of socket, as given by $ topZaxis - btmZaxis
 -}
 buildFrontFace :: Double -> Double -> Double -> Double -> Double -> Double -> Xslope -> Yslope -> CornerPoints
-buildFrontFace    ztop       zbtm     lx        ly        rx        ry        xSlope    ySlope       =
+buildFrontFace    topZaxis       btmZaxis     leftXaxis        leftYaxis        rightXaxis        rightYaxis        xSlope    ySlope       =
                   (
                     (F2
-                      (Point lx ly ztop)
+                      (Point leftXaxis leftYaxis topZaxis)
                     )
                     +++
                     (F3
-                      (Point rx ry ztop)
+                      (Point rightXaxis rightYaxis topZaxis)
                     )
                   ) 
                   +++
                   ( 
                     (F1
-                      (Point lx (ly + ySlope) zbtm)
+                      (Point leftXaxis (leftYaxis + ySlope) btmZaxis)
                     )
                     +++
                     (F4
-                      (Point rx (ry + ySlope) zbtm)
+                      (Point rightXaxis (rightYaxis + ySlope) btmZaxis)
                     )
                   )
 
@@ -416,57 +386,6 @@ socketMount    innerSleeveSDR         outerSleeveSDR         rowReductionFactor 
   
   return motorMountThatExtendsOutFromTheSocket
   
-{-before rotating the mount around the socket, so properly lined up with his hand.
-socketMount :: [SingleDegreeRadii] -> [SingleDegreeRadii] -> RowReductionFactor -> PixelsPerMillimeter ->
-               FaceDimensions -> FaceSlope -> Int -> Int ->
-               ExceptT BuilderError (State CpointsStack ) CpointsList
-socketMount    innerSleeveSDR         outerSleeveSDR         rowReductionFactor    pixelsPerMM
-               (FaceDimensions  zHeight_ leftx_ lefty_ rightx_ righty_ _) (FaceSlope slope_ _) drop' take' = do
-  let extensionHeight = 30
-      transposeFactors = [0,heightPerPixel.. ]
-      heightPerPixel = (1/ pixelsPerMM) * (fromIntegral rowReductionFactor)
-      origin = (Point{x_axis=0, y_axis=0, z_axis=50})
-      angles = (map (Angle) [0,10..360])
-      radii = repeat $ Radius 15 -- [Radius x | x <- [15,15..]] --
-      radiiSquared = --take 2 
-                     [squaredOff 3 radius' angle'
-                       | radius' <- radii
-                       | angle'  <- angles
-                     ]
-      backStripCutterCubes =
-        [CornerPointsId, CornerPointsId]
-        ++
-        [CornerPointsNothing | x <-[1,2..29]]
-        ++
-        --(repeat CornerPointsId)
-        [CornerPointsId | x <-[1,2..5]]
-
-      backStripCutterCubesList = concat [backStripCutterCubes | x <-  [1..]]
-
-  
-  wristCubes   <- buildCubePointsListWithAdd "wristCubes"
-                --(concat $ take take' $ drop 1  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
-                (concat $ take take' $ drop drop'  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
-                ([CornerPointsId | x <-[1..108]] ++ backStripCutterCubesList)
-  
-  --let mounts = generateMounts (-5.0) (slope_) $ buildFrontFace zTop_ zBtm_ leftx_ lefty_ rightx_ righty_ (slope_)
-  let
-    socketCubesForInnerMountWalls  = (take (take' - 3) $ drop (drop' + 2)  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
-    topOfMount = z_axis $ f2 $ extractF2 $ head $ head socketCubesForInnerMountWalls
-    --mounts = generateMounts (-5.0) (slope_) $ buildFrontFace {-zTop_-}topOfMount  {-zBtm_-}(topOfMount - 5) leftx_ lefty_ rightx_ righty_ (slope_)
-    mounts = generateMounts (- zHeight_) (slope_) $ buildFrontFace {-zTop_-}topOfMount  {-zBtm_-}(topOfMount - zHeight_) leftx_ lefty_ rightx_ righty_ (slope_)
-                                                            --ztop  zbtm  lx     ly     rx      ry      ySlope
-  wristMount
-             <- buildCubePointsListSingle "wristMount"
-                (concat $ 
-                   [gen1 |+++| gen2
-                    | gen1 <- socketCubesForInnerMountWalls -- (take (take' - 1) $ drop (drop' + 2)  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
-                    | gen2 <- mounts 
-                   ]
-                )
-  
-  return wristMount
--}
 
 --load the scan file and generate stl
 socketMountStlGenerator :: FaceDimensions -> FaceSlope -> CommonFactors -> IO ()
@@ -490,32 +409,19 @@ socketMountStlGenerator faceDimensions faceSlope (CommonFactors outerFlexSocketT
       Nothing                                ->
         putStrLn "File not decoded"
 
-{- before adding x slope
-socketMountStlGenerator :: FaceDimensions ->  FaceSlope -> CommonFactors -> IO ()
-socketMountStlGenerator faceDimensions faceSlope (CommonFactors innerTranspose outerTranspose dropFactor takeFactor)  = do
-  contents <- BL.readFile "src/Data/scanFullData.json"
-  
-  case (decode contents) of
-   
-      Just (MultiDegreeRadii name' degrees') ->
-        let rowReductionFactor = 100::RowReductionFactor
-            innerSleeveMDR = (transpose (+ innerTranspose)) . (reduceScan rowReductionFactor) . removeDefectiveTopRow' $
-                              (MultiDegreeRadii
-                                name'
-                                degrees'
-                              )
-
-            outerSleeveMDR = transpose (+ (outerTranspose - innerTranspose)) innerSleeveMDR
-            cpoints =  ((execState $ runExceptT (socketMount (degrees innerSleeveMDR) (degrees outerSleeveMDR)
-                                                 rowReductionFactor    pixelsPerMM faceDimensions faceSlope dropFactor takeFactor) ) [])
-        in  writeStlToFile $ newStlShape "socket with riser"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
-      Nothing                                ->
-        putStrLn "File not decoded"
--}
-
--- | Generate the socket stl, using database values.         
+-- | Generate the socket stl, using database values. 
 generateSocketMountStlUsingDbValues :: String -> IO ()
-generateSocketMountStlUsingDbValues commonDimensionsToUse  = runSqlite socketMountDatabaseConnStr $ do
+generateSocketMountStlUsingDbValues commonDimensionsToUse =
+  generateSocketMountStlUsingDbValuesBase commonDimensionsToUse (socketMountStlGenerator)
+
+-- | Generate the socket cubes, using database values. 
+showSocketMountCubesUsingDbValues :: String -> IO ()
+showSocketMountCubesUsingDbValues commonDimensionsToUse =
+  generateSocketMountStlUsingDbValuesBase commonDimensionsToUse socketMountShowCubes
+
+-- Base function for  generateSocketMountStlUsingDbValues/showSocketMountCubesUsingDbValues      
+generateSocketMountStlUsingDbValuesBase :: String -> (FaceDimensions -> FaceSlope -> CommonFactors -> IO ()) -> IO ()
+generateSocketMountStlUsingDbValuesBase commonDimensionsToUse processor  = runSqlite socketMountDatabaseConnStr $ do
   maybeMount <- getBy $ UniqueName "mount 1"
   maybeCommonDimensions <- runSqlite commontDBName $ do
      getBy $ uniqueDimensionName commonDimensionsToUse
@@ -533,38 +439,14 @@ generateSocketMountStlUsingDbValues commonDimensionsToUse  = runSqlite socketMou
               case maybeCommonDimensions of
                  Nothing -> liftIO $ putStrLn "common dimensions not found"
                  Just (Entity commonDimensionsId commonDimensions) -> do
-                   --liftIO $ socketMountStlGenerator mountDimension faceSlope $ setMountCommonFactors commonDimensions 
-                   --liftIO $ putStrLn "socket mount stl should be output"
-                   liftIO $ socketMountShowCubes mountDimension faceSlope $ setMountCommonFactors commonDimensions 
-                   
+                   liftIO $ processor mountDimension faceSlope $ setMountCommonFactors commonDimensions
+                   liftIO $ putStrLn "socket mount has been processed"
                    
 
 
 -- | load the scan file, generate socket with mount, and show current cubes from state.
 --   This has not yet been implemented with the db. See socketMountStlGenerator on how to do this.
 --   It already has the database objects added.
-{-
-socketMountShowCubes :: FaceDimensions -> FaceSlope -> IO ()
-socketMountShowCubes faceDimensions faceSlope = do
-  contents <- BL.readFile "src/Data/scanFullData.json"
-  
-  case (decode contents) of
-   
-      Just (MultiDegreeRadii name' degrees') ->
-        let rowReductionFactor = 100::RowReductionFactor 
-            innerSleeveMDR = (transpose (+3)) . (reduceScan rowReductionFactor) . removeDefectiveTopRow' $
-                              (MultiDegreeRadii
-                                name'
-                                degrees'
-                              )
-            outerSleeveMDR = transpose (+3) innerSleeveMDR
-            cpoints =  ((evalState $ runExceptT (socketMount (degrees innerSleeveMDR) (degrees outerSleeveMDR)
-                                                 rowReductionFactor    pixelsPerMM faceDimensions faceSlope 1 100) ) [])
-        in  print $ show cpoints
-      Nothing                                ->
-        putStrLn "File not decoded"
--}
-
 socketMountShowCubes :: FaceDimensions -> FaceSlope -> CommonFactors -> IO ()
 socketMountShowCubes faceDimensions faceSlope (CommonFactors outerFlexSocketTranspose outerMountSocketTranspose dropFactor takeFactor)  = do
   contents <- BL.readFile "src/Data/scanFullData.json"
