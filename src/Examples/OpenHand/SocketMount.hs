@@ -243,14 +243,13 @@ buildFrontFace    topZaxis       btmZaxis     leftXaxis        leftYaxis        
                   +++
                   ( 
                     (F1
-                      (Point leftXaxis (leftYaxis + ySlope) btmZaxis)
+                      (Point (leftXaxis + xSlope) (leftYaxis + ySlope) btmZaxis)
                     )
                     +++
                     (F4
-                      (Point rightXaxis (rightYaxis + ySlope) btmZaxis)
+                      (Point (rightXaxis + xSlope) (rightYaxis + ySlope) btmZaxis)
                     )
                   )
-
 
 {-
 Generate a list of mount faces, each being transposed downwards
@@ -290,37 +289,20 @@ buildMountList :: CornerPoints -> [CornerPoints]
 buildMountList frontFace =
   let 
       frontRightLine  = extractFrontRightLine frontFace
-      frontLeftLine = {-f12LineFromF34Line-}toFrontLeftLine frontRightLine 
+      frontLeftLine = toFrontLeftLine frontRightLine 
       rightLineAsFace = frontLeftLine +++ frontRightLine 
       frontLeftLine' = extractFrontLeftLine frontFace
       frontRightLine' = f34LineFromF12Line frontLeftLine' 
       leftLineAsFace = frontLeftLine' +++ frontRightLine'
 
-  in  [CornerPointsNothing | x <-[1,2..8]]
+  in  [CornerPointsNothing | x <-[1,2..4]]
       ++
-      [rightLineAsFace, rightLineAsFace,  rightLineAsFace , rightLineAsFace, frontFace, leftLineAsFace, leftLineAsFace ]
+      [rightLineAsFace, rightLineAsFace, rightLineAsFace, rightLineAsFace, rightLineAsFace, rightLineAsFace,  rightLineAsFace , rightLineAsFace,
+       frontFace,
+       leftLineAsFace, leftLineAsFace, leftLineAsFace, leftLineAsFace, leftLineAsFace, leftLineAsFace, leftLineAsFace, leftLineAsFace ]
       ++
       [CornerPointsNothing | x <-[1..]]
 
-      
-{-before trying to rotate around the socket to line up with his hand
-buildMountList :: CornerPoints -> [CornerPoints]
-buildMountList frontFace =
-  let 
-      frontRightLine  = extractFrontRightLine frontFace
-      frontLeftLine = {-f12LineFromF34Line-}toFrontLeftLine frontRightLine 
-      rightLineAsFace = frontLeftLine +++ frontRightLine 
-      frontLeftLine' = extractFrontLeftLine frontFace
-      frontRightLine' = f34LineFromF12Line frontLeftLine' 
-      leftLineAsFace = frontLeftLine' +++ frontRightLine'
-
-  in
-      [leftLineAsFace, leftLineAsFace ]
-      ++
-      [CornerPointsNothing | x <-[1,2..29]]
-      ++
-      [rightLineAsFace, rightLineAsFace,  rightLineAsFace , rightLineAsFace, frontFace ]
--}
 -- ========================================= Builder ====================================================
 
 -- | The wrist and back strip of the socket, with a platform to attach the motor/board box.
@@ -341,28 +323,24 @@ socketMount    innerSleeveSDR         outerSleeveSDR         rowReductionFactor 
                        | angle'  <- angles
                      ]
       attachmentArmCutterCubes =
-        [CornerPointsNothing | x <-[1,2..8]]
+        [CornerPointsNothing | x <-[1,2..4]]
         ++
-        [CornerPointsId | x <-[9..15]] 
+        [CornerPointsId | x <-[5..21]] 
         ++
-        [CornerPointsNothing | x <-[16..36]]
-        {-before trying to align with new mount position 
-        [CornerPointsNothing | x <-[1,2..15]]
-        ++
-        [CornerPointsId | x <-[1,2..7]] 
-        ++
-        [CornerPointsNothing | x <-[1..]]
-        -}
+        [CornerPointsNothing | x <-[22..36]]
+      
 
       attachmentArmCutterCubesList = concat [attachmentArmCutterCubes | x <-  [1..]]
-  {-Not need to print, but need for veiwing, to align the socket motor mount.
-    ============================= do not delete =======================================-}
+  {-
+  The section of the mount that attaches to the socket.
+  Use [CornerPointsId | x <-[1..108]] ++ to see the full circumference top section socket for alignment.
+  Remove it for printing as full circumference is not used.
+  -}
   socketCubeForWristAndBottomAttachmentArm
              <- buildCubePointsListWithAdd "wristCubes"
-                --(concat $ take take' $ drop 1  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
                 (concat $ take 100 $ drop (drop' +2)  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
                 ({-[CornerPointsId | x <-[1..108]] ++-}  attachmentArmCutterCubesList)
-                                     --[1..108]
+                                     
   
   
   let

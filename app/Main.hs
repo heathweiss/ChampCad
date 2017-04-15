@@ -41,8 +41,8 @@ main = do
   -- x <-  getArgs
  --loadMDRAndPassToProcessor (read $ head x) (read $ head $ tail x)
 
-  --SM.generateSocketMountStlUsingDbValues currentSocket
-  SM.showSocketMountCubesUsingDbValues currentSocket
+  SM.generateSocketMountStlUsingDbValues currentSocket
+  --SM.showSocketMountCubesUsingDbValues currentSocket
 
   --flexSocketPlainStlGeneratorDbStlGeneretor (head x)
   --wristSquaredOffStlFromDbGenerator
