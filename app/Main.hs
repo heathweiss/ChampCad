@@ -9,8 +9,9 @@ import Examples.OpenBionicsCom.OpenBionicsDotComDesignWork (fullLengthSocketWith
 import qualified  Examples.OpenHand.Wrist as W (wristAndDoubleCylinderStlGenerator, wristAndDoubleCylinderShowCubes,
                                wristSquaredOffStlGenerator, wristSquaredOffShowCubes, wristSquaredOffStlFromDbGenerator,
                                initializeDatabase, insertWristDimensions, wristWithRoundRiserDBGenerator)
-import qualified Examples.OpenHand.SocketMount as SM (socketMountStlGenerator, socketMountShowCubes, socketMountTestsDo, generateSocketMountStlUsingDbValues,
-                                     initializeDatabase, insertMount, viewMountByName, setCurrentMount, showFaceDimensions, showSocketMountCubesUsingDbValues )
+import qualified Examples.OpenHand.SocketMount as SM ({-socketMountStlGenerator, socketMountShowCubes,-} socketMountTestsDo, {-generateSocketMountStlUsingDbValues,-}
+                                     initializeDatabase, insertMount, setCurrentMount, showFaceDimensions, {-showSocketMountCubesUsingDbValues,-}
+                                     generateSocketMountWithDegreesStlUsingDbValues)
 import qualified Examples.OpenHand.MotorMount as M (motorMountHardCodedStlGenerator, motorMountHardCodedShowCubes,
                                    initializeDatabase, insertMotorMount, motorMountRunGeneratorFromDB)
 import qualified Examples.OpenHand.FlexiSocket as Flex (flexSocketStlGenerator, flexSocketPlainStlGenerator, flexSocketPlainStlGeneratorDbStlGeneretor,
@@ -41,8 +42,9 @@ main = do
   -- x <-  getArgs
  --loadMDRAndPassToProcessor (read $ head x) (read $ head $ tail x)
 
-  SM.generateSocketMountStlUsingDbValues currentSocket
+  SM.generateSocketMountWithDegreesStlUsingDbValues currentSocket
   --SM.showSocketMountCubesUsingDbValues currentSocket
+  --SM.socketMountTestsDo
 
   --flexSocketPlainStlGeneratorDbStlGeneretor (head x)
   --wristSquaredOffStlFromDbGenerator
