@@ -10,7 +10,7 @@ Try out a StateT example, then implement it for the Except work with CornerPoint
 -}
 module BuilderMonadTest(builderMonadTest) where
 
-import Builder.Monad(BuilderError(..), cornerPointsErrorHandler, buildCubePointsList,
+import Builder.Monad(BuilderError(..), cornerPointsErrorHandler, buildCubePointsList, buildCubePointsListSingle,
                      CpointsStack, CpointsList)
 
 
@@ -56,14 +56,52 @@ cube = btmFace +++ (upperFaceFromLowerFace $ transposeZ (+1) btmFace )
 
 
 builderMonadTest = do
-  let testPlaceHolder  = TestCase $ assertEqual
-        "tests will go here"
-        True
-        True
-
-  runTestTT testPlaceHolder
+  putStrLn ""
+  putStrLn "BuilderMonadTest"
+  runTestTT singleGoodCubeTest
+  runTestTT singleGoodCubePushedTest
   
+singleGoodCubeTest  = TestCase $ assertEqual
+        "create a single good cube and look at its state."
+        (Right [CubePoints {f1 = Point {x_axis = 0.0, y_axis = 5.0, z_axis = 0.0},
+                            f2 = Point {x_axis = 0.0, y_axis = 5.0, z_axis = 1.0},
+                            f3 = Point {x_axis = 5.0, y_axis = 5.0, z_axis = 1.0},
+                            f4 = Point {x_axis = 5.0, y_axis = 5.0, z_axis = 0.0},
+                            b1 = Point {x_axis = 0.0, y_axis = 0.0, z_axis = 0.0},
+                            b2 = Point {x_axis = 0.0, y_axis = 0.0, z_axis = 1.0},
+                            b3 = Point {x_axis = 5.0, y_axis = 0.0, z_axis = 1.0},
+                            b4 = Point {x_axis = 5.0, y_axis = 0.0, z_axis = 0.0}}])
+        (let btmFace = BottomFace (Point 0 0 0) (Point 0 5 0) (Point 5 0 0) (Point 5 5 0 )
+             cube = [btmFace +++ (upperFaceFromLowerFace $ transposeZ (+1) btmFace )]
+             makeCube :: ExceptT BuilderError (State CpointsStack ) CpointsList
+             makeCube = do
+               cube' <- buildCubePointsListSingle "build a single good cube" cube
+               return cube'
+         in
+            ((evalState $ runExceptT makeCube) [])
 
+        )
+
+singleGoodCubePushedTest  = TestCase $ assertEqual
+        "create a single good cube and push it onto the stack."
+        ( [CubePoints {f1 = Point {x_axis = 0.0, y_axis = 5.0, z_axis = 0.0},
+                            f2 = Point {x_axis = 0.0, y_axis = 5.0, z_axis = 1.0},
+                            f3 = Point {x_axis = 5.0, y_axis = 5.0, z_axis = 1.0},
+                            f4 = Point {x_axis = 5.0, y_axis = 5.0, z_axis = 0.0},
+                            b1 = Point {x_axis = 0.0, y_axis = 0.0, z_axis = 0.0},
+                            b2 = Point {x_axis = 0.0, y_axis = 0.0, z_axis = 1.0},
+                            b3 = Point {x_axis = 5.0, y_axis = 0.0, z_axis = 11111.0},
+                            b4 = Point {x_axis = 5.0, y_axis = 0.0, z_axis = 0.0}}])
+        (let btmFace = BottomFace (Point 0 0 0) (Point 0 5 0) (Point 5 0 0) (Point 5 5 0 )
+             cube = [btmFace +++ (upperFaceFromLowerFace $ transposeZ (+1) btmFace )]
+             makeCube :: ExceptT BuilderError (State CpointsStack ) CpointsList
+             makeCube = do
+               cube' <- buildCubePointsListSingle "build a single good cube" cube
+               return cube'
+         in
+            ((execState $ runExceptT makeCube) [])
+
+        )
 {------------------------------- simple stack of cubes ---------------------------------}
 
 --curry in the stack pushing function

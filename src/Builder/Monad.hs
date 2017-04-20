@@ -61,6 +61,7 @@ type CpointsList = [CornerPoints]
   
 -- | data type for an exception as required for the Except monad.
 data BuilderError  = BuilderError {errMsg :: String }
+  deriving Eq
 
 -- | common pattern to show the exception
 instance Show BuilderError where
