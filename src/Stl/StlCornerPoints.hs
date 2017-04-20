@@ -89,7 +89,7 @@ getTriangles (FaceTop)  (CubePoints _ f2 f3 _ _ b2 b3 _) =
 
 {-
 try adding in other cube constructors for autogenerate.
-This will allow a [FacesAll] to be |+++^| to [CornerPoints] even thougth they may be made up of Faces.
+This will allow a [FacesAll] to be |+++^| to [CornerPoints] even though they may be made up of Faces.
 
 Should look at doing this in a better way.
 -}
