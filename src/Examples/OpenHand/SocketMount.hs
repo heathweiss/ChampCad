@@ -314,8 +314,13 @@ socketMountWithDegreesShowCubes faceDimensions faceSlope (CommonFactors outerFle
                               )
 
             outerSleeveMDR = transpose (+ (outerMountSocketTranspose - outerFlexSocketTranspose)) innerSleeveMDR
-            cpoints =  ((evalState $ runExceptT (socketMountWithDegrees (degrees innerSleeveMDR) (degrees outerSleeveMDR)
-                                                 rowReductionFactor    pixelsPerMM faceDimensions faceSlope dropFactor takeFactor) ) [])
+            cpoints =  ((evalState $ runExceptT (socketMountWithDegrees
+                                                 (degrees innerSleeveMDR)
+                                                 (degrees outerSleeveMDR)
+                                                 rowReductionFactor    pixelsPerMM faceDimensions faceSlope dropFactor takeFactor
+                                                )
+                        ) []
+                       )
         in  print $ show cpoints
       Nothing                                ->
         putStrLn "File not decoded"

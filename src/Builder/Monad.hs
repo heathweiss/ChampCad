@@ -65,7 +65,6 @@ data BuilderError  = BuilderError {errMsg :: String }
 
 -- | common pattern to show the exception
 instance Show BuilderError where
-  show (BuilderError errMsg') = show errMsg' 
 
 {- |
 Handles a CornerPoints error in ExceptT catchError calls.

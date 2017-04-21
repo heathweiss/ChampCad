@@ -1,5 +1,5 @@
-module CornerPoints.MeshGeneration( doesOpposingFaceExistInList, doesSameFaceExistInList,
-                                    autoGenerateEachCube, autoGenerateEachFace) where
+module CornerPoints.MeshGeneration( doesOpposingFaceExistInList, doesSameFaceExistInList, extractFaces,
+                                    autoGenerateEachCube, autoGenerateEachFace, hasSurfaceArea) where
 
 {-Testing is in Tests.StlAutoGenerateTest-}
 import Data.List(findIndex, deleteBy)
@@ -18,20 +18,81 @@ doesOpposingFaceExistInList    facesList          inFace      =
     Just x -> True
     Nothing -> False
 
-{-Does this face already exist in a list.-}
+{-Does this face already exist in a list.
+ToDo: Is the logic here good.
+Eg: If a FrontFace and TopFace have the very same points, should they not
+be eliminated. Perhaps there should be a ~== that looks at just the points.
+-}
 doesSameFaceExistInList ::  [CornerPoints] -> CornerPoints -> Bool
 doesSameFaceExistInList     facesList          inFace      =
   case findIndex (inFace == ) facesList of
     Just x -> True
     Nothing -> False
 
+-- | Does a CornerPoints have surface area.
+-- | This is only true for Front/Back/Left/Right/Top/Bottom Faces.
+-- | If a face has been reduced to a line by having points that are equal, then false.
+-- | In that case, it should not be pushed onto the mesh.
+hasSurfaceArea :: CornerPoints -> Bool
+
+hasSurfaceArea (FrontFace f1 f2 f3 f4)
+  | f1 == f3 = False
+  | f2 == f4 = False
+  | (f1 == f2) && (f3 == f4) = False
+  | (f1 == f4) && (f2 == f3) = False
+  | otherwise = True
+
+hasSurfaceArea (BackFace b1 b2 b3 b4)
+  | b1 == b3 = False
+  | b2 == b4 = False
+  | (b1 == b2) && (b3 == b4) = False
+  | (b1 == b4) && (b2 == b3) = False
+  | otherwise = True
+
+--not tested
+hasSurfaceArea (LeftFace b1 b2 f1 f2)
+  | b1 == f2 = False
+  | b2 == f1 = False
+  | (b1 == f1) && (b2 == f2) = False
+  | (b1 == b2) && (f1 == f2) = False
+  | otherwise = True
+
+--not tested
+hasSurfaceArea (RightFace b3 b4 f3 f4)
+  | b4 == f3 = False
+  | b3 == f4 = False
+  | (b4 == f4) && (b3 == f3) = False
+  | (b4 == b3) && (f4 == f3) = False
+  | otherwise = True
+
+--not tested
+hasSurfaceArea (TopFace b2 f2 b3 f3)
+  | b2 == f3 = False
+  | b3 == f2 = False
+  | (b2 == f2) && (b3 == f3) = False
+  | (b2 == b3) && (f2 == f3) = False
+  | otherwise = True
+
+--not tested
+hasSurfaceArea (BottomFace b1 f1 b4 f4)
+  | b1 == f4 = False
+  | b4 == f1 = False
+  | (b1 == f1) && (b4 == f4) = False
+  | (b1 == b4) && (f1 == f4) = False
+  | otherwise = True
+  
 
 {-See if two faces are opposites of each other.
 So the face exists in the same position in space, but face the opposite directions.
 Can only be true for the following pairs:
 back/front
 left/right
-top/bottom-}
+top/bottom
+
+Is the logic good:
+What if a back/right pair are opposited of each other.
+Should they not be eliminated?
+-}
 (>==<) :: CornerPoints -> CornerPoints -> Bool
 
 BackFace b1 b2 b3 b4  >==< FrontFace f1' f2' f3' f4' =
@@ -61,6 +122,10 @@ BottomFace b1 f1 b4 f4 >==< TopFace b2 f2 b3 f3 =
 TopFace b2 f2 b3 f3 >==< BottomFace b1 f1 b4 f4 =
   BottomFace b1 f1 b4 f4 >==< TopFace b2 f2 b3 f3
 
+
+{-
+--ToDo: All of these need to be checked for being opposites.
+Eg: Why can't a BackFace and LeftFace be opposing.
 BackFace _ _ _ _ >==< BackFace _ _ _ _ = False
 BackFace _ _ _ _ >==< LeftFace _ _ _ _ = False
 BackFace _ _ _ _ >==< RightFace _ _ _ _ = False
@@ -96,7 +161,7 @@ RightFace _ _ _ _ >==< FrontFace _ _ _ _ = False
 RightFace _ _ _ _ >==< BackFace _ _ _ _ = False
 RightFace _ _ _ _ >==< TopFace _ _ _ _ = False
 RightFace _ _ _ _ >==< BottomFace _ _ _ _ = False
-
+-}
 _ >==< _ = False
 
 {-
@@ -117,14 +182,18 @@ pushToList     facesList          inFace
   | doesSameFaceExistInList  facesList inFace      = facesList
   | otherwise = inFace : facesList
   
-{-Break up a CubePoints into a list of faces.
 
-Return list with single CornerPointsError if not a CubePoints. 
--}
+-- | Break up a CubePoints into a list of faces.
 extractFaces :: CornerPoints -> [CornerPoints]
+-- | Remove any Faces that do not have any surface area.
+{-
+Using 'filter (hasSurfaceArea)' removes the BackFaces of solid cylinders that have no surface area.
+Slic3r still corrects errors with these faces removed.
+-}
 extractFaces (CubePoints f1 f2 f3 f4 b1 b2 b3 b4) =
                   let cubeIn = CubePoints f1 f2 f3 f4 b1 b2 b3 b4
-                  in  
+                      facesWithPossibleNoSurfaceArea =
+                   
                        extractTopFace cubeIn    :
                        extractBackFace cubeIn   : 
                        extractFrontFace cubeIn  :
@@ -132,7 +201,9 @@ extractFaces (CubePoints f1 f2 f3 f4 b1 b2 b3 b4) =
                        extractRightFace cubeIn  : 
                        extractBottomFace cubeIn : 
                        []
+                 in    filter (hasSurfaceArea) facesWithPossibleNoSurfaceArea
 
+-- |  If not a CubePoints, return list with single CornerPointsError
 extractFaces nonCubePoints = [CornerPointsError "attempted 'extractFaces' of non CubePoints"]
 
 

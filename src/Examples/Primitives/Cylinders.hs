@@ -7,6 +7,21 @@ import  Primitives.Cylindrical.Solid(yLengthenedCylinder, squaredOffCylinder, sq
 import CornerPoints.Radius(Radius(..))
 import CornerPoints.Points(Point(..))
 import CornerPoints.Transpose(transposeY)
+import CornerPoints.CornerPoints(CornerPoints(..))
+import CornerPoints.MeshGeneration(autoGenerateEachCube)
+
+import Builder.Monad(BuilderError(..), cornerPointsErrorHandler, buildCubePointsList,
+                     CpointsStack, CpointsList, buildCubePointsListWithAdd, buildCubePointsListSingle)
+
+import Control.Monad.Trans.Except
+import Control.Monad.Trans.Maybe
+import Control.Monad
+import Control.Monad.Trans
+import Control.Monad.State.Lazy
+import Control.Monad.State
+import Control.Monad.Except
+import Control.Monad.Writer (WriterT, tell, execWriterT)
+import Control.Monad.Reader
 
 
 import Stl.StlCornerPoints((|+++^|), (||+++^||), Faces(..))
@@ -27,13 +42,31 @@ slopedToppedCylinder =
       cylinderStl = newStlShape "cylinder" cylinderTriangles
   in  writeStlToFile cylinderStl
       
+solidCylinderSquaredShowCpoints :: [CornerPoints]
+solidCylinderSquaredShowCpoints =
+  let solidCylinderSquared' :: ExceptT BuilderError (State CpointsStack ) CpointsList
+      solidCylinderSquared' = do
+        cylinder <- buildCubePointsListSingle "cylinder"
+              $ squaredOffCylinder (Radius 10) (Point 0 0 0) angles (10 :: Height) (5 :: Power)
+        
+        return cylinder
+  in
+  case   ((evalState $ runExceptT solidCylinderSquared') [])  of
+    Right cpoints -> cpoints
+    Left  (BuilderError err)       -> [CornerPointsError err]
+
+solidCylinderSquared :: IO ()
 solidCylinderSquared =
-  let cylinder = squaredOffCylinder (Radius 10) (Point 0 0 0) angles (10 :: Height) (5 :: Power) 
-      cylinderTriangles =  [FacesBackBottomFrontTop | x <- [1..35]]
-             |+++^|
-             cylinder
-      cylinderStl = newStlShape "cylinder" cylinderTriangles
-  in  writeStlToFile cylinderStl
+  let solidCylinderSquared' :: ExceptT BuilderError (State CpointsStack ) CpointsList
+      solidCylinderSquared' = do
+        cylinder <- buildCubePointsListSingle "cylinder"
+              $ squaredOffCylinder (Radius 10) (Point 0 0 0) angles (10 :: Height) (5 :: Power)
+        
+        return cylinder
+      
+      cpoints = ((execState $ runExceptT solidCylinderSquared') []) 
+  in
+  writeStlToFile $ newStlShape "socket with riser"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
 
 solidCylinderLengthenY =
   let cylinder = yLengthenedCylinder (Radius 10) (Point 0 0 0) angles (10 :: Height)  (10 :: LengthenFactor) 

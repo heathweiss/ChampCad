@@ -21,7 +21,7 @@ import qualified Examples.OpenHand.Common  as C (initializeDatabase, insertDimen
 
 import Examples.Primitives.Squared(cylinderWithSquaredRadiiStlGenerator, )
 
-import Examples.Primitives.Cylinders(slopedToppedCylinder, solidCylinderSquared, solidCylinderLengthenY, solidCylinderSquared, walledCylinderSquared)
+import Examples.Primitives.Cylinders(slopedToppedCylinder, solidCylinderLengthenY, solidCylinderSquared, walledCylinderSquared)
 
 import Examples.Scan.WalkerSocketDesignWork(loadMDRAndPassToProcessor)
 
@@ -42,7 +42,7 @@ main = do
   -- x <-  getArgs
  --loadMDRAndPassToProcessor (read $ head x) (read $ head $ tail x)
 
-  SM.generateSocketMountWithDegreesStlUsingDbValues currentSocket
+  --SM.generateSocketMountWithDegreesStlUsingDbValues currentSocket
   --SM.showSocketMountCubesUsingDbValues currentSocket
   --SM.socketMountTestsDo
 
@@ -68,3 +68,4 @@ main = do
   --W.wristWithRoundRiserDBGenerator currentSocket
 
   
+  solidCylinderSquared
