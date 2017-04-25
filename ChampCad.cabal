@@ -24,7 +24,7 @@ library
                        CornerPoints.FaceExtractionWithDegrees, CornerPoints.VerticalFacesWithDegrees,
                        CornerPoints.FaceConversionsWithDegrees
                        CornerPoints.Degree, CornerPoints.MeshGeneration, CornerPoints.Slicer,
-                       CornerPoints.Rotations, CornerPoints.Slope,
+                       CornerPoints.Slope,
                        --TypeClasses
                        TypeClasses.Transposable
                        --Cubical

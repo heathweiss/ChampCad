@@ -7,7 +7,6 @@ import CornerPoints.FaceConversions(upperFaceFromLowerFace, backFaceFromFrontFac
 import CornerPoints.FaceExtraction(extractFrontFace, extractTopFace, extractBottomFace, extractRightFace)
 import CornerPoints.Transpose(transposeX, transposeY, transposeZ)
 import CornerPoints.MeshGeneration(autoGenerateEachCube, autoGenerateEachFace)
-import CornerPoints.Rotations(rotateAlongYaxis90, rotateAlongYaxis180)
 import CornerPoints.Slicer(slice)
 
 import Stl.StlBase(Triangle(..), newStlShape)

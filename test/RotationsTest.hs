@@ -7,8 +7,6 @@ import CornerPoints.Points (Point(..))
 
 import Geometry.Rotation(rotatePointAroundZAxis, rotateCornerPointAroundZAxis)
 {-
-The CornerPoints.Rotations module does not work. Should be removed.
-
 These tests are for Geometry.Rotation
 -}
 
