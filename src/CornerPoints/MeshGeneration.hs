@@ -122,7 +122,7 @@ FrontFace f1 f2 f3 f4  >==< BackFace b1 b2 b3 b4 =
 
 {-
 FrontFace f1' f2' f3' f4'  >==< BackFace b1 b2 b3 b4 =
-  BackFace b1 b2 b3 b4  >==< FrontFace f1' f2' f3' f4'
+  BackFace b1 b2 b3 b4  >==< FrontFace f1' f2' f3' f4' 
 -}
 
 LeftFace b1 b2 f1 f2 >==< RightFace b3' b4' f3' f4' =
