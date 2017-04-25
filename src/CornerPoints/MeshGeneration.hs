@@ -95,14 +95,35 @@ Should they not be eliminated?
 -}
 (>==<) :: CornerPoints -> CornerPoints -> Bool
 
+BackFace b1 b2 b3 b4  >==< FrontFace f1 f2 f3 f4 =
+ (b1 == f1 &&
+  b2 == f2 &&
+  b3 == f3 &&
+  b4 == f4
+ )
+ ||
+ (b1 == f4 &&
+  b2 == f2 &&
+  b4 == f1 &&
+  b3 == f2
+ )
+ 
+
+{-
 BackFace b1 b2 b3 b4  >==< FrontFace f1' f2' f3' f4' =
  b1 == f1' &&
  b2 == f2' &&
  b3 == f3' &&
  b4 == f4'
+-}
 
+FrontFace f1 f2 f3 f4  >==< BackFace b1 b2 b3 b4 =
+  BackFace b1 b2 b3 b4  >==< FrontFace f1 f2 f3 f4
+
+{-
 FrontFace f1' f2' f3' f4'  >==< BackFace b1 b2 b3 b4 =
   BackFace b1 b2 b3 b4  >==< FrontFace f1' f2' f3' f4'
+-}
 
 LeftFace b1 b2 f1 f2 >==< RightFace b3' b4' f3' f4' =
   b1 == b4' &&
@@ -122,7 +143,18 @@ BottomFace b1 f1 b4 f4 >==< TopFace b2 f2 b3 f3 =
 TopFace b2 f2 b3 f3 >==< BottomFace b1 f1 b4 f4 =
   BottomFace b1 f1 b4 f4 >==< TopFace b2 f2 b3 f3
 
-
+FrontFace f1 f2 f3 f4 >==< FrontFace f1' f2' f3' f4' =
+  (f1 == f1' &&
+   f2 == f2' &&
+   f3 == f3' &&
+   f4 == f4'
+  )
+  ||
+  (f1 == f4' &&
+   f2 == f3' &&
+   f3 == f2' &&
+   f4 == f1'
+  )
 {-
 --ToDo: All of these need to be checked for being opposites.
 Eg: Why can't a BackFace and LeftFace be opposing.
