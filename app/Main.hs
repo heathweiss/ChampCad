@@ -18,6 +18,7 @@ import qualified Examples.OpenHand.FlexiSocket as Flex (flexSocketStlGenerator, 
                                      initializeDatabase, insertFlexDimensions, flexSocketWithRiserDbStlGenerator, flexSocketShowCurrentState,
                                      flexBottomForSocketWithRiserDbStlGenerator)
 import qualified Examples.OpenHand.Common  as C (initializeDatabase, insertDimensions, seeCommonFactors)
+import qualified Examples.OpenHand.FingerJoints as FJnts(fingerJointsStlGenerator, fingerJointsToRiserStlGenerator)
 
 import Examples.Primitives.Squared(cylinderWithSquaredRadiiStlGenerator, )
 
@@ -54,7 +55,7 @@ main = do
   --M.motorMountRunGeneratorFromDB (head x)
   --M.motorMountRunGeneratorFromDB currentSocket
   
- 
+  FJnts.fingerJointsToRiserStlGenerator
 
   --Flex.flexBottomForSocketWithRiserDbStlGenerator currentSocket
   --Flex.flexSocketWithRiserDbStlGenerator currentSocket
@@ -68,4 +69,4 @@ main = do
   --W.wristWithRoundRiserDBGenerator currentSocket
 
   
-  solidCylinderSquared
+  --solidCylinderSquared
