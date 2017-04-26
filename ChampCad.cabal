@@ -24,7 +24,7 @@ library
                        CornerPoints.FaceExtractionWithDegrees, CornerPoints.VerticalFacesWithDegrees,
                        CornerPoints.FaceConversionsWithDegrees
                        CornerPoints.Degree, CornerPoints.MeshGeneration, CornerPoints.Slicer,
-                       CornerPoints.Slope,
+                       CornerPoints.Slope, CornerPoints.Collections
                        --TypeClasses
                        TypeClasses.Transposable
                        --Cubical
@@ -165,6 +165,7 @@ test-suite ChampCad-test
                        VertexTest
                        PointsTest
                        DiamondCutterTest
+                       CornerPointsCollectionsTest
  
   build-depends:       base
                      , ChampCad
