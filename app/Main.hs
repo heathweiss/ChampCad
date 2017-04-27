@@ -7,10 +7,9 @@ import Examples.OpenBionicsCom.OpenBionicsDotComDesignWork (fullLengthSocketWith
                                                  shortSocketToLargeShaftStlGenerator, wristToLargeShaftStlGenerator
                                                   )
 import qualified  Examples.OpenHand.Wrist as W (wristAndDoubleCylinderStlGenerator, wristAndDoubleCylinderShowCubes,
-                               wristSquaredOffStlGenerator, wristSquaredOffShowCubes, wristSquaredOffStlFromDbGenerator,
                                initializeDatabase, insertWristDimensions, wristWithRoundRiserDBGenerator)
-import qualified Examples.OpenHand.SocketMount as SM ({-socketMountStlGenerator, socketMountShowCubes,-} socketMountTestsDo, {-generateSocketMountStlUsingDbValues,-}
-                                     initializeDatabase, insertMount, setCurrentMount, showFaceDimensions, {-showSocketMountCubesUsingDbValues,-}
+import qualified Examples.OpenHand.SocketMount as SM (socketMountTestsDo, 
+                                     initializeDatabase, insertMount, setCurrentMount, showFaceDimensions,
                                      generateSocketMountWithDegreesStlUsingDbValues)
 import qualified Examples.OpenHand.MotorMount as M (motorMountHardCodedStlGenerator, motorMountHardCodedShowCubes,
                                    initializeDatabase, insertMotorMount, motorMountRunGeneratorFromDB)
