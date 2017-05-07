@@ -42,7 +42,7 @@ main = do
   -- x <-  getArgs
  --loadMDRAndPassToProcessor (read $ head x) (read $ head $ tail x)
 
-  --SM.generateSocketMountWithDegreesStlUsingDbValues currentSocket
+  SM.generateSocketMountWithDegreesStlUsingDbValues currentSocket
   --SM.showSocketMountCubesUsingDbValues currentSocket
   --SM.socketMountTestsDo
 
@@ -54,7 +54,7 @@ main = do
   --M.motorMountRunGeneratorFromDB (head x)
   --M.motorMountRunGeneratorFromDB currentSocket
   
-  FJnts.fingerJointsToRiserStlGenerator
+  --FJnts.fingerJointsToRiserStlGenerator
 
   --Flex.flexBottomForSocketWithRiserDbStlGenerator currentSocket
   --Flex.flexSocketWithRiserDbStlGenerator currentSocket
