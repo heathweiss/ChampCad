@@ -3,7 +3,8 @@ module LineScannerTest(lineScannerTestDo) where
 import Test.HUnit
 
 import Scan.LineScanner(LineScan(..), Measurement(..), uniqueScanName, getMinHeight, adjustHeight,
-                        adjustMeasurementHeightsToStartAtZero, measurementsToFrontLines, adjustRadius)
+                        adjustMeasurementHeightsToStartAtZero, measurementsToLines, adjustRadius,
+                        measurementToLinesWithRadiusAdj)
 
 import CornerPoints.Points(Point(..))
 import CornerPoints.CornerPoints(CornerPoints(..))
@@ -20,15 +21,53 @@ lineScannerTestDo = do
   runTestTT getMinHeightTest
   runTestTT adjustHeightTest
   runTestTT adjustMeasurementHeightsToStartAtZeroTest
-  runTestTT measurementsToFrontLinesTestBack
+  runTestTT measurementsToLinesTestBack
   runTestTT adjustMeasurementHeightsToStartAtZeroTest2
-  runTestTT measurementsToFrontLinesTest2Back
+  runTestTT measurementsToLinesTest2Back
   runTestTT adjustMeasurementHeightsToStartAtZeroTest3
-  runTestTT measurementsToFrontLinesTest
-  runTestTT measurementsToFrontLinesTest2
+  runTestTT measurementsToLinesTest
+  runTestTT measurementsToLinesTest2
   runTestTT adjustRadiusTest
   runTestTT makeFirstTwoBottomFrontLines
   runTestTT makeFirstTwoBackBottomLines
+  runTestTT adjustSingleRadiusTest
+  runTestTT adjustSingleRadiusTest2
+  runTestTT adjustSingleRadiusTest3
+  runTestTT adjustSingleRadiusBackTest
+  runTestTT adjustSingleRadiusBackTest3
+  runTestTT makeFirstTwoBackBottomLinesBack
+
+adjustSingleRadiusTest = TestCase $ assertEqual
+  "adjust the Radius of a single Measurement and create cPoint"
+  ([F4 {f4 = Point {x_axis = 0.0, y_axis = -10.0, z_axis = 0.0}}])
+  (measurementToLinesWithRadiusAdj 0.5 (F4) (F1) [Measurement (toSqlKey 3) 10 0 20])
+
+adjustSingleRadiusBackTest = TestCase $ assertEqual
+  "adjust the Radius of a single Measurement and create cPoint"
+  [B4 {b4 = Point {x_axis = 0.0, y_axis = -10.0, z_axis = 0.0}}]
+  (measurementToLinesWithRadiusAdj 0.5 (B4) (B1) [Measurement (toSqlKey 3) 10 0 20])
+
+adjustSingleRadiusTest2 = TestCase $ assertEqual
+  "adjust the Radius of 2 Measurement and create cPoints"
+  [BottomFrontLine {f1 = Point {x_axis = 0.0, y_axis = -10.0, z_axis = 5.0}, f4 = Point {x_axis = 0.0, y_axis = -10.0, z_axis = 0.0}}]
+  (measurementToLinesWithRadiusAdj 0.5 (F4) (F1) [Measurement (toSqlKey 3) 10 0 20, Measurement (toSqlKey 3) 20 0 20])
+
+adjustSingleRadiusTest3 = TestCase $ assertEqual
+  "adjust the Radius of 3 Measurement and create cPoints"
+  [BottomFrontLine {f1 = Point {x_axis = 0.0, y_axis = -10.0, z_axis = 5.0},
+                    f4 = Point {x_axis = 0.0, y_axis = -10.0, z_axis = 0.0}},
+   BottomFrontLine {f1 = Point {x_axis = 0.0, y_axis = -10.0, z_axis = 9.999999999999998},
+                    f4 = Point {x_axis = 0.0, y_axis = -10.0, z_axis = 5.0}}]
+  (measurementToLinesWithRadiusAdj 0.5 (F4) (F1) [Measurement (toSqlKey 1) 10 0 20, Measurement (toSqlKey 2) 20 0 20, Measurement (toSqlKey 3) 30 0 20])
+
+adjustSingleRadiusBackTest3 = TestCase $ assertEqual
+  "adjust the Radius of 3 Measurement and create cPoints"
+  [BackBottomLine {b1 = Point {x_axis = 0.0, y_axis = -10.0, z_axis = 5.0},
+                   b4 = Point {x_axis = 0.0, y_axis = -10.0, z_axis = 0.0}},
+   BackBottomLine {b1 = Point {x_axis = 0.0, y_axis = -10.0, z_axis = 9.999999999999998},
+                   b4 = Point {x_axis = 0.0, y_axis = -10.0, z_axis = 5.0}}]
+
+  (measurementToLinesWithRadiusAdj 0.5 (B4) (B1) [Measurement (toSqlKey 1) 10 0 20, Measurement (toSqlKey 2) 20 0 20, Measurement (toSqlKey 3) 30 0 20])
 
 makeFirstTwoBackBottomLines  = TestCase $ assertEqual
   "make the 1st 2 BackBottomLines of geox flex shoe"
@@ -41,7 +80,7 @@ makeFirstTwoBackBottomLines  = TestCase $ assertEqual
 
 
 
-  (measurementsToFrontLines (B4) (B1) [(Measurement (toSqlKey 1) 39.5 0 50.3), (Measurement (toSqlKey 2) 39.5 5 49.9),
+  (measurementsToLines (B4) (B1) [(Measurement (toSqlKey 1) 39.5 0 50.3), (Measurement (toSqlKey 2) 39.5 5 49.9),
                                          (Measurement (toSqlKey 3) 39.5 10 48.6), (Measurement (toSqlKey 4) 37.7 15 49.1)]
    --id height degree radius
   )
@@ -56,7 +95,21 @@ makeFirstTwoBottomFrontLines  = TestCase $ assertEqual
    BottomFrontLine {f1 = Point {x_axis = 25.648967369659804, y_axis = -95.72324938524666, z_axis = 0.0},
                     f4 = Point {x_axis = 17.12171031795933, y_axis = -97.1020444470037, z_axis = 1.7999999999999972}}]
 
-  (measurementsToFrontLines (F4) (F1) [(Measurement (toSqlKey 1) 39.5 0 100.3), (Measurement (toSqlKey 2) 39.5 5 99.9),
+  (measurementsToLines (F4) (F1) [(Measurement (toSqlKey 1) 39.5 0 100.3), (Measurement (toSqlKey 2) 39.5 5 99.9),
+                                         (Measurement (toSqlKey 3) 39.5 10 98.6), (Measurement (toSqlKey 4) 37.7 15 99.1)]
+   --id height degree radius
+  )
+
+makeFirstTwoBackBottomLinesBack  = TestCase $ assertEqual
+  "make the 1st 2 BackBottomLines of geox flex shoe using measurementToLinesWithRadiusAdj"
+  [BackBottomLine {b1 = Point {x_axis = 4.353429350245525, y_axis = -49.759925169682695, z_axis = 0.8999999999999988},
+                   b4 = Point {x_axis = 0.0, y_axis = -50.15, z_axis = 0.89985510587711}},
+   BackBottomLine {b1 = Point {x_axis = 8.560855158979665, y_axis = -48.55102222350185, z_axis = 0.8999999999999986},
+                   b4 = Point {x_axis = 4.353429350245525, y_axis = -49.759925169682695, z_axis = 0.8999999999999988}},
+   BackBottomLine {b1 = Point {x_axis = 12.824483684829902, y_axis = -47.86162469262333, z_axis = 0.0},
+                   b4 = Point {x_axis = 8.560855158979665, y_axis = -48.55102222350185, z_axis = 0.8999999999999986}}]
+
+  (measurementToLinesWithRadiusAdj 0.5 (B4) (B1) [(Measurement (toSqlKey 1) 39.5 0 100.3), (Measurement (toSqlKey 2) 39.5 5 99.9),
                                          (Measurement (toSqlKey 3) 39.5 10 98.6), (Measurement (toSqlKey 4) 37.7 15 99.1)]
    --id height degree radius
   )
@@ -96,31 +149,31 @@ adjustMeasurementHeightsToStartAtZeroTest3 = TestCase $ assertEqual
   [(Measurement (toSqlKey 1) 0 1 1), (Measurement (toSqlKey 2) 1 1 1)]
   (adjustMeasurementHeightsToStartAtZero [(Measurement (toSqlKey 1) (-1) 1 1), (Measurement (toSqlKey 2) 0 1 1)])
 
-measurementsToFrontLinesTest = TestCase $ assertEqual
+measurementsToLinesTest = TestCase $ assertEqual
   "convert [Measurement] to [CornerPoints]"
   [F3 $ Point {x_axis = 1.745240643728351e-2, y_axis = -0.9998476951563913, z_axis = 0.0}]
-  (measurementsToFrontLines (F3) (F2)  [(Measurement (toSqlKey 1) 1 1 1)]
+  (measurementsToLines (F3) (F2)  [(Measurement (toSqlKey 1) 1 1 1)]
   )
 
-measurementsToFrontLinesTestBack = TestCase $ assertEqual
+measurementsToLinesTestBack = TestCase $ assertEqual
   "convert [Measurement] to [CornerPoints]"
   [B4 $ Point {x_axis = 1.745240643728351e-2, y_axis = -0.9998476951563913, z_axis = 0.0}]
-  (measurementsToFrontLines (B4) (B1) [(Measurement (toSqlKey 1) 1 1 1)]
+  (measurementsToLines (B4) (B1) [(Measurement (toSqlKey 1) 1 1 1)]
   )
 
 
-measurementsToFrontLinesTest2 = TestCase $ assertEqual
+measurementsToLinesTest2 = TestCase $ assertEqual
   "convert [Measurement] to [CornerPoints]"
   [FrontTopLine {f2 = Point {x_axis = 1.745240643728351e-2, y_axis = -0.9998476951563913, z_axis = 1.0},
                  f3 = Point {x_axis = 1.745240643728351e-2, y_axis = -0.9998476951563913, z_axis = 0.0}}]
-  (measurementsToFrontLines (F3) (F2) [(Measurement (toSqlKey 1) 1 1 1), (Measurement (toSqlKey 2) 2 1 1)]
+  (measurementsToLines (F3) (F2) [(Measurement (toSqlKey 1) 1 1 1), (Measurement (toSqlKey 2) 2 1 1)]
   )
 
-measurementsToFrontLinesTest2Back = TestCase $ assertEqual
+measurementsToLinesTest2Back = TestCase $ assertEqual
   "convert [Measurement] to [CornerPoints]"
   [BackBottomLine {b1 = Point {x_axis = 1.745240643728351e-2, y_axis = -0.9998476951563913, z_axis = 1.0},
                  b4 = Point {x_axis = 1.745240643728351e-2, y_axis = -0.9998476951563913, z_axis = 0.0}}]
-  (measurementsToFrontLines (B4) (B1) [(Measurement (toSqlKey 1) 1 1 1), (Measurement (toSqlKey 2) 2 1 1)]
+  (measurementsToLines (B4) (B1) [(Measurement (toSqlKey 1) 1 1 1), (Measurement (toSqlKey 2) 2 1 1)]
   )
 
 adjustRadiusTest = TestCase $ assertEqual

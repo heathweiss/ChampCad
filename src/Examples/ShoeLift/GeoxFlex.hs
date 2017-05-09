@@ -11,14 +11,15 @@
 module Examples.ShoeLift.GeoxFlex() where
 
 import Scan.LineScanner(LineScan(..), Measurement(..), uniqueScanName, getMinHeight, adjustHeight,
-                        adjustMeasurementHeightsToStartAtZero, measurementsToFrontLines, adjustRadius,
-                        lineScanId, measurementScanId', degree', extractMeasurement)
+                        adjustMeasurementHeightsToStartAtZero, measurementsToLines, adjustRadius,
+                        lineScanId, measurementScanId', degree', extractMeasurement, measurementToLinesWithRadiusAdj)
 
 import CornerPoints.Points(Point(..))
 import CornerPoints.CornerPoints(CornerPoints(..), (+++), (|+++|), (|@+++#@|), (+++>))
 import CornerPoints.MeshGeneration(autoGenerateEachCube)
 import CornerPoints.Transpose(transposeZ)
 import CornerPoints.FaceConversions(toTopFace)
+import CornerPoints.FaceExtraction(extractTopFace)
 
 import Stl.StlCornerPoints((|+++^|), (||+++^||), Faces(..))
 import Stl.StlBase (StlShape(..), newStlShape)
@@ -91,21 +92,28 @@ heelBottom measurements = do
          
   bottomFrontLinesOutside
     <- buildCubePointsListSingle "bottomFrontLines of the outside wall."
-       ( measurementsToFrontLines (F4) (F1) measurements)
+       ( measurementsToLines (F4) (F1) measurements)
 
-  
   bottomFrontLinesInside
     <- buildCubePointsListSingle "bottomFrontLines of the inside wall."
-       ( measurementsToFrontLines (B4) (B1)  {-$ map (adjustRadius (-10))-} measurements)
+       ( measurementToLinesWithRadiusAdj 0.5 (B4) (B1) measurements)
   
   bottomFaces
     <- buildCubePointsListWithAdd "build the bottom faces"
        bottomFrontLinesInside
        bottomFrontLinesOutside
   
-  cubes 
+  bottomCubes 
     <- buildCubePointsListWithAdd "build the top faces and add to bottom faces"
        (map (toTopFace . (transposeZ (+ 10))) bottomFaces)
        bottomFaces
-     
-  return bottomFrontLinesOutside
+
+  topCubes
+    <- buildCubePointsListWithAdd "transpose up the bottomCubes to get a flat top"
+       (map ((transposeZ (\x -> 40) ) . extractTopFace) bottomCubes)
+       bottomCubes
+
+  
+        
+        
+  return bottomFrontLinesInside
