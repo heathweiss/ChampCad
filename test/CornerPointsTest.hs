@@ -191,7 +191,7 @@ f2PlusPlusPlusB2Test = TestCase $ assertEqual
 
 bottomFrontLinePlusPlusPlusF1Test = TestCase $ assertEqual
  "bottomFrontLinePlusPlusPlusF1" 
-  (BottomFrontLine {f1 = (Point 1 2 3), f4 = (Point 7 8 9)})
+  (BottomFrontLine {f1 = Point {x_axis = 7.0, y_axis = 8.0, z_axis = 9.0}, f4 = Point {x_axis = 1.0, y_axis = 2.0, z_axis = 3.0}})
   ((BottomFrontLine {f1 = (Point 1 2 3), f4 = (Point 4 5 6)}) +++ (F1 (Point 7 8 9)))
 
 f1PlusPlusPlusbottomFrontLineTest = TestCase $ assertEqual
