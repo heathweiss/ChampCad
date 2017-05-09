@@ -613,7 +613,8 @@ anyCornerPoint +++ (CornerPointsId) = anyCornerPoint
 
 (F1 f1) +++ (BottomFrontLine f1a f4a) = BottomFrontLine f1 f1a
 
-(BottomFrontLine f1a f4a) +++ (F1 f1) = BottomFrontLine f1a f1
+--changed this one for flex geox
+(BottomFrontLine f1a f4a) +++ (F1 f1) = BottomFrontLine f1 f1a
 
 (F1 f1) +++ (B1 b1) =
     BottomLeftLine b1 f1
@@ -675,6 +676,10 @@ anyCornerPoint +++ (CornerPointsId) = anyCornerPoint
 
 (BottomRightLine b4' f4') +++ (F4 f4'') =
   BottomRightLine f4' f4''
+
+(BackBottomLine b1 b4) +++ (B1 b1') = BackBottomLine b1' b1
+
+(B1 b1') +++ (BackBottomLine b1 b4) = BackBottomLine b1' b1
 
 
 (CornerPointsError _) +++ b = CornerPointsError "illegal CornerPointsError +++ _ operation"

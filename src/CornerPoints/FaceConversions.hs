@@ -26,6 +26,7 @@ module CornerPoints.FaceConversions(
   frontFaceFromBackFace,
   toBottomFace,
   toBackRightLine,
+  toTopFace,
 ) where
 import CornerPoints.CornerPoints (CornerPoints(..), (+++))
 
@@ -133,6 +134,9 @@ toBackFace (FrontFace f1 f2 f3 f4) = BackFace f1 f2 f3 f4
 toBackFace (BackRightLine b3 b4) = BackFace b4 b3 b3 b4
 toBackFace (BackLeftLine b1 b2) = BackFace b1 b2 b2 b1
 
+toTopFace :: CornerPoints -> CornerPoints
+toTopFace (BottomFace b1 f1 b4 f4) = TopFace b1 f1 b4 f4
+
 toBottomFace :: CornerPoints -> CornerPoints
 toBottomFace (TopFace b2 f2 b3 f3) = BottomFace b2 f2 b3 f3
 
@@ -152,7 +156,6 @@ toBackTopLine (B3 b3) = BackTopLine b3 b3
 toBackTopLine (BackRightLine b3 b4) = BackTopLine b3 b4
 toBackTopLine (B4 b4) = BackTopLine b4 b4
 toBackTopLine (BackBottomLine b1 b4) = BackTopLine b1 b4
-toBackTopLine (B4 b4) = BackTopLine b4 b4
 toBackTopLine (B1 b1) = BackTopLine b1 b1
 toBackTopLine (BackLeftLine b1 b2) = BackTopLine b1 b2
 toBackTopLine (B2 b2) = BackTopLine b2 b2
