@@ -1,3 +1,4 @@
+{-# LANGUAGE ParallelListComp #-}
 --for persist
 {-# LANGUAGE EmptyDataDecls             #-}
 {-# LANGUAGE FlexibleContexts           #-}
@@ -11,7 +12,9 @@
 
 module Scan.LineScanner(LineScan(..), Measurement(..), uniqueScanName, getMinHeight, adjustHeight,
                         adjustMeasurementHeightsToStartAtZero, measurementsToLines, adjustRadius,
-                        lineScanId, measurementScanId', degree', extractMeasurement, measurementToLinesWithRadiusAdj) where
+                        lineScanId, measurementScanId', degree', extractMeasurement, measurementToLinesWithRadiusAdj,
+                        buildBackToFrontMeasurements, buildBackToFrontMeasurementsTopFaces, buildBackToFrontMeasurementsBottomFaces,
+                        findIndiceOfMeasurementDegree, splitAndReverseBackMeasurementsAtDegree) where
 
 import CornerPoints.Degree(Degree(..))
 import CornerPoints.Create(Origin(..), createCornerPoint)
@@ -24,6 +27,10 @@ import Geometry.Angle(Angle(..))
 
 import Math.Trigonometry(sinDegrees,cosDegrees,tanDegrees,atanDegrees,coTanDegrees)
 
+import Helpers.List(splitAndReverseBackHalf, SplitAtT(..) )
+
+import Data.List(elemIndex, findIndex)
+
 -- for persist
 import Control.Monad.IO.Class  (liftIO)
 import Database.Persist
@@ -32,6 +39,8 @@ import Database.Persist.TH
 
 type HeightT = Double
 type RadiusT = Double
+type DegreeT = Double
+
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 LineScan
@@ -107,6 +116,34 @@ insertAdjustments heightAdj radiusAdj = runSqlite dbName $ do
               radiusAdj
      liftIO $ putStrLn "adjustment inserted"
 
+-- ==========================================================back to front scan ============================================================
+-- =========================================================================================================================================
+buildBackToFrontMeasurements :: (Point -> CornerPoints) -> (Point -> CornerPoints) -> (Point -> CornerPoints) -> (Point -> CornerPoints) -> DegreeT -> [Measurement] -> [CornerPoints]
+buildBackToFrontMeasurements initialFrontConst tailFrontConst  initialBackConst tailBackConstr splitAt measurements  = 
+  let measurementWithZAdjToZero = adjustMeasurementHeightsToStartAtZero measurements
+      (front, back) = splitAndReverseBackMeasurementsAtDegree splitAt measurementWithZAdjToZero
+      b1Point = createCornerPoint (initialBackConst) (Point 0 0 $ extractHeight $ head front) (extractRadius $ head front) (extractAngle $ head front)
+      b4Point = createCornerPoint (initialFrontConst) (Point 0 0 $ extractHeight $ head back) (extractRadius $ head back) (extractAngle $ head back)
+  in  (b4Point +++ b1Point)
+      +++> 
+      [ (createCornerPoint (tailBackConstr) (Point 0 0 $ extractHeight currBack) (extractRadius currBack) (extractAngle currBack))
+        +++
+        (createCornerPoint (tailFrontConst) (Point 0 0 $ extractHeight currfront) (extractRadius currfront) (extractAngle currfront))
+        
+        
+        | currfront <- tail front
+        | currBack  <- tail back
+      ]
+  
+buildBackToFrontMeasurementsBottomFaces :: DegreeT -> [Measurement] -> [CornerPoints]
+buildBackToFrontMeasurementsBottomFaces splitAt measurements =
+  buildBackToFrontMeasurements (B4) (F4) (B1) (F1) splitAt measurements
+
+buildBackToFrontMeasurementsTopFaces :: DegreeT -> [Measurement] -> [CornerPoints]
+buildBackToFrontMeasurementsTopFaces splitAt measurements =
+  buildBackToFrontMeasurements (F4) (B4) (F1) (B1) splitAt measurements
+-- ==================================================== measurementsToLines ===============================================================
+-- =========================================================================================================================================
 {-| Convert [Measurement] to [CornerPoints] which is data captured from scanner, and put into database,
 into a series of connected lines. These can be be any line, but will typically be:
 Front and Back lines such as BackFrontLine.
@@ -129,9 +166,6 @@ example of right/leftConstructor would be a F4 F1 combination to create [BottomF
 measurement: A [Measurement] that is the data captured by the scanner.
 
 -}
--- ==================================================== measurementsToLines ===============================================================
--- =========================================================================================================================================
-
 measurementsToLines :: (Point -> CornerPoints) -> (Point -> CornerPoints) -> [Measurement] -> [CornerPoints]
 
 measurementsToLines rightConstructor leftConstructor  (measurement:[]) =
@@ -218,7 +252,19 @@ measurementToLinesWithRadiusAdj' radiusAdjMultiplier leftConstructor    (measure
   measurementToLinesWithRadiusAdj' radiusAdjMultiplier leftConstructor (measurements)
 
 
+-- ==============================================================================================================================================
+-- ======================================================= support functions ====================================================================
+findIndiceOfMeasurementDegree :: DegreeT -> [Measurement] -> Int
+findIndiceOfMeasurementDegree degree measurements =
+  case findIndex (\x -> degree == (angle $ extractAngle x)) measurements of
+    Nothing -> 0
+    Just index -> index
 
+-- | The target degree is part of the second list. 
+splitAndReverseBackMeasurementsAtDegree :: DegreeT -> [Measurement] -> ([Measurement],[Measurement])
+splitAndReverseBackMeasurementsAtDegree degree measurements =
+  splitAndReverseBackHalf (findIndiceOfMeasurementDegree degree measurements) measurements
+  
 extractRadius :: Measurement -> Radius
 extractRadius (Measurement _ _ _ radius) =
   Radius $ radius

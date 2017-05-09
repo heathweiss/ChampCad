@@ -12,7 +12,8 @@ module Examples.ShoeLift.GeoxFlex() where
 
 import Scan.LineScanner(LineScan(..), Measurement(..), uniqueScanName, getMinHeight, adjustHeight,
                         adjustMeasurementHeightsToStartAtZero, measurementsToLines, adjustRadius,
-                        lineScanId, measurementScanId', degree', extractMeasurement, measurementToLinesWithRadiusAdj)
+                        lineScanId, measurementScanId', degree', extractMeasurement, measurementToLinesWithRadiusAdj,
+                        buildBackToFrontMeasurementsBottomFaces, buildBackToFrontMeasurementsTopFaces)
 
 import CornerPoints.Points(Point(..))
 import CornerPoints.CornerPoints(CornerPoints(..), (+++), (|+++|), (|@+++#@|), (+++>))
@@ -61,34 +62,32 @@ heelBottomDbBase runScan = runSqlite databaseName $ do
      liftIO $  runScan measurements
      liftIO $ putStrLn "heel bottom stl has been output"
   
-heelBottomDbStl :: IO ()
-heelBottomDbStl = heelBottomDbBase (heelBottomStl)
+heelBottomRadialDbStl :: IO ()
+heelBottomRadialDbStl = heelBottomDbBase (heelBottomRadialStl)
 
-heelBottomDbState :: IO ()
-heelBottomDbState = heelBottomDbBase (heelBottomShowState)
+heelBottomRadialDbState :: IO ()
+heelBottomRadialDbState = heelBottomDbBase (heelBottomRadialShowState)
 
-heelBottomStl :: [Measurement] -> IO ()
-heelBottomStl measurements = do
+heelBottomRadialStl :: [Measurement] -> IO ()
+heelBottomRadialStl measurements = do
   let
     
-    cpoints =  ((execState $ runExceptT (heelBottom measurements)) [])
+    cpoints =  ((execState $ runExceptT (heelBottomRadial measurements)) [])
   
   writeStlToFile $ newStlShape "bottom of heel" $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
 
-heelBottomShowState :: [Measurement] -> IO ()
-heelBottomShowState measurements = do
+heelBottomRadialShowState :: [Measurement] -> IO ()
+heelBottomRadialShowState measurements = do
   let
     
-    cpoints =  ((evalState $ runExceptT (heelBottom measurements)) [])
+    cpoints =  ((evalState $ runExceptT (heelBottomRadial measurements)) [])
   print $ show cpoints
   
 
 
 
-heelBottom :: [Measurement] -> ExceptT BuilderError (State CpointsStack ) CpointsList
-heelBottom measurements = do
-  test <- buildCubePointsListSingle "do I get stack overflow"
-          [F1 $ Point 1 1 1]
+heelBottomRadial :: [Measurement] -> ExceptT BuilderError (State CpointsStack ) CpointsList
+heelBottomRadial measurements = do
          
   bottomFrontLinesOutside
     <- buildCubePointsListSingle "bottomFrontLines of the outside wall."
@@ -113,7 +112,35 @@ heelBottom measurements = do
        (map ((transposeZ (\x -> 40) ) . extractTopFace) bottomCubes)
        bottomCubes
 
-  
-        
-        
   return bottomFrontLinesInside
+
+-- =================================================================================================================================================
+-- ========================================== front to back =======================================================================================
+heelBottomBackToFrontDbStl :: IO ()
+heelBottomBackToFrontDbStl = heelBottomDbBase (heelBottomBackToFrontStl)
+
+heelBottomBackToFrontStl :: [Measurement] -> IO ()
+heelBottomBackToFrontStl measurements = do
+  let
+    
+    cpoints =  ((execState $ runExceptT (heelBottomBackToFront measurements)) [])
+  
+  writeStlToFile $ newStlShape "bottom of heel" $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
+
+heelBottomBackToFront :: [Measurement] -> ExceptT BuilderError (State CpointsStack ) CpointsList
+heelBottomBackToFront measurements = do
+         
+  bottomFaces
+    <- buildCubePointsListSingle "bottom faces"
+       ( buildBackToFrontMeasurementsBottomFaces 225 measurements)
+
+  topFaces
+    <- buildCubePointsListSingle "top faces"
+       ( map ( toTopFace . (transposeZ (\x -> 25)) ) bottomFaces )
+
+  cubes
+    <- buildCubePointsListWithAdd "cubes"
+       bottomFaces
+       topFaces
+
+  return cubes

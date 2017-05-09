@@ -4,7 +4,8 @@ import Test.HUnit
 
 import Scan.LineScanner(LineScan(..), Measurement(..), uniqueScanName, getMinHeight, adjustHeight,
                         adjustMeasurementHeightsToStartAtZero, measurementsToLines, adjustRadius,
-                        measurementToLinesWithRadiusAdj)
+                        measurementToLinesWithRadiusAdj, buildBackToFrontMeasurements, buildBackToFrontMeasurementsTopFaces,
+                        buildBackToFrontMeasurementsBottomFaces, findIndiceOfMeasurementDegree, splitAndReverseBackMeasurementsAtDegree)
 
 import CornerPoints.Points(Point(..))
 import CornerPoints.CornerPoints(CornerPoints(..))
@@ -36,6 +37,54 @@ lineScannerTestDo = do
   runTestTT adjustSingleRadiusBackTest
   runTestTT adjustSingleRadiusBackTest3
   runTestTT makeFirstTwoBackBottomLinesBack
+  -- ========= radial system =============
+  runTestTT buildFirstLineFrontToBackBottomFaces
+  runTestTT buildFirstLineFrontToBackBottomFrontFaces
+  runTestTT findIndexOfMeasurement
+  runTestTT splitAndReverseBackMeasurementsAtDegreeTest
+-- ========================================================================================================================================================================
+-- ========================================================================================================================================================================
+-- ==================================================================radial system ========================================================================================
+
+
+buildFirstLineFrontToBackBottomFaces = TestCase $ assertEqual
+  "build the first BottomFace of front to back"
+  [BottomFace {b1 = Point {x_axis = 0.0, y_axis = -20.0, z_axis = 0.0},
+               f1 = Point {x_axis = 6.840402866513374, y_axis = -18.79385241571817, z_axis = 0.0},
+               b4 = Point {x_axis = 19.999999999999996, y_axis = -34.64101615137755, z_axis = 0.0},
+               f4 = Point {x_axis = 6.945927106677213, y_axis = -39.39231012048832, z_axis = 0.0}}]
+  (buildBackToFrontMeasurementsBottomFaces 20 [Measurement (toSqlKey 3) 10 0 20, Measurement (toSqlKey 3) 10 10 40,
+                                             Measurement (toSqlKey 3) 10 20 20, Measurement (toSqlKey 3) 10 30 40
+                                            ])
+
+buildFirstLineFrontToBackBottomFrontFaces = TestCase $ assertEqual
+  "build the first BottomFace of front to back"
+  [BottomFace {b1 = Point {x_axis = 6.840402866513374, y_axis = -18.79385241571817, z_axis = 0.0},
+               f1 = Point {x_axis = 0.0, y_axis = -20.0, z_axis = 0.0},
+               b4 = Point {x_axis = 6.945927106677213, y_axis = -39.39231012048832, z_axis = 0.0},
+               f4 = Point {x_axis = 19.999999999999996, y_axis = -34.64101615137755, z_axis = 0.0}}]
+  (buildBackToFrontMeasurementsTopFaces 20 [Measurement (toSqlKey 3) 10 0 20, Measurement (toSqlKey 3) 10 10 40,
+                                             Measurement (toSqlKey 3) 10 20 20, Measurement (toSqlKey 3) 10 30 40
+                                            ])
+
+findIndexOfMeasurement = TestCase $ assertEqual
+  "find the index of Measurement in [Measurement] by degree"
+  (2)
+  (findIndiceOfMeasurementDegree 10 [Measurement (toSqlKey 1) 10 0 20, Measurement (toSqlKey 2) 20 5 20, Measurement (toSqlKey 3) 30 10 20, Measurement (toSqlKey 3) 30 20 20])
+
+splitAndReverseBackMeasurementsAtDegreeTest = TestCase $ assertEqual
+  "split [Measurement] by degree"
+  ([Measurement (toSqlKey 1) 10 0 20, Measurement (toSqlKey 2) 20 5 20],
+   [Measurement (toSqlKey 3) 30 20 20, Measurement (toSqlKey 3) 30 10 20])
+
+  (splitAndReverseBackMeasurementsAtDegree
+     10
+     [Measurement (toSqlKey 1) 10 0 20, Measurement (toSqlKey 2) 20 5 20, Measurement (toSqlKey 3) 30 10 20, Measurement (toSqlKey 3) 30 20 20]
+  )
+-- ========================================================================================================================================================================
+-- ========================================================================================================================================================================
+-- ==================================================================radial system ========================================================================================
+
 
 adjustSingleRadiusTest = TestCase $ assertEqual
   "adjust the Radius of a single Measurement and create cPoint"
