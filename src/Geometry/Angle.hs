@@ -16,10 +16,10 @@ data Angle =         Quadrant1Angle  { angle::Double}
                    | Quadrant2Angle  { angle::Double}
                    | Quadrant3Angle  { angle::Double}
                    | Quadrant4Angle  { angle::Double}
-                   | Angle           { angle::Double}
                    -- | An angle which has not been adjusted for quadrant.
+                   | Angle           { angle::Double}
                    
-  deriving (Show, Eq)
+     deriving (Show, Eq)
 
 -- | Which quadrant of the xy plane.
 data Quadrant =   Quadrant1

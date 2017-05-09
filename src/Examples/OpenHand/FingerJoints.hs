@@ -1,5 +1,3 @@
-module Examples.OpenHand.FingerJoints(fingerJointsStlGenerator, fingerJointsToRiserStlGenerator) where
-
 {- |
 Build the flexible joints between the fingers, and between the finger and the riser.
 fingerJoints: joins the finger sections together.
@@ -8,6 +6,9 @@ fingerToRiser: joins a finger joint to the riser.
 Has the larger cylinder to attach to the finger joint.
 Has a long flat section to attach to the riser.
 -}
+module Examples.OpenHand.FingerJoints(fingerJointsStlGenerator, fingerJointsToRiserStlGenerator) where
+
+
 
 import CornerPoints.CornerPoints(CornerPoints(..), (+++), (|+++|), (|@+++#@|), (+++>))
 import CornerPoints.HorizontalFaces(createTopFaces, createBottomFaces)
