@@ -4,8 +4,8 @@ import Test.HUnit
 
 import Scan.LineScanner(LineScan(..), Measurement(..), uniqueScanName, getMinHeight, adjustHeight,
                         adjustMeasurementHeightsToStartAtZero, measurementsToLines, adjustRadius,
-                        measurementToLinesWithRadiusAdj, buildBackToFrontMeasurements, buildBackToFrontMeasurementsTopFaces,
-                        buildBackToFrontMeasurementsBottomFaces, findIndiceOfMeasurementDegree, splitAndReverseBackMeasurementsAtDegree)
+                        measurementToLinesWithRadiusAdj, linearBackToFrontTopFaces, linearLeftToRightTBottomFaces,
+                        linearBackToFrontBottomFaces, findIndiceOfMeasurementDegree, splitAndReverseBackMeasurementsAtDegree,)
 
 import CornerPoints.Points(Point(..))
 import CornerPoints.CornerPoints(CornerPoints(..))
@@ -42,28 +42,64 @@ lineScannerTestDo = do
   runTestTT buildFirstLineFrontToBackBottomFrontFaces
   runTestTT findIndexOfMeasurement
   runTestTT splitAndReverseBackMeasurementsAtDegreeTest
+  runTestTT buildFirstLineLeftToRightBottomFaces
+  runTestTT buildFirst2CubesLeftToRightBottomFaces
 -- ========================================================================================================================================================================
 -- ========================================================================================================================================================================
 -- ==================================================================radial system ========================================================================================
+buildFirst2CubesLeftToRightBottomFaces = TestCase $ assertEqual
+  "build the first 2 BottomFacesof left to right"
+  --will need to be confirmed by viewing geoxFlex
+  
+  [BottomFace {b1 = Point {x_axis = 0.0, y_axis = -20.0, z_axis = 0.0},
+               f1 = Point {x_axis = 30.64177772475912, y_axis = -25.711504387461574, z_axis = 0.0},
+               b4 = Point {x_axis = 6.945927106677213, y_axis = -39.39231012048832, z_axis = 0.0},
+               f4 = Point {x_axis = 12.855752193730785, y_axis = -15.32088886237956, z_axis = 0.0}},
+   BottomFace {b1 = Point {x_axis = 6.945927106677213, y_axis = -39.39231012048832, z_axis = 0.0},
+               f1 = Point {x_axis = 12.855752193730785, y_axis = -15.32088886237956, z_axis = 0.0},
+               b4 = Point {x_axis = 6.840402866513374, y_axis = -18.79385241571817, z_axis = 0.0},
+               f4 = Point {x_axis = 19.999999999999996, y_axis = -34.64101615137755, z_axis = 0.0}}
+  ]
+  
+  (linearLeftToRightTBottomFaces 30 [Measurement (toSqlKey 3) 10 0 20, Measurement (toSqlKey 3) 10 10 40,
+                                             Measurement (toSqlKey 3) 10 20 20, Measurement (toSqlKey 3) 10 30 40,
+                                             Measurement (toSqlKey 3) 10 40 20, Measurement (toSqlKey 3) 10 50 40
+                                            ])
 
+buildFirstLineLeftToRightBottomFaces = TestCase $ assertEqual
+  "build the first BottomFace of left to right"
+  --will need to be confirmed by viewing geoxFlex
+  [BottomFace {b1 = Point {x_axis = 0.0, y_axis = -20.0, z_axis = 0.0},
+               f1 = Point {x_axis = 19.999999999999996, y_axis = -34.64101615137755, z_axis = 0.0},
+               b4 = Point {x_axis = 6.945927106677213, y_axis = -39.39231012048832, z_axis = 0.0},
+               f4 = Point {x_axis = 6.840402866513374, y_axis = -18.79385241571817, z_axis = 0.0}}]
+  (linearLeftToRightTBottomFaces 20 [Measurement (toSqlKey 3) 10 0 20, Measurement (toSqlKey 3) 10 10 40,
+                                     Measurement (toSqlKey 3) 10 20 20, Measurement (toSqlKey 3) 10 30 40
+                                    ]
+  )
 
 buildFirstLineFrontToBackBottomFaces = TestCase $ assertEqual
   "build the first BottomFace of front to back"
-  [BottomFace {b1 = Point {x_axis = 0.0, y_axis = -20.0, z_axis = 0.0},
+  
+  [BottomFace {b1 = Point {x_axis = 19.999999999999996, y_axis = -34.64101615137755, z_axis = 0.0},
                f1 = Point {x_axis = 6.840402866513374, y_axis = -18.79385241571817, z_axis = 0.0},
-               b4 = Point {x_axis = 19.999999999999996, y_axis = -34.64101615137755, z_axis = 0.0},
+               b4 = Point {x_axis = 0.0, y_axis = -20.0, z_axis = 0.0},
                f4 = Point {x_axis = 6.945927106677213, y_axis = -39.39231012048832, z_axis = 0.0}}]
-  (buildBackToFrontMeasurementsBottomFaces 20 [Measurement (toSqlKey 3) 10 0 20, Measurement (toSqlKey 3) 10 10 40,
+  
+
+  
+  (linearBackToFrontBottomFaces 20 [Measurement (toSqlKey 3) 10 0 20, Measurement (toSqlKey 3) 10 10 40,
                                              Measurement (toSqlKey 3) 10 20 20, Measurement (toSqlKey 3) 10 30 40
                                             ])
 
 buildFirstLineFrontToBackBottomFrontFaces = TestCase $ assertEqual
   "build the first BottomFace of front to back"
-  [BottomFace {b1 = Point {x_axis = 6.840402866513374, y_axis = -18.79385241571817, z_axis = 0.0},
-               f1 = Point {x_axis = 0.0, y_axis = -20.0, z_axis = 0.0},
-               b4 = Point {x_axis = 6.945927106677213, y_axis = -39.39231012048832, z_axis = 0.0},
-               f4 = Point {x_axis = 19.999999999999996, y_axis = -34.64101615137755, z_axis = 0.0}}]
-  (buildBackToFrontMeasurementsTopFaces 20 [Measurement (toSqlKey 3) 10 0 20, Measurement (toSqlKey 3) 10 10 40,
+  [TopFace {b2 = Point {x_axis = 19.999999999999996, y_axis = -34.64101615137755, z_axis = 0.0},
+            f2 = Point {x_axis = 6.840402866513374, y_axis = -18.79385241571817, z_axis = 0.0},
+            b3 = Point {x_axis = 0.0, y_axis = -20.0, z_axis = 0.0},
+            f3 = Point {x_axis = 6.945927106677213, y_axis = -39.39231012048832, z_axis = 0.0}}]
+  
+  (linearBackToFrontTopFaces 20 [Measurement (toSqlKey 3) 10 0 20, Measurement (toSqlKey 3) 10 10 40,
                                              Measurement (toSqlKey 3) 10 20 20, Measurement (toSqlKey 3) 10 30 40
                                             ])
 
@@ -151,16 +187,17 @@ makeFirstTwoBottomFrontLines  = TestCase $ assertEqual
 
 makeFirstTwoBackBottomLinesBack  = TestCase $ assertEqual
   "make the 1st 2 BackBottomLines of geox flex shoe using measurementToLinesWithRadiusAdj"
+  
   [BackBottomLine {b1 = Point {x_axis = 4.353429350245525, y_axis = -49.759925169682695, z_axis = 0.8999999999999988},
                    b4 = Point {x_axis = 0.0, y_axis = -50.15, z_axis = 0.89985510587711}},
    BackBottomLine {b1 = Point {x_axis = 8.560855158979665, y_axis = -48.55102222350185, z_axis = 0.8999999999999986},
                    b4 = Point {x_axis = 4.353429350245525, y_axis = -49.759925169682695, z_axis = 0.8999999999999988}},
    BackBottomLine {b1 = Point {x_axis = 12.824483684829902, y_axis = -47.86162469262333, z_axis = 0.0},
-                   b4 = Point {x_axis = 8.560855158979665, y_axis = -48.55102222350185, z_axis = 0.8999999999999986}}]
+                   b4 = Point {x_axis = 8.560855158979665, y_axis = -48.55102222350185, z_axis = 0.8999999999999986}}
+  ]
 
   (measurementToLinesWithRadiusAdj 0.5 (B4) (B1) [(Measurement (toSqlKey 1) 39.5 0 100.3), (Measurement (toSqlKey 2) 39.5 5 99.9),
                                          (Measurement (toSqlKey 3) 39.5 10 98.6), (Measurement (toSqlKey 4) 37.7 15 99.1)]
-   --id height degree radius
   )
 
   

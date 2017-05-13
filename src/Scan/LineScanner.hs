@@ -13,8 +13,9 @@
 module Scan.LineScanner(LineScan(..), Measurement(..), uniqueScanName, getMinHeight, adjustHeight,
                         adjustMeasurementHeightsToStartAtZero, measurementsToLines, adjustRadius,
                         lineScanId, measurementScanId', degree', extractMeasurement, measurementToLinesWithRadiusAdj,
-                        buildBackToFrontMeasurements, buildBackToFrontMeasurementsTopFaces, buildBackToFrontMeasurementsBottomFaces,
-                        findIndiceOfMeasurementDegree, splitAndReverseBackMeasurementsAtDegree) where
+                        linearMeasurementsBase, linearBackToFrontTopFaces, linearBackToFrontBottomFaces,
+                        findIndiceOfMeasurementDegree, splitAndReverseBackMeasurementsAtDegree,
+                        linearLeftToRightTBottomFaces) where
 
 import CornerPoints.Degree(Degree(..))
 import CornerPoints.Create(Origin(..), createCornerPoint)
@@ -22,6 +23,7 @@ import CornerPoints.HorizontalFaces(createBottomFaces)
 import CornerPoints.CornerPoints(CornerPoints(..), (+++>), (+++), (|+++|))
 import CornerPoints.Points(Point(..))
 import CornerPoints.Radius(Radius(..))
+import CornerPoints.FaceConversions(reverseNormal)
 
 import Geometry.Angle(Angle(..))
 
@@ -118,30 +120,36 @@ insertAdjustments heightAdj radiusAdj = runSqlite dbName $ do
 
 -- ==========================================================back to front scan ============================================================
 -- =========================================================================================================================================
-buildBackToFrontMeasurements :: (Point -> CornerPoints) -> (Point -> CornerPoints) -> (Point -> CornerPoints) -> (Point -> CornerPoints) -> DegreeT -> [Measurement] -> [CornerPoints]
-buildBackToFrontMeasurements initialFrontConst tailFrontConst  initialBackConst tailBackConstr splitAt measurements  = 
+linearMeasurementsBase :: (Point -> CornerPoints) -> (Point -> CornerPoints) -> (Point -> CornerPoints) -> (Point -> CornerPoints) -> DegreeT -> [Measurement] -> [CornerPoints]
+linearMeasurementsBase initialFrontConst tailFrontConst  initialBackConst tailBackConstr splitAt measurements  = 
   let measurementWithZAdjToZero = adjustMeasurementHeightsToStartAtZero measurements
-      (front, back) = splitAndReverseBackMeasurementsAtDegree splitAt measurementWithZAdjToZero
-      b1Point = createCornerPoint (initialBackConst) (Point 0 0 $ extractHeight $ head front) (extractRadius $ head front) (extractAngle $ head front)
-      b4Point = createCornerPoint (initialFrontConst) (Point 0 0 $ extractHeight $ head back) (extractRadius $ head back) (extractAngle $ head back)
-  in  (b4Point +++ b1Point)
+      (leadingMeasurements, trailingMeasurements) = splitAndReverseBackMeasurementsAtDegree splitAt measurementWithZAdjToZero
+      trailingCpoint = createCornerPoint (initialBackConst) (Point 0 0 $ extractHeight $ head leadingMeasurements) (extractRadius $ head leadingMeasurements) (extractAngle $ head leadingMeasurements)
+      leadingCpoint = createCornerPoint (initialFrontConst) (Point 0 0 $ extractHeight $ head trailingMeasurements) (extractRadius $ head trailingMeasurements) (extractAngle $ head trailingMeasurements)
+  in  (reverseNormal(leadingCpoint +++ trailingCpoint))
       +++> 
       [ (createCornerPoint (tailBackConstr) (Point 0 0 $ extractHeight currBack) (extractRadius currBack) (extractAngle currBack))
         +++
         (createCornerPoint (tailFrontConst) (Point 0 0 $ extractHeight currfront) (extractRadius currfront) (extractAngle currfront))
         
         
-        | currfront <- tail front
-        | currBack  <- tail back
+        | currfront <- tail leadingMeasurements
+        | currBack  <- tail trailingMeasurements
       ]
-  
-buildBackToFrontMeasurementsBottomFaces :: DegreeT -> [Measurement] -> [CornerPoints]
-buildBackToFrontMeasurementsBottomFaces splitAt measurements =
-  buildBackToFrontMeasurements (B4) (F4) (B1) (F1) splitAt measurements
+ 
+linearBackToFrontBottomFaces :: DegreeT -> [Measurement] -> [CornerPoints]
+linearBackToFrontBottomFaces splitAt measurements =
+  linearMeasurementsBase (B4) (F4) (B1) (F1) splitAt measurements
 
-buildBackToFrontMeasurementsTopFaces :: DegreeT -> [Measurement] -> [CornerPoints]
-buildBackToFrontMeasurementsTopFaces splitAt measurements =
-  buildBackToFrontMeasurements (F4) (B4) (F1) (B1) splitAt measurements
+
+linearBackToFrontTopFaces :: DegreeT -> [Measurement] -> [CornerPoints]
+linearBackToFrontTopFaces splitAt measurements =
+  linearMeasurementsBase (B3) (F3) (B2) (F2) splitAt measurements
+
+linearLeftToRightTBottomFaces :: DegreeT -> [Measurement] -> [CornerPoints]
+linearLeftToRightTBottomFaces splitAt measurements =
+  linearMeasurementsBase (B1)              (B4)           (F1)              (F4) splitAt measurements
+--                       initialFrontConst tailFrontConst  initialBackConst tailBackConstr 
 -- ==================================================== measurementsToLines ===============================================================
 -- =========================================================================================================================================
 {-| Convert [Measurement] to [CornerPoints] which is data captured from scanner, and put into database,

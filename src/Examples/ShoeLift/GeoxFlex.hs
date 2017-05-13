@@ -13,7 +13,7 @@ module Examples.ShoeLift.GeoxFlex() where
 import Scan.LineScanner(LineScan(..), Measurement(..), uniqueScanName, getMinHeight, adjustHeight,
                         adjustMeasurementHeightsToStartAtZero, measurementsToLines, adjustRadius,
                         lineScanId, measurementScanId', degree', extractMeasurement, measurementToLinesWithRadiusAdj,
-                        buildBackToFrontMeasurementsBottomFaces, buildBackToFrontMeasurementsTopFaces)
+                        linearBackToFrontBottomFaces, linearBackToFrontTopFaces, linearLeftToRightTBottomFaces)
 
 import CornerPoints.Points(Point(..))
 import CornerPoints.CornerPoints(CornerPoints(..), (+++), (|+++|), (|@+++#@|), (+++>))
@@ -119,6 +119,9 @@ heelBottomRadial measurements = do
 heelBottomBackToFrontDbStl :: IO ()
 heelBottomBackToFrontDbStl = heelBottomDbBase (heelBottomBackToFrontStl)
 
+heelBottomBackToFrontDbState :: IO ()
+heelBottomBackToFrontDbState = heelBottomDbBase (heelBottomBackToFrontShowState)
+
 heelBottomBackToFrontStl :: [Measurement] -> IO ()
 heelBottomBackToFrontStl measurements = do
   let
@@ -127,12 +130,19 @@ heelBottomBackToFrontStl measurements = do
   
   writeStlToFile $ newStlShape "bottom of heel" $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
 
+heelBottomBackToFrontShowState :: [Measurement] -> IO ()
+heelBottomBackToFrontShowState measurements = do
+  let
+    
+    cpoints =  ((evalState $ runExceptT (heelBottomBackToFront measurements)) [])
+  print $ show cpoints
+
 heelBottomBackToFront :: [Measurement] -> ExceptT BuilderError (State CpointsStack ) CpointsList
 heelBottomBackToFront measurements = do
          
   bottomFaces
     <- buildCubePointsListSingle "bottom faces"
-       ( buildBackToFrontMeasurementsBottomFaces 225 measurements)
+       ( linearLeftToRightTBottomFaces 225 measurements)
 
   topFaces
     <- buildCubePointsListSingle "top faces"
