@@ -546,6 +546,9 @@ anyCornerPoint +++ (CornerPointsId) = anyCornerPoint
 (BottomRightLine b4 f4) +++ (BottomLeftLine b1 f1) =
     BottomFace b1 f1 b4 f4
 
+(BottomLeftLine b1 f1) +++ (BottomRightLine b4 f4) =
+  BottomFace b1 f1 b4 f4
+
 (FrontLeftLine f1 f2) +++ (FrontRightLine f3 f4) =
   FrontFace f1 f2 f3 f4
 
@@ -582,6 +585,12 @@ anyCornerPoint +++ (CornerPointsId) = anyCornerPoint
 (BottomFace b1 f1 b4 f4) +++ (BottomLeftLine b1a f1a) =
     BottomFace {b1=b1a, f1=f1a, b4=b1, f4=f1}
 
+(BottomFace b1 f1 b4 f4) +++ (BottomRightLine b4' f4') =
+  BottomFace b4 f4 b4' f4'
+
+(BottomRightLine b4' f4') +++ (BottomFace b1 f1 b4 f4) =
+  BottomFace b4 f4 b4' f4'
+
 (TopFace b2 f2 b3 f3) +++ (FrontTopLine f2a f3a) =
     TopFace {b2=f2, b3=f3, f2=f2a, f3=f3a}
 
@@ -601,15 +610,14 @@ anyCornerPoint +++ (CornerPointsId) = anyCornerPoint
 (B2 b2) +++ (B3 b3) =
      BackTopLine {b2=b2, b3=b3}
 
+(B3 b3) +++ (B2 b2) =
+  BackTopLine {b2=b2, b3=b3}
+
 (B2 b2) +++ (F2 f2) =
   TopLeftLine b2 f2
 
 (F1 f1) +++ (F4 f4) =
      BottomFrontLine {f1=f1, f4=f4}
-
-(BottomLeftLine b1' f1') +++ (BottomRightLine b4' f4') =
-    BottomFace {b1=b1', f1=f1', b4=b4', f4=f4'}
-
 
 (F1 f1) +++ (BottomFrontLine f1a f4a) = BottomFrontLine f1 f1a
 
@@ -670,9 +678,6 @@ anyCornerPoint +++ (CornerPointsId) = anyCornerPoint
 
 (F2 f2t) +++ (FrontTopLine f2 f3)  =
   FrontTopLine f2t f2
-
-(BottomLeftLine b1' f1') +++ (F1 f1'') =
-  BottomLeftLine f1' f1''
 
 (BottomRightLine b4' f4') +++ (F4 f4'') =
   BottomRightLine f4' f4''

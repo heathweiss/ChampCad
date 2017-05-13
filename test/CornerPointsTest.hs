@@ -36,6 +36,7 @@ cornerPointsTestDo = do
   runTestTT f1PlusPlusPlusF4Test 
   runTestTT bottomFrontLinePlusPlusPlusbackBottomLineTest
   runTestTT f3PlusPlusPlusb3Test
+  runTestTT  bottomLeftLinePlusPlusPlusBottomRightLineTest
 
   putStrLn ""
   putStrLn "Infix tests"
@@ -171,8 +172,21 @@ f1PlusPlusPlusB1Test = TestCase $ assertEqual
 
 bottomRightLinePlusPlusPlusBottomLeftLineTest = TestCase $ assertEqual
   "BottomRightLine +++ BottomLeftLine = BottomFace"
-  (BottomFace (Point 2 2 2) (Point 2 2 2) (Point 1 1 1) (Point 1 1 1)) 
-  ((BottomRightLine (Point 1 1 1) (Point 1 1 1)) +++ (BottomLeftLine (Point 2 2 2) (Point 2 2 2)))
+  (BottomFace {b1 = Point {x_axis = 0.0, y_axis = 0.0, z_axis = 0.0},
+               f1 = Point {x_axis = 0.0, y_axis = 1.0, z_axis = 0.0},
+               b4 = Point {x_axis = 10.0, y_axis = 0.0, z_axis = 0.0},
+               f4 = Point {x_axis = 10.0, y_axis = 1.0, z_axis = 0.0}}
+  )
+  ((BottomRightLine (Point 10 0 0) (Point 10 1 0)) +++ (BottomLeftLine (Point 0 0 0) (Point 0 1 0)))
+
+bottomLeftLinePlusPlusPlusBottomRightLineTest = TestCase $ assertEqual
+  "BottomLeftLine +++ BottomRightLine = BottomFace"
+  (BottomFace {b1 = Point {x_axis = 0.0, y_axis = 0.0, z_axis = 0.0},
+               f1 = Point {x_axis = 0.0, y_axis = 1.0, z_axis = 0.0},
+               b4 = Point {x_axis = 10.0, y_axis = 0.0, z_axis = 0.0},
+               f4 = Point {x_axis = 10.0, y_axis = 1.0, z_axis = 0.0}}
+  )
+  ((BottomLeftLine (Point 0 0 0) (Point 0 1 0)) +++ (BottomRightLine (Point 10 0 0) (Point 10 1 0)))
 
 bottomFacePlusPlusPlusBottomLeftLineTest = TestCase $ assertEqual
   "BottomFace +++ BottomLeftLine = BottomFace"
