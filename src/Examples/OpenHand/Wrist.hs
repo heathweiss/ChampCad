@@ -14,8 +14,8 @@ The wrist section attach to which will be attached:
  The motor and board sections.
  The main socket made out of semi-flex.
 -}
-module Examples.OpenHand.Wrist(wristAndDoubleCylinderStlGenerator, wristAndDoubleCylinderShowCubes, wristSquaredOffStlGenerator,
-                               wristSquaredOffShowCubes, wristSquaredOffStlFromDbGenerator, initializeDatabase, insertWristDimensions,
+module Examples.OpenHand.Wrist(wristAndDoubleCylinderStlGenerator, wristAndDoubleCylinderShowCubes,
+                                initializeDatabase, insertWristDimensions,
                                wristWithRoundRiserDBGenerator) where
 
 import Examples.OpenHand.Common(Dimensions(..), commontDBName, uniqueDimensionName,
@@ -127,7 +127,8 @@ WristDimensions
    name String
    UniqueWristDimensionName name
    desc String
-   squaredOffRiserHeight Double --height above socket, at which btm of riser starts
+   squaredOffRiserHeight Double --height of squared off section, above the transition
+   transitionHeight Double --height of the transition from socket to squared off section
    radius Double --radius for the squared off section
    power Double  --the power to apply to the square function
    thickness Double --thickness of the wall
@@ -136,6 +137,7 @@ WristDimensions
    
   deriving Show
 |]
+
 
 -- | Initialize a new database with all tables. Will alter tables of existing db.
 initializeDatabase :: IO ()
@@ -152,7 +154,8 @@ insertWristDimensions     = runSqlite commontDBName $ do
                "sharkfin" 
                "make it the same dimensions as the shark swim fin which fits him good in Mar/17"
                20 --squaredOffRiserHeight
-               20 --squaredOffRiserHeight
+               20 --transition height
+               20 --radius
                5 --power
                3 --thickness
                0 --x adjust
@@ -198,7 +201,7 @@ wristWithRoundRiserStlGenerator flexDimensions wristDimensions =
 
 wristWithRoundRiser :: FlexDimensions -> WristDimensions -> ExceptT BuilderError (State CpointsStack ) CpointsList
 wristWithRoundRiser (FlexDimensions _ _ riserHeight _ innerRiserRadius _ _)
-                    (WristDimensions _ _ squaredOffRiserHeight radius power thickness xAdjust yAdjust) = do
+                    (WristDimensions _ _ squaredOffRiserHeight transitionHeight radius power thickness xAdjust yAdjust) = do
   let angles = (map (Angle) [0,10..360])
       origin = Point 0 0 0
       adjustOrigin inOrigin = inOrigin {x_axis = xAdjust, y_axis = yAdjust}
@@ -213,7 +216,8 @@ wristWithRoundRiser (FlexDimensions _ _ riserHeight _ innerRiserRadius _ _)
   joinerTransitionTopFaces
         <- buildCubePointsListWithAdd "joinerTransitionTopFaces"
             (map (extractTopFace)
-              (squaredCylinder (repeat $ Radius radius) thickness (adjustOrigin origin) angles (riserHeight + (squaredOffRiserHeight/2)) power)
+              --(squaredCylinder (repeat $ Radius radius) thickness (adjustOrigin origin) angles (riserHeight + (squaredOffRiserHeight/2)) power)
+             (squaredCylinder (repeat $ Radius radius) thickness (adjustOrigin origin) angles (riserHeight + transitionHeight) power)
             )
             ([CornerPointsId | x <- [1..6]] ++
              [CornerPointsNothing | x <- [1..24]] ++
@@ -227,212 +231,15 @@ wristWithRoundRiser (FlexDimensions _ _ riserHeight _ innerRiserRadius _ _)
 
   joinerStraightCubes
        <- buildCubePointsListWithAdd "joinerStraightCubes"
-          (map ( (transposeZ (+ (squaredOffRiserHeight/2))) . extractTopFace) joinerTransitionCubes )
+          --(map ( (transposeZ (+ (squaredOffRiserHeight/2))) . extractTopFace) joinerTransitionCubes )
+          (map ( (transposeZ (+ squaredOffRiserHeight)) . extractTopFace) joinerTransitionCubes )
           (joinerTransitionCubes)
 
   return riser
--- =======================================================================================================================================================
--- ===============================================================socket shaped riser=====================================================================
-{- |
-Wrist section with a squared off partial riser, to which the fingers can be attached.
-The squared off section kicks off from the top of the socket which is a poor design.
-Depracted for the version that uses a round riser.
--}
-wristSquaredOff :: [SingleDegreeRadii] -> [SingleDegreeRadii] -> RowReductionFactor -> PixelsPerMillimeter -> Int -> Int -> ExceptT BuilderError (State CpointsStack ) CpointsList
-wristSquaredOff    innerSleeveSDR         outerSleeveSDR         rowReductionFactor    pixelsPerMM            drop'   take' = do
-  let extensionHeight = 30
-      transposeFactors = [0,heightPerPixel.. ]
-      heightPerPixel = (1/ pixelsPerMM) * (fromIntegral rowReductionFactor)
-      origin = (Point{x_axis=0, y_axis=0, z_axis=50})
-      angles = (map (Angle) [0,10..360])
-      radii = repeat $ Radius 25 -- 15 was too small
-      radiiSquared = --take 2 
-                     [squaredOff 3 radius' angle'
-                       | radius' <- radii
-                       | angle'  <- angles
-                     ]
 
-   
-  wristCubes  <- buildCubePointsListWithAdd "wristCubes"
-                --take 3 is normal, but use more to see what is going on. Use
-                --(concat $ take 3 $ drop 1  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
-                 (concat $ take take' $ drop drop'  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
-                [CornerPointsId | x <-[1..]]
-
-  topOfWristAsLowerFaces
-             <- buildCubePointsListSingle "extrudeTop"
-                (map (lowerFaceFromUpperFace . extractTopFace) (head (drop drop' $ createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors))
-                )
-  {-before drop from db
-  topOfWristAsLowerFaces
-             <- buildCubePointsListSingle "extrudeTop"
-                (map (lowerFaceFromUpperFace . extractTopFace) (head (drop 1 $ createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors))
-                )
-  -}
-
-  let rotate' = 40
-        
-  squaredTopFaces
-             <- buildCubePointsListWithAdd "squaredTopCubes"
-                ( rotate . rotate . rotate . rotate . rotate . rotate . rotate $
-                  (map
-                   ((rotateCornerPointAroundZAxis 80 (Point 0 0 75)) . extractTopFace)
-                    (squaredCylinder radii 4 (Point 0 0 65) angles 0 5)
-                  )
-                ) 
-                
-                ([CornerPointsId |  x <- [1..4]] ++
-                 [CornerPointsNothing | x <- [1..24]] ++
-                 [CornerPointsId | x <- [1..]]
-                )
-            
-  squaredTopCubes
-             <-  buildCubePointsListWithAdd "newTop"
-                 squaredTopFaces
-                 topOfWristAsLowerFaces
-
-  return squaredTopCubes
-{- before CommonDimensions
-wristSquaredOff :: [SingleDegreeRadii] -> [SingleDegreeRadii] -> RowReductionFactor -> PixelsPerMillimeter -> ExceptT BuilderError (State CpointsStack ) CpointsList
-wristSquaredOff    innerSleeveSDR         outerSleeveSDR         rowReductionFactor    pixelsPerMM wristSquaredOff  = do
-  let extensionHeight = 30
-      transposeFactors = [0,heightPerPixel.. ]
-      heightPerPixel = (1/ pixelsPerMM) * (fromIntegral rowReductionFactor)
-      origin = (Point{x_axis=0, y_axis=0, z_axis=50})
-      angles = (map (Angle) [0,10..360])
-      radii = repeat $ Radius 15 -- 15 looks to big to fit through outer socket
-      radiiSquared = --take 2 
-                     [squaredOff 3 radius' angle'
-                       | radius' <- radii
-                       | angle'  <- angles
-                     ]
-
-   
-  wristCubes  <- buildCubePointsListWithAdd "wristCubes"
-                --take 3 is normal, but use more to see what is going on. Use
-                (concat $ take 3 $ drop 1  (createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors) )
-                [CornerPointsId | x <-[1..]]
-
-  topOfWristAsLowerFaces
-             <- buildCubePointsListSingle "extrudeTop"
-                (map (lowerFaceFromUpperFace . extractTopFace) (head (drop 1 $ createVerticalWalls  innerSleeveSDR outerSleeveSDR origin transposeFactors))
-                )
-
-  let rotate' = 40
-        
-  squaredTopFaces
-             <- buildCubePointsListWithAdd "squaredTopCubes"
-                ( rotate . rotate . rotate . rotate . rotate . rotate . rotate $
-                  (map
-                   ((rotateCornerPointAroundZAxis 80 (Point 0 0 75)) . extractTopFace)
-                    (squaredCylinder radii 4 (Point 0 0 65) angles 0 5)
-                  )
-                ) 
-                
-                ([CornerPointsId |  x <- [1..4]] ++
-                 [CornerPointsNothing | x <- [1..24]] ++
-                 [CornerPointsId | x <- [1..]]
-                )
-            
-  squaredTopCubes
-             <-  buildCubePointsListWithAdd "newTop"
-                 squaredTopFaces
-                 topOfWristAsLowerFaces
-
-  return squaredTopCubes
-
--}
-wristSquaredOffStlFromDbGenerator :: IO ()
-wristSquaredOffStlFromDbGenerator = runSqlite commontDBName $ do
-  maybeCommonDimensions <- getBy $ uniqueDimensionName "dimensions 1"
-  case maybeCommonDimensions of
-    Nothing -> liftIO $ putStrLn "common dimensions not found"
-    Just (Entity commonDimensionsId commonDimensions) -> do
-      --liftIO $ putStrLn "all good so far"
-      liftIO $ wristSquaredOffStlGenerator $ setWristCommonFactors commonDimensions
-
---load the json file and call generate stl
---wristSquaredOffStlGenerator :: IO ()
-wristSquaredOffStlGenerator :: CommonFactors -> IO ()
-wristSquaredOffStlGenerator (CommonFactors innerTranspose outerTranspose dropFactor takeFactor) = do
-  contents <- BL.readFile "src/Data/scanFullData.json"
-  
-  case (decode contents) of
-   
-      Just (MultiDegreeRadii name' degrees') ->
-        let --Changing this to 50 does not work. It should be made so this can be changed.
-            --Is it some combination with PixelsPerMillimeter that messes it up.
-            --ToDo: Make a diff. version of reduceScan that perhaps uses mm instead of mod of some number.
-            rowReductionFactor = 100::RowReductionFactor 
-            --innerSleeveMDR = (rotateMDR) . (rotateMDR) . (rotateMDR) . (transpose (+3)) . (reduceScan rowReductionFactor) . removeDefectiveTopRow' $ (MultiDegreeRadii name' degrees')
-            --innerSleeveMDR = (transpose (+3)) . (reduceScan rowReductionFactor) . removeDefectiveTopRow' $
-            innerSleeveMDR = (transpose (+ innerTranspose)) . (reduceScan rowReductionFactor) . removeDefectiveTopRow' $
-                              (MultiDegreeRadii
-                                name'
-                                --(rotateSDR . rotateSDR . rotateSDR $ degrees')
-                                degrees'
-                              )
-            --outerSleeveMDR = transpose (+3) innerSleeveMDR
-            outerSleeveMDR = transpose (+(outerTranspose - innerTranspose)) innerSleeveMDR
-            cpoints =  ((execState $ runExceptT (wristSquaredOff (degrees innerSleeveMDR) (degrees outerSleeveMDR)
-                                                 rowReductionFactor    pixelsPerMM dropFactor takeFactor) ) [])
-        in  writeStlToFile $ newStlShape "socket with riser"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
-      Nothing                                ->
-        putStrLn "File not decoded"
-{-
---before CommonDimensions
-wristSquaredOffStlGenerator :: IO ()
-wristSquaredOffStlGenerator = do
-  contents <- BL.readFile "src/Data/scanFullData.json"
-  
-  case (decode contents) of
-   
-      Just (MultiDegreeRadii name' degrees') ->
-        let --Changing this to 50 does not work. It should be made so this can be changed.
-            --Is it some combination with PixelsPerMillimeter that messes it up.
-            --ToDo: Make a diff. version of reduceScan that perhaps uses mm instead of mod of some number.
-            rowReductionFactor = 100::RowReductionFactor 
-            --innerSleeveMDR = (rotateMDR) . (rotateMDR) . (rotateMDR) . (transpose (+3)) . (reduceScan rowReductionFactor) . removeDefectiveTopRow' $ (MultiDegreeRadii name' degrees')
-            innerSleeveMDR = (transpose (+3)) . (reduceScan rowReductionFactor) . removeDefectiveTopRow' $
-                              (MultiDegreeRadii
-                                name'
-                                --(rotateSDR . rotateSDR . rotateSDR $ degrees')
-                                degrees'
-                              )
-            outerSleeveMDR = transpose (+3) innerSleeveMDR
-            cpoints =  ((execState $ runExceptT (wristSquaredOff (degrees innerSleeveMDR) (degrees outerSleeveMDR)         rowReductionFactor    pixelsPerMM ) ) [])
-        in  writeStlToFile $ newStlShape "socket with riser"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
-      Nothing                                ->
-        putStrLn "File not decoded"
--}
-
-wristSquaredOffShowCubes :: IO ()
-wristSquaredOffShowCubes = do
-  contents <- BL.readFile "src/Data/scanFullData.json"
-  
-  case (decode contents) of
-   
-      Just (MultiDegreeRadii name' degrees') ->
-        let --Changing this to 50 does not work. It should be made so this can be changed.
-            --Is it some combination with PixelsPerMillimeter that messes it up.
-            --ToDo: Make a diff. version of reduceScan that perhaps uses mm instead of mod of some number.
-            rowReductionFactor = 100::RowReductionFactor 
-            --innerSleeveMDR = (rotateMDR) . (rotateMDR) . (rotateMDR) . (transpose (+3)) . (reduceScan rowReductionFactor) . removeDefectiveTopRow' $ (MultiDegreeRadii name' degrees')
-            innerSleeveMDR = (transpose (+3)) . (reduceScan rowReductionFactor) . removeDefectiveTopRow' $
-                              (MultiDegreeRadii
-                                name'
-                                --(rotateSDR . rotateSDR . rotateSDR $ degrees')
-                                degrees'
-                              )
-            outerSleeveMDR = transpose (+3) innerSleeveMDR
-            --cpoints =  ((execState $ runExceptT (wristSquaredOff (degrees innerSleeveMDR) (degrees outerSleeveMDR)         rowReductionFactor    pixelsPerMM ) ) [])
-            cpoints =  ((evalState $ runExceptT (wristSquaredOff (degrees innerSleeveMDR) (degrees outerSleeveMDR)         rowReductionFactor    pixelsPerMM 1 4 ) ) [])
-        in  --writeStlToFile $ newStlShape "socket with riser"  $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
-            print $ show cpoints
-      Nothing                                ->
-        putStrLn "File not decoded"
-
-
+-- ========================================================================================================================================================
+-- ================================================================== double cylinder========================================================================
+-- ========================================================================================================================================================
   
 {- |
 Wrist section that is topped off with a partial double cylinder.

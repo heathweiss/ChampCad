@@ -7,10 +7,9 @@ import Examples.OpenBionicsCom.OpenBionicsDotComDesignWork (fullLengthSocketWith
                                                  shortSocketToLargeShaftStlGenerator, wristToLargeShaftStlGenerator
                                                   )
 import qualified  Examples.OpenHand.Wrist as W (wristAndDoubleCylinderStlGenerator, wristAndDoubleCylinderShowCubes,
-                               wristSquaredOffStlGenerator, wristSquaredOffShowCubes, wristSquaredOffStlFromDbGenerator,
                                initializeDatabase, insertWristDimensions, wristWithRoundRiserDBGenerator)
-import qualified Examples.OpenHand.SocketMount as SM ({-socketMountStlGenerator, socketMountShowCubes,-} socketMountTestsDo, {-generateSocketMountStlUsingDbValues,-}
-                                     initializeDatabase, insertMount, setCurrentMount, showFaceDimensions, {-showSocketMountCubesUsingDbValues,-}
+import qualified Examples.OpenHand.SocketMount as SM (socketMountTestsDo, 
+                                     initializeDatabase, insertMount, setCurrentMount, showFaceDimensions,
                                      generateSocketMountWithDegreesStlUsingDbValues)
 import qualified Examples.OpenHand.MotorMount as M (motorMountHardCodedStlGenerator, motorMountHardCodedShowCubes,
                                    initializeDatabase, insertMotorMount, motorMountRunGeneratorFromDB)
@@ -43,7 +42,7 @@ main = do
   -- x <-  getArgs
  --loadMDRAndPassToProcessor (read $ head x) (read $ head $ tail x)
 
-  --SM.generateSocketMountWithDegreesStlUsingDbValues currentSocket
+  SM.generateSocketMountWithDegreesStlUsingDbValues currentSocket
   --SM.showSocketMountCubesUsingDbValues currentSocket
   --SM.socketMountTestsDo
 
@@ -55,7 +54,7 @@ main = do
   --M.motorMountRunGeneratorFromDB (head x)
   --M.motorMountRunGeneratorFromDB currentSocket
   
-  FJnts.fingerJointsToRiserStlGenerator
+  --FJnts.fingerJointsToRiserStlGenerator
 
   --Flex.flexBottomForSocketWithRiserDbStlGenerator currentSocket
   --Flex.flexSocketWithRiserDbStlGenerator currentSocket
