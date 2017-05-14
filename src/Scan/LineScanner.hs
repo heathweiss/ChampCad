@@ -15,7 +15,7 @@ module Scan.LineScanner(LineScan(..), Measurement(..), uniqueScanName, getMinHei
                         lineScanId, measurementScanId', degree', extractMeasurement, measurementToLinesWithRadiusAdj,
                         linearMeasurementsBase, linearBackToFrontTopFaces, linearBackToFrontBottomFaces,
                         findIndiceOfMeasurementDegree, splitAndReverseBackMeasurementsAtDegree,
-                        linearLeftToRightTBottomFaces) where
+                        linearLeftToRightBottomFaces, linearLeftToRightTopFaces) where
 
 import CornerPoints.Degree(Degree(..))
 import CornerPoints.Create(Origin(..), createCornerPoint)
@@ -61,12 +61,6 @@ Measurement
 
   deriving Show Eq
 
-Adjustments
-  scanId LineScanId
-  adjHeight HeightT --probably not needed as the min height is set to 0
-  adjRadius RadiusT --adjust the Radius for scanner offset
-
-  deriving Show Eq
 |]
 
 
@@ -106,17 +100,6 @@ insertMeasurement scanName degree height radius = runSqlite dbName $ do
               
      liftIO $ putStrLn "measurement inserted"
 
-insertAdjustments :: HeightT -> RadiusT -> IO ()
-insertAdjustments heightAdj radiusAdj = runSqlite dbName $ do
-  maybeScan <- getBy $ UniqueScanName "heel"
-  case maybeScan of
-   Nothing -> liftIO $ putStrLn "scan not found"
-   Just (Entity scanId scan) -> do
-     insert $ Adjustments
-              scanId
-              heightAdj
-              radiusAdj
-     liftIO $ putStrLn "adjustment inserted"
 
 -- ==========================================================back to front scan ============================================================
 -- =========================================================================================================================================
@@ -146,10 +129,16 @@ linearBackToFrontTopFaces :: DegreeT -> [Measurement] -> [CornerPoints]
 linearBackToFrontTopFaces splitAt measurements =
   linearMeasurementsBase (B3) (F3) (B2) (F2) splitAt measurements
 
-linearLeftToRightTBottomFaces :: DegreeT -> [Measurement] -> [CornerPoints]
-linearLeftToRightTBottomFaces splitAt measurements =
+linearLeftToRightBottomFaces :: DegreeT -> [Measurement] -> [CornerPoints]
+linearLeftToRightBottomFaces splitAt measurements =
   linearMeasurementsBase (B1)              (B4)           (F1)              (F4) splitAt measurements
 --                       initialFrontConst tailFrontConst  initialBackConst tailBackConstr 
+
+linearLeftToRightTopFaces :: DegreeT -> [Measurement] -> [CornerPoints]
+linearLeftToRightTopFaces splitAt measurements =
+  linearMeasurementsBase (B2)              (B3)           (F2)              (F3) splitAt measurements
+--                       initialFrontConst tailFrontConst  initialBackConst tailBackConstr 
+
 -- ==================================================== measurementsToLines ===============================================================
 -- =========================================================================================================================================
 {-| Convert [Measurement] to [CornerPoints] which is data captured from scanner, and put into database,

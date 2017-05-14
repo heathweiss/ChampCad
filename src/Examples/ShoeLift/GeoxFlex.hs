@@ -13,13 +13,14 @@ module Examples.ShoeLift.GeoxFlex() where
 import Scan.LineScanner(LineScan(..), Measurement(..), uniqueScanName, getMinHeight, adjustHeight,
                         adjustMeasurementHeightsToStartAtZero, measurementsToLines, adjustRadius,
                         lineScanId, measurementScanId', degree', extractMeasurement, measurementToLinesWithRadiusAdj,
-                        linearBackToFrontBottomFaces, linearBackToFrontTopFaces, linearLeftToRightTBottomFaces)
+                        linearBackToFrontBottomFaces, linearBackToFrontTopFaces, linearLeftToRightBottomFaces,
+                        linearLeftToRightTopFaces)
 
 import CornerPoints.Points(Point(..))
 import CornerPoints.CornerPoints(CornerPoints(..), (+++), (|+++|), (|@+++#@|), (+++>))
 import CornerPoints.MeshGeneration(autoGenerateEachCube)
 import CornerPoints.Transpose(transposeZ)
-import CornerPoints.FaceConversions(toTopFace)
+import CornerPoints.FaceConversions(toTopFace, toBottomFace)
 import CornerPoints.FaceExtraction(extractTopFace)
 
 import Stl.StlCornerPoints((|+++^|), (||+++^||), Faces(..))
@@ -47,21 +48,122 @@ import Control.Monad.Except
 import Control.Monad.Writer (WriterT, tell, execWriterT)
 import Control.Monad.Reader
 
-databaseName = "src/Examples/ShoeLift/GeoxFlex.sql"
 
-heelBottomDbBase :: ([Measurement] -> IO ()) -> IO ()
-heelBottomDbBase runScan = runSqlite databaseName $ do
-  maybeScan <- getBy $ uniqueScanName "heel"
+databaseName = "src/Examples/ShoeLift/GeoxFlex.sql"
+heelName = "heel"
+
+--Takes a function which uses the Builder monad to produce stl or show state. 
+--Supplies the db values for that function.
+runDatabaseBuilder :: String -> ([Measurement] -> IO ()) -> IO ()
+runDatabaseBuilder shapeName runScan = runSqlite databaseName $ do
+  maybeScan <- getBy $ uniqueScanName shapeName
   
   case maybeScan of
-   Nothing -> liftIO $ putStrLn "heel scan not found"
+   Nothing -> liftIO $ putStrLn "scan not found"
    Just (Entity scanId' scan) -> do
      maybeMeasurements <- selectList [measurementScanId' ==. scanId'] [Asc degree'] -- :: [Entity Measurement]
      
      let measurements = map (extractMeasurement) maybeMeasurements
      liftIO $  runScan measurements
-     liftIO $ putStrLn "heel bottom stl has been output"
+     liftIO $ putStrLn "stl has been output"
+
+stlBase :: [Measurement] -> ( [Measurement] -> ExceptT BuilderError (State CpointsStack ) CpointsList ) -> IO ()
+stlBase measurements builder = do 
+  let
+    
+    cpoints =  ((execState $ runExceptT (builder measurements)) [])
   
+  writeStlToFile $ newStlShape "bottom of heel" $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
+  
+stateBase :: [Measurement] -> ( [Measurement] -> ExceptT BuilderError (State CpointsStack ) CpointsList ) -> IO ()
+stateBase measurements builder = do
+  let
+    
+    cpoints =  ((evalState $ runExceptT (builder measurements)) [])
+  print $ show cpoints 
+-- =================================================================================================================================================
+-- ========================================== heel bottom ==========================================================================================
+runHeelBottomStl :: IO ()
+runHeelBottomStl = runDatabaseBuilder heelName  heelBottomStl
+
+
+runHeelBottomState :: IO ()
+runHeelBottomState = runDatabaseBuilder heelName heelBottomState
+
+heelBottomStl :: [Measurement] -> IO ()
+heelBottomStl measurements =
+  stlBase measurements heelBottomBuilder
+  
+heelBottomState :: [Measurement] -> IO ()
+heelBottomState measurements =
+  stateBase measurements heelBottomBuilder
+  
+
+heelBottomBuilder :: [Measurement] -> ExceptT BuilderError (State CpointsStack ) CpointsList
+heelBottomBuilder measurements = do
+         
+  bottomFaces
+    <- buildCubePointsListSingle "bottom faces"
+       ( linearLeftToRightBottomFaces 225 measurements)
+
+  topFaces
+    <- buildCubePointsListSingle "top faces"
+       ( map ( toTopFace . (transposeZ (\x -> 25)) ) bottomFaces )
+
+  cubes
+    <- buildCubePointsListWithAdd "cubes"
+       bottomFaces
+       topFaces
+
+  return cubes
+
+
+-- =================================================================================================================================================
+-- ========================================== heel bottom ==========================================================================================
+
+runHeelTopStl :: IO ()
+runHeelTopStl = runDatabaseBuilder heelName  heelTopStl
+
+
+runHeelTopState :: IO ()
+runHeelTopState = runDatabaseBuilder heelName heelTopState
+
+heelTopStl :: [Measurement] -> IO ()
+heelTopStl measurements =
+  stlBase measurements heelTopBuilder
+  
+heelTopState :: [Measurement] -> IO ()
+heelTopState measurements =
+  stateBase measurements heelTopBuilder
+  
+
+heelTopBuilder :: [Measurement] -> ExceptT BuilderError (State CpointsStack ) CpointsList
+heelTopBuilder measurements = do
+         
+  topFaces
+    <- buildCubePointsListSingle "bottom faces"
+       ( linearLeftToRightTopFaces 225 measurements)
+
+  bottomFaces
+    <- buildCubePointsListSingle "top faces"
+       ( map ( toBottomFace . (transposeZ (\x -> (-3))) ) topFaces )
+
+  cubes
+    <- buildCubePointsListWithAdd "cubes"
+       bottomFaces
+       topFaces
+
+  return cubes
+
+
+
+-- ============================================================================================================================================
+-- ================================================radial processing of heel. Depracated=======================================================
+-- ============================================================================================================================================
+--processed it radially. Not used as it does not work out will doing radially. Leave here for now as an example of use of
+--measurementToLinesWithRadiusAdj and measurementToLines
+
+{-
 heelBottomRadialDbStl :: IO ()
 heelBottomRadialDbStl = heelBottomDbBase (heelBottomRadialStl)
 
@@ -114,43 +216,4 @@ heelBottomRadial measurements = do
 
   return bottomFrontLinesInside
 
--- =================================================================================================================================================
--- ========================================== front to back =======================================================================================
-heelBottomBackToFrontDbStl :: IO ()
-heelBottomBackToFrontDbStl = heelBottomDbBase (heelBottomBackToFrontStl)
-
-heelBottomBackToFrontDbState :: IO ()
-heelBottomBackToFrontDbState = heelBottomDbBase (heelBottomBackToFrontShowState)
-
-heelBottomBackToFrontStl :: [Measurement] -> IO ()
-heelBottomBackToFrontStl measurements = do
-  let
-    
-    cpoints =  ((execState $ runExceptT (heelBottomBackToFront measurements)) [])
-  
-  writeStlToFile $ newStlShape "bottom of heel" $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
-
-heelBottomBackToFrontShowState :: [Measurement] -> IO ()
-heelBottomBackToFrontShowState measurements = do
-  let
-    
-    cpoints =  ((evalState $ runExceptT (heelBottomBackToFront measurements)) [])
-  print $ show cpoints
-
-heelBottomBackToFront :: [Measurement] -> ExceptT BuilderError (State CpointsStack ) CpointsList
-heelBottomBackToFront measurements = do
-         
-  bottomFaces
-    <- buildCubePointsListSingle "bottom faces"
-       ( linearLeftToRightTBottomFaces 225 measurements)
-
-  topFaces
-    <- buildCubePointsListSingle "top faces"
-       ( map ( toTopFace . (transposeZ (\x -> 25)) ) bottomFaces )
-
-  cubes
-    <- buildCubePointsListWithAdd "cubes"
-       bottomFaces
-       topFaces
-
-  return cubes
+-}

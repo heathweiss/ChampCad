@@ -4,8 +4,9 @@ import Test.HUnit
 
 import Scan.LineScanner(LineScan(..), Measurement(..), uniqueScanName, getMinHeight, adjustHeight,
                         adjustMeasurementHeightsToStartAtZero, measurementsToLines, adjustRadius,
-                        measurementToLinesWithRadiusAdj, linearBackToFrontTopFaces, linearLeftToRightTBottomFaces,
-                        linearBackToFrontBottomFaces, findIndiceOfMeasurementDegree, splitAndReverseBackMeasurementsAtDegree,)
+                        measurementToLinesWithRadiusAdj, linearBackToFrontTopFaces, linearLeftToRightBottomFaces,
+                        linearBackToFrontBottomFaces, findIndiceOfMeasurementDegree, splitAndReverseBackMeasurementsAtDegree,
+                        linearLeftToRightTopFaces)
 
 import CornerPoints.Points(Point(..))
 import CornerPoints.CornerPoints(CornerPoints(..))
@@ -44,9 +45,28 @@ lineScannerTestDo = do
   runTestTT splitAndReverseBackMeasurementsAtDegreeTest
   runTestTT buildFirstLineLeftToRightBottomFaces
   runTestTT buildFirst2CubesLeftToRightBottomFaces
+  runTestTT buildFirst2CubesLeftToRightTopFaces
 -- ========================================================================================================================================================================
 -- ========================================================================================================================================================================
 -- ==================================================================radial system ========================================================================================
+buildFirst2CubesLeftToRightTopFaces = TestCase $ assertEqual
+  "build the first 2 TopFaces of left to right"
+  --will need to be confirmed by viewing geoxFlex
+  [TopFace {b2 = Point {x_axis = 0.0, y_axis = -20.0, z_axis = 0.0},
+            f2 = Point {x_axis = 30.64177772475912, y_axis = -25.711504387461574, z_axis = 0.0},
+            b3 = Point {x_axis = 6.945927106677213, y_axis = -39.39231012048832, z_axis = 0.0},
+            f3 = Point {x_axis = 12.855752193730785, y_axis = -15.32088886237956, z_axis = 0.0}},
+   TopFace {b2 = Point {x_axis = 6.945927106677213, y_axis = -39.39231012048832, z_axis = 0.0},
+            f2 = Point {x_axis = 12.855752193730785, y_axis = -15.32088886237956, z_axis = 0.0},
+            b3 = Point {x_axis = 6.840402866513374, y_axis = -18.79385241571817, z_axis = 0.0},
+            f3 = Point {x_axis = 19.999999999999996, y_axis = -34.64101615137755, z_axis = 0.0}}]
+
+  
+  (linearLeftToRightTopFaces 30 [Measurement (toSqlKey 3) 10 0 20, Measurement (toSqlKey 3) 10 10 40,
+                                             Measurement (toSqlKey 3) 10 20 20, Measurement (toSqlKey 3) 10 30 40,
+                                             Measurement (toSqlKey 3) 10 40 20, Measurement (toSqlKey 3) 10 50 40
+                                            ])
+
 buildFirst2CubesLeftToRightBottomFaces = TestCase $ assertEqual
   "build the first 2 BottomFacesof left to right"
   --will need to be confirmed by viewing geoxFlex
@@ -61,7 +81,7 @@ buildFirst2CubesLeftToRightBottomFaces = TestCase $ assertEqual
                f4 = Point {x_axis = 19.999999999999996, y_axis = -34.64101615137755, z_axis = 0.0}}
   ]
   
-  (linearLeftToRightTBottomFaces 30 [Measurement (toSqlKey 3) 10 0 20, Measurement (toSqlKey 3) 10 10 40,
+  (linearLeftToRightBottomFaces 30 [Measurement (toSqlKey 3) 10 0 20, Measurement (toSqlKey 3) 10 10 40,
                                              Measurement (toSqlKey 3) 10 20 20, Measurement (toSqlKey 3) 10 30 40,
                                              Measurement (toSqlKey 3) 10 40 20, Measurement (toSqlKey 3) 10 50 40
                                             ])
@@ -73,7 +93,7 @@ buildFirstLineLeftToRightBottomFaces = TestCase $ assertEqual
                f1 = Point {x_axis = 19.999999999999996, y_axis = -34.64101615137755, z_axis = 0.0},
                b4 = Point {x_axis = 6.945927106677213, y_axis = -39.39231012048832, z_axis = 0.0},
                f4 = Point {x_axis = 6.840402866513374, y_axis = -18.79385241571817, z_axis = 0.0}}]
-  (linearLeftToRightTBottomFaces 20 [Measurement (toSqlKey 3) 10 0 20, Measurement (toSqlKey 3) 10 10 40,
+  (linearLeftToRightBottomFaces 20 [Measurement (toSqlKey 3) 10 0 20, Measurement (toSqlKey 3) 10 10 40,
                                      Measurement (toSqlKey 3) 10 20 20, Measurement (toSqlKey 3) 10 30 40
                                     ]
   )
