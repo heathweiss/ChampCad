@@ -258,4 +258,5 @@ reverseNormal (FrontLeftLine f1 f2)   = FrontLeftLine f2 f1
 reverseNormal (FrontTopLine f2 f3)    = FrontTopLine f3 f2
 reverseNormal (BackBottomLine b1 b4)  = (BackBottomLine b4 b1) 
 reverseNormal (BackTopLine b2 b3)     = (BackTopLine b3 b2)
-reverseNormal (BottomLeftLine b1 f1) = (BottomLeftLine f1 b1)
+reverseNormal (BottomLeftLine b1 f1)  = (BottomLeftLine f1 b1)
+reverseNormal (TopLeftLine b2 f2)     = (TopLeftLine f2 b2)
