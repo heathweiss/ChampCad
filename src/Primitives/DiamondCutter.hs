@@ -7,9 +7,8 @@ import CornerPoints.FaceExtraction (extractFrontFace, extractTopFace,extractBott
                                     extractBackTopLine, extractRightFace, extractFrontRightLine, extractFrontLeftLine, extractBottomFrontLine,
                                     extractF2, extractF3, extractF4, extractF1, extractB1, extractB2, extractB3, extractB4, extractBackRightLine,
                                     extractBackLeftLine)
-import CornerPoints.FaceConversions(backFaceFromFrontFace, upperFaceFromLowerFace, lowerFaceFromUpperFace, frontFaceFromBackFace, 
-                                    f34LineFromF12Line, toBackFace, reverseNormal, toBottomFrontLine, toFrontTopLine,
-                                    toFrontLeftLine, toFrontRightLine, toBackBottomLine, toBackTopLine, toBottomFace, toBackRightLine)
+import CornerPoints.FaceConversions(toFrontLeftLine, toFrontRightLine, toBackBottomLine, toBackTopLine, toBottomFace, toBackRightLine, toBottomFrontLine, reverseNormal,
+                                   toFrontTopLine)
 
 
 import Data.Maybe(isNothing, fromJust, isJust)

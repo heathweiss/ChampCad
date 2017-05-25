@@ -6,6 +6,7 @@ transposeY
 import CornerPoints.CornerPoints
 import CornerPoints.Points(Point(..), transposeZ)
 import TypeClasses.Transposable(TransposePoint, transposeX, transposeY, transposeZ)
+
 ------------------------------------- transposing cubes/points ----------------------------------------------
 {-
 Used for: changing points by adding values, as opposed to mulipling with the scalePoints
