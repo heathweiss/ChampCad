@@ -25,6 +25,8 @@ import CornerPoints.Points(Point(..))
 import CornerPoints.Radius(Radius(..))
 import CornerPoints.FaceConversions(reverseNormal)
 
+import TypeClasses.Transposable(TransposeLength, transpose)
+
 import Geometry.Angle(Angle(..))
 
 import Math.Trigonometry(sinDegrees,cosDegrees,tanDegrees,atanDegrees,coTanDegrees)
@@ -56,13 +58,14 @@ Measurement
   scanId LineScanId
   height HeightT -- Double --z distance from btm to top of riser
   degree Degree
-  UniqueDegree degree
   radius RadiusT
 
   deriving Show Eq
 
 |]
 
+instance TransposeLength Measurement where
+  transpose f (Measurement scanId height degree radius) = Measurement scanId height degree (f radius)
 
 uniqueScanName = UniqueScanName
 lineScanId = LineScanId
@@ -78,17 +81,17 @@ initializeDatabase = runSqlite dbName $ do
     runMigration migrateAll
     liftIO $ putStrLn "db initializes"
 
-insertScan :: IO ()
-insertScan     = runSqlite dbName $ do
+insertScan :: String -> String -> IO ()
+insertScan scanName description = runSqlite dbName $ do
   scanId
     <- insert $ LineScan
-       "heel"
-       "heel of the geox shoe"
+       scanName
+       description
   liftIO $ putStrLn "scan inserted"
 
 insertMeasurement :: String -> Double -> Double -> Double -> IO ()
 insertMeasurement scanName degree height radius = runSqlite dbName $ do
-  maybeScan <- getBy $ UniqueScanName "heel"
+  maybeScan <- getBy $ UniqueScanName scanName
   case maybeScan of
    Nothing -> liftIO $ putStrLn "scan not found"
    Just (Entity scanId scan) -> do

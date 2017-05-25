@@ -88,6 +88,7 @@ library
                        Primitives.Cylindrical.Walled, Primitives.Cubical
                        Primitives.Cylindrical.Solid
                        Primitives.DiamondCutter
+                       Primitives.DiamondCutterDB
                        
                        --Scanning
                        Scan.Filter,
