@@ -148,7 +148,7 @@ flexToeTopBuilder measurements = do
 
   bottomFaces
     <- buildCubePointsListSingle "bottom faces"
-       ( map ( toBottomFace . (transposeZ (\x -> (-5))) ) topFaces )
+       ( map ( toBottomFace . (transposeZ (\x -> (-20))) ) topFaces )
 
   cubes
     <- buildCubePointsListWithAdd "cubes"
@@ -219,7 +219,7 @@ flexToeRiserBuilder measurements = do
          
   topFaces
     <- buildCubePointsListSingle "top faces"
-       ( map (transposeZ (\x -> 20)) ( linearLeftToRightTopFaces 188 measurements))
+       ( map (transposeZ (\x -> 15)) ( linearLeftToRightTopFaces 188 measurements))
 
   bottomFaces
     <- buildCubePointsListSingle "bottom faces"
@@ -405,7 +405,7 @@ archTopBuilder measurements = do
 
   bottomFaces
     <- buildCubePointsListSingle "bottom faces"
-       ( map ( toBottomFace . (transposeZ (\x -> (-5))) ) topFaces )
+       ( map ( toBottomFace . (transposeZ (\x -> (-18))) ) topFaces )
 
   cubes
     <- buildCubePointsListWithAdd "cubes"
