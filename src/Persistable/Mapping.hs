@@ -21,7 +21,9 @@ import Data.Text
 
 {- | -------------------------overview---------------------------------------------
 Create persist Datatypes that map to CornerPoints lines. eg: BackTopLine.
-
+This was used for scanning a shoe in a linear fashion with the wood scanner I built.
+Is to be replaced with the new radial lineScanner.
+After that is done, this should be deleted, along with any projects that used it.
 -}
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
