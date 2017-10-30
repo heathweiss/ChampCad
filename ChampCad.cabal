@@ -40,6 +40,7 @@ library
                        Helpers.Symmetrical.Sequence, Helpers.Symmetrical.List
                        --database
                        Persistable.Mapping
+                       Persistable.Radial
                        --Examples
                        -- Example ShoeLifts
                        Examples.ShoeLift.SnowBoardBoot
@@ -50,6 +51,7 @@ library
                        Examples.ShoeLift.GeoxFlex,
                        Examples.Persist.SingleLineTable,
                        Examples.Persist.MappedToCornerPoints,
+                        Examples.Persist.RadialTest,
                        --Have not been redone for changes to MathPolar.
                        --Leave in until sure I will not need them further for printing shoe lifts
                        -- Sockets

@@ -75,7 +75,6 @@ FrontTopLineP
     deriving Show
 |]
 
-
 -- | Create the database.
 initializeDatabase :: Text -> IO ()
 initializeDatabase databaseName = runSqlite databaseName $ do
