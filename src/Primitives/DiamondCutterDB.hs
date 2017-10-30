@@ -9,10 +9,10 @@
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TypeFamilies               #-}
 
-
+-- | Supply Persitence database functionality to DiamondCutter
 module Primitives.DiamondCutterDB(uniqueDiamondName, DiamondDB(..), diamondDbToDiamondCutter, diamondDefaultDb) where
 
--- | Supply Persitence database functionality to DiamondCutter
+
 
 import Primitives.DiamondCutter(DiamondBuilder(..), OffSet(..), defaultDiamondBuilder)
 

@@ -67,7 +67,8 @@ layerId' = LayerId
 angleHeightRadiusLayerId' = AngleHeightRadiusLayerId
 
 databaseName = "src/Data/lineScanner.db"
-  -- | Create the database.
+
+-- | Create the database.
 initializeDatabase :: IO ()
 initializeDatabase = runSqlite databaseName $ do
        

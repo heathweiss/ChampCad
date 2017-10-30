@@ -573,7 +573,7 @@ generateBootLvl1TestStlBase verticalSplitter  inState =
 
 generateBootLvl1RearStl :: IO ()
 generateBootLvl1RearStl  =
-generateBootLvl1TestStlBase (take $ rearVerticalSplit) []
+  generateBootLvl1TestStlBase (take $ rearVerticalSplit) []
 
 generateBootLvl1FrontStl :: IO ()
 generateBootLvl1FrontStl  =
