@@ -7,8 +7,8 @@
 {-# LANGUAGE OverloadedStrings          #-}
 
 module Persistable.Radial (Layer(..), AngleHeightRadius(..), nameUnique', angleHeightRadius', layerId',
-                           angleHeightRadiusLayerId', extractAnglesHeightsRadiiFromEntity,
-                           extractRadii, extractAngles, extractHeights, extractLayerId, extractOrigin) where
+                           angleHeightRadiusLayerId', extractAnglesHeightsRadiiFromEntity, ExtractedAngleHeightRadius(..),
+                           extractRadii, extractAngles, extractHeights, extractLayerId, extractOrigin, loadAndExtractedAngleHeightRadiusFromDB) where
 
 import Control.Monad.IO.Class  (liftIO)
 import Database.Persist
@@ -149,3 +149,26 @@ extractAnglesHeightsRadiiFromEntity anglesHeightsRadii =
     extract (Entity _ ahr) = ahr
   in
   map (extract) anglesHeightsRadii
+
+
+-- A handy wrapper used for extracting the [Angle], [Height], [Radius] the Persist layers.
+-- Gets used to pass from the database extraction function to the Builder function
+data ExtractedAngleHeightRadius = ExtractedAngleHeightRadius
+                                   {angles :: [Angle],
+                                    heights :: [Height],
+                                    radii :: [Radius]
+                                   }
+                                   deriving (Show)
+
+--will fail if layerName is not valid.
+--Thought monad would protect from that.
+loadAndExtractedAngleHeightRadiusFromDB :: String -> IO (ExtractedAngleHeightRadius)
+loadAndExtractedAngleHeightRadiusFromDB  layerName = runSqlite databaseName $ do
+  layerId <- getBy $ nameUnique' layerName --top = geox. bottom = golf
+  angleHeightRadiusEntity <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId layerId)] []
+  
+  let ahr = extractAnglesHeightsRadiiFromEntity angleHeightRadiusEntity
+      angles'  = extractAngles ahr
+      heights' = extractHeights ahr
+      radii'   = extractRadii ahr
+  return $ ExtractedAngleHeightRadius angles' heights' radii'
