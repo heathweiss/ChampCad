@@ -11,6 +11,7 @@ module CornerPoints.HorizontalFaces(
   createBottomFacesSquaredOffLengthenY,
   createBottomFacesLengthenY,
   createBottomFacesSquaredOffLengthenYSeparately,
+  createTopFacesVariableHeight,
   )where
 import CornerPoints.Create(Origin(..), createCornerPointSquaredOff, createCornerPoint)
 import CornerPoints.CornerPoints(CornerPoints(..), (+++>), (+++), (|+++|), (|@+++#@|))
@@ -321,6 +322,7 @@ createBottomFacesSquaredOffLengthenYSeparately inOrigin radii angles power lengt
 {------------------------------------------------------------------ createTopFaces ----------------------------
 
 -}
+-- | Create a [TopFace], all with a common origin for the BackTopLine.
 createTopFaces :: Origin -> [Radius] -> [Angle] -> [CornerPoints]
 createTopFaces inOrigin radii angles   =
     (createCornerPoint
@@ -345,6 +347,41 @@ createTopFaces inOrigin radii angles   =
        | angle <- tail angles
        | radius <- tail radii
     ]
+
+-- | Create [TopFace], all with a common origin for the BackTopLine.
+-- | The z-axis, or height, of the FrontTopLine's will vary according to a [Height].
+-- | These heights are absolute values instead of  varying in reference to the origin.
+-- | This is so that the origin, which sets the BackTopLines's, does not end up being set down below the FrontFaces, but rather, can be adusted to give a flatter top.
+createTopFacesVariableHeight :: Origin -> [Radius] -> [Angle] -> [Height] -> [CornerPoints]
+createTopFacesVariableHeight inOrigin radii angles heights  =
+    (transposeZ
+      (\z -> (head heights))
+      $ createCornerPoint
+         (F3)
+         inOrigin
+         (head radii)
+         (head angles)
+    )
+    +++
+    B3 inOrigin
+    +++>
+    [(transposeZ
+      (\z -> height)
+      $ (createCornerPoint
+         (F2)
+         inOrigin
+         radius
+         angle
+      
+        )
+     )
+     +++
+     B2 inOrigin
+       | angle <- tail angles
+       | radius <- tail radii
+       | height <- tail heights
+    ]
+
 
 createTopFacesSloped :: Origin -> [Radius] -> [Angle] -> Slope -> Slope -> [CornerPoints]
 createTopFacesSloped inOrigin radii angles xSlope ySlope =
