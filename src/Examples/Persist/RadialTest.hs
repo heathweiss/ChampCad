@@ -52,8 +52,8 @@ import Control.Monad.Writer (WriterT, tell, execWriterT)
 import Control.Monad.Reader
 
 import Persistable.Radial (Layer(..), AngleHeightRadius(..), nameUnique', angleHeightRadius', layerId',
-                           angleHeightRadiusLayerId', extractAnglesHeightsRadiiFromEntity,
-                           extractRadii, extractAngles, extractHeights, extractLayerId, extractOrigin)
+                           angleHeightRadiusLayerId', extractAnglesHeightsRadiiFromEntity, ExtractedAngleHeightRadius(..),
+                           extractRadii, extractAngles, extractHeights, extractLayerId, extractOrigin, loadAndExtractedAngleHeightRadiusFromDB)
 
 import Builder.Monad (BuilderError(..),
                       cornerPointsErrorHandler, buildCubePointsList, buildCubePointsListWithAdd,
@@ -64,25 +64,9 @@ import Builder.Monad (BuilderError(..),
 databaseName = "src/Examples/Persist/radialTest.db"
 type Height = Double
 
--- A handy wrapper used for extracting the [Angle], [Height], [Radius] the Persist layers.
--- Gets used to pass from the database extraction function to the Builder function
-data ExtractedAngleHeightRadius = ExtractedAngleHeightRadius
-                                   {angles :: [Angle],
-                                    heights :: [Height],
-                                    radii :: [Radius]
-                                   }
-                                   deriving (Show)
 
-loadAndExtractedAngleHeightRadiusFromDB :: String -> IO (ExtractedAngleHeightRadius)
-loadAndExtractedAngleHeightRadiusFromDB  layerName = runSqlite databaseName $ do
-  layerId <- getBy $ nameUnique' layerName --"layer1"
-  angleHeightRadiusEntity <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId layerId)] []
-  
-  let ahr = extractAnglesHeightsRadiiFromEntity angleHeightRadiusEntity
-      angles'  = extractAngles ahr
-      heights' = extractHeights ahr
-      radii'   = extractRadii ahr
-  return $ ExtractedAngleHeightRadius angles' heights' radii'
+
+
 
 
 runCreateStlTestLayer :: IO ()
@@ -98,25 +82,8 @@ runCreateStlTestLayer = runSqlite databaseName $ do
       liftIO $ stlGenerator (extractAnglesHeightsRadiiFromEntity angleHeightRadiusEntity) (extractOrigin layerVal)
       
       liftIO $ putStrLn "stl should have been output"
-  {-    
-  case  angleHeightRadiusEntity of
-        Nothing -> 
-          liftIO $ putStrLn "angel height radius not loaded from db"
-        {-
-        (Just (Entity key val)) -> do
-          --stlGenerator
-          --createStlTestLayer val layerVal
-          liftIO $ putStrLn "stl should have been output, once a runner is created that is."
-       -}
-   -}   
   
-  
-     
-  --return putStrLn "done"
 
--- ===================================================== next ============================
--- create the builder function to build the shape.
--- Output the stl.
 
 createStlTestLayer :: [AngleHeightRadius] -> Point -> ExceptT BuilderError (State CpointsStack) CpointsList
 createStlTestLayer angleHeightRadius origin = do
