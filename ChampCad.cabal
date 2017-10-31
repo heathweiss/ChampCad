@@ -49,9 +49,11 @@ library
                        Examples.ShoeLift.CrazyBBoots,
                        Examples.ShoeLift.GeorgeSandalls,
                        Examples.ShoeLift.GeoxFlex,
+                       Examples.ShoeLift.GeoxPillarsWithAnkleBrace
+
                        Examples.Persist.SingleLineTable,
                        Examples.Persist.MappedToCornerPoints,
-                        Examples.Persist.RadialTest,
+                       Examples.Persist.RadialTest,
                        --Have not been redone for changes to MathPolar.
                        --Leave in until sure I will not need them further for printing shoe lifts
                        -- Sockets
