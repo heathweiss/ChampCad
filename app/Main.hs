@@ -33,6 +33,8 @@ import Examples.ShoeLift.SnowBoardBoot (writeRearSlopedTread, writeRearBoot, wri
 
 import System.Environment
 
+import Examples.ShoeLift.GeoxPillarsWithAnkleBrace (runGeoxPillarsWithAnkleBrace)
+
 
 --let type of Main to be inferred for running embedded tests
 -- main :: IO ()
@@ -42,7 +44,7 @@ main = do
   -- x <-  getArgs
  --loadMDRAndPassToProcessor (read $ head x) (read $ head $ tail x)
 
-  SM.generateSocketMountWithDegreesStlUsingDbValues currentSocket
+  --SM.generateSocketMountWithDegreesStlUsingDbValues currentSocket
   --SM.showSocketMountCubesUsingDbValues currentSocket
   --SM.socketMountTestsDo
 
@@ -69,3 +71,5 @@ main = do
 
   
   --solidCylinderSquared
+
+  runGeoxPillarsWithAnkleBrace

@@ -72,6 +72,7 @@ extractFrontRightLine (FrontFace f1 f2 f3 f4) = FrontRightLine f3 f4
 
 extractLeftFace :: CornerPoints -> CornerPoints
 extractLeftFace (CubePoints f1 f2 f3 f4 b1 b2 b3 b4) = LeftFace b1 b2 f1 f2
+extractLeftFace (BottomFace b1 f1 b4 f4) = CornerPointsError "Cannot extract LeftFace from BottomFace"
 
 extractF1 :: CornerPoints -> CornerPoints
 extractF1 (BottomFrontLine f1 f4) = F1 f1

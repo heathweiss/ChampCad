@@ -65,6 +65,7 @@ data BuilderError  = BuilderError {errMsg :: String }
 
 -- | common pattern to show the exception
 instance Show BuilderError where
+  show (BuilderError err) = show err
 
 {- |
 Handles a CornerPoints error in ExceptT catchError calls.
@@ -75,6 +76,17 @@ cornerPointsErrorHandler :: BuilderError -> ExceptT BuilderError (State CpointsS
 cornerPointsErrorHandler error = do
   throwE error
 
+{-
+ExceptT e (StateT s m) a expands to:
+  s -> m (s, Either e a)
+
+Could have used
+StateT s (ExceptT e m) a which expands to:
+  s -> m (Either e (s,a))
+
+This is a stackoverflow question which refers to:
+www.cse.chalmers.se/edu/course/TDA342_Advanced_Functional_Programming/lecture8.html
+-}
 buildCubePointsList :: (CpointsList -> CpointsStack -> CpointsStack) -> String -> CpointsList -> CpointsList ->
                        ExceptT BuilderError (State CpointsStack ) CpointsList
 buildCubePointsList pushToStack extraMsg cPoints cPoints' = 
