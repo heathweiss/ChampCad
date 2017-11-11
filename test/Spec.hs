@@ -25,6 +25,7 @@ import VertexTest(vertexTestDo)
 import PointsTest(pointsTestDo)
 import DiamondCutterTest(diamondCutterTestDo)
 import LineScannerTest(lineScannerTestDo)
+import JoinerTest(joinerTestDo)
 
 --main :: IO ()
 main = do
@@ -53,3 +54,4 @@ main = do
   pointsTestDo
   diamondCutterTestDo
   lineScannerTestDo
+  joinerTestDo
