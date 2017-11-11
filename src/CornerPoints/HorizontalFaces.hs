@@ -12,6 +12,7 @@ module CornerPoints.HorizontalFaces(
   createBottomFacesLengthenY,
   createBottomFacesSquaredOffLengthenYSeparately,
   createTopFacesVariableHeight,
+  createBottomFacesVariableHeight,
   )where
 import CornerPoints.Create(Origin(..), createCornerPointSquaredOff, createCornerPoint)
 import CornerPoints.CornerPoints(CornerPoints(..), (+++>), (+++), (|+++|), (|@+++#@|))
@@ -106,6 +107,14 @@ createBottomFaces inOrigin radii angles {-xSlope ySlope-}  =
        | angle <- tail angles
        | radius <- tail radii
     ]
+
+-- | Create [TopFace], all with a common origin for the BackTopLine.
+-- | The z-axis, or height, of the FrontTopLine's will vary according to a [Height].
+-- | These heights are absolute values instead of  varying in reference to the origin.
+-- | This is so that the origin, which sets the BackTopLines's, does not end up being set down below the FrontFaces, but rather, can be adusted to give a flatter top.
+createBottomFacesVariableHeight :: Origin -> [Radius] -> [Angle] -> [Height] -> [CornerPoints]
+createBottomFacesVariableHeight inOrigin radii angles heights  =
+    createFacesVariableHeightBase (F4) (B4) (F1) (B1) inOrigin radii angles heights
 
 createBottomFacesSloped :: Origin -> [Radius] -> [Angle] ->  Slope -> Slope -> [CornerPoints]
 createBottomFacesSloped inOrigin radii angles xSlope ySlope  =
@@ -354,33 +363,7 @@ createTopFaces inOrigin radii angles   =
 -- | This is so that the origin, which sets the BackTopLines's, does not end up being set down below the FrontFaces, but rather, can be adusted to give a flatter top.
 createTopFacesVariableHeight :: Origin -> [Radius] -> [Angle] -> [Height] -> [CornerPoints]
 createTopFacesVariableHeight inOrigin radii angles heights  =
-    (transposeZ
-      (\z -> (head heights))
-      $ createCornerPoint
-         (F3)
-         inOrigin
-         (head radii)
-         (head angles)
-    )
-    +++
-    B3 inOrigin
-    +++>
-    [(transposeZ
-      (\z -> height)
-      $ (createCornerPoint
-         (F2)
-         inOrigin
-         radius
-         angle
-      
-        )
-     )
-     +++
-     B2 inOrigin
-       | angle <- tail angles
-       | radius <- tail radii
-       | height <- tail heights
-    ]
+    createFacesVariableHeightBase (F3) (B3) (F2) (B2) inOrigin radii angles heights
 
 
 createTopFacesSloped :: Origin -> [Radius] -> [Angle] -> Slope -> Slope -> [CornerPoints]
@@ -482,3 +465,38 @@ createTopFacesSquaredOff    inOrigin  radii       angles      power  =
        | radius' <- tail radiiSquared
     ]
 
+------------------------------------------------------ base functions common to both top and bottom faces ----------------------------------------
+-- | Create [Top/Bottom Face], all with a common origin for the BackTopLine.
+-- | The z-axis, or height, of the Front(Bottom/Top)Line's will vary according to a [Height].
+-- | These heights are absolute values instead of  varying in reference to the origin.
+-- | This is so that the origin, which sets the Back(Bottom/Top)Lines's, does not end up being set down below the FrontFaces, but rather, can be adusted to give a flatter top.
+createFacesVariableHeightBase :: (Point -> CornerPoints) -> (Point -> CornerPoints) -> (Point -> CornerPoints) -> (Point -> CornerPoints)
+                                 -> Origin -> [Radius] -> [Angle] -> [Height] -> [CornerPoints]
+createFacesVariableHeightBase top1 bottom1 top2 bottom2 inOrigin radii angles heights  =
+    (transposeZ
+      (\z -> (head heights))
+      $ createCornerPoint
+         (top1)
+         inOrigin
+         (head radii)
+         (head angles)
+    )
+    +++
+    bottom1 inOrigin
+    +++>
+    [(transposeZ
+      (\z -> height)
+      $ (createCornerPoint
+         (top2)
+         inOrigin
+         radius
+         angle
+      
+        )
+     )
+     +++
+     bottom2 inOrigin
+       | angle <- tail angles
+       | radius <- tail radii
+       | height <- tail heights
+    ]

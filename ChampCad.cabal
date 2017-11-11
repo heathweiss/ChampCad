@@ -30,7 +30,7 @@ library
                        --Cubical
                        Cubical.Cubical
                        --Builder
-                       Builder.Sequence, Builder.List, Builder.Map, Builder.Monad
+                       Builder.Sequence, Builder.List, Builder.Map, Builder.Monad, Builder.Joiner
                        --math
                        Math.Trigonometry,
                        --stl
@@ -173,6 +173,7 @@ test-suite ChampCad-test
                        PointsTest
                        DiamondCutterTest
                        LineScannerTest
+                       JoinerTest
  
   build-depends:       base
                      , ChampCad
