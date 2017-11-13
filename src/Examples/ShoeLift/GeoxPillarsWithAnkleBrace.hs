@@ -66,7 +66,7 @@ import Builder.Monad (BuilderError(..),
                       buildCubePointsListSingle,
                       buildCubePointsListWithIOCpointsListBase,
                       CpointsStack, CpointsList)
-import  Builder.Joiner(Joiner(..),joiner, takeLeft, takeRight)
+import  Builder.Joiner(Joiner(..),joiner, takeLeading, takeTrailing)
 
 import Primitives.Cylindrical.Solid(cylinder)
 
@@ -79,7 +79,7 @@ databaseName = "src/Examples/ShoeLift/geoxPillarsWithAnkleBrace.db"
 --what to run in main.
 --Handy to change it here, instead of going to main.
 --Saves running ghci.
-runGeoxPillarsWithAnkleBrace = golfTreadCenterCpoints  --geoxTreadHeelCpoints  -- golfTreadHeelCpoints 
+runGeoxPillarsWithAnkleBrace =  golfTreadCenterCpoints  --geoxTreadHeelCpoints  -- golfTreadHeelCpoints 
 
 cylinderRadius = Radius 20
 {---------------------------------------------function index and terms-----------------------------------------------------------
@@ -148,9 +148,9 @@ centerCPoints treadAHR origin' cylinderHeight cylinderZAdj treadCpoints = do
         --fst = tread
         --snd = pillar
         [(Take, Take),
-         (HoldLeft, Take),
-         (HoldLeft, Take),
-         (HoldLeft, Take),
+         (HoldLeading, Take),
+         (HoldLeading, Take),
+         (HoldLeading, Take),
          (Take, Take),
          (Take, Take),
          (Take, Take),
@@ -159,28 +159,86 @@ centerCPoints treadAHR origin' cylinderHeight cylinderZAdj treadCpoints = do
          (Take, Take),
          (Take, Take),
          (Take, Take),
-         (Take, HoldLeft),
-         (Take, HoldLeft),
-         (Take, HoldLeft),
-         (Take, HoldLeft),
-         (Take, HoldLeft),
+         (Take, HoldLeading),
+         (Take, HoldLeading),
+         (Take, HoldLeading),
+         (Take, HoldLeading),
+         (Take, HoldLeading),
          (Take, Take),
          (Take, Take),
-         (HoldLeft, Take),
-         (HoldLeft, Take),
-         (HoldLeft, Take),
-         (HoldLeft, Take)
+         (HoldLeading, Take),
+         (HoldLeading, Take),
+         (HoldLeading, Take),
+         (HoldLeading, Take)
         ]
 
   leadingSideCubes <- buildCubePointsListWithAdd "first cubes"
          (--                                           the [Joiner] limits the # of heelOuterFaces.
-          joiner (takeLeft     ) (takeRight) ( map (fst) leadingSideJoiners) $ drop 9 heelOuterFaces           
+          joiner (takeLeading     ) (takeTrailing) ( map (fst) leadingSideJoiners) $ drop 9 heelOuterFaces           
          )
          (--                                          the [Joiner] limits # of pillar faces
-          joiner (takeLeft       ) (takeRight) (map (snd) leadingSideJoiners) pillarFrontFacesAsBackFaces
+          joiner (takeLeading       ) (takeTrailing) (map (snd) leadingSideJoiners) pillarFrontFacesAsBackFaces
          )
 
-  return leadingSideCubes
+  let
+     --Use these Joiners as the limits to the Joiner fx.
+        --fst = tread
+        --snd = pillar
+     trailingSideJoiners =
+       [(Take,Take),
+        (Take,Take),
+        (Take,Take),
+        (Take,Take),
+        (Take,Take),
+        (Take,Take),
+        (Take,Take),
+
+        (Take,HoldLeading),
+        (Take,HoldLeading),
+        (Take,HoldLeading),
+        (Take,Take),
+        (Take,Take),
+        (Take,Take),
+        (Take,Take),
+        (Take,Take),
+        (Take,Take),
+        (Take,Take),
+        (Take,Take),
+        (HoldLeading,Take)
+       ]
+
+  trailingSideCubes <- buildCubePointsListWithAdd "trailing cubes"
+         (--                                           the [Joiner] limits the # of heelOuterFaces.
+          joiner (takeLeading) (takeTrailing) ( map (fst) trailingSideJoiners) $ drop 45 heelOuterFaces           
+         )
+         (--                                          the [Joiner] limits # of pillar faces
+          joiner (takeLeading) (takeTrailing) (map (snd) trailingSideJoiners) $ drop 19 pillarFrontFacesAsBackFaces
+         )
+
+  frontFillerCube <- buildCubePointsListWithAdd "backFillerCube"
+        (
+         [--lead tread front face
+          (toFrontRightLine . extractFrontLeftLine $ last leadingSideCubes)
+          +++
+          --trailing tread front face
+          (toFrontLeftLine . extractFrontRightLine $ head trailingSideCubes)
+         ]
+        )
+        ([head $ drop 18 pillarFrontFacesAsBackFaces])
+
+  backFillerCube <- buildCubePointsListWithAdd "backFillerCube"
+        (
+         [--lead tread front face
+          (toFrontLeftLine . extractFrontRightLine $ head leadingSideCubes)
+          +++
+          --trailing tread front face
+          (toFrontRightLine . extractFrontLeftLine $ last trailingSideCubes)
+         ]
+        )
+        ([last pillarFrontFacesAsBackFaces])
+
+  
+  return frontFillerCube
 
   
 
