@@ -3,7 +3,7 @@ Use for joining together 2 [CornerPoints] which have to be matched up.
 example: Cutting a cylinder out of a radial shape such as the pillar cylinders in a shoe scan.
 -}
 
-module Builder.Joiner(Joiner(..),joiner, takeLeft, takeRight) where
+module Builder.Joiner(Joiner(..),joiner, takeLeading, takeTrailing) where
 
 import CornerPoints.CornerPoints(CornerPoints(..), )
 import CornerPoints.FaceConversions(toBackFace, toFrontFace)
@@ -21,28 +21,28 @@ This data type will be used for pattern matching to make those decisions.
 -}
 data Joiner =
          Take
-       | TakeLeft
-       | TakeRight
+       | TakeLeading
+       | TakeTrailing
        | Hold
-       | HoldRight
-       | HoldLeft
+       | HoldTrailing
+       | HoldLeading
        
 {-
 modify a [Cpoints] by zipping with a [Joiner]
 
 given:
-takeLeftFx: Take the <Front/Back>Face, extract the Left line and turn into a <Back/Front> Face.
-takeRightFx: Take the <Front/Back>Face, extract the Right line and turn into a <Back/Front> Face.
+takeLeadingFx: Take the <Front/Back>Face, extract the Left line and turn into a <Back/Front> Face.
+takeTrailingFx: Take the <Front/Back>Face, extract the Right line and turn into a <Back/Front> Face.
 -}
 joiner :: (CornerPoints -> CornerPoints) -> (CornerPoints -> CornerPoints) -> [Joiner] -> [CornerPoints] ->  [CornerPoints]
 joiner _ _ [] _ =
   [CornerPointsError "empty [Joiner] passed into joiner"]
-joiner takeLeft takeRight joiners [] =
+joiner takeLeading takeTrailing joiners [] =
   [CornerPointsError "empty [CornerPoints] passed into joiner"]
 
-joiner takeLeft takeRight (join:joins) cpoints  =
+joiner takeLeading takeTrailing (join:joins) cpoints  =
   --append head on to give an initial prev cpoint.
-  joiner' takeLeft takeRight join joins CornerPointsNothing cpoints []
+  joiner' takeLeading takeTrailing join joins CornerPointsNothing cpoints []
 
 
   
@@ -59,57 +59,57 @@ joiner' :: (CornerPoints -> CornerPoints) -> (CornerPoints -> CornerPoints) -> J
 joiner'   _ _ _ _ _ [] joinedCpoints  =
   reverse joinedCpoints
 -}
-joiner'   takeLeft takeRight TakeRight (join:joins) prevUnjoinedCpoint (currUnjoinedCpoint : origCpoints) joinedCpoints  =
-  joiner' takeLeft takeRight join joins currUnjoinedCpoint (origCpoints) ((takeRight currUnjoinedCpoint):joinedCpoints  )
+joiner'   takeLeading takeTrailing TakeTrailing (join:joins) prevUnjoinedCpoint (currUnjoinedCpoint : origCpoints) joinedCpoints  =
+  joiner' takeLeading takeTrailing join joins currUnjoinedCpoint (origCpoints) ((takeTrailing currUnjoinedCpoint):joinedCpoints  )
 
-joiner'   takeLeft takeRight TakeLeft (join:joins) prevUnjoinedCpoint (currUnjoinedCpoint : origCpoints) joinedCpoints  =
-  joiner' takeLeft takeRight join joins currUnjoinedCpoint (origCpoints) ((takeLeft currUnjoinedCpoint):joinedCpoints  )
-
-
-
-joiner' takeLeft takeRight HoldLeft (join:joins) prevUnjoinedCpoint (currUnjoinedCpoint : origCpoints) joinedCpoints =
-  joiner' takeLeft takeRight join joins prevUnjoinedCpoint (currUnjoinedCpoint : origCpoints) ((takeLeft prevUnjoinedCpoint):joinedCpoints  )
-
-joiner' takeLeft _ HoldLeft [] prevUnjoinedCpoint _ joinedCpoints =
-  reverse ((takeLeft prevUnjoinedCpoint):joinedCpoints  )
-
-joiner' takeLeft _ HoldLeft _ prevUnjoinedCpoint [] joinedCpoints =
-  reverse ((takeLeft prevUnjoinedCpoint):joinedCpoints  )
+joiner'   takeLeading takeTrailing TakeLeading (join:joins) prevUnjoinedCpoint (currUnjoinedCpoint : origCpoints) joinedCpoints  =
+  joiner' takeLeading takeTrailing join joins currUnjoinedCpoint (origCpoints) ((takeLeading currUnjoinedCpoint):joinedCpoints  )
 
 
 
-joiner' _ takeRight HoldRight [] prevUnjoinedCpoint _ joinedCpoints =
-  reverse ((takeRight prevUnjoinedCpoint):joinedCpoints  )
+joiner' takeLeading takeTrailing HoldLeading (join:joins) prevUnjoinedCpoint (currUnjoinedCpoint : origCpoints) joinedCpoints =
+  joiner' takeLeading takeTrailing join joins prevUnjoinedCpoint (currUnjoinedCpoint : origCpoints) ((takeLeading prevUnjoinedCpoint):joinedCpoints  )
 
-joiner' takeLeft takeRight HoldRight (join:joins) prevUnjoinedCpoint  (currUnjoinedCpoint : origCpoints) joinedCpoints =
-  joiner' takeLeft takeRight join joins prevUnjoinedCpoint (currUnjoinedCpoint : origCpoints) ((takeRight prevUnjoinedCpoint):joinedCpoints  )
+joiner' takeLeading _ HoldLeading [] prevUnjoinedCpoint _ joinedCpoints =
+  reverse ((takeLeading prevUnjoinedCpoint):joinedCpoints  )
 
-joiner'   _ takeRight TakeRight [] _ (currUnjoinedCpoint : origCpoints) joinedCpoints  =
-  reverse  $ (takeRight currUnjoinedCpoint):joinedCpoints
+joiner' takeLeading _ HoldLeading _ prevUnjoinedCpoint [] joinedCpoints =
+  reverse ((takeLeading prevUnjoinedCpoint):joinedCpoints  )
 
-joiner'   takeLeft _ TakeLeft [] _ (currUnjoinedCpoint : origCpoints) joinedCpoints  =
-  reverse  $ (takeLeft currUnjoinedCpoint):joinedCpoints
+
+
+joiner' _ takeTrailing HoldTrailing [] prevUnjoinedCpoint _ joinedCpoints =
+  reverse ((takeTrailing prevUnjoinedCpoint):joinedCpoints  )
+
+joiner' takeLeading takeTrailing HoldTrailing (join:joins) prevUnjoinedCpoint  (currUnjoinedCpoint : origCpoints) joinedCpoints =
+  joiner' takeLeading takeTrailing join joins prevUnjoinedCpoint (currUnjoinedCpoint : origCpoints) ((takeTrailing prevUnjoinedCpoint):joinedCpoints  )
+
+joiner'   _ takeTrailing TakeTrailing [] _ (currUnjoinedCpoint : origCpoints) joinedCpoints  =
+  reverse  $ (takeTrailing currUnjoinedCpoint):joinedCpoints
+
+joiner'   takeLeading _ TakeLeading [] _ (currUnjoinedCpoint : origCpoints) joinedCpoints  =
+  reverse  $ (takeLeading currUnjoinedCpoint):joinedCpoints
 
 
 
 joiner' _ _ Take [] _ (currUnjoinedCpoint : origCpoints) joinedCpoints  =
   reverse $ currUnjoinedCpoint : joinedCpoints
 
-joiner' takeLeft takeRight Take (nextJoin:[]) _ ( currUnjoinedCpoint : origCpoints) joinedCpoints  =
-  joiner' takeLeft takeRight nextJoin [] currUnjoinedCpoint  (origCpoints) (currUnjoinedCpoint:joinedCpoints)
+joiner' takeLeading takeTrailing Take (nextJoin:[]) _ ( currUnjoinedCpoint : origCpoints) joinedCpoints  =
+  joiner' takeLeading takeTrailing nextJoin [] currUnjoinedCpoint  (origCpoints) (currUnjoinedCpoint:joinedCpoints)
 
-joiner' takeLeft takeRight Take (nextJoin:joins) _ (currUnjoinedCpoint : origCpoints) joinedCpoints  =
-  joiner' takeLeft takeRight nextJoin joins currUnjoinedCpoint (origCpoints) (currUnjoinedCpoint:joinedCpoints)
+joiner' takeLeading takeTrailing Take (nextJoin:joins) _ (currUnjoinedCpoint : origCpoints) joinedCpoints  =
+  joiner' takeLeading takeTrailing nextJoin joins currUnjoinedCpoint (origCpoints) (currUnjoinedCpoint:joinedCpoints)
 
-joiner' takeLeft takeRight Take _ _ [] joinedCpoints  =
+joiner' takeLeading takeTrailing Take _ _ [] joinedCpoints  =
   reverse joinedCpoints
 
 
 --extract <back/front>LeftLine and turn it into a <back/front>Face
-takeLeft :: CornerPoints -> CornerPoints
-takeLeft (FrontFace p1 p2 p3 p4) = (toFrontFace . extractFrontLeftLine) (FrontFace p1 p2 p3 p4)
-takeLeft (BackFace p1 p2 p3 p4)  = (toBackFace . extractBackLeftLine) (BackFace p1 p2 p3 p4)
+takeLeading :: CornerPoints -> CornerPoints
+takeLeading (FrontFace p1 p2 p3 p4) = (toFrontFace . extractFrontLeftLine) (FrontFace p1 p2 p3 p4)
+takeLeading (BackFace p1 p2 p3 p4)  = (toBackFace . extractBackLeftLine) (BackFace p1 p2 p3 p4)
 --extract <back/front>RightLine and turn it into a <back/front>Face
-takeRight :: CornerPoints -> CornerPoints
-takeRight (FrontFace p1 p2 p3 p4) = (toFrontFace . extractFrontRightLine) (FrontFace p1 p2 p3 p4)
-takeRight (BackFace p1 p2 p3 p4)  = (toBackFace . extractBackRightLine) (BackFace p1 p2 p3 p4)
+takeTrailing :: CornerPoints -> CornerPoints
+takeTrailing (FrontFace p1 p2 p3 p4) = (toFrontFace . extractFrontRightLine) (FrontFace p1 p2 p3 p4)
+takeTrailing (BackFace p1 p2 p3 p4)  = (toBackFace . extractBackRightLine) (BackFace p1 p2 p3 p4)
