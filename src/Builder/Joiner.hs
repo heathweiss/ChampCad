@@ -104,6 +104,9 @@ joiner' takeLeading takeTrailing Take (nextJoin:joins) _ (currUnjoinedCpoint : o
 joiner' takeLeading takeTrailing Take _ _ [] joinedCpoints  =
   reverse joinedCpoints
 
+joiner' takeLeading takeTrailing Hold (nextJoin:joins) prevUnjoinedCpoint (currUnjoinedCpoint : origCpoints) joinedCpoints  =
+  joiner' takeLeading takeTrailing nextJoin joins currUnjoinedCpoint (origCpoints) (prevUnjoinedCpoint:joinedCpoints)
+
 
 --extract <back/front>LeftLine and turn it into a <back/front>Face
 takeLeading :: CornerPoints -> CornerPoints
