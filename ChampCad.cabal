@@ -49,7 +49,11 @@ library
                        Examples.ShoeLift.CrazyBBoots,
                        Examples.ShoeLift.GeorgeSandalls,
                        Examples.ShoeLift.GeoxFlex,
-                       Examples.ShoeLift.GeoxPillarsWithAnkleBrace
+                       Examples.ShoeLift.Pillars.GeoxPillarsWithAnkleBrace
+                       Examples.ShoeLift.Pillars.FullScan
+                       Examples.ShoeLift.Pillars.Main
+                       Examples.ShoeLift.Pillars.ContourScan
+                       Examples.ShoeLift.Pillars.Common
 
                        Examples.Persist.SingleLineTable,
                        Examples.Persist.MappedToCornerPoints,

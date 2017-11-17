@@ -17,7 +17,7 @@ Use bottom tread from golf shoes. Slightly shorter than the Geox, but still usab
 Use 3 wooden dowels as pillars to join the Geox shoe to the golf tread.
 -}
 
-module Examples.ShoeLift.GeoxPillarsWithAnkleBrace (runGeoxPillarsWithAnkleBrace) where
+module Examples.ShoeLift.Pillars.GeoxPillarsWithAnkleBrace (runGeoxPillarsWithAnkleBrace) where
 
 import           Control.Monad.IO.Class  (liftIO)
 import           Database.Persist
@@ -75,12 +75,12 @@ import Primitives.Cylindrical.Solid(cylinder)
 type Height = Double
 type LayerName = String
 
-databaseName = "src/Examples/ShoeLift/geoxPillarsWithAnkleBrace.db"
+databaseName = "src/Examples/ShoeLift/Pillars/geoxPillarsWithAnkleBrace.db"
 
 --what to run in main.
 --Handy to change it here, instead of going to main.
 --Saves running ghci.
-runGeoxPillarsWithAnkleBrace = geoxToeStlGenerator
+runGeoxPillarsWithAnkleBrace = golfHeelStlGenerator
 
 cylinderRadius = Radius 20
 type CylinderTransposer = (Double) -> (Double)
@@ -643,7 +643,8 @@ geoxToeSectionData :: SectionRunData
 geoxToeSectionData = SectionRunData 16 (-20) toeCylinderTransposer (entireGeoxTreadCpoints) (toeCPoints) "top"
 
 golfHeelSectionData :: SectionRunData
-golfHeelSectionData = SectionRunData 12 8 heelCylinderTransposer (entireGolfTreadCpoints) (heelCPoints) "bottom"
+--golfHeelSectionData = SectionRunData 12 8 heelCylinderTransposer (entireGolfTreadCpoints) (heelCPoints) "bottom"
+golfHeelSectionData = SectionRunData 12 6 heelCylinderTransposer (entireGolfTreadCpoints) (heelCPoints) "bottom"
 
 golfCenterSectionData :: SectionRunData
 golfCenterSectionData = SectionRunData 10 10 centerCylinderTransposer (entireGolfTreadCpoints) (centerCPoints) "bottom"
@@ -705,8 +706,13 @@ entireGeoxTreadCpoints fullScanBuilderData = do
 
 entireGolfTreadCpoints :: FullScanBuilderData -> ExceptT BuilderError (State CpointsStack) CpointsList
 entireGolfTreadCpoints fullScanBuilderData = do
+  let setTopOriginTo origin' = (transposeZ (\z -> 18) $ origin')
+      adjustHeightOfBtmOrigin origin' = (transposeZ (+ (2)) origin')
+
+  {-
   let setTopOriginTo origin' = (transposeZ (\z -> 20) $ origin')
       adjustHeightOfBtmOrigin origin' = (transposeZ (+ (7)) origin')
+-}
       
   btmFaces <- buildCubePointsListSingle "bottom faces"
               (createBottomFacesVariableHeight

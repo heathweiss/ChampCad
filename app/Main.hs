@@ -33,7 +33,7 @@ import Examples.ShoeLift.SnowBoardBoot (writeRearSlopedTread, writeRearBoot, wri
 
 import System.Environment
 
-import Examples.ShoeLift.GeoxPillarsWithAnkleBrace (runGeoxPillarsWithAnkleBrace)
+import Examples.ShoeLift.Pillars.Main (run)
 
 
 --let type of Main to be inferred for running embedded tests
@@ -72,4 +72,4 @@ main = do
   
   --solidCylinderSquared
 
-  runGeoxPillarsWithAnkleBrace
+  run
