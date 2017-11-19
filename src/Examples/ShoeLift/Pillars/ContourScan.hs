@@ -12,10 +12,10 @@
 {- |
 Create the <single/double> sections that include the variable height(contoured) of the scan.
 -}
-module Examples.ShoeLift.Pillars.ContourScan(runContourScan) where
+module Examples.ShoeLift.Pillars.ContourScan(runContourScan, SectionBuilder(..), databaseName, SectionData(..), toSectionBuilderData, topToeBuilderData) where
 
 import Examples.ShoeLift.Pillars.FullScan(FullScanBuilder(..), FullScanBuilderData(..), LayerNames(..), layerNames,
-                                          entireGeoxTreadCpoints, entireGolfTreadCpoints)
+                                          entireTopTreadCpoints, entireBtmTreadCpoints)
 import Examples.ShoeLift.Pillars.Common(LayerName(..))
 
 import           Control.Monad.IO.Class  (liftIO)
@@ -72,7 +72,7 @@ import Primitives.Cylindrical.Solid(cylinder)
 
 import Control.Lens
 
-makeLenses ''FullScanBuilderData
+--makeLenses ''FullScanBuilderData
 makeLenses ''LayerNames
 
 type SectionBuilder = SectionData
@@ -95,7 +95,7 @@ cylinderRadius = Radius 20
 
 databaseName = "src/Examples/ShoeLift/Pillars/geoxPillarsWithAnkleBrace.db"
 --export for Main to run as exe.
-runContourScan = runBtmCenterStlGenerator
+runContourScan = runBtmHeelCenterStlGenerator
 
 data SectionData =
   SectionDimensions
@@ -119,38 +119,38 @@ toSectionBuilderData origin (SectionDimensions cylinderHeight cylinderHorizontal
   
 
 
----------- run sectionStlGeneratorBase with SectionDimensions for the <top/btm> <heel/center/toe> section req'd. ------
+---------- run singleSectionStlGenerator with SectionDimensions for the <top/btm> <heel/center/toe> section req'd. ------
 topToeBuilderData = SectionDimensions  16 (+(-20)) toeCylinderTransposer 
-btmToeBuilderData = SectionDimensions  10 (+(10)) toeCylinderTransposer 
-topCenterBuilderData = SectionDimensions  13 (+(-20)) centerCylinderTransposer 
-btmCenterBuilderData = SectionDimensions  10 (+10) heelCylinderTransposer 
-topHeelBuilderData = SectionDimensions  9 (+(-20)) heelCylinderTransposer 
-btmHeelBuilderData = SectionDimensions  9 (+(-20)) heelCylinderTransposer 
+topHeelBuilderData = SectionDimensions  9 (+(-20)) heelCylinderTransposer
+topCenterBuilderData = SectionDimensions  13 (+(-20)) centerCylinderTransposer
 
+btmCenterBuilderData = SectionDimensions  10 (+10) heelCylinderTransposer
+btmHeelBuilderData = SectionDimensions  13 (+7) heelCylinderTransposer
+btmToeBuilderData = SectionDimensions  10 (+(10)) toeCylinderTransposer
 
 runTopToeStlGenerator =
-  sectionStlGeneratorBase topToeBuilderData toeCPoints entireGeoxTreadCpoints (layerNames^.topLayer)
+  singleSectionStlGenerator topToeBuilderData toeCPoints entireTopTreadCpoints (layerNames^.topLayer)
   
 runBtmToeStlGenerator =
-  sectionStlGeneratorBase btmToeBuilderData toeCPoints entireGolfTreadCpoints (layerNames^.btmLayer)
+  singleSectionStlGenerator btmToeBuilderData toeCPoints entireBtmTreadCpoints (layerNames^.btmLayer)
 
 runTopCenterStlGenerator =
-  sectionStlGeneratorBase topCenterBuilderData centerCPoints entireGeoxTreadCpoints (layerNames^.topLayer)
+  singleSectionStlGenerator topCenterBuilderData centerCPoints entireTopTreadCpoints (layerNames^.topLayer)
 
 runBtmCenterStlGenerator =
-  sectionStlGeneratorBase btmCenterBuilderData centerCPoints entireGolfTreadCpoints (layerNames^.btmLayer)
+  singleSectionStlGenerator btmCenterBuilderData centerCPoints entireBtmTreadCpoints (layerNames^.btmLayer)
 
 runTopHeelStlGenerator = 
-  sectionStlGeneratorBase topHeelBuilderData heelCPoints entireGeoxTreadCpoints (layerNames^.topLayer)
+  singleSectionStlGenerator topHeelBuilderData heelCPoints entireTopTreadCpoints (layerNames^.topLayer)
 
 runBtmHeelStlGenerator = 
-  sectionStlGeneratorBase btmHeelBuilderData heelCPoints entireGolfTreadCpoints (layerNames^.btmLayer)
+  singleSectionStlGenerator btmHeelBuilderData heelCPoints entireBtmTreadCpoints (layerNames^.btmLayer)
 
-----------end:  run sectionStlGeneratorBase with SectionDimensions for the <top/btm> <heel/center/toe> section req'd. ------
+----------end:  run singleSectionStlGenerator with SectionDimensions for the <top/btm> <heel/center/toe> section req'd. ------
 
 --genearte stl by running the <heel/center/toe> cpoints builder for <top/btm> layer
-sectionStlGeneratorBase :: SectionData -> SectionBuilder -> FullScanBuilder -> LayerName -> IO ()
-sectionStlGeneratorBase sectionBldrData sectionBuilder fullScanBuilder layerName = runSqlite (databaseName) $ do
+singleSectionStlGenerator :: SectionData -> SectionBuilder -> FullScanBuilder -> LayerName -> IO ()
+singleSectionStlGenerator sectionDimensions sectionBuilder fullScanBuilder layerName = runSqlite (databaseName) $ do
     
   layerId <- getBy $ nameUnique' $ layerName
   angleHeightRadiusEntity <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId layerId)] []
@@ -159,7 +159,7 @@ sectionStlGeneratorBase sectionBldrData sectionBuilder fullScanBuilder layerName
     Nothing -> liftIO $ putStrLn "layer id was not found"
     (Just (Entity key layerVal)) -> do
       let
-        builder = sectionBuilder (toSectionBuilderData (extractOrigin layerVal) sectionBldrData (extractAnglesHeightsRadiiFromEntity angleHeightRadiusEntity)) fullScanBuilder
+        builder = sectionBuilder (toSectionBuilderData (extractOrigin layerVal) sectionDimensions (extractAnglesHeightsRadiiFromEntity angleHeightRadiusEntity)) fullScanBuilder
         
         valCpoints = ((evalState $ runExceptT builder) [])
 
@@ -172,6 +172,55 @@ sectionStlGeneratorBase sectionBldrData sectionBuilder fullScanBuilder layerName
           liftIO $ writeStlToFile $ newStlShape "heel geox" $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
           liftIO $ putStrLn "stl should have been output"
 
+-- ========================================================= double section stl generators =================================================
+runTopHeelCenterStlGenerator :: IO ()
+runTopHeelCenterStlGenerator =
+  doubleSectionStlGenerator topHeelBuilderData heelCPoints topCenterBuilderData centerCPoints  entireTopTreadCpoints (layerNames^.topLayer)
+
+runTopCenterToeStlGenerator :: IO ()
+runTopCenterToeStlGenerator =
+  doubleSectionStlGenerator topCenterBuilderData centerCPoints topToeBuilderData toeCPoints   entireTopTreadCpoints (layerNames^.topLayer)
+
+runBtmHeelCenterStlGenerator :: IO ()
+runBtmHeelCenterStlGenerator =
+  doubleSectionStlGenerator btmHeelBuilderData heelCPoints btmCenterBuilderData centerCPoints  entireBtmTreadCpoints (layerNames^.btmLayer)
+
+runBtmCenterToeStlGenerator :: IO ()
+runBtmCenterToeStlGenerator =
+  doubleSectionStlGenerator btmCenterBuilderData centerCPoints btmToeBuilderData toeCPoints  entireBtmTreadCpoints (layerNames^.btmLayer)
+
+
+doubleSectionStlGenerator :: SectionData -> SectionBuilder -> SectionData -> SectionBuilder -> FullScanBuilder -> LayerName -> IO ()
+doubleSectionStlGenerator section1Dimensions section1Builder section2Dimensions section2Builder fullScanBuilder layerName = runSqlite (databaseName) $ do
+  layerId <- getBy $ nameUnique' $ layerName
+  angleHeightRadiusEntity <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId layerId)] []
+
+  case layerId of
+    Nothing -> liftIO $ putStrLn "layer id was not found"
+    (Just (Entity key layerVal)) -> do
+      let
+        builder1 = section1Builder (toSectionBuilderData (extractOrigin layerVal) section1Dimensions (extractAnglesHeightsRadiiFromEntity angleHeightRadiusEntity)) fullScanBuilder
+        
+        val1Cpoints = ((evalState $ runExceptT builder1) [])
+
+        cpoints1 =  ((execState $ runExceptT builder1) [])
+
+        builder2 = section2Builder (toSectionBuilderData (extractOrigin layerVal) section2Dimensions (extractAnglesHeightsRadiiFromEntity angleHeightRadiusEntity)) fullScanBuilder
+        
+        val2Cpoints = ((evalState $ runExceptT builder2) [])
+
+        cpoints2 =  ((execState $ runExceptT builder2) [])
+
+      case val1Cpoints of
+        (Left e) -> liftIO $ print $ e
+        (Right a) -> do
+          liftIO $ putStrLn "output from Builder1 was good"
+          case val2Cpoints of
+            (Left e) -> liftIO $ print $ e
+            (Right a) -> do
+              liftIO $ putStrLn "output from Builder2 was good"
+              liftIO $ writeStlToFile $ newStlShape "heel geox" $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] (cpoints1 ++ cpoints2))
+              liftIO $ putStrLn "stl has been written"
 -- ======================================================== toe builder ====================================================================================
 toeCPoints :: SectionBuilder
 toeCPoints (SectionBuilderData origin' cylinderHeight cylinderMoveHorizontally cylinderYTransposer angleHeightRadius) fullScanBuilder = do
