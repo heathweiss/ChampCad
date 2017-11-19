@@ -10,7 +10,7 @@
 {-# LANGUAGE ParallelListComp #-}
 
 module Examples.ShoeLift.Pillars.FullScan(runFullTopTreadStlGenerator, runFullBtmTreadStlGenerator, FullScanBuilder(..), FullScanBuilderData(..),
-                                          LayerNames(..), layerNames, entireGeoxTreadCpoints, entireGolfTreadCpoints) where
+                                          LayerNames(..), layerNames, entireTopTreadCpoints, entireBtmTreadCpoints) where
 
 import           Control.Monad.IO.Class  (liftIO)
 import           Database.Persist
@@ -104,9 +104,9 @@ Build the entire geox tread from the database just to have a look at it.
 Also gets used for taking sections out of for building the various pieces: heel, toe, heel&midddle, toe&middle,
 as well as the flat geox tread that has no variable height.
 -}
---entireGeoxTreadCpoints :: FullScanBuilderData -> ExceptT BuilderError (State CpointsStack) CpointsList
-entireGeoxTreadCpoints :: FullScanBuilder
-entireGeoxTreadCpoints fullScanBuilderData = do
+--entireTopTreadCpoints :: FullScanBuilderData -> ExceptT BuilderError (State CpointsStack) CpointsList
+entireTopTreadCpoints :: FullScanBuilder
+entireTopTreadCpoints fullScanBuilderData = do
   let setBottomOriginToZero origin' = (transposeZ (\z -> 0) origin')
       adjustHeightOfTopOrigin origin' = (transposeZ (+ (-7)) origin')
   
@@ -132,9 +132,9 @@ entireGeoxTreadCpoints fullScanBuilderData = do
   
   return cubes
 
---entireGolfTreadCpoints :: FullScanBuilderData -> ExceptT BuilderError (State CpointsStack) CpointsList
-entireGolfTreadCpoints :: FullScanBuilder
-entireGolfTreadCpoints fullScanBuilderData = do
+--entireBtmTreadCpoints :: FullScanBuilderData -> ExceptT BuilderError (State CpointsStack) CpointsList
+entireBtmTreadCpoints :: FullScanBuilder
+entireBtmTreadCpoints fullScanBuilderData = do
   let setTopOriginTo origin' = (transposeZ (\z -> 20) $ origin')
       adjustHeightOfBtmOrigin origin' = (transposeZ (+ (7)) origin')
       
@@ -162,7 +162,7 @@ entireGolfTreadCpoints fullScanBuilderData = do
 {-
 runGolfTreadStlGenerator :: IO ()
 runGolfTreadStlGenerator =
-  runTreadStlGenerator (entireGolfTreadCpoints) "bottom"
+  runTreadStlGenerator (entireBtmTreadCpoints) "bottom"
 -}
 runFullTopTreadStlGenerator :: IO ()
 runFullTopTreadStlGenerator =
@@ -176,10 +176,10 @@ runFullBtmTreadStlGenerator =
 --Otherwise it outputs the stl.
 runTreadStlGenerator :: FullScan  -> IO ()
 runTreadStlGenerator TopFullScan = 
-  runTreadStlGeneratorBase (entireGeoxTreadCpoints) (layerNames^.topLayer)
+  runTreadStlGeneratorBase (entireTopTreadCpoints) (layerNames^.topLayer)
 
 runTreadStlGenerator BtmFullScan = 
-  runTreadStlGeneratorBase (entireGolfTreadCpoints) (layerNames^.btmLayer)
+  runTreadStlGeneratorBase (entireBtmTreadCpoints) (layerNames^.btmLayer)
 
 
 runTreadStlGeneratorBase :: FullScanBuilder -> LayerName -> IO ()
