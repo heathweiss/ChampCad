@@ -54,6 +54,7 @@ library
                        Examples.ShoeLift.Pillars.Main
                        Examples.ShoeLift.Pillars.ContourScan
                        Examples.ShoeLift.Pillars.Common
+                       Examples.ShoeLift.Pillars.FlatScan
 
                        Examples.Persist.SingleLineTable,
                        Examples.Persist.MappedToCornerPoints,

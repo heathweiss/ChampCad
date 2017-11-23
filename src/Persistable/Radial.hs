@@ -6,7 +6,7 @@
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE OverloadedStrings          #-}
 
-module Persistable.Radial (Layer(..), AngleHeightRadius(..), nameUnique', angleHeightRadius', layerId',
+module Persistable.Radial (Layer(..), AngleHeightRadius(..), AnglesHeightsRadii(..), nameUnique', angleHeightRadius', layerId',
                            angleHeightRadiusLayerId', extractAnglesHeightsRadiiFromEntity, ExtractedAngleHeightRadius(..),
                            extractRadii, extractAngles, extractHeights, extractLayerId, extractOrigin, loadAndExtractedAngleHeightRadiusFromDB) where
 
@@ -61,6 +61,8 @@ AngleHeightRadius
 
 type Height = Double
 
+type AnglesHeightsRadii = [AngleHeightRadius]
+
 nameUnique' = NameUnique
 angleHeightRadius' = AngleHeightRadius
 layerId' = LayerId
@@ -103,8 +105,8 @@ extractOrigin :: Layer -> Point
 extractOrigin (Layer _ x y z) =
   Point x y z
 
--- | Extract the [Radius] from the [AngleHeightRadius].
-extractRadii :: [AngleHeightRadius] -> [Radius]
+-- | Extract the [Radius] from the AnglesHeightsRadii.
+extractRadii :: AnglesHeightsRadii -> [Radius]
 extractRadii angleHeightRadius =
   let
     extractRadius :: AngleHeightRadius -> Radius
@@ -114,8 +116,8 @@ extractRadii angleHeightRadius =
   map (extractRadius) angleHeightRadius
 
 
--- | Extract the [Angle] from the [AngleHeightRadius].
-extractAngles :: [AngleHeightRadius] -> [Angle]
+-- | Extract the [Angle] from the AnglesHeightsRadii.
+extractAngles :: AnglesHeightsRadii -> [Angle]
 extractAngles angleHeightRadius =
   let
     extractAngle :: AngleHeightRadius -> Angle
@@ -124,8 +126,8 @@ extractAngles angleHeightRadius =
   in 
   map (extractAngle) angleHeightRadius
 
--- | Extract the [Height] from the [AngleHeightRadius].
-extractHeights :: [AngleHeightRadius] -> [Height]
+-- | Extract the [Height] from the AnglesHeightsRadii.
+extractHeights :: AnglesHeightsRadii -> [Height]
 extractHeights angleHeightRadius =
   let
     extractHeight :: AngleHeightRadius -> Height
@@ -141,9 +143,9 @@ extractLayerId (Just (Entity key val))  = key
 --extractLayerId Nothing = 
 
 
--- | Extract the [AngleHeightRadius] from the Persist Entity [AngleHeightRadius] returned from selectList()
+-- | Extract the AnglesHeightsRadii from the Persist Entity AnglesHeightsRadii returned from selectList()
 -- | 
-extractAnglesHeightsRadiiFromEntity :: ([Entity AngleHeightRadius]) -> [AngleHeightRadius]
+extractAnglesHeightsRadiiFromEntity :: ([Entity AngleHeightRadius]) -> AnglesHeightsRadii
 extractAnglesHeightsRadiiFromEntity anglesHeightsRadii =
   let
     extract :: (Entity AngleHeightRadius) -> AngleHeightRadius

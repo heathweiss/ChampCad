@@ -10,7 +10,9 @@
 {-# LANGUAGE ParallelListComp #-}
 
 module Examples.ShoeLift.Pillars.FullScan(runFullTopTreadStlGenerator, runFullBtmTreadStlGenerator, FullScanBuilder(..), FullScanBuilderData(..),
-                                          LayerNames(..), layerNames, entireTopTreadCpoints, entireBtmTreadCpoints) where
+                                          LayerNames(..), layerNames, fullTopBuilder, fullBtmBuilder) where
+
+import Examples.ShoeLift.Pillars.Common(LayerName(..), databaseName)
 
 import           Control.Monad.IO.Class  (liftIO)
 import           Database.Persist
@@ -38,7 +40,7 @@ import Stl.StlFileWriter(writeStlToFile)
 import Builder.Monad(BuilderError(..),
                      cornerPointsErrorHandler, buildCubePointsList,
                      buildCubePointsListWithIOCpointsListBase,
-                     CpointsStack, CpointsList)
+                     CpointsStack, CpointsList, ExceptStackCornerPointsBuilder)
 
 import Control.Monad.Trans.Except
 import Control.Monad.Trans.Maybe
@@ -51,7 +53,7 @@ import Control.Monad.Except
 import Control.Monad.Writer (WriterT, tell, execWriterT)
 import Control.Monad.Reader
 
-import Persistable.Radial (Layer(..), AngleHeightRadius(..), nameUnique', angleHeightRadius', layerId',
+import Persistable.Radial (Layer(..), AngleHeightRadius(..), AnglesHeightsRadii(..), nameUnique', angleHeightRadius', layerId',
                            angleHeightRadiusLayerId', extractAnglesHeightsRadiiFromEntity, ExtractedAngleHeightRadius(..),
                            extractRadii, extractAngles, extractHeights, extractLayerId, extractOrigin, loadAndExtractedAngleHeightRadiusFromDB)
 
@@ -68,29 +70,21 @@ import Control.Lens
 
 type CylinderTransposer = (Double) -> (Double)
 type Height = Double
-type LayerName = String
 
-databaseName = "src/Examples/ShoeLift/Pillars/geoxPillarsWithAnkleBrace.db"
+type FullScanBuilder = FullScanBuilderData -> ExceptStackCornerPointsBuilder 
 
-
-
-type FullScanBuilder = FullScanBuilderData -> ExceptT BuilderError (State CpointsStack) CpointsList
-
-data FullScan =
-    TopFullScan
-  | BtmFullScan
 
 data FullScanBuilderData =
   FullScanBuilderData
-   {_angleHeighRadiusFSBD :: [AngleHeightRadius],
+   {_angleHeighRadiusFSBD :: AnglesHeightsRadii,
     _originFSBD :: Point
     }
 
 
 data LayerNames =
   LayerNames
-  {_topLayer :: String,
-   _btmLayer :: String
+  {_topLayer :: LayerName,
+   _btmLayer :: LayerName
   }
 
 layerNames = LayerNames "top" "bottom"
@@ -104,9 +98,9 @@ Build the entire geox tread from the database just to have a look at it.
 Also gets used for taking sections out of for building the various pieces: heel, toe, heel&midddle, toe&middle,
 as well as the flat geox tread that has no variable height.
 -}
---entireTopTreadCpoints :: FullScanBuilderData -> ExceptT BuilderError (State CpointsStack) CpointsList
-entireTopTreadCpoints :: FullScanBuilder
-entireTopTreadCpoints fullScanBuilderData = do
+--fullTopBuilder :: FullScanBuilderData -> ExceptT BuilderError (State CpointsStack) CpointsList
+fullTopBuilder :: FullScanBuilder
+fullTopBuilder fullScanBuilderData = do
   let setBottomOriginToZero origin' = (transposeZ (\z -> 0) origin')
       adjustHeightOfTopOrigin origin' = (transposeZ (+ (-7)) origin')
   
@@ -132,9 +126,8 @@ entireTopTreadCpoints fullScanBuilderData = do
   
   return cubes
 
---entireBtmTreadCpoints :: FullScanBuilderData -> ExceptT BuilderError (State CpointsStack) CpointsList
-entireBtmTreadCpoints :: FullScanBuilder
-entireBtmTreadCpoints fullScanBuilderData = do
+fullBtmBuilder :: FullScanBuilder
+fullBtmBuilder fullScanBuilderData = do
   let setTopOriginTo origin' = (transposeZ (\z -> 20) $ origin')
       adjustHeightOfBtmOrigin origin' = (transposeZ (+ (7)) origin')
       
@@ -159,28 +152,14 @@ entireBtmTreadCpoints fullScanBuilderData = do
 
   return cubes
 
-{-
-runGolfTreadStlGenerator :: IO ()
-runGolfTreadStlGenerator =
-  runTreadStlGenerator (entireBtmTreadCpoints) "bottom"
--}
+
 runFullTopTreadStlGenerator :: IO ()
 runFullTopTreadStlGenerator =
-  runTreadStlGenerator TopFullScan
+  runTreadStlGeneratorBase (fullTopBuilder) (layerNames^.topLayer)
 
 runFullBtmTreadStlGenerator :: IO ()
 runFullBtmTreadStlGenerator =
-  runTreadStlGenerator BtmFullScan
-
---Checks for errors from the Builder and shows the error if applicable.
---Otherwise it outputs the stl.
-runTreadStlGenerator :: FullScan  -> IO ()
-runTreadStlGenerator TopFullScan = 
-  runTreadStlGeneratorBase (entireTopTreadCpoints) (layerNames^.topLayer)
-
-runTreadStlGenerator BtmFullScan = 
-  runTreadStlGeneratorBase (entireBtmTreadCpoints) (layerNames^.btmLayer)
-
+  runTreadStlGeneratorBase (fullBtmBuilder) (layerNames^.btmLayer)
 
 runTreadStlGeneratorBase :: FullScanBuilder -> LayerName -> IO ()
 runTreadStlGeneratorBase fullScanBuilder layerName = runSqlite databaseName $ do
