@@ -17,9 +17,9 @@ Tests and example are in Tests.BuilderMonadTest
 
 module Builder.Monad (BuilderError(..),
                       cornerPointsErrorHandler, buildCubePointsList, buildCubePointsListWithAdd,
-                      buildCubePointsListSingle,
+                      buildCubePointsListSingle, buildCubePointsListSingleNoPush,
                        buildCubePointsListWithIOCpointsListBase,
-                      CpointsStack, CpointsList) where
+                      CpointsStack, CpointsList, ExceptStackCornerPointsBuilder) where
 
 
 {-
@@ -56,7 +56,8 @@ import           Database.Persist.TH
 type CpointsStack = [CornerPoints]
 -- | type to clarify code.
 type CpointsList = [CornerPoints]
-
+-- | The ExceptT BuilderError (State CpointsStack ) CpointsList transformer stack type
+type ExceptStackCornerPointsBuilder =  ExceptT BuilderError (State CpointsStack ) CpointsList
 
   
 -- | data type for an exception as required for the Except monad.
@@ -72,7 +73,7 @@ Handles a CornerPoints error in ExceptT catchError calls.
 At this time, can be replaced with throwE in the code, as that is all it does.
 Suggest using it in case error handling changes.
 -}
-cornerPointsErrorHandler :: BuilderError -> ExceptT BuilderError (State CpointsStack ) CpointsList
+cornerPointsErrorHandler :: BuilderError -> ExceptStackCornerPointsBuilder 
 cornerPointsErrorHandler error = do
   throwE error
 
@@ -88,7 +89,7 @@ This is a stackoverflow question which refers to:
 www.cse.chalmers.se/edu/course/TDA342_Advanced_Functional_Programming/lecture8.html
 -}
 buildCubePointsList :: (CpointsList -> CpointsStack -> CpointsStack) -> String -> CpointsList -> CpointsList ->
-                       ExceptT BuilderError (State CpointsStack ) CpointsList
+                       ExceptStackCornerPointsBuilder 
 buildCubePointsList pushToStack extraMsg cPoints cPoints' = 
   (buildCubePointsListOrFail pushToStack extraMsg cPoints cPoints') `catchError` cornerPointsErrorHandler
 
@@ -96,10 +97,16 @@ buildCubePointsList pushToStack extraMsg cPoints cPoints' =
 buildCubePointsListWithAdd = buildCubePointsList (++)
 
 -- | Build [CornerPoints] from a single list.
-buildCubePointsListSingle :: String -> CpointsList ->
-                       ExceptT BuilderError (State CpointsStack ) CpointsList
+buildCubePointsListSingle :: String -> CpointsList -> ExceptStackCornerPointsBuilder
+                       
 buildCubePointsListSingle extraMsg cPoints =
   buildCubePointsList (++) extraMsg [CornerPointsId | x <- [1..]] cPoints
+
+-- | Build [CornerPoints] from a single list. Do not push onto stack.
+buildCubePointsListSingleNoPush :: String -> CpointsList -> ExceptStackCornerPointsBuilder
+                       
+buildCubePointsListSingleNoPush extraMsg cPoints =
+  buildCubePointsList (\newList existingStack -> existingStack) extraMsg [CornerPointsId | x <- [1..]] cPoints
   
 {- |
 Same as buildCornerPointsListOrFail, but only pushes list onto the stack if all the elements are CubePoints.
@@ -114,7 +121,7 @@ The function to push onto the stack.
 For now ++ is the only option. Once stl autogenerate module is done, then that system can be used.
 -}
 buildCubePointsListOrFail :: (CpointsList -> CpointsStack -> CpointsStack) -> String -> CpointsList -> CpointsList ->
-                             ExceptT BuilderError (State CpointsStack ) CpointsList
+                             ExceptStackCornerPointsBuilder
 buildCubePointsListOrFail pushToStack  extraMsg cPoints cPoints' =
   let  cubeList = cPoints |+++| cPoints'
   in   case findCornerPointsError cubeList of
