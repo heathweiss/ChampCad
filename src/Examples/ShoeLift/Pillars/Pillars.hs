@@ -62,7 +62,7 @@ import Persistable.Radial (Layer(..), AngleHeightRadius(..), AnglesHeightsRadii(
                            extractRadii, extractAngles, extractHeights, extractLayerId, extractOrigin, loadAndExtractedAngleHeightRadiusFromDB)
 
 
-import  Builder.Joiner(Joiner(..),joiner, takeLeading, takeTrailing)
+import  Joiners.Manual(Joiner(..),joiner, takeLeading, takeTrailing)
 
 import Primitives.Cylindrical.Walled(cylinder)
 
