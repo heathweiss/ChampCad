@@ -1,33 +1,7 @@
-
-{-ToDo:
-Get rid of the custom state stuff?
-
-Do a module for extensible-effects
--https://hackage.haskell.org/package/extensible-effects
-
-Do a module for layers
--https://hackage.haskell.org/package/layers
--}
-{- |
-Build up a shape from [CornerPoints].
-Do it using the State monad inside of the ExceptT monad transformer.
-
-Tests and example are in Tests.BuilderMonadTest
--} 
-
-module Builder.Monad (BuilderError(..),
+module Builder.ExceptStateIO(BuilderError(..),
                       cornerPointsErrorHandler, buildCubePointsList, buildCubePointsListWithAdd,
                       buildCubePointsListSingle, buildCubePointsListSingleNoPush,
-                       buildCubePointsListWithIOCpointsListBase,
-                      CpointsStack, CpointsList, ExceptStackCornerPointsBuilder) where
-
-
-{-
-ToDo:
-Add an IO layer in the bottom to have something like Persist read in values for building up shapes.
-This would allow shapes to be tweaked live, by editing a file or database, and not have to recompile
-in order to change simple values.
--}
+                      CpointsStack, CpointsList, ExceptStateIOCornerPointsBuilder) where
 
 import CornerPoints.CornerPoints((|@+++#@|), (|+++|), CornerPoints(..), (+++), (+++>),
                                  cornerPointsError, findCornerPointsError, isCubePointsList)
@@ -56,10 +30,19 @@ import           Database.Persist.TH
 type CpointsStack = [CornerPoints]
 -- | type to clarify code.
 type CpointsList = [CornerPoints]
--- | The ExceptT BuilderError (State CpointsStack ) CpointsList transformer stack type
-type ExceptStackCornerPointsBuilder =  ExceptT BuilderError (State CpointsStack ) CpointsList
 
-  
+
+type ExceptStateIOCornerPointsBuilder = ExceptT BuilderError (StateT CpointsStack (IO) ) CpointsList
+
+{- |
+Handles a CornerPoints error in ExceptT catchError calls.
+At this time, can be replaced with throwE in the code, as that is all it does.
+Suggest using it in case error handling changes.
+-}
+cornerPointsErrorHandler :: BuilderError -> ExceptStateIOCornerPointsBuilder 
+cornerPointsErrorHandler error = do
+  throwE error
+
 -- | data type for an exception as required for the Except monad.
 data BuilderError  = BuilderError {errMsg :: String }
   deriving Eq
@@ -68,28 +51,10 @@ data BuilderError  = BuilderError {errMsg :: String }
 instance Show BuilderError where
   show (BuilderError err) = show err
 
-{- |
-Handles a CornerPoints error in ExceptT catchError calls.
-At this time, can be replaced with throwE in the code, as that is all it does.
-Suggest using it in case error handling changes.
--}
-cornerPointsErrorHandler :: BuilderError -> ExceptStackCornerPointsBuilder 
-cornerPointsErrorHandler error = do
-  throwE error
 
-{-
-ExceptT e (StateT s m) a expands to:
-  s -> m (s, Either e a)
-
-Could have used
-StateT s (ExceptT e m) a which expands to:
-  s -> m (Either e (s,a))
-
-This is a stackoverflow question which refers to:
-www.cse.chalmers.se/edu/course/TDA342_Advanced_Functional_Programming/lecture8.html
--}
+-- ======================================================================================================
 buildCubePointsList :: (CpointsList -> CpointsStack -> CpointsStack) -> String -> CpointsList -> CpointsList ->
-                       ExceptStackCornerPointsBuilder 
+                       ExceptStateIOCornerPointsBuilder 
 buildCubePointsList pushToStack extraMsg cPoints cPoints' = 
   (buildCubePointsListOrFail pushToStack extraMsg cPoints cPoints') `catchError` cornerPointsErrorHandler
 
@@ -97,13 +62,13 @@ buildCubePointsList pushToStack extraMsg cPoints cPoints' =
 buildCubePointsListWithAdd = buildCubePointsList (++)
 
 -- | Build [CornerPoints] from a single list.
-buildCubePointsListSingle :: String -> CpointsList -> ExceptStackCornerPointsBuilder
+buildCubePointsListSingle :: String -> CpointsList -> ExceptStateIOCornerPointsBuilder
                        
 buildCubePointsListSingle extraMsg cPoints =
   buildCubePointsList (++) extraMsg [CornerPointsId | x <- [1..]] cPoints
 
 -- | Build [CornerPoints] from a single list. Do not push onto stack.
-buildCubePointsListSingleNoPush :: String -> CpointsList -> ExceptStackCornerPointsBuilder
+buildCubePointsListSingleNoPush :: String -> CpointsList -> ExceptStateIOCornerPointsBuilder
                        
 buildCubePointsListSingleNoPush extraMsg cPoints =
   buildCubePointsList (\newList existingStack -> existingStack) extraMsg [CornerPointsId | x <- [1..]] cPoints
@@ -121,7 +86,7 @@ The function to push onto the stack.
 For now ++ is the only option. Once stl autogenerate module is done, then that system can be used.
 -}
 buildCubePointsListOrFail :: (CpointsList -> CpointsStack -> CpointsStack) -> String -> CpointsList -> CpointsList ->
-                             ExceptStackCornerPointsBuilder
+                             ExceptStateIOCornerPointsBuilder
 buildCubePointsListOrFail pushToStack  extraMsg cPoints cPoints' =
   let  cubeList = cPoints |+++| cPoints'
   in   case findCornerPointsError cubeList of
@@ -132,11 +97,7 @@ buildCubePointsListOrFail pushToStack  extraMsg cPoints cPoints' =
         Just err -> throwE (BuilderError (extraMsg ++ " " ++ (errMessage err)) {-cube-})
 
 
-
-{----------------------------------------------------------------------------------------------
-create versions which have IO (CpointsList) as the base monad
--}
-type ExceptStateIOCornerPointsBuilder = ExceptT BuilderError (StateT CpointsStack (IO) ) CpointsList
+-- =====================================================================================================
 
 cornerPointsErrorHandlerWithIOCpointsListBase :: BuilderError -> ExceptT BuilderError (StateT CpointsStack (IO) ) CpointsList
 cornerPointsErrorHandlerWithIOCpointsListBase error = do
@@ -157,3 +118,5 @@ buildCubePointsListOrFailWithIOCpointsListBase pushToStack  extraMsg cPoints cPo
              then lift $ state $ \cubeStack -> (cubeList, cubeList `pushToStack` cubeStack)
              else lift $ state $ \cubeStack -> (cubeList, cubeStack)
         Just err -> throwE (BuilderError (extraMsg ++ " " ++ (errMessage err)) {-cube-})
+
+

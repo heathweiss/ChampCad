@@ -19,6 +19,7 @@ module Examples.ShoeLift.Pillars.ContourScan(runContourScan, SectionBuilder(..),
 import Examples.ShoeLift.Pillars.FullScan(FullScanBuilder(..), FullScanBuilderData(..), LayerNames(..), layerNames,
                                           fullTopBuilder, fullBtmBuilder)
 import Examples.ShoeLift.Pillars.Common(LayerName(..), databaseName)
+import Examples.ShoeLift.Pillars.Pillars(outerRingRadius)
 
 import           Control.Monad.IO.Class  (liftIO)
 import           Database.Persist
@@ -94,8 +95,6 @@ centerCylinderTransposer :: CylinderTransposer
 centerCylinderTransposer = (+0)
 heelCylinderTransposer :: CylinderTransposer
 heelCylinderTransposer = (+(-70))
-
-cylinderRadius = Radius 20
 
 
 --export for Main to run as exe.
@@ -288,7 +287,7 @@ runBtmToeCpointsGenerator =
 -- ======================================================== toe builder ====================================================================================
 toeCPoints :: SectionBuilder
 toeCPoints (SectionBuilderData origin' cylinderHeight cylinderMoveHorizontally cylinderYTransposer angleHeightRadius) fullScanBuilder = do
-  let  pillarCylinder = map (transposeZ (cylinderMoveHorizontally)) $ cylinder cylinderRadius (transposeY cylinderYTransposer origin') [Angle a | a <- [0,10..360]] cylinderHeight
+  let  pillarCylinder = map (transposeZ (cylinderMoveHorizontally)) $ cylinder outerRingRadius (transposeY cylinderYTransposer origin') [Angle a | a <- [0,10..360]] cylinderHeight
 
   toeOuterFaces
     <- buildCubePointsListSingle "toeOuterFaces"
@@ -372,7 +371,7 @@ centerCPoints :: SectionBuilder
 --centerCPoints treadAHR origin' cylinderHeight cylinderZAdj cylinderYTransposer treadCpoints = do
 centerCPoints (SectionBuilderData origin' cylinderHeight cylinderMoveHorizontally cylinderYTransposer angleHeightRadius) fullScanBuilder = do
        --cylinder did no need to be adjusted on Yaxis.
-  let  pillarCylinder = map (transposeZ (cylinderMoveHorizontally)) $ cylinder cylinderRadius origin' [Angle a | a <- [0,10..360]] cylinderHeight
+  let  pillarCylinder = map (transposeZ (cylinderMoveHorizontally)) $ cylinder outerRingRadius origin' [Angle a | a <- [0,10..360]] cylinderHeight
        
  
   heelOuterFaces
@@ -495,7 +494,7 @@ centerCPoints (SectionBuilderData origin' cylinderHeight cylinderMoveHorizontall
 heelCPoints :: SectionBuilder
 heelCPoints (SectionBuilderData origin' cylinderHeight cylinderMoveHorizontally cylinderYTransposer angleHeightRadius) fullScanBuilder = do
   
-  let  pillarCylinder = map (transposeZ (cylinderMoveHorizontally)) $ cylinder cylinderRadius (transposeY cylinderYTransposer origin') [Angle a | a <- [0,10..360]] cylinderHeight
+  let  pillarCylinder = map (transposeZ (cylinderMoveHorizontally)) $ cylinder outerRingRadius (transposeY cylinderYTransposer origin') [Angle a | a <- [0,10..360]] cylinderHeight
        
        
 

@@ -30,7 +30,8 @@ library
                        --Cubical
                        Cubical.Cubical
                        --Builder
-                       Builder.Sequence, Builder.List, Builder.Map, Builder.Monad, Builder.Joiner
+                       Builder.Sequence, Builder.List, Builder.Map, Builder.Monad, Builder.Joiner,
+                       Builder.ExceptStateIO
                        --math
                        Math.Trigonometry,
                        --stl
@@ -55,6 +56,7 @@ library
                        Examples.ShoeLift.Pillars.ContourScan
                        Examples.ShoeLift.Pillars.Common
                        Examples.ShoeLift.Pillars.FlatScan
+                       Examples.ShoeLift.Pillars.Pillars
 
                        Examples.Persist.SingleLineTable,
                        Examples.Persist.MappedToCornerPoints,
