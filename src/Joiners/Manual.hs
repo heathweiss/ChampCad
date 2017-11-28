@@ -1,9 +1,21 @@
 {-|
 Use for joining together 2 [CornerPoints] which have to be matched up.
 example: Cutting a cylinder out of a radial shape such as the pillar cylinders in a shoe scan.
+
+Does it in a very manual system by:
+From each of the [CornerPoints]:
+
+Extract the face, or build a face from 1 line of the face.
+Can also create a face from the previous face, as is required when the [CornerPoints] are not the same length,
+most likely because they have different Angles.
+Eg: Join a cylinder with angles of every 10 degrees to a scan taken every 5 degrees.
+
+When all done Joining, there will be 2 new [CornerPoints] which:
+-should be the same length. Of course 1 may be shorter which would be the liminting list.
+-can now be |+++| together.
 -}
 
-module Builder.Joiner(Joiner(..),joiner, takeLeading, takeTrailing) where
+module Joiners.Manual(Joiner(..),joiner, takeLeading, takeTrailing) where
 
 import CornerPoints.CornerPoints(CornerPoints(..), )
 import CornerPoints.FaceConversions(toBackFace, toFrontFace)

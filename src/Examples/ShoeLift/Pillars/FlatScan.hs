@@ -47,11 +47,6 @@ import Stl.StlBase(Triangle(..), newStlShape)
 import Stl.StlCornerPoints((|+++^|), Faces(..) )
 import Stl.StlFileWriter(writeStlToFile)
 
-import Builder.Monad(BuilderError(..),
-                     cornerPointsErrorHandler, buildCubePointsList,
-                     buildCubePointsListWithIOCpointsListBase, buildCubePointsListSingleNoPush,
-                     CpointsStack, CpointsList)
-
 import Control.Monad.Trans.Except
 import Control.Monad.Trans.Maybe
 import Control.Monad
@@ -72,7 +67,7 @@ import Builder.Monad (BuilderError(..),
                       buildCubePointsListSingle, buildCubePointsListSingleNoPush,
                       buildCubePointsListWithIOCpointsListBase,
                       CpointsStack, CpointsList)
-import  Builder.Joiner(Joiner(..),joiner, takeLeading, takeTrailing)
+import  Joiners.Manual(Joiner(..),joiner, takeLeading, takeTrailing)
 
 import Primitives.Cylindrical.Solid(cylinder)
 
