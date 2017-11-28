@@ -1,6 +1,6 @@
-{-# LANGUAGE TemplateHaskell #-}
+
 {-ToDo:
-Get rid of the custom state stuff.
+Get rid of the custom state stuff?
 
 Do a module for extensible-effects
 -https://hackage.haskell.org/package/extensible-effects
@@ -136,6 +136,7 @@ buildCubePointsListOrFail pushToStack  extraMsg cPoints cPoints' =
 {----------------------------------------------------------------------------------------------
 create versions which have IO (CpointsList) as the base monad
 -}
+type ExceptStateIOCornerPointsBuilder = ExceptT BuilderError (StateT CpointsStack (IO) ) CpointsList
 
 cornerPointsErrorHandlerWithIOCpointsListBase :: BuilderError -> ExceptT BuilderError (StateT CpointsStack (IO) ) CpointsList
 cornerPointsErrorHandlerWithIOCpointsListBase error = do
