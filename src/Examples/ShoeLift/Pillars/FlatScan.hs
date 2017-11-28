@@ -96,7 +96,7 @@ data FlatSectionBuilderData =
 
 
 makeLenses ''FlatSectionBuilderData
--- ======================================================== single base =============================================
+-- ======================================================== single stl generator bases =============================================
 --ToDo: Finish the Builer.Monad.cornerPointsErrorHandlerWithIOCpointsListBase that allows me to build with IO.
   --This should allow the stl generator to work within the Builder system, eliminating these case statements.
 singleStlGeneratorBase :: SectionTransposer -> FlatSectionBuilder -> IO [CornerPoints] ->   IO ()
@@ -146,7 +146,7 @@ runTopCenterStlGenerator =
 runTopToeStlGenerator ::  IO ()
 runTopToeStlGenerator =
   singleTopStlGeneratorBase runTopToeCpointsGenerator
--- ======================================================== bottom sections ==================================================
+-- ======================================================== single bottom sections ==================================================
 flatBtmBuilder :: FlatSectionBuilder
 flatBtmBuilder flatSectionBuilderData = do
   contouredCpoints <- buildCubePointsListSingleNoPush "contouredCpoints"
@@ -180,7 +180,7 @@ runBtmToeStlGenerator ::  IO ()
 runBtmToeStlGenerator =
   singleBtmStlGeneratorBase runBtmToeCpointsGenerator
 
--- ============================================================ double sections ==================================================
+-- ============================================================ double stl generator base/run ==================================================
 --ToDo: Finish the Builer.Monad.cornerPointsErrorHandlerWithIOCpointsListBase that allows me to build with IO.
   --This should allow the stl generator to work within the Builder system, eliminating these case statements.
 doubleStlGeneratorBase :: SectionTransposer -> FlatSectionBuilder -> IO [CornerPoints] -> IO [CornerPoints] ->  IO ()
