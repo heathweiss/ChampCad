@@ -79,7 +79,7 @@ type FlatSectionBuilder = FlatSectionBuilderData -> ExceptT BuilderError (State 
 
 type SectionTransposer = (Double) -> (Double)
 btmHeightTransposer = (+(-5))
-topHeightTransposer = (+5)
+topHeightTransposer = (+10)
 
 
 data FlatSectionBuilderData =

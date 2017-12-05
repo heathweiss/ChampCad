@@ -117,7 +117,9 @@ fullTopBuilder fullScanBuilderData = do
                  (adjustHeightOfTopOrigin $ fullScanBuilderData^.originFSBD)
                  (extractRadii $  fullScanBuilderData^.angleHeighRadiusFSBD)
                  (extractAngles $  fullScanBuilderData^.angleHeighRadiusFSBD)
-                 (map (+ (-10)) $ extractHeights $ fullScanBuilderData^.angleHeighRadiusFSBD)
+                 --(map (+ (-10)) $ extractHeights $ fullScanBuilderData^.angleHeighRadiusFSBD)
+                 --make it thinner
+                 (map (+ (-15)) $ extractHeights $ fullScanBuilderData^.angleHeighRadiusFSBD)
               )
   
   cubes <- buildCubePointsListWithAdd "cubes"
