@@ -1,4 +1,6 @@
-module Examples.ShoeLift.Pillars.Pillars(outerRingRadius) where
+{-# LANGUAGE TemplateHaskell            #-}
+
+module Examples.ShoeLift.Pillars.Pillars(outerTreadRingRadius) where
 
 {- |
 Create the pillar inserts that go inside the tread rings, and into which the dowels go.
@@ -66,25 +68,58 @@ import  Joiners.Manual(Joiner(..),joiner, takeLeading, takeTrailing)
 
 import Primitives.Cylindrical.Walled(cylinder)
 
-type Height = Double
-outerRingRadius = Radius 20
---20:
- --used this for the cheetah
- --gave an inner diameter of 39 in the cheetah rings
- --gave a outer diameter of 41 in the carbon fiber, which prints very course edges. This coarse edge is just for 1st few layers.
-   --This may only be the 1st few layers that are coarse.
---19:
-  --little too small for pillar, try 19.5
+import Control.Lens
 
---this leaves a bit of room for the wood dowels I am using.
-innerRingRadius = Radius 16
+type Height = Double
+--the size of ring to insert into the tread section.
+outerTreadRingRadius = Radius 20
+
+-- ======= insertion ring which goes into tread section, and which dowel goes into
+--size of the insertion ring that goes into tread section.
+--Want it to fit tightly.
+--For carbon fiber which has very coarse perimeters, only slightly small than outerTreadRadius.
+--May have to be slightly smaller/larger for smoother materials such as pla.
+
+outerRingRadius = Radius 19.5
+--radius that fits into the tread
+--20:
+ --to big to fit into section. Had to power sand and beat in. Carbon fiber.\
+--19.5:
+  --nice fit in the cheetah filament.
+--19:
+  --little too small and loose fitting
+
+
+innerRingRadius = Radius 16.4
+--radius that dowel fits into
 --16
-  --used this for the cheetah
-  --030.25 inner radius of the carbon fiber compared to 31.5 of the dowel
-  --This was just 1st few layers of test ring, which turned out to be wrong as only 1st few layers on btm are rough.
+  --too small for pillar dowel to fit in by 1 mm. Filed it and beat it in.
+--16.2
+  --too small. Had to be filed.
 --16.5
-  --bit too big. 32.2
-standardHeight = 35
+  --bit too big and loose fitting.
+
+
+ 
+data RingRadii =
+  RingRadius
+    {_treadType  :: String,
+     _pillarType :: String,
+     _outerRadius :: Radius,
+     _innerRadius :: Radius,
+     _dowelSize :: Double
+    }
+
+makeLenses ''RingRadii
+
+cheetahCarbon =
+  RingRadius
+    "cheetah" "formFutura carbonFill"
+    (Radius 19.5) --fits nice and tight
+    (Radius 16.4) --16.4 a bit too tight
+    31.8
+
+standardRingHeight = 35
 
 {-Build the pillar rings-}
 ringBuilder :: Height -> Radius -> Radius -> ExceptStateIOCornerPointsBuilder
@@ -97,4 +132,5 @@ ringBuilder ringHeight innerRingRadius' outerRingRadius' = do
   liftIO $ writeStlToFile $ newStlShape "pillar cylinder"   ([FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube []  ring))
   return ring
 
-runRingBuilder =  (runStateT $ runExceptT $ ringBuilder standardHeight innerRingRadius outerRingRadius) []
+--runRingBuilder =  (runStateT $ runExceptT $ ringBuilder standardRingHeight innerRingRadius outerRingRadius) []
+runRingBuilder =  (runStateT $ runExceptT $ ringBuilder standardRingHeight (cheetahCarbon^.innerRadius) (cheetahCarbon^.outerRadius)) []

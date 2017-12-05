@@ -33,7 +33,7 @@ library
                        Builder.Sequence, Builder.List, Builder.Map, Builder.Monad, 
                        Builder.ExceptStateIO
                        --Joiners
-                       Joiners.Manual,
+                       Joiners.Manual, Joiners.Auto,
                        --math
                        Math.Trigonometry,
                        --stl

@@ -19,7 +19,7 @@ module Examples.ShoeLift.Pillars.ContourScan(runContourScan, SectionBuilder(..),
 import Examples.ShoeLift.Pillars.FullScan(FullScanBuilder(..), FullScanBuilderData(..), LayerNames(..), layerNames,
                                           fullTopBuilder, fullBtmBuilder)
 import Examples.ShoeLift.Pillars.Common(LayerName(..), databaseName)
-import Examples.ShoeLift.Pillars.Pillars(outerRingRadius)
+import Examples.ShoeLift.Pillars.Pillars(outerTreadRingRadius)
 
 import           Control.Monad.IO.Class  (liftIO)
 import           Database.Persist
@@ -90,6 +90,8 @@ type SectionBuilder = SectionData
 type CylinderTransposer = (Double) -> (Double)
 type Height = Double
 
+--transpose the center of the pillar cylinders along the y axis
+--to center of each section
 toeCylinderTransposer :: CylinderTransposer
 toeCylinderTransposer = (+80)
 centerCylinderTransposer :: CylinderTransposer
@@ -104,14 +106,14 @@ runContourScan = runBtmHeelCenterStlGenerator
 data SectionData =
   SectionDimensions
   {_cylinderHeightTS :: Height,
-   _cylinderHorizontalTransposerTS :: CylinderTransposer,
+   _cylinderZTransposerTS :: CylinderTransposer,
    _cylinderYTransposerTS :: CylinderTransposer
   }
   |
   SectionBuilderData
   {_originTS :: Point,
    _cylinderHeightTS :: Height,
-   _cylinderHorizontalTransposerTS :: CylinderTransposer,
+   _cylinderZTransposerTS :: CylinderTransposer,
    _cylinderYTransposerTS :: CylinderTransposer,
    _scanAHRTS :: AnglesHeightsRadii
   }
@@ -124,9 +126,12 @@ toSectionBuilderData origin (SectionDimensions cylinderHeight cylinderHorizontal
 
 
 ---------- run singleSectionStlGenerator with SectionDimensions for the <top/btm> <heel/center/toe> section req'd. ------
-topToeBuilderData = SectionDimensions  16 (+(-20)) toeCylinderTransposer 
-topHeelBuilderData = SectionDimensions  9 (+(-20)) heelCylinderTransposer
-topCenterBuilderData = SectionDimensions  13 (+(-20)) centerCylinderTransposer
+--topToeBuilderData = SectionDimensions  16 (+(-20)) toeCylinderTransposer
+topToeBuilderData = SectionDimensions  12 (+(-20)) toeCylinderTransposer 
+--topHeelBuilderData = SectionDimensions  9 (+(-20)) heelCylinderTransposer
+topHeelBuilderData = SectionDimensions  6 (+(-20)) heelCylinderTransposer
+--topCenterBuilderData = SectionDimensions  13 (+(-20)) centerCylinderTransposer
+topCenterBuilderData = SectionDimensions  8 (+(-20)) centerCylinderTransposer
 
 btmCenterBuilderData = SectionDimensions  10 (+10) heelCylinderTransposer
 btmHeelBuilderData = SectionDimensions  13 (+7) heelCylinderTransposer
@@ -288,7 +293,7 @@ runBtmToeCpointsGenerator =
 -- ======================================================== toe builder ====================================================================================
 toeCPoints :: SectionBuilder
 toeCPoints (SectionBuilderData origin' cylinderHeight cylinderMoveHorizontally cylinderYTransposer angleHeightRadius) fullScanBuilder = do
-  let  pillarCylinder = map (transposeZ (cylinderMoveHorizontally)) $ cylinder outerRingRadius (transposeY cylinderYTransposer origin') [Angle a | a <- [0,10..360]] cylinderHeight
+  let  pillarCylinder = map (transposeZ (cylinderMoveHorizontally)) $ cylinder outerTreadRingRadius (transposeY cylinderYTransposer origin') [Angle a | a <- [0,10..360]] cylinderHeight
 
   toeOuterFaces
     <- buildCubePointsListSingle "toeOuterFaces"
@@ -372,7 +377,7 @@ centerCPoints :: SectionBuilder
 --centerCPoints treadAHR origin' cylinderHeight cylinderZAdj cylinderYTransposer treadCpoints = do
 centerCPoints (SectionBuilderData origin' cylinderHeight cylinderMoveHorizontally cylinderYTransposer angleHeightRadius) fullScanBuilder = do
        --cylinder did no need to be adjusted on Yaxis.
-  let  pillarCylinder = map (transposeZ (cylinderMoveHorizontally)) $ cylinder outerRingRadius origin' [Angle a | a <- [0,10..360]] cylinderHeight
+  let  pillarCylinder = map (transposeZ (cylinderMoveHorizontally)) $ cylinder outerTreadRingRadius origin' [Angle a | a <- [0,10..360]] cylinderHeight
        
  
   heelOuterFaces
@@ -495,7 +500,7 @@ centerCPoints (SectionBuilderData origin' cylinderHeight cylinderMoveHorizontall
 heelCPoints :: SectionBuilder
 heelCPoints (SectionBuilderData origin' cylinderHeight cylinderMoveHorizontally cylinderYTransposer angleHeightRadius) fullScanBuilder = do
   
-  let  pillarCylinder = map (transposeZ (cylinderMoveHorizontally)) $ cylinder outerRingRadius (transposeY cylinderYTransposer origin') [Angle a | a <- [0,10..360]] cylinderHeight
+  let  pillarCylinder = map (transposeZ (cylinderMoveHorizontally)) $ cylinder outerTreadRingRadius (transposeY cylinderYTransposer origin') [Angle a | a <- [0,10..360]] cylinderHeight
        
        
 
