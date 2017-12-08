@@ -11,7 +11,6 @@ import CornerPoints.Slope(addSlope)
 
 import Math.Trigonometry(sinDegrees,cosDegrees)
 
-import Geometry.Radius(calcultateDistance)
 import Geometry.Angle(Angle(..), rotateAngle, getQuadrantAngle, RotateFactor(..))
 import Geometry.Slope(Slope(..), flatXSlope, flatYSlope, slopeAdjustedForVerticalAngle)
 

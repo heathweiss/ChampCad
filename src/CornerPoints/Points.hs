@@ -7,8 +7,8 @@
 {-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TypeFamilies               #-}
-module CornerPoints.Points (Point(..), transposeZ) where
-import TypeClasses.Transposable(TransposePoint, transposeX, transposeY, transposeZ)
+module CornerPoints.Points (Point(..), transposeZ, calculateDistance, calculateXYDistance) where
+import TypeClasses.Transposable(TransposePoint, transposeX, transposeY, transposeZ, )
 
 import Database.Persist.Sqlite
 import Database.Persist.TH
@@ -59,3 +59,30 @@ instance TransposePoint Point where
   transposeY f (Point x y z) = Point x (f y) z
 
    
+-- | Given a 2 points, caluclate the distance between the points.
+calculateDistance :: Point -> Point -> Double
+calculateDistance    point1   point2  =
+  let
+      distance :: Point -> Point -> Point
+      distance    (Point x y z)    (Point x1 y1 z1) =
+        --Point (abs $ x - x1) (abs $ y - y1) (abs $ z - z1)
+        Point (x - x1) (y - y1) (z - z1)
+      p = distance point1 point2
+      x = x_axis p
+      y = y_axis p
+      z = z_axis p
+  in 
+      sqrt (x**2 + y**2 + z**2)
+      
+calculateXYDistance :: Point -> Point -> Double
+calculateXYDistance    point1   point2  =
+  let
+      distance :: Point -> Point -> Point
+      distance    (Point x y z)    (Point x1 y1 z1) =
+        Point (x - x1) (y - y1) (z - z1)
+      p = distance point1 point2
+      x = x_axis p
+      y = y_axis p
+      z = z_axis p
+  in
+      sqrt (x**2 + y**2)  

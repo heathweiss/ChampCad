@@ -22,10 +22,8 @@ import CornerPoints.Transpose (transposeZ)
 import CornerPoints.Radius(Radius(..))
 
 import Geometry.CornerPoints(squaredOffAdjustmentFunction)
---import  Geometry.Radius(calcultateDistance)
 import Geometry.Angle(Angle(..), getQuadrantAngle, RotateFactor(..))
 import Geometry.Slope(Slope(..), flatXSlope, flatYSlope, slopeAdjustedForVerticalAngle)
-import Geometry.Radius(calcultateDistance)
 
 import Math.Trigonometry(sinDegrees, cosDegrees, coTanDegrees)
 

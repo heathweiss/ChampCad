@@ -51,7 +51,6 @@ import CornerPoints.MeshGeneration(autoGenerateEachCube)
 import CornerPoints.HorizontalFaces(createTopFaces,  createBottomFaces, createTopFacesSquaredOff)
 
 import Geometry.Angle(RotateFactor, getXYAngle, Angle(..), getQuadrantAngle, rotateAngle)
-import Geometry.Radius(calcultateXYDistance)
 import Geometry.Vertex(getXWithQuadrant, getYWithQuadrant, Vertex(..), adjustPointAxis)
 
 import TypeClasses.Transposable(transpose)

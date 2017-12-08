@@ -1,6 +1,6 @@
 module GeometryRadiusTest (geometryRadiusTestDo) where
 
-import  Geometry.Radius(doubleCylinderZip, doubleCylinder, squaredOff, calcultateDistance, calcultateXYDistance)
+import  Geometry.Radius(doubleCylinderZip, doubleCylinder, squaredOff, calculateDistance, calculateXYDistance)
 import Geometry.Angle(RotateFactor, getXYAngle, Angle(..), getQuadrantAngle, rotateAngle, )
 import Geometry.Vertex(getXWithQuadrant, getYWithQuadrant, Vertex(..), adjustPointAxis)
 
@@ -30,7 +30,7 @@ geometryRadiusTestDo = do
 rotationsTestFailureTest = TestCase $ assertEqual
   "see why RotationsTest.rotateCornerPointAroundZAxisTest fails. Is it the distance caluclation"
   (Radius 7.07106781186547550)
-  (calcultateDistance
+  (calculateDistance
      (Point 5 (-5) 0)
      (Point 0 0 0)
   )
@@ -39,7 +39,7 @@ rotationsTestFailureTest = TestCase $ assertEqual
 pos1Test = TestCase $ assertEqual
   "pos1Test"
   (Radius 1.73)
-  (calcultateDistance
+  (calculateDistance
      (Point 0 0 0)
      (Point 1 1 1)
   )
@@ -49,7 +49,7 @@ pos1Test = TestCase $ assertEqual
 neg1Test = TestCase $ assertEqual
   "neg1Test"
   (Radius 1.73)
-  (calcultateDistance
+  (calculateDistance
      (Point 1 1 1)
      (Point 0 0 0)
   )
@@ -57,7 +57,7 @@ neg1Test = TestCase $ assertEqual
 calculateXYDistancePos1Test = TestCase $ assertEqual
   "calculateXYDistancePos1Test"
   (Radius 1.414)
-  (calcultateXYDistance
+  (calculateXYDistance
      (Point 0 0 0)
      (Point 1 1 1)
   )
@@ -65,7 +65,7 @@ calculateXYDistancePos1Test = TestCase $ assertEqual
 calculateXYDistanceNeg1Test = TestCase $ assertEqual
   "calculateXYDistancePos1Test"
   (Radius 1.414)
-  (calcultateXYDistance
+  (calculateXYDistance
      (Point 1 1 1)
      (Point 0 0 0)
   )
@@ -74,7 +74,7 @@ calculateXYDistanceNeg1Test = TestCase $ assertEqual
 calculateXYDistanceUnEvenTest = TestCase $ assertEqual
   "calculateXYDistanceUnEvenTest"
   (Radius 2.236068)
-  (calcultateXYDistance
+  (calculateXYDistance
      (Point 0 0 0)
      (Point 1 (-2) 1)
   )
@@ -87,10 +87,10 @@ calculateXYDistanceAfterRotatingTest = TestCase $ assertEqual
        origin = (Point 0 0 0)
        rotateFactor = 10
        rotatedAngle = rotateAngle rotateFactor $ getXYAngle (Point 0 0 0) pointToRotate
-       xyRadius = calcultateXYDistance origin pointToRotate
+       xyRadius = calculateXYDistance origin pointToRotate
        rotatedPoint = (adjustPointAxis (getXWithQuadrant rotatedAngle xyRadius)) . (adjustPointAxis (getYWithQuadrant rotatedAngle xyRadius)) $ origin
     in
-    calcultateXYDistance
+    calculateXYDistance
      origin
      rotatedPoint
   )
@@ -104,7 +104,7 @@ lookAtXTestLength = TestCase $ assertEqual
        origin = (Point 0 0 0)
        rotateFactor = 10
        rotatedAngle = rotateAngle rotateFactor $ getXYAngle (Point 0 0 0) pointToRotate
-       xyRadius = calcultateXYDistance origin pointToRotate
+       xyRadius = calculateXYDistance origin pointToRotate
        --rotatedPoint = (adjustPointAxis (getXWithQuadrant rotatedAngle xyRadius)) . (adjustPointAxis (getYWithQuadrant rotatedAngle xyRadius)) $ origin
     in
       getXWithQuadrant rotatedAngle xyRadius
@@ -117,7 +117,7 @@ lookAtXYRadiusTestLength = TestCase $ assertEqual
   ( let
        pointToRotate = (Point 1 (-10) 10)
        origin = (Point 0 0 0)
-       xyRadius = calcultateXYDistance origin pointToRotate
+       xyRadius = calculateXYDistance origin pointToRotate
     in
       xyRadius
   )

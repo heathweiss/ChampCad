@@ -7,7 +7,7 @@ import CornerPoints.Create(adjustRadiusForSlope)
 
 import Geometry.Slope(Slope(..), flatXSlope, flatYSlope, slopeAdjustedForVerticalAngle)
 import Geometry.Angle(Angle(..), rotateAngle, getQuadrantAngle, RotateFactor(..))
-import Geometry.Radius(calcultateDistance)
+import Geometry.Radius(calculateDistance)
 
 import Math.Trigonometry(sinDegrees, cosDegrees, coTanDegrees)
 
@@ -31,7 +31,7 @@ addSlope    xSlope   ySlope   xyAngle  origin   cpoint =
     extractPoint (F4 p) = p
     
                                                     
-    xyRadius = calcultateDistance origin $ extractPoint cpoint
+    xyRadius = calculateDistance origin $ extractPoint cpoint
 
     adjustedRadius = radius (adjustRadiusForSlope (xyRadius) currentSlope)
     
