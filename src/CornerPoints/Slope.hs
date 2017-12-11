@@ -1,15 +1,21 @@
+{-# LANGUAGE TemplateHaskell #-}
 module CornerPoints.Slope(addSlope) where
 
 import CornerPoints.CornerPoints(CornerPoints(..))
-import CornerPoints.Points(Point(..))
+import CornerPoints.Points(Point(..), calculateDistance, calculateXYDistance)
 import CornerPoints.Radius(Radius(..))
 import CornerPoints.Create(adjustRadiusForSlope)
 
 import Geometry.Slope(Slope(..), flatXSlope, flatYSlope, slopeAdjustedForVerticalAngle)
 import Geometry.Angle(Angle(..), rotateAngle, getQuadrantAngle, RotateFactor(..))
-import Geometry.Radius(calculateDistance)
+
 
 import Math.Trigonometry(sinDegrees, cosDegrees, coTanDegrees)
+import Math.Doubles(Distance(..))
+
+import Control.Lens
+
+makeLenses ''Distance
 
 {- |
 Add a slope to a CornerPoionts
@@ -31,7 +37,7 @@ addSlope    xSlope   ySlope   xyAngle  origin   cpoint =
     extractPoint (F4 p) = p
     
                                                     
-    xyRadius = calculateDistance origin $ extractPoint cpoint
+    xyRadius = Radius $  (calculateDistance origin $ extractPoint cpoint)^.distance
 
     adjustedRadius = radius (adjustRadiusForSlope (xyRadius) currentSlope)
     

@@ -2,6 +2,8 @@ module PointsTest(pointsTestDo) where
 
 import CornerPoints.Points(Point(..), calculateDistance, calculateXYDistance)
 
+import  Math.Doubles(Distance(..))
+
 import Test.HUnit
 
 pointsTestDo = do
@@ -49,7 +51,7 @@ allAxisDifferTest = TestCase $ assertEqual
 -- ============================= calculate distances =================================
 calculateDistance1 = TestCase $ assertEqual
   "see why RotationsTest.rotateCornerPointAroundZAxisTest fails. Is it the distance caluclation"
-  (7.07106781186547550)
+  (Distance 7.07106781186547550)
   (calculateDistance
      (Point 5 (-5) 0)
      (Point 0 0 0)
@@ -58,7 +60,7 @@ calculateDistance1 = TestCase $ assertEqual
 
 calculateDistance2 = TestCase $ assertEqual
   "pos1Test"
-  (1.73)
+  (Distance 1.73)
   (calculateDistance
      (Point 0 0 0)
      (Point 1 1 1)
@@ -68,7 +70,7 @@ calculateDistance2 = TestCase $ assertEqual
 
 calculateDistance3 = TestCase $ assertEqual
   "neg1Test"
-  (1.73)
+  (Distance 1.73)
   (calculateDistance
      (Point 1 1 1)
      (Point 0 0 0)
@@ -76,7 +78,7 @@ calculateDistance3 = TestCase $ assertEqual
 
 calculateDistance4 = TestCase $ assertEqual
   "calculateXYDistancePos1Test"
-  (1.414)
+  (Distance 1.414)
   (calculateXYDistance
      (Point 0 0 0)
      (Point 1 1 1)
@@ -84,7 +86,7 @@ calculateDistance4 = TestCase $ assertEqual
 
 calculateDistance5 = TestCase $ assertEqual
   "calculateXYDistancePos1Test"
-  (1.414)
+  (Distance 1.414)
   (calculateXYDistance
      (Point 1 1 1)
      (Point 0 0 0)
@@ -93,7 +95,7 @@ calculateDistance5 = TestCase $ assertEqual
   
 calculateDistance6 = TestCase $ assertEqual
   "calculateXYDistanceUnEvenTest"
-  (2.236068)
+  (Distance 2.236068)
   (calculateXYDistance
      (Point 0 0 0)
      (Point 1 (-2) 1)

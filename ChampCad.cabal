@@ -35,7 +35,7 @@ library
                        --Joiners
                        Joiners.Manual, Joiners.Auto, Joiners.Delaunay
                        --math
-                       Math.Trigonometry,
+                       Math.Trigonometry, Math.Doubles
                        --stl
                        Stl.StlBase, Stl.StlCornerPoints, Stl.StlFileWriter, Stl.StlCornerPointsWithDegrees
                        --helpers

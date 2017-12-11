@@ -1,16 +1,20 @@
+{-# LANGUAGE TemplateHaskell #-}
 module GeometryRadiusTest (geometryRadiusTestDo) where
 
-import  Geometry.Radius(doubleCylinderZip, doubleCylinder, squaredOff, calculateDistance, calculateXYDistance)
+import Geometry.Radius(doubleCylinderZip, doubleCylinder, squaredOff)
 import Geometry.Angle(RotateFactor, getXYAngle, Angle(..), getQuadrantAngle, rotateAngle, )
 import Geometry.Vertex(getXWithQuadrant, getYWithQuadrant, Vertex(..), adjustPointAxis)
 
-import CornerPoints.Points(Point(..))
+import CornerPoints.Points(Point(..), calculateDistance, calculateXYDistance)
 import CornerPoints.Radius(Radius(..))
 
+import Math.Doubles(Distance(..))
 
 import Test.HUnit
 
+import Control.Lens
 
+makeLenses ''Distance
 
 geometryRadiusTestDo = do
   putStrLn "\n\n" 
@@ -30,12 +34,10 @@ calculateXYDistanceAfterRotatingTest = TestCase $ assertEqual
        origin = (Point 0 0 0)
        rotateFactor = 10
        rotatedAngle = rotateAngle rotateFactor $ getXYAngle (Point 0 0 0) pointToRotate
-       xyRadius = calculateXYDistance origin pointToRotate
+       xyRadius = Radius $ (calculateXYDistance origin pointToRotate)^.distance
        rotatedPoint = (adjustPointAxis (getXWithQuadrant rotatedAngle xyRadius)) . (adjustPointAxis (getYWithQuadrant rotatedAngle xyRadius)) $ origin
     in
-    calculateXYDistance
-     origin
-     rotatedPoint
+    Radius $ (calculateXYDistance origin rotatedPoint)^.distance
   )
 
 lookAtXTestLength = TestCase $ assertEqual
@@ -47,7 +49,7 @@ lookAtXTestLength = TestCase $ assertEqual
        origin = (Point 0 0 0)
        rotateFactor = 10
        rotatedAngle = rotateAngle rotateFactor $ getXYAngle (Point 0 0 0) pointToRotate
-       xyRadius = calculateXYDistance origin pointToRotate
+       xyRadius = Radius $ (calculateXYDistance origin pointToRotate)^.distance
        --rotatedPoint = (adjustPointAxis (getXWithQuadrant rotatedAngle xyRadius)) . (adjustPointAxis (getYWithQuadrant rotatedAngle xyRadius)) $ origin
     in
       getXWithQuadrant rotatedAngle xyRadius
@@ -60,7 +62,7 @@ lookAtXYRadiusTestLength = TestCase $ assertEqual
   ( let
        pointToRotate = (Point 1 (-10) 10)
        origin = (Point 0 0 0)
-       xyRadius = calculateXYDistance origin pointToRotate
+       xyRadius = Radius $ (calculateXYDistance origin pointToRotate)^.distance
     in
       xyRadius
   )

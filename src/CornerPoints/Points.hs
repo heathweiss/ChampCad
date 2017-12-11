@@ -1,17 +1,8 @@
-{-# LANGUAGE EmptyDataDecls             #-}
-{-# LANGUAGE FlexibleContexts           #-}
-{-# LANGUAGE GADTs                      #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE MultiParamTypeClasses      #-}
-{-# LANGUAGE OverloadedStrings          #-}
-{-# LANGUAGE QuasiQuotes                #-}
-{-# LANGUAGE TemplateHaskell            #-}
-{-# LANGUAGE TypeFamilies               #-}
+
 module CornerPoints.Points (Point(..), transposeZ, calculateDistance, calculateXYDistance) where
 import TypeClasses.Transposable(TransposePoint, transposeX, transposeY, transposeZ, )
 
-import Database.Persist.Sqlite
-import Database.Persist.TH
+import Math.Doubles(equal, Distance(..))
 {-------------------------- Point------------------------------
 Points in 3D geometry.
 
@@ -41,15 +32,16 @@ give it a range of .01, and still allow the points to be equal.
 
 All the type restrictions are to get it to compile.
 -}
+{-
 axisEqual :: (Eq a, Num a, Ord a, Fractional a) => a -> a -> Bool
 axisEqual  a b
   
   | (abs (a - b)) <= 0.011 = True
   | otherwise      = False
-
+-}
 instance Eq Point where
     Point x y z == Point xa ya za
-      |  (axisEqual x xa) && (axisEqual y ya)  && (axisEqual z za) = True 
+      |  (equal x xa) && (equal y ya)  && (equal z za) = True 
       | otherwise = False
 
 
@@ -60,7 +52,7 @@ instance TransposePoint Point where
 
    
 -- | Given a 2 points, caluclate the distance between the points.
-calculateDistance :: Point -> Point -> Double
+calculateDistance :: Point -> Point -> Distance
 calculateDistance    point1   point2  =
   let
       distance :: Point -> Point -> Point
@@ -72,9 +64,9 @@ calculateDistance    point1   point2  =
       y = y_axis p
       z = z_axis p
   in 
-      sqrt (x**2 + y**2 + z**2)
-      
-calculateXYDistance :: Point -> Point -> Double
+      Distance $ sqrt (x**2 + y**2 + z**2)
+
+calculateXYDistance :: Point -> Point -> Distance
 calculateXYDistance    point1   point2  =
   let
       distance :: Point -> Point -> Point
@@ -85,4 +77,4 @@ calculateXYDistance    point1   point2  =
       y = y_axis p
       z = z_axis p
   in
-      sqrt (x**2 + y**2)  
+      Distance $ sqrt (x**2 + y**2)  
