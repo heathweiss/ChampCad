@@ -12,18 +12,19 @@ scaleCornerPointsZ,
 CornerPointsBuilder(..),
 cornerPointsError, findCornerPointsError,
 isCubePoints, isCubePointsList,
-getCornerPointsWithIndex
+getCornerPointsWithIndex,
+center, (<-|->)
 ) where
 
 import Control.Lens
 
-import CornerPoints.Points (Point(..))
+import CornerPoints.Points (Point(..), Center, center ,(<-|->))
 
 import    Control.Applicative
 
 import Data.List(find)
 
-
+import Math.Distance(Distance(..),Distant, calculateDistance)
 
 infix 7 +++
 infix 6 +++-
@@ -759,3 +760,37 @@ getCornerPointsWithIndex errMsg cutterFaces index =
     Nothing -> CornerPointsError errMsg 
     Just a  -> a
 
+-- ToDo: Fill in missing pattern matches.
+instance Center CornerPoints where
+  center (B1 point) = point
+  center (B4 point) = point
+  center (F1 point) = point
+  center (F4 point) = point
+  center (BottomLeftLine b1 f1) = b1 <-|-> f1
+  center (BottomRightLine f4 b4) = f4 <-|-> b4
+  
+  (BottomLeftLine b1 f1) <-|-> (B1 b1') =
+    b1' <-|-> (center $ BottomLeftLine b1 f1)
+  (B1 b1') <-|-> (BottomLeftLine b1 f1) =
+    (BottomLeftLine b1 f1) <-|-> (B1 b1')
+
+  (BottomRightLine f4 b4) <-|-> (B1 b1) =
+    (center $ BottomRightLine f4 b4) <-|-> b1
+
+instance Distant CornerPoints where
+  calculateDistance  (BottomRightLine f4 b4) (B1 b1) =
+     calculateDistance
+       (center $ BottomRightLine f4 b4)
+       b1
+  calculateDistance  (BottomRightLine f4 b4) (F1 f1) =
+    calculateDistance
+      (center $ BottomRightLine f4 b4)
+      f1
+  calculateDistance  (BottomLeftLine f1 b1) (B1 b1') =
+     calculateDistance
+       (center $ BottomLeftLine f1 b1)
+       b1'
+  calculateDistance  (BottomLeftLine f1 b1) (F1 f1') =
+     calculateDistance
+       (center $ BottomLeftLine f1 b1)
+       f1'

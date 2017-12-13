@@ -34,6 +34,7 @@ data Radius = Radius {radius :: Double}
               
    deriving (Show)
 
+
 -- | Reset value of a Radius if null.
 setRadiusIfNull :: Double -> Radius -> Radius
 setRadiusIfNull resetValue (Radius radius')
@@ -60,6 +61,13 @@ instance Eq Radius where
     Radius rad == Radius rad'
       | (radiusEqual rad rad') = True 
       | otherwise = False
+{-
+Take this out once Ord has been put in place for Distance.
+Will also have to move the tests over to DistanceTests.
+-}
+instance Ord Radius where
+  (Radius r1) <= (Radius r2) =
+    (r2 - r1) >= (-0.011)
 
 instance TransposeLength Radius where
   transpose f (Radius a) = Radius $ f a

@@ -1,17 +1,23 @@
+-- {-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell #-}
 module Geometry.Rotation(rotatePointAroundZAxis, rotateCornerPointAroundZAxis) where
 
 import CornerPoints.CornerPoints(CornerPoints(..), (+++))
-import CornerPoints.Points(Point(..))
+import CornerPoints.Points(Point(..), calculateXYDistance)
 import CornerPoints.Radius(Radius(..))
-
-import Geometry.Angle(RotateFactor, getXYAngle, Angle(..), getQuadrantAngle, rotateAngle, )
-import Geometry.Radius(calcultateXYDistance)
-import Geometry.Vertex(getXWithQuadrant, getYWithQuadrant, Vertex(..), adjustPointAxis)
-
 import CornerPoints.Create()
 
-import Math.Trigonometry(sinDegrees, cosDegrees, coTanDegrees)
+import Geometry.Angle(RotateFactor, getXYAngle, Angle(..), getQuadrantAngle, rotateAngle, )
+import Geometry.Vertex(getXWithQuadrant, getYWithQuadrant, Vertex(..), adjustPointAxis)
 
+import Math.Trigonometry(sinDegrees, cosDegrees, coTanDegrees)
+import Math.Distance(Distance(..))
+
+import Control.Lens
+
+
+
+makeLenses ''Distance
 {-
 [rotateFactor::RotateFactor
  origin::Point
@@ -25,7 +31,7 @@ import Math.Trigonometry(sinDegrees, cosDegrees, coTanDegrees)
  pointToRotate::Point
 ]
 |
-|calcultateXYDistance
+|calculateXYDistance
 |
 [rotatedAngle::Angle
  xyRadius::Radius
@@ -41,7 +47,7 @@ import Math.Trigonometry(sinDegrees, cosDegrees, coTanDegrees)
 rotatePointAroundZAxis :: RotateFactor -> Point -> Point -> Point
 rotatePointAroundZAxis rotateFactor origin pointToRotate  =
   let rotatedAngle = rotateAngle rotateFactor $ getXYAngle origin pointToRotate 
-      xyRadius = calcultateXYDistance origin pointToRotate
+      xyRadius = Radius $ (calculateXYDistance origin pointToRotate)^.distance
   in
       (adjustPointAxis (getXWithQuadrant rotatedAngle xyRadius)) . (adjustPointAxis (getYWithQuadrant rotatedAngle xyRadius)) $ origin {z_axis = (z_axis pointToRotate)}
       

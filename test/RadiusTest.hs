@@ -52,6 +52,20 @@ radisuTestDo = do
  runTestTT resetSingleDegreeRadiiNaNTest
  runTestTT resetSingleDegreeRadiiNullWithPreviousValueTest
 
+ runTestTT areEqual
+ runTestTT areEqual2
+ runTestTT areEqual3
+ runTestTT areNotEqual
+ runTestTT r1NotLessThanR2
+ runTestTT r1LessThanOrEqualToR2
+ runTestTT r1LessThanOrEqualToR2'
+ runTestTT r1LessThanOrEqualToR2''
+ runTestTT r1LessThanOrEqualToR2'''
+ runTestTT r1GreaterThanOrEqualToR2
+ runTestTT r1LessThanToR2
+ runTestTT r1LessThanToR2'
+ runTestTT r1LessThanToR2''
+ runTestTT r1LessThanToR2'''
 -- =============================== work on transposing an mdr using >><<===================
 {-
 (>><<) :: a -> (a -> b) -> b
@@ -263,3 +277,115 @@ extractRadiusFromSinleDegreeRadiiTest2 = TestCase $ assertEqual
   (extractList tail (SingleDegreeRadii 1 [Radius 1, Radius 2, Radius 3]))
 
 
+-- ================================= eq and ord testing ==========================
+areEqual = TestCase $ assertEqual
+  "areEqual"
+  (True)
+  ((Radius 1.0)
+   ==
+   (Radius 1.0)
+  )
+
+areEqual2 = TestCase $ assertEqual
+  "areEqual2"
+  (True)
+  ((Radius 1.0)
+   ==
+   (Radius 1.01)
+  )
+
+areEqual3 = TestCase $ assertEqual
+  "areEqual3"
+  (True)
+  ((Radius 1.0)
+   ==
+   (Radius 1.011)
+  )
+
+areNotEqual = TestCase $ assertEqual
+  "areNotEqual"
+  (False)
+  ((Radius 1.0)
+   ==
+   (Radius 1.012)
+  )
+
+r1NotLessThanR2 = TestCase $ assertEqual
+  "r1LessThanR2"
+  (False)
+  ((Radius 1.02)
+   <=
+   (Radius 1.0)
+  )
+
+r1LessThanOrEqualToR2 = TestCase $ assertEqual
+  "r1LessThanOrEqualToR2"
+  (True)
+  ((Radius 1.0)
+   <=
+   (Radius 1.0)
+  )
+
+r1LessThanOrEqualToR2' = TestCase $ assertEqual
+  "r1LessThanOrEqualToR2'"
+  (True)
+  ((Radius 1.01)
+   <=
+   (Radius 1.0)
+  )
+
+r1LessThanOrEqualToR2'' = TestCase $ assertEqual
+  "r1LessThanOrEqualToR2''"
+  (True)
+  ((Radius 1.011)
+   <=
+   (Radius 1.0)
+  )
+
+r1LessThanOrEqualToR2''' = TestCase $ assertEqual
+  "r1LessThanOrEqualToR2'''"
+  (False)
+  ((Radius 1.012)
+   <=
+   (Radius 1.0)
+  )
+
+r1GreaterThanOrEqualToR2 = TestCase $ assertEqual
+  "r1GreaterThanOrEqualToR2"
+  (True)
+  ((Radius 1.012)
+   >=
+   (Radius 1.0)
+  )
+
+r1LessThanToR2 = TestCase $ assertEqual
+  "r1LessThanToR2"
+  (False)
+  ((Radius 1.0)
+   <
+   (Radius 1.0)
+  )
+
+r1LessThanToR2' = TestCase $ assertEqual
+  "r1LessThanToR2'"
+  (True)
+  ((Radius 0.9)
+   <
+   (Radius 1.0)
+  )
+
+r1LessThanToR2'' = TestCase $ assertEqual
+  "r1LessThanToR2''"
+  (False)
+  ((Radius 0.99)
+   <
+   (Radius 1.0)
+  )
+
+r1LessThanToR2''' = TestCase $ assertEqual
+  "r1LessThanToR2'''"
+  (True)
+  ((Radius 0.98)
+   <
+   (Radius 1.0)
+  )

@@ -8,7 +8,7 @@ import CornerPoints.FaceExtraction(extractFrontRightLine, extractFrontLeftLine)
 import CornerPoints.FaceConversions(toFrontFace)
 import CornerPoints.Transpose(transposeX)
 
-import Builder.Joiner(Joiner(..),joiner)
+import Joiners.Manual(Joiner(..),joiner)
 
 
 joinerTestDo = do
@@ -135,7 +135,7 @@ test8 = TestCase $ assertEqual
       takeLeftFx = (toFrontFace . extractFrontLeftLine)
       takeRightFx = (toFrontFace . extractFrontRightLine)
       rawCpoints = [frontFace1,frontFace2, frontFace3]
-      joiners   = [Take, Take, HoldLeft]
+      joiners   = [Take, Take, HoldLeading]
     in
       joiner takeLeftFx takeRightFx joiners rawCpoints
   )
@@ -147,7 +147,7 @@ test9 = TestCase $ assertEqual
       takeLeftFx = (toFrontFace . extractFrontLeftLine)
       takeRightFx = (toFrontFace . extractFrontRightLine)
       rawCpoints = [frontFace1,frontFace2]
-      joiners   = [Take, Take, HoldLeft]
+      joiners   = [Take, Take, HoldLeading]
     in
       joiner takeLeftFx takeRightFx joiners rawCpoints
   )

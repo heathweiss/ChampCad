@@ -1,3 +1,6 @@
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell #-}
+
 {- |
 Manipulate Radius using various geometric formulas, in order to change the resulting CornerPoints.
 
@@ -5,16 +8,18 @@ Examples: Examples.Primitives.ComposableExample
 
 Test in test/GeometryRadiusTest
 -}
-module Geometry.Radius(doubleCylinderZip, doubleCylinder, squaredOff, calcultateDistance, calcultateXYDistance) where
+module Geometry.Radius(doubleCylinderZip, doubleCylinder, squaredOff, {-calculateDistance, calculateXYDistance-}) where
 
 import Geometry.Angle(Angle(..), getQuadrantAngle)
 
 import CornerPoints.Radius(Radius(..))
 import CornerPoints.Points(Point(..) )
+import qualified CornerPoints.Points as P (calculateDistance, calculateXYDistance ) 
 
 import Math.Trigonometry(sinDegrees, cosDegrees)
+import Math.Distance(Distance(..))
 
-
+import Control.Lens
 
 {- |
  Use cosDegrees/sinDegrees to create a double cylinder from a Radius Angle
@@ -83,32 +88,25 @@ squaredOff power (Radius radius') angle' =
       (radius'**2)/
         (((x**power) + (y**power))**(1/power)) 
 
--- | Given a 2 points, caluclate the distance between the points.
-calcultateDistance :: Point -> Point -> Radius
-calcultateDistance    point1   point2  =
-  let
-      distance :: Point -> Point -> Point
-      distance    (Point x y z)    (Point x1 y1 z1) =
-        --Point (abs $ x - x1) (abs $ y - y1) (abs $ z - z1)
-        Point (x - x1) (y - y1) (z - z1)
-      p = distance point1 point2
-      x = x_axis p
-      y = y_axis p
-      z = z_axis p
-  in
-      Radius $ sqrt (x**2 + y**2 + z**2)
-      
-calcultateXYDistance :: Point -> Point -> Radius
-calcultateXYDistance    point1   point2  =
-  let
-      distance :: Point -> Point -> Point
-      distance    (Point x y z)    (Point x1 y1 z1) =
-        Point (x - x1) (y - y1) (z - z1)
-      p = distance point1 point2
-      x = x_axis p
-      y = y_axis p
-      z = z_axis p
-  in
-      Radius $ sqrt (x**2 + y**2)  
-
 type Power = Double
+{-Now these are just wrappers around fx's in CornerPoints.Points.hs which wrap them into a Radius
+  Should get rid of them entirely as seldom used and do the wrapping manually.
+  Or not because:
+  May use a Distance type for these, which in turn will use a <Double011/DoubleD/Double2> type
+-}
+{-
+-- | Given a 2 points, caluclate the distance between the points.
+calculateDistance :: Point -> Point -> Radius
+calculateDistance    point1   point2  = Radius $   (P.calculateDistance point1   point2)^.distance
+
+calculateXYDistance :: Point -> Point -> Radius
+calculateXYDistance    point1   point2  = Radius $  (P.calculateXYDistance point1   point2)^.distance
+
+
+
+calculateDistance :: Point -> Point -> Radius
+calculateDistance    point1   point2  = Radius $ P.calculateDistance point1   point2
+
+calculateXYDistance :: Point -> Point -> Radius
+calculateXYDistance    point1   point2  = Radius $ P.calculateXYDistance point1   point2
+-}
