@@ -1,7 +1,4 @@
 {-# LANGUAGE TemplateHaskell            #-}
-
-module Examples.ShoeLift.Pillars.Pillars(outerTreadRingRadius) where
-
 {- |
 Create the pillar inserts that go inside the tread rings, and into which the dowels go.
 
@@ -20,6 +17,9 @@ innerRingRadius
 -inner radius of the pillarRing. Will be the same as the dowel.
 -Perhaps slightly larger than dowe. so dowel will fit.
 -}
+module Examples.ShoeLift.Pillars.Pillars(outerTreadRingRadius) where
+
+
 
 import           Control.Monad.IO.Class  (liftIO)
 import           Database.Persist

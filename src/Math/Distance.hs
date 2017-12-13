@@ -4,7 +4,6 @@ import Math.Equal(equal)
 
 
 
---ToDo: Decide if this should have it's own module.
 -- | The disance between 2 Points, or 2 CornerPoints.
 -- Known uses: Joiners.Delaunay
 data Distance = Distance {_distance :: Double}
@@ -16,10 +15,12 @@ instance Eq Distance where
       | otherwise = False
 
 
+-- | Caluculate the Distance between to objects.
+-- Currently used by CornerPoints and Points.
 class Distant a where
   calculateDistance :: a -> a -> Distance
 
-
+-- | Compare 2 Distance for an Ordering base on underlying distance.
 getOrdering :: Distance ->  Distance -> Ordering
 getOrdering    (Distance d) (Distance d')
   | d > d' = GT
