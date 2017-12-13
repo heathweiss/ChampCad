@@ -17,7 +17,7 @@ import CornerPoints.Points(Point(..) )
 import qualified CornerPoints.Points as P (calculateDistance, calculateXYDistance ) 
 
 import Math.Trigonometry(sinDegrees, cosDegrees)
-import Math.Doubles(Distance(..))
+import Math.Distance(Distance(..))
 
 import Control.Lens
 

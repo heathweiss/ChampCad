@@ -8,7 +8,7 @@ import Geometry.Vertex(getXWithQuadrant, getYWithQuadrant, Vertex(..), adjustPoi
 import CornerPoints.Points(Point(..), calculateDistance, calculateXYDistance)
 import CornerPoints.Radius(Radius(..))
 
-import Math.Doubles(Distance(..))
+import Math.Distance(Distance(..))
 
 import Test.HUnit
 

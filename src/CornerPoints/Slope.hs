@@ -11,7 +11,7 @@ import Geometry.Angle(Angle(..), rotateAngle, getQuadrantAngle, RotateFactor(..)
 
 
 import Math.Trigonometry(sinDegrees, cosDegrees, coTanDegrees)
-import Math.Doubles(Distance(..))
+import Math.Distance(Distance(..))
 
 import Control.Lens
 

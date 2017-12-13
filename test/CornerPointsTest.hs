@@ -1,17 +1,19 @@
 module CornerPointsTest(cornerPointsTestDo ) where
+
 import Test.HUnit
+
 import CornerPoints.CornerPoints(CornerPoints(..), (+++), (+++>), (|+++|), CornerPointsBuilder(..), (&+++#@), (|@+++#@|), (@+++#@),
                                 cornerPointsError, isCubePoints, isCubePointsList)
-import CornerPoints.Points (Point(..))
+import CornerPoints.Points (Point(..), center ,(<-|->))
 import CornerPoints.FaceConversions(backFaceFromFrontFace, upperFaceFromLowerFace, lowerFaceFromUpperFace )
 import CornerPoints.Transpose (transposeZ)
 
-
+import Math.Distance(Distance(..),calculateDistance)
 
 cornerPointsTestDo = do
 
-  
-
+  putStrLn ""
+  putStrLn "cornerPointsTestDo"
   runTestTT leftFacePPPBottomLeftLineTest
   runTestTT topLeftLinePPPBottomLeftLineTest
   runTestTT rightFacePPPBottomRightLineTest
@@ -38,8 +40,6 @@ cornerPointsTestDo = do
   runTestTT f3PlusPlusPlusb3Test
   runTestTT  bottomLeftLinePlusPlusPlusBottomRightLineTest
 
-  putStrLn ""
-  putStrLn "Infix tests"
   runTestTT f2PlusPlusPlusB2PlusPlusFwdF3PlusPlusPlusB3
 
   -- equality tests
@@ -58,7 +58,14 @@ cornerPointsTestDo = do
   runTestTT isCornerPointsErrorTest
   runTestTT isNotCornerPointsErrorTest
 
+  runTestTT centerTest1
+  runTestTT centerTest2
+  runTestTT centerTest3
 
+  runTestTT distanceTest1
+  runTestTT distanceTest2
+  runTestTT distanceTest3
+  runTestTT distanceTest4
 -------------------- isCubePoints tests-------
 isCubePointsTest = TestCase $ assertEqual
   "isCubePointsTest"
@@ -280,3 +287,83 @@ f2PlusPlusPlusB2PlusPlusFwdF3PlusPlusPlusB3 = TestCase $ assertEqual
   [(TopFace (Point 2 2 2) (Point 2 2 2) (Point 2 2 2) (Point 2 2 2))]
   ( (F2 (Point 2 2 2)) +++ (B2 (Point 2 2 2)) +++>  [(F3 (Point 2 2 2)) +++ (B3 (Point 2 2 2))])
 
+-- =================================================== centers =============================================================
+centerTest1 = TestCase $ assertEqual
+  "centerTest1"
+  (Point 2 1.5 0 )
+  (center
+    (BottomLeftLine
+      (Point 4 0 0)
+      (Point 0 3 0)
+    )
+  )
+
+centerTest2 = TestCase $ assertEqual
+  "centerTest2"
+  (Point 2 1.5 0 )
+  (center
+    (BottomRightLine
+      (Point 4 0 0)
+      (Point 0 3 0)
+    )
+  )
+
+centerTest3 = TestCase $ assertEqual
+  "centerTest3"
+  (Point 1 0.75 0 )
+  (let
+    bottomRightLine = 
+      
+       (BottomRightLine
+         (Point 4 0 0)
+         (Point 0 3 0)
+       )
+   in
+    bottomRightLine <-|-> (B1 $ Point 0 0 0)
+  )
+
+-- ====================================================== distances =====================================================
+distanceTest1  = TestCase $ assertEqual
+  "distanceTest1"
+  (Distance 2.5)
+  (calculateDistance
+    (BottomRightLine
+      (Point 4 0 0)
+      (Point 0 3 0)
+    )
+    (B1 $ Point 0 0 0)
+  )
+
+distanceTest2  = TestCase $ assertEqual
+  "distanceTest2"
+  (Distance 2.5)
+  (calculateDistance
+    (BottomRightLine
+      (Point 4 0 0)
+      (Point 0 3 0)
+    )
+    (F1 $ Point 0 0 0)
+  )
+
+-- ==============================================================================================
+distanceTest3  = TestCase $ assertEqual
+  "distanceTest3"
+  (Distance 2.5)
+  (calculateDistance
+    (BottomLeftLine
+      (Point 4 0 0)
+      (Point 0 3 0)
+    )
+    (B1 $ Point 0 0 0)
+  )
+
+distanceTest4  = TestCase $ assertEqual
+  "distanceTest4"
+  (Distance 2.5)
+  (calculateDistance
+    (BottomLeftLine
+      (Point 4 0 0)
+      (Point 0 3 0)
+    )
+    (F1 $ Point 0 0 0)
+  )

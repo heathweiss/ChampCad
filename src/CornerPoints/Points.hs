@@ -1,8 +1,11 @@
 
-module CornerPoints.Points (Point(..), transposeZ, calculateDistance, calculateXYDistance) where
+module CornerPoints.Points (Point(..), transposeZ, calculateDistance, calculateXYDistance, Center, center ,(<-|->)) where
 import TypeClasses.Transposable(TransposePoint, transposeX, transposeY, transposeZ, )
 
-import Math.Doubles(equal, Distance(..))
+
+import Math.Distance(Distance(..),Distant, calculateDistance)
+import Math.Equal(equal)
+
 {-------------------------- Point------------------------------
 Points in 3D geometry.
 
@@ -52,20 +55,21 @@ instance TransposePoint Point where
 
    
 -- | Given a 2 points, caluclate the distance between the points.
-calculateDistance :: Point -> Point -> Distance
-calculateDistance    point1   point2  =
-  let
-      distance :: Point -> Point -> Point
-      distance    (Point x y z)    (Point x1 y1 z1) =
-        --Point (abs $ x - x1) (abs $ y - y1) (abs $ z - z1)
-        Point (x - x1) (y - y1) (z - z1)
-      p = distance point1 point2
-      x = x_axis p
-      y = y_axis p
-      z = z_axis p
-  in 
-      Distance $ sqrt (x**2 + y**2 + z**2)
+instance Distant Point where
+  calculateDistance    point1   point2  =
+    let
+        distance :: Point -> Point -> Point
+        distance    (Point x y z)    (Point x1 y1 z1) =
+          --Point (abs $ x - x1) (abs $ y - y1) (abs $ z - z1)
+          Point (x - x1) (y - y1) (z - z1)
+        p = distance point1 point2
+        x = x_axis p
+        y = y_axis p
+        z = z_axis p
+    in 
+        Distance $ sqrt (x**2 + y**2 + z**2)
 
+--ToDo: this is to be a fx of Distant
 calculateXYDistance :: Point -> Point -> Distance
 calculateXYDistance    point1   point2  =
   let
@@ -77,4 +81,20 @@ calculateXYDistance    point1   point2  =
       y = y_axis p
       z = z_axis p
   in
-      Distance $ sqrt (x**2 + y**2)  
+      Distance $ sqrt (x**2 + y**2)
+
+-- | Of a Point(s) or CornerPoint(s):
+-- Find the center. For a line such as FrontLeftLine, this would be the middle of the line.
+class Center a where
+  (<-|->) :: a -> a -> Point -- ^ Takes 2 <CornerPoints/Points> and returns the center Point between them
+  center :: a -> Point -- ^ Return the center of the <CornerPoint/Point>. 
+
+instance Center Point where
+  center p = p
+  (Point x1 y1 z1) <-|-> (Point x2 y2 z2) =
+    let
+      x = (x1 + x2)/2
+      y = (y1 + y2)/2
+      z = (z1 + z2)/2
+    in
+      Point x y z

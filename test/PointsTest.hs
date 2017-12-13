@@ -1,8 +1,8 @@
 module PointsTest(pointsTestDo) where
 
-import CornerPoints.Points(Point(..), calculateDistance, calculateXYDistance)
+import CornerPoints.Points(Point(..), calculateDistance, calculateXYDistance, center ,(<-|->))
 
-import  Math.Doubles(Distance(..))
+import  Math.Distance(Distance(..))
 
 import Test.HUnit
 
@@ -20,6 +20,8 @@ pointsTestDo = do
   runTestTT calculateDistance5
   runTestTT calculateDistance6
 
+  runTestTT centerTest1
+
 onlyZDiffersTest = TestCase $ assertEqual
   "only z differs"
   (False)
@@ -33,7 +35,7 @@ onlyZIsTheSameTest = TestCase $ assertEqual
   "only the z axis is same"
   (False)
   (
-    (Point {x_axis = 15.0, y_axis = 10.0, z_axis = 20.0})
+    (Point {x_axis = 15.0, y_axis = 0.0, z_axis = 20.0})
     ==
     (Point {x_axis = 25.0, y_axis = 110.0, z_axis = 20.0})
   )
@@ -101,3 +103,11 @@ calculateDistance6 = TestCase $ assertEqual
      (Point 1 (-2) 1)
   )
 
+-- ======================================= centers ==============================================
+centerTest1 = TestCase $ assertEqual
+  "centerTest1"
+  (Point 2 1.5 0)
+  ((Point 0 3 0)
+   <-|->
+   (Point 4 0 0) 
+  )
