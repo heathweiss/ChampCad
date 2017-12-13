@@ -794,3 +794,5 @@ instance Distant CornerPoints where
      calculateDistance
        (center $ BottomLeftLine f1 b1)
        f1'
+  calculateDistance _ CornerPointsNothing = Distance 0.0
+  calculateDistance CornerPointsNothing _ = Distance 0.0

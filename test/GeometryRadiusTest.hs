@@ -8,7 +8,7 @@ import Geometry.Vertex(getXWithQuadrant, getYWithQuadrant, Vertex(..), adjustPoi
 import CornerPoints.Points(Point(..), calculateDistance, calculateXYDistance)
 import CornerPoints.Radius(Radius(..))
 
-import Math.Distance(Distance(..))
+import Math.Distance(Distance(..), fromDistance)
 
 import Test.HUnit
 
@@ -34,10 +34,10 @@ calculateXYDistanceAfterRotatingTest = TestCase $ assertEqual
        origin = (Point 0 0 0)
        rotateFactor = 10
        rotatedAngle = rotateAngle rotateFactor $ getXYAngle (Point 0 0 0) pointToRotate
-       xyRadius = Radius $ (calculateXYDistance origin pointToRotate)^.distance
+       xyRadius = Radius $ fromDistance (calculateXYDistance origin pointToRotate)
        rotatedPoint = (adjustPointAxis (getXWithQuadrant rotatedAngle xyRadius)) . (adjustPointAxis (getYWithQuadrant rotatedAngle xyRadius)) $ origin
     in
-    Radius $ (calculateXYDistance origin rotatedPoint)^.distance
+    Radius $ fromDistance  (calculateXYDistance origin rotatedPoint)
   )
 
 lookAtXTestLength = TestCase $ assertEqual
@@ -49,7 +49,7 @@ lookAtXTestLength = TestCase $ assertEqual
        origin = (Point 0 0 0)
        rotateFactor = 10
        rotatedAngle = rotateAngle rotateFactor $ getXYAngle (Point 0 0 0) pointToRotate
-       xyRadius = Radius $ (calculateXYDistance origin pointToRotate)^.distance
+       xyRadius = Radius $ fromDistance (calculateXYDistance origin pointToRotate)
        --rotatedPoint = (adjustPointAxis (getXWithQuadrant rotatedAngle xyRadius)) . (adjustPointAxis (getYWithQuadrant rotatedAngle xyRadius)) $ origin
     in
       getXWithQuadrant rotatedAngle xyRadius
@@ -62,7 +62,7 @@ lookAtXYRadiusTestLength = TestCase $ assertEqual
   ( let
        pointToRotate = (Point 1 (-10) 10)
        origin = (Point 0 0 0)
-       xyRadius = Radius $ (calculateXYDistance origin pointToRotate)^.distance
+       xyRadius = Radius $ fromDistance (calculateXYDistance origin pointToRotate)
     in
       xyRadius
   )

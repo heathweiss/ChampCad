@@ -1,4 +1,4 @@
-module Math.Distance(Distance(..), Distant, calculateDistance, getOrdering) where
+module Math.Distance(Distance(..), Distant, calculateDistance, getOrdering, fromDistance) where
 
 import Math.Equal(equal)
 
@@ -6,8 +6,15 @@ import Math.Equal(equal)
 
 -- | The disance between 2 Points, or 2 CornerPoints.
 -- Known uses: Joiners.Delaunay
-data Distance = Distance {_distance :: Double}
+data Distance =
+  Distance {_distance :: Double}
+  |
+  NoDistance
  deriving (Show)
+
+fromDistance :: Distance -> Double
+fromDistance (Distance d) = d
+fromDistance NoDistance = 0.0
 
 instance Eq Distance where
     Distance d == Distance d'

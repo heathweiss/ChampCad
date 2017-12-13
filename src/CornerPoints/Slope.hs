@@ -37,7 +37,11 @@ addSlope    xSlope   ySlope   xyAngle  origin   cpoint =
     extractPoint (F4 p) = p
     
                                                     
-    xyRadius = Radius $  (calculateDistance origin $ extractPoint cpoint)^.distance
+    --xyRadius = Radius $  (calculateDistance origin $ extractPoint cpoint)^.distance
+    xyRadius =
+      case (calculateDistance origin $ extractPoint cpoint) of
+        (Distance d) -> Radius d
+        NoDistance   -> Radius 0.0
 
     adjustedRadius = radius (adjustRadiusForSlope (xyRadius) currentSlope)
     
