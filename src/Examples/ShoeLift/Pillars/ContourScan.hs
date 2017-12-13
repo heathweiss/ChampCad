@@ -294,7 +294,8 @@ runBtmToeCpointsGenerator =
 toeCPoints :: SectionBuilder
 toeCPoints (SectionBuilderData origin' cylinderHeight cylinderMoveHorizontally cylinderYTransposer angleHeightRadius) fullScanBuilder = do
   let  pillarCylinder = map (transposeZ (cylinderMoveHorizontally)) $ cylinder outerTreadRingRadius (transposeY cylinderYTransposer origin') [Angle a | a <- [0,10..360]] cylinderHeight
-
+  --extract the front faces of the entire <top/bottom> scan, as loaded with fullScanBuilder.
+  --fullScanBuilder passed in will dictate whether shoe or tread scan is loaded.
   toeOuterFaces
     <- buildCubePointsListSingle "toeOuterFaces"
          ( 
@@ -302,12 +303,15 @@ toeCPoints (SectionBuilderData origin' cylinderHeight cylinderMoveHorizontally c
             map (extractFrontFace) $ (execState $ runExceptT   (fullScanBuilder $ FullScanBuilderData angleHeightRadius origin'  ) ) []
          )
 
+  --extract [FrontFace] of pillar, and convert to [BackFace] so they can be added to the topOuterFaces, which are [FrontFace]
   pillarFrontFacesAsBackFaces
               <- buildCubePointsListSingle "riser circle outer faces"
                  ( 
                     map (toBackFace . extractFrontFace ) pillarCylinder
                  )
 
+  --Use the manual join system to align [<Front/Back>Face] as the pillar has different # of Faces than the toeOuterFaces.
+  --This will be replaced with the delaunay joiner.
   let mainJoiners =
         --Use these Joiners as the limits to the Joiner fx.
         --Took 18 pillars
