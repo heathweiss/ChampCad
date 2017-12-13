@@ -47,7 +47,11 @@ makeLenses ''Distance
 rotatePointAroundZAxis :: RotateFactor -> Point -> Point -> Point
 rotatePointAroundZAxis rotateFactor origin pointToRotate  =
   let rotatedAngle = rotateAngle rotateFactor $ getXYAngle origin pointToRotate 
-      xyRadius = Radius $ (calculateXYDistance origin pointToRotate)^.distance
+      --xyRadius = Radius $ (calculateXYDistance origin pointToRotate)^.distance
+      xyRadius =
+        case (calculateXYDistance origin pointToRotate) of
+          (Distance d) -> Radius d
+          NoDistance   -> Radius 0.0
   in
       (adjustPointAxis (getXWithQuadrant rotatedAngle xyRadius)) . (adjustPointAxis (getYWithQuadrant rotatedAngle xyRadius)) $ origin {z_axis = (z_axis pointToRotate)}
       
