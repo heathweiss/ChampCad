@@ -1,7 +1,9 @@
-
+{-# LANGUAGE DeriveDataTypeable #-}
 module CornerPoints.Points (Point(..), transposeZ, calculateDistance, calculateXYDistance, Center, center ,(<-|->)) where
 import TypeClasses.Transposable(TransposePoint, transposeX, transposeY, transposeZ, )
 
+import Data.Data
+import Data.Typeable
 
 import Math.Distance(Distance(..),Distant, calculateDistance)
 import Math.Equal(equal)
@@ -13,7 +15,7 @@ Know uses:
 Make up the corners of Cubes and Faces.
 -}
 data Point =  Point { x_axis :: Double, y_axis :: Double, z_axis :: Double } 
-              deriving (Show)
+              deriving (Show, Typeable, Data)
 
 {-
 	Front view of cube:
