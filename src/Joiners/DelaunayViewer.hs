@@ -8,7 +8,8 @@ import Primitives.Cylindrical.Walled(cylinder)
 
 import CornerPoints.Radius(Radius(..))
 import CornerPoints.Points(Point(..))
-import CornerPoints.FaceExtraction(extractB1, extractB4, extractF1, extractF4)
+import CornerPoints.FaceExtraction(extractB1, extractB4, extractF1, extractF4, extractBackLeftLine, extractBackRightLine,
+                                  extractFrontLeftLine, extractFrontRightLine)
 import CornerPoints.MeshGeneration(autoGenerateEachCube, autoGenerateEachFace)
 import CornerPoints.CornerPoints((+++>), (|+++|))
 import CornerPoints.FaceConversions(toTopFace)
@@ -127,3 +128,79 @@ inner cylinder:
  -extract BackRightLine of 1st cube, and [BackLeftLine] of all cubes.
 -}
 
+frontBackFacesBuilder :: ExceptStackCornerPointsBuilder
+frontBackFacesBuilder = do
+  let
+  {-----------------Build the 2 cylinders, and extract required bottom points to be joined as [BottomFace]-------------}
+  --Create the inner cylinder which will supply the [B<1/4>] used to build the inner wall.
+  backFaces <- buildCubePointsListSingle "back faces"
+                            
+                            (let
+                                --build the inner cylinder
+                               angles = ([Angle a | a <- [0,5..360]] )
+                               cylinder' = cylinder [Radius 40 | r <- [1..]] [Radius 50 | r <- [1..]] angles (Point 0 0 0) 100
+                             in
+                              --extract all the Back points. Note that 1st the first cube needs B4 and B1 extracted.
+                              (extractBackRightLine $ head cylinder') : (map (extractBackLeftLine) cylinder')
+                            )
+  
+  --Create the outer cylinder which supplies the [F<1/4>] used to build the outer wall.
+  frontFaces <- buildCubePointsListSingle "frontFaces"
+                            (let
+                              --build the outer cylinder
+                               anglesOuter = ([Angle a | a <- [0,10..360]])
+                               outerCylinder = cylinder [Radius 60 | r <- [1..]] [Radius 80 | r <- [1..]] anglesOuter (Point 0 0 0) 100
+                             in
+                             --extract all the Front points. Note that the first cube needs F4 and F1 extracted.
+                              (extractFrontRightLine $ head outerCylinder) : (map (extractFrontLeftLine) $ {-tail-}  outerCylinder)
+                            )
+
+
+
+
+  
+  --Use delaunay joiner to join the <innerBack/outerFront>Points into a [Bottom<Left/Right>Line]
+  frontBackFaces <- buildCubePointsListSingle "frontBackFaces"
+              
+                (delaunay
+                   frontFaces
+                   backFaces
+                   [] []
+                )
+              
+  {-
+  --create the [BottomFace] by: (head bottomLeftRightLines) +++> (tail bottomLeftRightLines)
+  cubes <- buildCubePointsListSingle "btmFaces"
+           ((head frontBackFaces) +++> (tail frontBackFaces)
+           )
+
+  
+  -}
+  return frontBackFaces
+
+
+runFrontBackFacesBuilder :: IO ()
+runFrontBackFacesBuilder = do
+  let
+    builder' = runExceptT frontBackFacesBuilder
+    cpoints = ((execState $ builder') [])
+    valCpoints = ((evalState $ builder') [])
+
+  case valCpoints of
+        (Left e) -> liftIO $ print $ e
+        (Right a) -> do
+          liftIO $ putStrLn "output from Builder was good"
+          liftIO $ writeStlToFile $ newStlShape "entire geox" $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
+          liftIO $ putStrLn "stl should have been output"
+
+showValFrontBackFacesBuilder :: IO ()
+showValFrontBackFacesBuilder = do
+  let
+    builder' = runExceptT frontBackFacesBuilder
+    cpoints = ((execState $ builder') [])
+    valCpoints = ((evalState $ builder') [])
+
+  case valCpoints of
+        (Left e) -> liftIO $ print $ e
+        (Right a) -> do
+          liftIO $ print $ show a
