@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveDataTypeable #-}
 module CornerPoints.CornerPoints(
 CornerPoints(..),
 (+++),
@@ -13,10 +14,14 @@ CornerPointsBuilder(..),
 cornerPointsError, findCornerPointsError,
 isCubePoints, isCubePointsList,
 getCornerPointsWithIndex,
-center, (<-|->)
+center, (<-|->),
+cpointType
 ) where
 
 import Control.Lens
+
+import Data.Data
+import Data.Typeable
 
 import CornerPoints.Points (Point(..), Center, center ,(<-|->))
 
@@ -214,7 +219,7 @@ data CornerPoints =
         {
                 f4 :: Point
         }
-        deriving (Show)
+        deriving (Show, Typeable, Data)
 
 
 {-
@@ -556,6 +561,9 @@ anyCornerPoint +++ (CornerPointsId) = anyCornerPoint
 (FrontRightLine f3 f4) +++ (FrontLeftLine f1 f2)  =
   FrontFace f1 f2 f3 f4
 
+(FrontRightLine f3 f4) +++ (BackRightLine b3 b4)  =
+  RightFace b3 b4 f3 f4
+
 (TopLeftLine b2 f2) +++ (TopRightLine b3 f3) =
     TopFace b2 f2 b3 f3
 
@@ -705,7 +713,7 @@ anyCornerPoint +++ (CornerPointsId) = anyCornerPoint
 (CornerPointsNothing) +++ _ = CornerPointsNothing
 _ +++ (CornerPointsNothing) = CornerPointsNothing
 
-anythingElse +++ isIllegal = CornerPointsError "illegal +++ operation"
+anythingElseIsIllegal +++ orNotPatternMatched = CornerPointsError $ "unmatched or illegal +++ operation of " ++ (cpointType anythingElseIsIllegal) ++ " " ++ (cpointType orNotPatternMatched)
 
 ----------------------------------------------- scale cubes/points ------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------
@@ -768,6 +776,10 @@ instance Center CornerPoints where
   center (F4 point) = point
   center (BottomLeftLine b1 f1) = b1 <-|-> f1
   center (BottomRightLine f4 b4) = f4 <-|-> b4
+  center (LeftFace b1 b2 f1 f2) = (b1 <-|-> b2) <-|-> (f1 <-|-> f2)
+  center (RightFace b3 b4 f3 f4) = (b3 <-|-> b4) <-|-> (f3 <-|-> f4)
+  center (BackLeftLine b1 b2) = b1 <-|-> b2
+  center (FrontLeftLine f1 f2) = f1 <-|-> f2
   
   (BottomLeftLine b1 f1) <-|-> (B1 b1') =
     b1' <-|-> (center $ BottomLeftLine b1 f1)
@@ -796,3 +808,18 @@ instance Distant CornerPoints where
        f1'
   calculateDistance _ CornerPointsNothing = Distance 0.0
   calculateDistance CornerPointsNothing _ = Distance 0.0
+
+--this would return a Constr instead, if that would be better.
+-- Will need to see how it gets used.
+--showMeTheType :: CornerPoints -> Constr
+--showMeTheType cpoint = toConstr $ cpoint
+
+-- | Show the type of a CornerPoints.
+-- Handy for figuring out missing or illegal pattern matches.
+-- Used by +++ to get the types involved for the catchall pattern of:
+--unmatched or illegal +++ operation of: <cpoint1> <cpoint2>
+cpointType :: CornerPoints -> String
+cpointType cpoint = showConstr . toConstr $ cpoint
+
+
+
