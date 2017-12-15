@@ -2,7 +2,7 @@ module CornerPointsTest(cornerPointsTestDo ) where
 
 import Test.HUnit
 
-import CornerPoints.CornerPoints(CornerPoints(..), (+++), (+++>), (|+++|), CornerPointsBuilder(..), (&+++#@), (|@+++#@|), (@+++#@),
+import CornerPoints.CornerPoints(CornerPoints(..), (+++), (++++), (+++>), (|+++|), CornerPointsBuilder(..), (&+++#@), (|@+++#@|), (@+++#@),
                                 cornerPointsError, isCubePoints, isCubePointsList)
 import CornerPoints.Points (Point(..), center ,(<-|->))
 import CornerPoints.FaceConversions(backFaceFromFrontFace, upperFaceFromLowerFace, lowerFaceFromUpperFace )
@@ -66,6 +66,8 @@ cornerPointsTestDo = do
   runTestTT distanceTest2
   runTestTT distanceTest3
   runTestTT distanceTest4
+
+  runTestTT nonStandaredTest1
 -------------------- isCubePoints tests-------
 isCubePointsTest = TestCase $ assertEqual
   "isCubePointsTest"
@@ -345,7 +347,7 @@ distanceTest2  = TestCase $ assertEqual
     (F1 $ Point 0 0 0)
   )
 
--- ==============================================================================================
+
 distanceTest3  = TestCase $ assertEqual
   "distanceTest3"
   (Distance 2.5)
@@ -366,4 +368,34 @@ distanceTest4  = TestCase $ assertEqual
       (Point 0 3 0)
     )
     (F1 $ Point 0 0 0)
+  )
+
+
+--------------------------------------------------- ++++ of non-standard -----------------------------------------------
+
+leftFaceNs =
+  LeftFace
+    {b1 = Point 0 0 0,
+     b2 = Point 0 0 1,
+     f1 = Point 1 1 0,
+     f2 = Point 1 1 1
+    }
+
+frontLeftLineNs =
+  FrontLeftLine
+      {f1 = Point 1 1 0,
+       f2= Point 1 1 1
+      }
+
+rightFaceNs =
+  RightFace
+      {b3 = Point 0 0 1,
+       b4 = Point 0 0 0,
+       f3 = Point 0 (-1) 1,
+       f4 = Point 0 (-1) 0
+      }
+nonStandaredTest1  = TestCase $ assertEqual
+  "nonStandaredTest1"
+  (Right leftFaceNs  )
+  ( rightFaceNs ++++ frontLeftLineNs
   )

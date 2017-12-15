@@ -27,6 +27,7 @@ import DiamondCutterTest(diamondCutterTestDo)
 import LineScannerTest(lineScannerTestDo)
 import JoinerTest(joinerTestDo)
 import DistanceTest(distanceTestDo)
+import  DelaunayTest(delaunayTestDo)
 
 --main :: IO ()
 main = do
@@ -57,3 +58,4 @@ main = do
   lineScannerTestDo
   joinerTestDo
   distanceTestDo
+  delaunayTestDo

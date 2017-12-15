@@ -3,18 +3,16 @@
 Join together 2,3,or 4 [CornerPoints].
 Eg: cutting a cylinder out of a scanned tread.
 -}
-module Joiners.Delaunay(delaunay) where
+module Joiners.Delaunay(delaunay, removeIfUsed) where
 
 import Data.Typeable
 
-import CornerPoints.CornerPoints(CornerPoints(..),(+++), center, (<-|->), cpointType)
-import CornerPoints.FaceExtraction(extractB1,extractFrontLeftLine, extractF1, extractBackLeftLine )
+import CornerPoints.CornerPoints(CornerPoints(..),(+++),(++++), center, (<-|->), cpointType)
+import CornerPoints.FaceExtraction(extractB1,extractFrontLeftLine, extractF1, extractBackLeftLine, contains )
+import CornerPoints.FaceConversions(toLeftFace, raisedTo, toBottomLeftLine)
 
 import Math.Distance(Distance(..), Distant, calculateDistance)
 
-import Control.Lens
-
-makeLenses ''Distance
 
 data Terminator =
  Early -- ^ Terminate as soon as 1 list has ended
@@ -27,13 +25,25 @@ delaunay [] _ _ _ = [CornerPointsError "empty outer points passed into delaunay"
 delaunay  _ [] [] [] = [CornerPointsError "at least 1 inner points required into delaunay"]
 --use the head of first list and head of another list to create the intial back <Face/line>.
 delaunay (i:is) (x:xs) [] [] =
-  delaunay' (is) (xs) [] [] (i +++ x) ((i +++ x):[])
+  delaunay' (Right (is)) (Right (xs)) (Right []) (Right []) (i +++ x) ((i +++ x):[])
   
 
 --Run (i:is) and at least 1 other list to the end of both lists.
 --(i:is) is the outer CornerPoints defining the shape into which all the others will be inserted.
-delaunay' :: [CornerPoints] -> [CornerPoints] -> [CornerPoints] -> [CornerPoints] ->  CornerPoints -> [CornerPoints] -> [CornerPoints] 
-delaunay'    (i:is)            (x:xs)            []                []                 currLine        cpointsJoined =
+--delaunay' :: [CornerPoints] -> [CornerPoints] -> [CornerPoints] -> [CornerPoints] ->  CornerPoints -> [CornerPoints] -> [CornerPoints]
+delaunay' :: (Either String [CornerPoints]) -> (Either String [CornerPoints]) -> (Either String [CornerPoints]) -> (Either String [CornerPoints]) ->  CornerPoints -> [CornerPoints] -> [CornerPoints] 
+
+
+delaunay'    (Left e) _ _ _ _ cpointsJoined =
+  reverse $ (CornerPointsError e : cpointsJoined)
+delaunay'    _ (Left e) _ _ _ cpointsJoined =
+  reverse $ (CornerPointsError e : cpointsJoined)
+delaunay'    _ _ (Left e) _ _ cpointsJoined =
+  reverse $ (CornerPointsError e : cpointsJoined)
+delaunay'    _  _ _ (Left e) _ cpointsJoined =
+  reverse $ (CornerPointsError e : cpointsJoined)
+
+delaunay'    (Right (i:is))            (Right (x:xs))            (Right [])                (Right [])                 currLine        cpointsJoined =
   let
     avgDistance = getAvgDistance (i:is)            (x:xs)            []                []                 currLine 
     newCurrLine = buildLine
@@ -51,16 +61,13 @@ delaunay'    (i:is)            (x:xs)            []                []           
                       (GTCPoint CornerPointsNothing)
                       (GTCPoint CornerPointsNothing)
   in
-    --delaunay' (removeHeadIfFrontUsed (i:is) (F1 $ f1 newCurrLine)) (removeHeadIfBackUsed (x:xs) (B1 $ b1 newCurrLine)) [] [] newCurrLine (newCurrLine:cpointsJoined)
     case newCurrLine of
       Right newCurrLine' ->
-        delaunay' (removeHeadIfFrontUsed (i:is) (newCurrLine')) (removeHeadIfBackUsed (x:xs) (newCurrLine')) [] [] newCurrLine' (newCurrLine':cpointsJoined)
+        delaunay' (removeIfUsed (i:is) (newCurrLine')) (removeIfUsed (x:xs) (newCurrLine')) (Right []) (Right []) newCurrLine' (newCurrLine':cpointsJoined)
         
       Left e -> reverse $ (CornerPointsError e) : cpointsJoined
 
-
-
-delaunay'  (i:is) [] [] [] currLine cpointsJoined =
+delaunay'  (Right (i:is)) (Right []) (Right []) (Right []) currLine cpointsJoined =
   let
     avgDistance = getAvgDistance (i:is)            []            []                []                 currLine 
     newCurrLine = buildLine
@@ -72,11 +79,11 @@ delaunay'  (i:is) [] [] [] currLine cpointsJoined =
   in
     case newCurrLine of
       Right newCurrLine' ->
-        delaunay' is [] [] [] newCurrLine' (newCurrLine':cpointsJoined)
+        delaunay' (Right is) (Right []) (Right []) (Right []) newCurrLine' (newCurrLine':cpointsJoined)
         
       Left e -> reverse $ (CornerPointsError e) : cpointsJoined
 
-delaunay' [] (x:xs) [] [] currLine cpointsJoined =
+delaunay' (Right []) (Right (x:xs)) (Right []) (Right []) currLine cpointsJoined =
   let
     avgDistance = getAvgDistance []            (x:xs)            []                []                 currLine 
     newCurrLine = buildLine
@@ -95,73 +102,68 @@ delaunay' [] (x:xs) [] [] currLine cpointsJoined =
   in
     case newCurrLine of
       Right newCurrLine' ->
-        delaunay' [] xs [] [] newCurrLine' (newCurrLine':cpointsJoined)
+        delaunay' (Right []) (Right xs) (Right []) (Right []) newCurrLine' (newCurrLine':cpointsJoined)
       Left e -> reverse $ (CornerPointsError e) : cpointsJoined
 
-delaunay'  [] [] [] [] _ cpointsJoined =  reverse cpointsJoined
+delaunay'  (Right []) (Right []) (Right []) (Right []) _ cpointsJoined =  reverse cpointsJoined
+
+
+delaunay' _ _ _ _ _ cpointsJoined =
+  reverse $ (CornerPointsError "delaunay cathcall used"):cpointsJoined
 
 buildLine :: CornerPoints ->            OrderedCornerPoint -> OrderedCornerPoint -> OrderedCornerPoint -> OrderedCornerPoint ->  Either  String CornerPoints
 {-           currLine                   i                     x                      y                    z                    -}
 
 -- ======================================= Right<Point/Line> ====================================================
-buildLine    ((BottomRightLine b4 _))   (LTCPoint (F1 f1))    (GTCPoint _)           (GTCPoint _)         (GTCPoint _)    =
-  Right $ BottomLeftLine b4 f1
---add face
-buildLine    ((RightFace b3 b4 _ _))   (LTCPoint (FrontLeftLine f1 f2))    (GTCPoint _)           (GTCPoint _)         (GTCPoint _)    =
-  Right $ LeftFace b4 b3 f1 f2
-  --Left "stopped ((RightFace b3 b4 _ _))   (LTCPoint (FrontLeftLine f1 f2))  (GTCPoint _) "
+buildLine    ((BottomRightLine b4 f4))   (LTCPoint (F1 f1))    (GTCPoint _)           (GTCPoint _)         (GTCPoint _)    =
+  (F1 f1) `raisedTo` (toBottomLeftLine (BottomRightLine b4 f4))
 
-buildLine    ((BottomRightLine _ f4))   (GTCPoint _)          (LTCPoint (B1 b1))     (GTCPoint _)         (GTCPoint _)    =
-  Right $ BottomLeftLine  b1 f4
---add face
-buildLine    (RightFace _ _ f3 f4)   (GTCPoint _)          (LTCPoint (BackLeftLine b1 b2))     (GTCPoint _)         (GTCPoint _)    =
-  Right $ LeftFace b1 b2 f4 f3
-        --LeftFace b1 b2 f1 f2
-  --Left "stopped (RightFace _ _ f3 f4)   (GTCPoint _)          (LTCPoint (BackLeftLine b1 b2))"
+buildLine    ((RightFace b3 b4 f3 f4))   (LTCPoint (FrontLeftLine f1 f2))    (GTCPoint _)           (GTCPoint _)         (GTCPoint _)    =
+  (FrontLeftLine f1 f2) `raisedTo` (toLeftFace $ RightFace b3 b4 f3 f4)
   
-buildLine    ((BottomRightLine _ f4))   (GTCPoint _)          (EQCPoint (B1 b1))     (GTCPoint _)         (GTCPoint _)    =
-  Right $ BottomLeftLine b1 f4
---add face
-buildLine    (RightFace _ _ f3 f4)   (GTCPoint _)          (EQCPoint (BackLeftLine b1 b2))     (GTCPoint _)         (GTCPoint _)    =
-  Right $ LeftFace b1 b2 f4 f3
-  --Left "stopped (RightFace _ _ f3 f4)   (GTCPoint _)          (EQCPoint (BackLeftLine b1 b2)) "
+buildLine    ((BottomRightLine b4 f4))   (GTCPoint _)          (LTCPoint (B1 b1))     (GTCPoint _)         (GTCPoint _)    =
+  (B1 b1) `raisedTo` (toBottomLeftLine $ BottomRightLine b4 f4)
 
-buildLine    ((BottomRightLine b4 _))   (EQCPoint (F1 f1))    (GTCPoint _)           (GTCPoint _)         (GTCPoint _)    =
-  Right $ BottomLeftLine b4 f1
---add face
-buildLine    ((RightFace b3 b4 _ _))   (EQCPoint (FrontLeftLine f1 f2))    (GTCPoint _)           (GTCPoint _)         (GTCPoint _)    =
-  Right $ LeftFace b4 b3 f1 f2
-  --Left "stopped ((RightFace b3 b4 _ _))   (EQCPoint (FrontLeftLine f1 f2))    (GTCPoint _) "
+buildLine    (RightFace b3 b4 f3 f4)   (GTCPoint _)          (LTCPoint (BackLeftLine b1 b2))     (GTCPoint _)         (GTCPoint _)    =
+  (BackLeftLine b1 b2) `raisedTo` (toLeftFace $ RightFace b3 b4 f3 f4 )
+  
+buildLine    ((BottomRightLine b4 f4))   (GTCPoint _)          (EQCPoint (B1 b1))     (GTCPoint _)         (GTCPoint _)    =
+  (B1 b1) `raisedTo` (toBottomLeftLine $ BottomRightLine b4 f4)
 
+buildLine    (RightFace b3 b4 f3 f4)   (GTCPoint _)          (EQCPoint (BackLeftLine b1 b2))     (GTCPoint _)         (GTCPoint _)    =
+  (BackLeftLine b1 b2) `raisedTo` (toLeftFace $ RightFace b3 b4 f3 f4)
+  
+buildLine    ((BottomRightLine b4 f4))   (EQCPoint (F1 f1))    (GTCPoint _)           (GTCPoint _)         (GTCPoint _)    =
+  --Right $ BottomLeftLine b4 f1
+  (F1 f1) `raisedTo`  (toBottomLeftLine $ BottomRightLine b4 f4)
+  
+buildLine    ((RightFace b3 b4 f3 f4))   (EQCPoint (FrontLeftLine f1 f2))    (GTCPoint _)           (GTCPoint _)         (GTCPoint _)    =
+  (FrontLeftLine f1 f2) `raisedTo` (toLeftFace $ RightFace b3 b4 f3 f4)
+  
   -- ================================ Left<Line/Face>======================================
-buildLine    ((BottomLeftLine _ f1)) (GTCPoint _)       (LTCPoint (B1 b1))         (GTCPoint _)              (GTCPoint _)    =
-  Right $ BottomLeftLine b1 f1
- 
---add face
-buildLine    (LeftFace _ _ f1 f2)    (GTCPoint _)       (LTCPoint (BackLeftLine b1 b2))         (GTCPoint _)              (GTCPoint _)    =
-  Right $ LeftFace b1 b2 f1 f2
-  --Left "stopped (LeftFace _ _ f1 f2)    (GTCPoint _)       (LTCPoint (BackLeftLine b1 b2))   "
+buildLine    ((BottomLeftLine b1 f1)) (GTCPoint _)       (LTCPoint (B1 b1'))         (GTCPoint _)              (GTCPoint _)    =
+  (B1 b1') `raisedTo` (BottomLeftLine b1 f1)
 
-buildLine    ((BottomLeftLine b1 _)) (LTCPoint (F1 f1)) (GTCPoint _)                (GTCPoint _)              (GTCPoint _)    =
-  Right $ BottomLeftLine b1 f1
---add face
-buildLine    (LeftFace b1 b2 _ _)      (LTCPoint (FrontLeftLine f1 f2))  (GTCPoint _)        (GTCPoint _)              (GTCPoint _)    =
-  Right $ LeftFace b1 b2 f1 f2
-  --Left "stopped (LeftFace b1 b2 _ _)      (LTCPoint (FrontLeftLine f1 f2))  (GTCPoint _)"
+buildLine    (LeftFace b1 b2 f1 f2)    (GTCPoint _)       (LTCPoint (BackLeftLine b1' b2'))         (GTCPoint _)              (GTCPoint _)    =
+  (BackLeftLine b1' b2') `raisedTo` (LeftFace b1 b2 f1 f2) 
 
-buildLine    ((BottomLeftLine b1 _))    (EQCPoint (F1 f1))        (GTCPoint _)                (GTCPoint _)              (GTCPoint _)    =
-  Right $ BottomLeftLine b1 f1
---add face
-buildLine    (LeftFace b1 b2 _ _)      (EQCPoint (FrontLeftLine f1 f2))  (GTCPoint _)        (GTCPoint _)              (GTCPoint _)    =
-  Right $ LeftFace b1 b2 f1 f2
-  --Left "stopped (LeftFace b1 b2 _ _)      (EQCPoint (FrontLeftLine f1 f2))  (GTCPoint _)"
+buildLine    ((BottomLeftLine b1 f1)) (LTCPoint (F1 f1')) (GTCPoint _)                (GTCPoint _)              (GTCPoint _)    =
+  (F1 f1') `raisedTo` (BottomLeftLine b1 f1)
+
+buildLine    (LeftFace b1 b2 f1 f2)      (LTCPoint (FrontLeftLine f1' f2'))  (GTCPoint _)        (GTCPoint _)              (GTCPoint _)    =
+  (FrontLeftLine f1' f2') `raisedTo` (LeftFace b1 b2 f1 f2)
+
+buildLine    ((BottomLeftLine b1 f1))    (EQCPoint (F1 f1'))        (GTCPoint _)                (GTCPoint _)              (GTCPoint _)    =
+  (F1 f1') `raisedTo` (BottomLeftLine b1 f1)
+
+buildLine    (LeftFace b1 b2 f1 f2)      (EQCPoint (FrontLeftLine f1' f2'))  (GTCPoint _)        (GTCPoint _)              (GTCPoint _)    =
+  (FrontLeftLine f1' f2') `raisedTo` (LeftFace b1 b2 f1 f2)
   
-buildLine    ((BottomLeftLine _ f1)) (GTCPoint _) (EQCPoint (B1 b1)) (GTCPoint _)  (GTCPoint _)   =
-  Right $ BottomLeftLine b1 f1
---add face
-buildLine    (LeftFace _ _ f1 f2)    (GTCPoint _)       (EQCPoint (BackLeftLine b1 b2))         (GTCPoint _)              (GTCPoint _)    =
-  Right $ LeftFace b1 b2 f1 f2
-  --Left "stopped (LeftFace _ _ f1 f2)    (GTCPoint _)       (EQCPoint (BackLeftLine b1 b2)) "
+buildLine    ((BottomLeftLine b1 f1)) (GTCPoint _) (EQCPoint (B1 b1')) (GTCPoint _)  (GTCPoint _)   =
+  (B1 b1') `raisedTo` (BottomLeftLine b1 f1)
+
+buildLine    (LeftFace b1 b2 f1 f2)    (GTCPoint _)       (EQCPoint (BackLeftLine b1' b2'))         (GTCPoint _)              (GTCPoint _)    =
+  (BackLeftLine b1' b2') `raisedTo` (LeftFace b1 b2 f1 f2) 
 
 --look for the missing pattern match
 buildLine currLine i x y z =
@@ -175,37 +177,6 @@ buildLine currLine i x y z =
   in
     Left $ currLineType ++ iType ++ xType ++ yType ++ zType
 
-{-
-buildLine (RightFace _ _ f3 f4) i (GTCPoint _) (GTCPoint _) (GTCPoint _) =
-  CornerPointsError "(RightFace _ _ f3 f4) i"
-  --untested
-
-buildLine (BottomRightLine b4 _) i (GTCPoint _) (GTCPoint _) (GTCPoint _) =
-  CornerPointsError "(BottomRightLine b4 _) i"
-  --untested
-
-buildLine (LeftFace _ _ f1 f2) i (GTCPoint _) (GTCPoint _) (GTCPoint _) =
-  CornerPointsError "(LeftFace _ _ f1 f2) i"
-  --untested
-
-buildLine (BottomLeftLine _ f1) i (GTCPoint _) (GTCPoint _) (GTCPoint _) =
-  CornerPointsError "(BottomLeftLine _ f1) i"
-  --untested
-
-buildLine (CornerPointsNothing) i (GTCPoint _) (GTCPoint _) (GTCPoint _) =
-  CornerPointsError "(CornerPointsNothing) i"
-
-buildLine (CornerPointsError m) i (GTCPoint _) (GTCPoint _) (GTCPoint _) =
-  CornerPointsError "(CornerPointsError) i"
-
-buildLine testCurrLine i (GTCPoint _) (GTCPoint _) (GTCPoint _) =
-  CornerPointsError "testCurrLine i"
-  --got non-exhaustive in fx center.
-
-buildLine testCurrLine i x y z =
-  CornerPointsError "testCurrLine"
-  --had to kill
--}
 getAvgDistance :: [CornerPoints] -> [CornerPoints] -> [CornerPoints] -> [CornerPoints] -> CornerPoints -> Distance
 getAvgDistance    (i:is)            (x:xs)            []                []                currLine        =
   let
@@ -243,37 +214,49 @@ getOrderedCPoint    avgDist     advanceFromThisLine        orderThisCpoint =
       LT -> LTCPoint orderThisCpoint
       EQ -> EQCPoint orderThisCpoint
 
-removeHeadIfFrontUsed :: [CornerPoints] -> CornerPoints -> [CornerPoints]
+{-
+--should be able to replace the front/back versions
+cpoint: The CornerPoint that was created during the join.
+(x:xs): One of the [CornerPoints] that are to be joined.
+
+If cpoint `contains` x, then x was used and gets removed from the list as it has now been 'joined'.
+-}
+removeIfUsed :: [CornerPoints] -> CornerPoints -> Either String [CornerPoints]
+removeIfUsed (x:xs) cpoint =
+  case ( cpoint `contains` (x)) of
+    Right True ->  Right xs
+    Right False -> Right (x:xs)
+    Left e -> Left e
+{-
+removeHeadIfFrontUsed :: [CornerPoints] -> CornerPoints -> Either String [CornerPoints]
 removeHeadIfFrontUsed ((F1 f1'):xs) (BottomLeftLine b1 f1) =
   case ((F1 f1') == (extractF1 (BottomLeftLine b1 f1))) of
-    True -> xs
-    False -> (F1 f1'):xs
+    True -> (Right xs)
+    False -> (Right $ (F1 f1'):xs)
 removeHeadIfFrontUsed ((FrontLeftLine f1' f2'):xs) (LeftFace b1 b2 f1 f2) =
   case ((FrontLeftLine f1' f2') == (extractFrontLeftLine )(LeftFace b1 b2 f1 f2)) of
-    True -> xs
-    False -> (FrontLeftLine f1' f2'):xs
+    True -> Right xs
+    False -> Right $ (FrontLeftLine f1' f2'):xs
 --the orig that worked with bottom points
 --now make it an error
-removeHeadIfFrontUsed (x:xs) cpoint =
-  case (x == cpoint) of
-    True -> [CornerPointsError "removeHeadIfFrontUsed generic true"] -- xs
-    False -> [CornerPointsError "removeHeadIfFrontUsed generic false"] -- x:xs
+removeHeadIfFrontUsed (x:xs) currLine =
+  Left $ "unmatched removeHeadIfFrontUsed: list: " ++ ( cpointType x) ++ " currLine: " ++ ( cpointType currLine)
 
-removeHeadIfBackUsed :: [CornerPoints] -> CornerPoints -> [CornerPoints]
+removeHeadIfBackUsed :: [CornerPoints] -> CornerPoints -> Either String [CornerPoints]
 removeHeadIfBackUsed ((B1 b1'):xs) (BottomLeftLine b1 f1) =
   case ((B1 b1') == (extractB1 (BottomLeftLine b1 f1))) of
-    True -> xs
-    False -> (B1 b1'):xs
+    True -> (Right xs)
+    False -> (Right $ (B1 b1'):xs)
 removeHeadIfBackUsed ((BackLeftLine b1' f1'):xs) (LeftFace b1 b2 f1 f2) =
   case ((BackLeftLine b1' f1') == (extractBackLeftLine )(LeftFace b1 b2 f1 f2)) of
-    True -> xs
-    False -> (BackLeftLine b1' f1'):xs
+    True -> (Right xs)
+    False -> Right $ (BackLeftLine b1' f1'):xs
 --the orig that worked with bottom points
-removeHeadIfBackUsed (x:xs) cpoint =
-  case (x == cpoint) of
-    True -> [CornerPointsError "removeHeadIfBackUsed generic true"]  -- xs
-    False -> [CornerPointsError "removeHeadIfBackUsed generic false"]  -- x:xs
-  
+
+removeHeadIfBackUsed (x:xs) currLine =
+  Left $ "unmatched removeHeadIfBackUsed: list: " ++ ( cpointType x) ++ " currLine: " ++ ( cpointType currLine)
+
+-}  
 --Associate a CornerPoints with Ordering.
 --Used by buildLine pattern matching to decide which CornerPoint is to be used to advance.
 data OrderedCornerPoint =
@@ -288,3 +271,4 @@ fromOrderedCornerPoint :: OrderedCornerPoint -> CornerPoints
 fromOrderedCornerPoint (LTCPoint cpoint) = cpoint
 fromOrderedCornerPoint (EQCPoint cpoint) = cpoint
 fromOrderedCornerPoint (GTCPoint cpoint) = cpoint
+

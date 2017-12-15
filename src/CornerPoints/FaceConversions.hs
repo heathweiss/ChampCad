@@ -27,8 +27,11 @@ module CornerPoints.FaceConversions(
   toBottomFace,
   toBackRightLine,
   toTopFace,
+  toLeftFace,
+  toBottomLeftLine,
+  raisedTo,
 ) where
-import CornerPoints.CornerPoints (CornerPoints(..), (+++))
+import CornerPoints.CornerPoints (CornerPoints(..), (+++), cpointType)
 
 
 {- |
@@ -134,6 +137,9 @@ toBackFace (FrontFace f1 f2 f3 f4) = BackFace f1 f2 f3 f4
 toBackFace (BackRightLine b3 b4) = BackFace b4 b3 b3 b4
 toBackFace (BackLeftLine b1 b2) = BackFace b1 b2 b2 b1
 
+toLeftFace :: CornerPoints -> CornerPoints
+toLeftFace (RightFace b3 b4 f3 f4) = LeftFace b4 b3 f4 f3
+
 toTopFace :: CornerPoints -> CornerPoints
 toTopFace (BottomFace b1 f1 b4 f4) = TopFace b1 f1 b4 f4
 
@@ -178,7 +184,12 @@ toBottomFrontLine (F1 f1)                 = BottomFrontLine f1 f1
 toBottomFrontLine (FrontLeftLine f1 f2)   = BottomFrontLine f2 f1
 toBottomFrontLine (BottomFrontLine f1 f4) = BottomFrontLine f1 f4
 toBottomFrontLine (B2 b2)                 = BottomFrontLine b2 b2
-toBottomFrontLine _ = CornerPointsError "unhandled toBottomFrontLine pattern match"
+toBottomFrontLine cpoint = CornerPointsError $ "FaceConversions.toBottomFrontLine: unhandled or illegal pattern match for " ++ (cpointType cpoint)
+
+toBottomLeftLine :: CornerPoints -> CornerPoints
+toBottomLeftLine (BottomRightLine b4 f4) = BottomLeftLine b4 f4
+toBottomLeftLine cpoint = CornerPointsError $ "FaceConversions.toBottomLeftLine: unhandled or illegal pattern match for "  ++ (cpointType cpoint)
+
 
 -- ToDo: Finish pattern matches. Test
 toFrontTopLine :: CornerPoints -> CornerPoints
@@ -260,3 +271,33 @@ reverseNormal (BackBottomLine b1 b4)  = (BackBottomLine b4 b1)
 reverseNormal (BackTopLine b2 b3)     = (BackTopLine b3 b2)
 reverseNormal (BottomLeftLine b1 f1)  = (BottomLeftLine f1 b1)
 reverseNormal (TopLeftLine b2 f2)     = (TopLeftLine f2 b2)
+
+
+{------------------------------------------------------rasiedTo-----------------------------------------------------------------
+Used by Joiners.Delaunay to create the advancing Cpoints.
+
+Type of non-standared +++ in that it builds Cpoints in unexpected way.
+EG:
+Adding a F1 to a BottomLeftLine(BLL) will create a new BLL using the new F1 and the B1 from the
+original BLL.
+Compare this to +++ which would have created new BLL by adding the F1 to the F1(used as a B1) from the BLL.
+
+The 1st parameter(raisee) is the Cpoint which will be raised.
+The 2nd param(raiser) is the Cpoint which is raising.
+So if raiser is a BottomLeftLine, it will raise the raiser to a BottomLeftLine.
+
+Will return a Left is it is not a valid raise, such a raising a B1 to a CubePoints.
+-}
+raisedTo :: CornerPoints -> CornerPoints -> Either String CornerPoints
+
+raisedTo (FrontLeftLine f1' f2') ( LeftFace b1 b2 f1 f2) = Right $ LeftFace b1 b2 f1' f2'
+
+raisedTo (BackLeftLine b1' b2') ( LeftFace b1 b2 f1 f2) = Right $ LeftFace b1' b2' f1 f2
+
+raisedTo (B1 b1') (BottomLeftLine b1 f1) = Right $ BottomLeftLine b1' f1
+
+raisedTo (F1 f1') (BottomLeftLine b1 f1) = Right $ BottomLeftLine b1 f1'
+  
+raisedTo a b =
+  Left $ "FaceConversions.raisedTo: illegal or missing pattern match for " ++ (cpointType a) ++ " and " ++ (cpointType b)
+ 

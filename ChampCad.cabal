@@ -186,6 +186,7 @@ test-suite ChampCad-test
                        LineScannerTest
                        JoinerTest
                        DistanceTest
+                       DelaunayTest
  
   build-depends:       base
                      , ChampCad

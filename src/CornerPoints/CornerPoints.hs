@@ -2,6 +2,7 @@
 module CornerPoints.CornerPoints(
 CornerPoints(..),
 (+++),
+(++++),
 (+++-),
 (|+++|),
 (+++>),
@@ -355,7 +356,9 @@ instance Eq CornerPoints where
       | (b3 == b3a) && (f3 == f3a) = True
       | otherwise = False
 
-
+    FrontLeftLine f1 f2 == FrontLeftLine f1' f2'
+      | (f1 == f1') && (f2 == f2') = True
+      | otherwise = False
 
     ------------------------------- faces ---------------------------
     FrontFace f1 f2 f3 f4 == FrontFace f1a f2a f3a f4a
@@ -393,7 +396,7 @@ instance Eq CornerPoints where
     CornerPointsNothing == _ = False
     _ == CornerPointsNothing = False
 
-    anyThingElse == isFalse = False
+    anyThingElse == isFalseOrNeedsAPatterMatch = False
 
     
 --------------------------------------------------- add cubes +++ ---------------------------------------------------
@@ -695,7 +698,14 @@ anyCornerPoint +++ (CornerPointsId) = anyCornerPoint
 
 (B1 b1') +++ (BackBottomLine b1 b4) = BackBottomLine b1' b1
 
+-- ------------------------ non-standard as used in Delaunay meshes ------------------------------
+(RightFace b3 b4 f3 f4) +++ (FrontLeftLine f1 f2) = 
+  LeftFace b4 b3 f1 f2
+--inverse
+(FrontLeftLine f1 f2) +++ (RightFace b3 b4 f3 f4) =
+  (RightFace b3 b4 f3 f4) +++ (FrontLeftLine f1 f2)
 
+----------------------------- illegal -----------------------------------------------------------
 (CornerPointsError _) +++ b = CornerPointsError "illegal CornerPointsError +++ _ operation"
 --faces
 (BackFace _ _ _ _) +++ (BackFace _ _ _ _) = CornerPointsError "illegal BackFace +++ BackFace operation"
@@ -715,6 +725,22 @@ _ +++ (CornerPointsNothing) = CornerPointsNothing
 
 anythingElseIsIllegal +++ orNotPatternMatched = CornerPointsError $ "unmatched or illegal +++ operation of " ++ (cpointType anythingElseIsIllegal) ++ " " ++ (cpointType orNotPatternMatched)
 
+{------------------------------------------------------------ ++++ --------------------------------------------------
+Add together CornerPoints with using Either.
+
+If handled by +++ simply wrap them in Either.
+IF +++ gives CornerPointsError then wrap error msg in Left
+
+This is the way +++ should have been from the start.
+
+-}
+-- | +++ used with Either
+(++++) :: CornerPoints -> CornerPoints -> Either String CornerPoints
+
+c1 ++++ c2 =
+  case c1 +++ c2 of
+    CornerPointsError e -> Left e
+    goodCornerPoint     -> Right goodCornerPoint
 ----------------------------------------------- scale cubes/points ------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------
 {-                                           Over view
@@ -780,6 +806,7 @@ instance Center CornerPoints where
   center (RightFace b3 b4 f3 f4) = (b3 <-|-> b4) <-|-> (f3 <-|-> f4)
   center (BackLeftLine b1 b2) = b1 <-|-> b2
   center (FrontLeftLine f1 f2) = f1 <-|-> f2
+
   
   (BottomLeftLine b1 f1) <-|-> (B1 b1') =
     b1' <-|-> (center $ BottomLeftLine b1 f1)
@@ -820,6 +847,4 @@ instance Distant CornerPoints where
 --unmatched or illegal +++ operation of: <cpoint1> <cpoint2>
 cpointType :: CornerPoints -> String
 cpointType cpoint = showConstr . toConstr $ cpoint
-
-
 

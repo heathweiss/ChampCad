@@ -14,7 +14,8 @@ module CornerPoints.FaceExtraction (
  extractBackRightLine,
  extractBackLeftLine,
  extractF1, extractF2, extractF3, extractF4,
- extractB1, extractB2, extractB3, extractB4
+ extractB1, extractB2, extractB3, extractB4,
+ contains
  ) where
 import CornerPoints.CornerPoints(CornerPoints(..), cpointType)
 import CornerPoints.Points(Point(..))
@@ -63,7 +64,7 @@ extractBackFace (CubePoints f1 f2 f3 f4 b1 b2 b3 b4) = BackFace b1 b2 b3 b4
 extractFrontLeftLine :: CornerPoints -> CornerPoints
 extractFrontLeftLine (CubePoints f1 f2 f3 f4 b1 b2 b3 b4) = FrontLeftLine f1 f2
 extractFrontLeftLine (FrontFace f1 f2 f3 f4) = FrontLeftLine f1 f2
-extractFrontLeftLine (LeftFace b1 b2 f1 f2) =  FrontLeftLine f1 f2 
+extractFrontLeftLine (LeftFace b1 b2 f1 f2) =  FrontLeftLine f1 f2
 extractFrontLeftLine unmatchedOrIllegal = CornerPointsError $ "unmatched or illegal extractFrontLeftLine: " ++ ( cpointType unmatchedOrIllegal)
 
 extractBackRightLine :: CornerPoints -> CornerPoints
@@ -114,3 +115,32 @@ extractB3 (CubePoints _ _ _ _ _ _ b3 _ ) = B3 b3
 extractB4 :: CornerPoints -> CornerPoints
 extractB4 (CubePoints _ _ _ _ _ _ _ b4 ) = B4 b4
 
+{- | ------------------------------------------------ contains ------------------------------------------------
+A bool indicating if a CornerPoints is embedded in another, such as an F1 in a FrontLeftLine.
+True if F1 == the F1 in FrontLeftLIne
+False if F1 /== the F1 in FrontLeftLIne
+
+Wrapped in an Either in case it is an invalid test such as an F1 in a BackBottomLine,
+or an unhandled pattern match.
+
+Known uses:
+Joiners.Deluanay used it to join [CornerPoints]'s
+-}
+contains :: CornerPoints -> CornerPoints -> Either String Bool
+contains  (BottomLeftLine b1 f1) (F1 f1') =
+  case ((F1 f1') == (extractF1 (BottomLeftLine b1 f1))) of
+    True -> Right True
+    False -> Right False
+
+contains  (LeftFace b1 b2 f1 f2) (FrontLeftLine f1' f2') =
+  case ((FrontLeftLine f1' f2') == (extractFrontLeftLine (LeftFace b1 b2 f1 f2))) of
+    True -> Right True
+    False -> Right False
+
+contains  (LeftFace b1 b2 f1 f2) (BackLeftLine b1' b2') =
+  case ( (extractBackLeftLine $ LeftFace b1 b2 f1 f2) == (BackLeftLine b1' b2') ) of
+    True -> Right True
+    False -> Right False 
+
+contains a b =
+  Left $ "CornerPoints.FaceExtraction.contains: illegal or unhandled pattern match for: " ++ (cpointType a) ++ " and " ++ (cpointType b)

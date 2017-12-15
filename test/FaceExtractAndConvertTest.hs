@@ -2,8 +2,9 @@ module FaceExtractAndConvertTest(faceExtractAndConvertTestDo) where
 import Test.HUnit
 import CornerPoints.CornerPoints(CornerPoints(..), (+++))
 import CornerPoints.Points(Point(..))
-import CornerPoints.FaceConversions(reverseNormal, toBackFace)
-import CornerPoints.FaceExtraction(extractFrontFace, extractBackFace, extractRightFace)
+import CornerPoints.FaceConversions(reverseNormal, toBackFace, toLeftFace, toBottomLeftLine, raisedTo)
+import CornerPoints.FaceExtraction(extractFrontFace, extractBackFace, extractRightFace, extractFrontLeftLine, 
+                                   contains)
 
 faceExtractAndConvertTestDo = do
   let helloTest = TestCase $ assertEqual
@@ -56,4 +57,155 @@ faceExtractAndConvertTestDo = do
 
   
 
+  let toLeftFaceTest1 = TestCase $ assertEqual
+       "toLeftFaceTest1"
+       (LeftFace
+               {b1 = Point 0 0 0,
+                b2 = Point 0 0 1,
+                f1 = Point 1 1 0,
+                f2 = Point 1 1 1
+               }
+       )
+       
+       (let
+           rightFace =
+             RightFace
+               {b4 = Point 0 0 0,
+                b3 = Point 0 0 1,
+                f4 = Point 1 1 0,
+                f3 = Point 1 1 1
+               }
+        in
+         toLeftFace rightFace
+          
+       )
+       
+  runTestTT toLeftFaceTest1
+
+  let extractFrontLeftLineTest = TestCase $ assertEqual
+       "extractFrontLeftLineTest"
+       (FrontLeftLine {f1 = Point {x_axis = 1.0, y_axis = 1.0, z_axis = 0.0}, f2 = Point {x_axis = 1.0, y_axis = 1.0, z_axis = 1.0}})
+       
+       (let
+           leftFace =
+             LeftFace
+               {b1 = Point 0 0 0,
+                b2 = Point 0 0 1,
+                f1 = Point 1 1 0,
+                f2 = Point 1 1 1
+               }
+        in
+         extractFrontLeftLine leftFace
+          
+       )
+       
+  runTestTT extractFrontLeftLineTest
+
+  let toBottomLeftLineTest1 = TestCase $ assertEqual
+       "toBottomLeftLineTest1"
+       (BottomLeftLine
+               {b1 = Point 0 0 0,
+                f1 = Point 1 1 0
+               })
+       
+       (let
+           bottomRightLine =
+             BottomRightLine
+               {b4 = Point 0 0 0,
+                f4 = Point 1 1 0
+               }
+        in
+         toBottomLeftLine  bottomRightLine
+          
+       )
+       
+  runTestTT toBottomLeftLineTest1
+
+  let toBottomLeftLineTest2 = TestCase $ assertEqual
+       "toBottomLeftLineTest2"
+       (CornerPointsError {errMessage = "FaceConversions.toBottomLeftLine: unhandled or illegal pattern match for B4"})
+       
+       (let
+           b4 =
+             B4
+               {b4 = Point 0 0 0
+               }
+        in
+         toBottomLeftLine  b4
+          
+       )
+       
+  runTestTT toBottomLeftLineTest2
+
+--------------------------------------------------------- raisedTo ------------------------------------------------------------------
+  let raisedToTest1 = TestCase $ assertEqual
+       "raisedToTest1"
+       (Right $ LeftFace
+                 {b1 = Point 0 0 0,
+                  b2 = Point 0 0 1,
+                  f1 = Point 1 1 0,
+                  f2 = Point 1 1 1
+                 })
+       
+       (let
+           frontLeftLine =
+             FrontLeftLine (Point 1 1 0) (Point 1 1 1)
+           leftFace =
+             LeftFace
+               {b1 = Point 0 0 0,
+                b2 = Point 0 0 1,
+                f1 = Point 11 11 10,
+                f2 = Point 12 12 12
+               }
+        in
+         frontLeftLine `raisedTo`  leftFace
+          
+       )
+       
+  runTestTT raisedToTest1
+
+  let raisedToTest2 = TestCase $ assertEqual
+       "raisedToTest2"
+       (Right $ BottomLeftLine {b1 = Point 10 10 10, f1 = Point 1 1 1})
+       
+       (let
+           bottomLeftLine =
+             BottomLeftLine {b1 = Point 0 0 0, f1 = Point 1 1 1}
+           b1 =
+             B1
+               {b1 = Point 10 10 10}
+        in
+         b1 `raisedTo`  bottomLeftLine
+          
+       )
+       
+  runTestTT raisedToTest2
+ ------------------------------------------------------ contains -----------------------------------------------------------------------
+
+  let containsTest1 = TestCase $ assertEqual
+       "containsTest1"
+       (Right True)
+       (let
+         f1 = Point 0 0 0
+         bottomLeftLine = BottomLeftLine   (Point 1 1 1) f1
+        in
+          bottomLeftLine `contains` (F1 f1)
+       )
   
+  runTestTT containsTest1
+
+  let containsTest2 = TestCase $ assertEqual
+       "containsTest2"
+       (Right True)
+       (let
+         f1 = Point 0 1 0
+         f2 = Point 0 1 1
+         b1 = Point 0 0 0
+         b2 = Point 0 0 1
+         frontLeftLine  = FrontLeftLine f1 f2
+         leftFace = LeftFace   b1 b2 f1 f2 
+        in
+          leftFace `contains` frontLeftLine
+       )
+  
+  runTestTT containsTest1
