@@ -1,0 +1,7 @@
+B: master
+ B: delaunayApplicative
+    -can't get Joiners.Deluanay.delaunayA to compile for applicative.
+   B: delaunayApplicativeB
+      -get rid of Joiners.Deluanay:
+       -OrderCpoints, getAvgDistance, 
+      -use a list of [CornerPoints] for all inner cpoints

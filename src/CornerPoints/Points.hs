@@ -1,11 +1,11 @@
 {-# LANGUAGE DeriveDataTypeable #-}
-module CornerPoints.Points (Point(..), transposeZ, calculateDistance, calculateXYDistance, Center, center ,(<-|->)) where
+module CornerPoints.Points (Point(..), transposeZ, calculateDistance, calculateXYDistance, Center, center ,(<-|->), CenterA, (<-||->), centerA) where
 import TypeClasses.Transposable(TransposePoint, transposeX, transposeY, transposeZ, )
 
 import Data.Data
 import Data.Typeable
 
-import Math.Distance(Distance(..),Distant, calculateDistance)
+import Math.Distance(Distance(..),Distant, calculateDistance, DistanceA(..),DistantA, calculateDistanceA)
 import Math.Equal(equal)
 
 {-------------------------- Point------------------------------
@@ -71,6 +71,21 @@ instance Distant Point where
     in 
         Distance $ sqrt (x**2 + y**2 + z**2)
 
+-- | Given a 2 points, caluclate the distance between the points.
+instance DistantA Point where
+  calculateDistanceA    point1   point2  =
+    let
+        distance :: Point -> Point -> Point
+        distance    (Point x y z)    (Point x1 y1 z1) =
+          --Point (abs $ x - x1) (abs $ y - y1) (abs $ z - z1)
+          Point (x - x1) (y - y1) (z - z1)
+        p = distance point1 point2
+        x = x_axis p
+        y = y_axis p
+        z = z_axis p
+    in 
+        Right $ DistanceA $ sqrt (x**2 + y**2 + z**2)
+
 --ToDo: this is to be a fx of Distant
 calculateXYDistance :: Point -> Point -> Distance
 calculateXYDistance    point1   point2  =
@@ -100,3 +115,29 @@ instance Center Point where
       z = (z1 + z2)/2
     in
       Point x y z
+------------------------------------- center Either----------------------------------------------
+{-
+Is there a point in making this Either.
+Any applicative work should be done above this level.
+-}
+
+class CenterA a where
+  --(<-||->) :: Either String a -> Either String a -> Either String Point -- ^ Takes 2 <CornerPoints/Points> and returns the center Point between them
+  (<-||->) :: a -> a -> Either String Point -- ^ Takes 2 <CornerPoints/Points> and returns the center Point between them
+  centerA :: a -> Either String Point -- ^ Return the center of the <CornerPoint/Point>. 
+
+instance CenterA Point where
+  centerA (Point x y z) = Right $ Point x y z
+  
+  --(Right (Point x1 y1 z1)) <-||-> (Right (Point x2 y2 z2)) =
+  ((Point x1 y1 z1)) <-||-> ((Point x2 y2 z2)) =
+    let
+      x = (x1 + x2)/2
+      y = (y1 + y2)/2
+      z = (z1 + z2)/2
+    in
+      Right $ Point x y z
+
+  --centerA (Left e) _ = Left e
+  --centerA _ (Left e) = Left e
+  

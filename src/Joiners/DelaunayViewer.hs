@@ -17,7 +17,7 @@ import CornerPoints.Transpose(transposeZ)
 
 import Geometry.Angle(Angle(..))
 
-import Joiners.Delaunay(delaunay)
+import Joiners.Delaunay(delaunay, delaunayA)
 
 import Stl.StlBase(Triangle(..), newStlShape)
 import Stl.StlCornerPoints((|+++^|), Faces(..) )
@@ -162,7 +162,7 @@ frontBackFacesBuilder = do
   --Use delaunay joiner to join the <innerBack/outerFront>Points into a [Bottom<Left/Right>Line]
   frontBackFaces <- buildCubePointsListSingle "frontBackFaces"
               
-                (delaunay
+                (delaunayA
                    frontFaces
                    backFaces
                    [] []

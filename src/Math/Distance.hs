@@ -1,4 +1,5 @@
-module Math.Distance(Distance(..), Distant, calculateDistance, getOrdering, fromDistance) where
+module Math.Distance(Distance(..), Distant, calculateDistance, getOrdering, fromDistance,
+                     DistanceA(..), DistantA, calculateDistanceA, getOrderingA, fromDistanceA) where
 
 import Math.Equal(equal)
 
@@ -30,6 +31,34 @@ class Distant a where
 -- | Compare 2 Distance for an Ordering base on underlying distance.
 getOrdering :: Distance ->  Distance -> Ordering
 getOrdering    (Distance d) (Distance d')
+  | d > d' = GT
+  | d < d' = LT
+  | d == d' = EQ
+
+
+----------------------------------------------------------- applicative version-----------------------------
+data DistanceA =
+  DistanceA {distance :: Double}
+ deriving (Show)
+
+fromDistanceA :: DistanceA -> Double
+fromDistanceA (DistanceA d) = d
+
+
+instance Eq DistanceA where
+    DistanceA d == DistanceA d'
+      |  (equal d d')  = True 
+      | otherwise = False
+
+
+-- | Caluculate the Distance between to objects.
+-- Currently used by CornerPoints and Points.
+class DistantA a where
+  calculateDistanceA :: a -> a -> Either String DistanceA
+
+-- | Compare 2 Distance for an Ordering base on underlying distance.
+getOrderingA :: DistanceA ->  DistanceA -> Ordering
+getOrderingA    (DistanceA d) (DistanceA d')
   | d > d' = GT
   | d < d' = LT
   | d == d' = EQ

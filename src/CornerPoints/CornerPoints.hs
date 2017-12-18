@@ -16,6 +16,7 @@ cornerPointsError, findCornerPointsError,
 isCubePoints, isCubePointsList,
 getCornerPointsWithIndex,
 center, (<-|->),
+centerA, (<-||->),
 cpointType
 ) where
 
@@ -24,13 +25,13 @@ import Control.Lens
 import Data.Data
 import Data.Typeable
 
-import CornerPoints.Points (Point(..), Center, center ,(<-|->))
+import CornerPoints.Points (Point(..), Center, center ,(<-|->), CenterA, (<-||->), centerA)
 
 import    Control.Applicative
 
 import Data.List(find)
 
-import Math.Distance(Distance(..),Distant, calculateDistance)
+import Math.Distance(Distance(..),Distant, calculateDistance, DistanceA(..),DistantA, calculateDistanceA)
 
 infix 7 +++
 infix 6 +++-
@@ -807,15 +808,39 @@ instance Center CornerPoints where
   center (BackLeftLine b1 b2) = b1 <-|-> b2
   center (FrontLeftLine f1 f2) = f1 <-|-> f2
 
+
+instance CenterA CornerPoints where
+  centerA (B1 point) = Right point
+  centerA (B4 point) = Right point
+  centerA (F1 point) = Right point
+  centerA (F4 point) = Right point
+  centerA (BottomLeftLine b1 f1) = b1 <-||-> f1
+  centerA (BottomRightLine f4 b4) = f4 <-||-> b4
+  --centerA (LeftFace b1 b2 f1 f2) = (Right (b1 <-||-> b2)) <*>  <*> (<-||-> f1) <*> ( <-||-> f2)
+  centerA (LeftFace b1 b2 f1 f2) =
+    case (b1 <-||-> b2) of
+      Left e -> Left e
+      Right p ->
+        case (f1<-||-> f2) of
+          Left e -> Left e
+          Right p' ->
+            p <-||-> p'
+
   
-  (BottomLeftLine b1 f1) <-|-> (B1 b1') =
-    b1' <-|-> (center $ BottomLeftLine b1 f1)
-  (B1 b1') <-|-> (BottomLeftLine b1 f1) =
-    (BottomLeftLine b1 f1) <-|-> (B1 b1')
+{-
+  centerA (Right (RightFace b3 b4 f3 f4)) = ((Right b3) <-||-> (Right b4)) <-||-> ((Right f3) <-||-> (Right f4))
+  centerA (Right (BackLeftLine b1 b2)) = (Right b1) <-||-> (Right b2)
+  centerA (Right (FrontLeftLine f1 f2)) = (Right f1) <-||-> (Right f2)
 
-  (BottomRightLine f4 b4) <-|-> (B1 b1) =
-    (center $ BottomRightLine f4 b4) <-|-> b1
+  
+  (Right (BottomLeftLine b1 f1)) <-||-> (Right (B1 b1')) =
+    (Right (b1')) <-||-> (centerA $ Right (BottomLeftLine b1 f1))
+  (Right (B1 b1')) <-||-> (Right (BottomLeftLine b1 f1)) =
+    (Right (BottomLeftLine b1 f1)) <-||-> (Right (B1 b1'))
 
+  (Right (BottomRightLine f4 b4)) <-||-> (Right (B1 b1)) =
+    (centerA $ Right (BottomRightLine f4 b4)) <-||-> (Right (b1))
+-}
 instance Distant CornerPoints where
   calculateDistance  (BottomRightLine f4 b4) (B1 b1) =
      calculateDistance
@@ -836,6 +861,36 @@ instance Distant CornerPoints where
   calculateDistance _ CornerPointsNothing = Distance 0.0
   calculateDistance CornerPointsNothing _ = Distance 0.0
 
+
+instance DistantA CornerPoints where
+  calculateDistanceA  (BottomRightLine f4 b4) (B1 b1) =
+    case
+     calculateDistanceA
+       (center $ BottomRightLine f4 b4)
+       b1
+    of
+      Right distance -> Right distance
+      Left e -> Left e
+  {-
+  calculateDistanceA  (BottomRightLine f4 b4) (F1 f1) =
+    calculateDistanceA
+      (center $ BottomRightLine f4 b4)
+      f1
+  calculateDistanceA  (BottomLeftLine f1 b1) (B1 b1') =
+     calculateDistanceA
+       (center $ BottomLeftLine f1 b1)
+       b1'
+  calculateDistanceA  (BottomLeftLine f1 b1) (F1 f1') =
+     calculateDistanceA
+       (center $ BottomLeftLine f1 b1)
+       f1'
+  calculateDistanceA _ CornerPointsNothing = DistanceA 0.0
+  calculateDistanceA CornerPointsNothing _ = DistanceA 0.0
+
+  calculateDistanceA missingPatternMatchCpoint1 missingPatternMatchCpoint1 =
+    --this is why is must be an Either. To handle the unmatched patterns.
+    --Will have to change Joiners.Delaunay line 66ish where it used by getAvgDistanceA.
+-}
 --this would return a Constr instead, if that would be better.
 -- Will need to see how it gets used.
 --showMeTheType :: CornerPoints -> Constr
