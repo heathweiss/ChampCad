@@ -3,7 +3,7 @@
 module Geometry.Rotation(rotatePointAroundZAxis, rotateCornerPointAroundZAxis) where
 
 import CornerPoints.CornerPoints(CornerPoints(..), (+++))
-import CornerPoints.Points(Point(..), calculateXYDistance)
+import CornerPoints.Points(Point(..), )
 import CornerPoints.Radius(Radius(..))
 import CornerPoints.Create()
 
@@ -11,7 +11,7 @@ import Geometry.Angle(RotateFactor, getXYAngle, Angle(..), getQuadrantAngle, rot
 import Geometry.Vertex(getXWithQuadrant, getYWithQuadrant, Vertex(..), adjustPointAxis)
 
 import Math.Trigonometry(sinDegrees, cosDegrees, coTanDegrees)
-import Math.Distance(Distance(..))
+import Math.Distance(Distance(..), calculateXYDistance)
 
 import Control.Lens
 

@@ -1,4 +1,4 @@
-module Helpers.List((++:), (++::), SplitAtT(..), splitAndReverseBackHalf ) where
+module Helpers.List((++:), (++::), SplitAtT(..), splitAndReverseBackHalf, removeEmpty, safeHead, safeTail) where
 
 type SplitAtT = Int
 
@@ -26,3 +26,21 @@ splitAndReverseBackHalf splitListAt measurements =
   let (front,back) = splitAt splitListAt measurements
   in
   (front, reverse back)
+
+
+-- | Clear the [[CornerPoints]] of inner perimeters of any []
+removeEmpty :: [[a]] -> [[a]]
+removeEmpty inputList =
+  let clearFx ::  [innerPerimeters] -> Bool
+      clearFx inputList = (length inputList) > 0
+
+  in
+    filter (clearFx) inputList
+
+safeHead :: [[a]] -> [a]
+safeHead (x:xs) = x
+safeHead [] = []
+
+safeTail :: [[a]] -> [[a]]
+safeTail (x:xs) = xs
+safeTail [] = []

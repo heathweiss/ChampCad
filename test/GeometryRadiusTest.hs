@@ -5,10 +5,10 @@ import Geometry.Radius(doubleCylinderZip, doubleCylinder, squaredOff)
 import Geometry.Angle(RotateFactor, getXYAngle, Angle(..), getQuadrantAngle, rotateAngle, )
 import Geometry.Vertex(getXWithQuadrant, getYWithQuadrant, Vertex(..), adjustPointAxis)
 
-import CornerPoints.Points(Point(..), calculateDistance, calculateXYDistance)
+import CornerPoints.Points(Point(..))
 import CornerPoints.Radius(Radius(..))
 
-import Math.Distance(Distance(..), fromDistance)
+import Math.Distance(Distance(..), fromDistance, calculateDistance, calculateXYDistance)
 
 import Test.HUnit
 

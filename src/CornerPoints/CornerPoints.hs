@@ -2,6 +2,7 @@
 module CornerPoints.CornerPoints(
 CornerPoints(..),
 (+++),
+(===),
 (++++),
 (+++-),
 (|+++|),
@@ -15,8 +16,6 @@ CornerPointsBuilder(..),
 cornerPointsError, findCornerPointsError,
 isCubePoints, isCubePointsList,
 getCornerPointsWithIndex,
-center, (<-|->),
-centerA, (<-||->),
 cpointType
 ) where
 
@@ -25,13 +24,13 @@ import Control.Lens
 import Data.Data
 import Data.Typeable
 
-import CornerPoints.Points (Point(..), Center, center ,(<-|->), CenterA, (<-||->), centerA)
+import CornerPoints.Points (Point(..))
 
 import    Control.Applicative
 
 import Data.List(find)
 
-import Math.Distance(Distance(..),Distant, calculateDistance, DistanceA(..),DistantA, calculateDistanceA)
+-- import Math.Distance(Distance(..),Distant, calculateDistance, DistanceA(..),DistantA, calculateDistanceA)
 
 infix 7 +++
 infix 6 +++-
@@ -271,7 +270,7 @@ instance TransposePoint CornerPoints where
                                                                  (transposeX f b1) (transposeX f b2) (transposeX f b3) (transposeX f b4)
 -}
 --------------------------------------------------- Equal-----------------------------------------------------------
-{-
+{- |
 Implement as part of Equal class.
 
 Used for:
@@ -398,6 +397,126 @@ instance Eq CornerPoints where
     _ == CornerPointsNothing = False
 
     anyThingElse == isFalseOrNeedsAPatterMatch = False
+
+--------------------------------------------------- Equal ===-----------------------------------------------------------
+{- |
+An Either String Bool version of ==
+-}
+(===) :: CornerPoints -> CornerPoints -> Either String Bool
+
+
+-------------------------- points -------------------
+B1 b1 === B1 b1a
+       |  b1 == b1a = Right True
+       | otherwise = Right False
+  
+B2 b2 === B2 b2a
+       |  b2 == b2a = Right True
+       | otherwise = Right False
+
+B3 b3 === B3 b3a
+       |  b3 == b3a = Right True
+       | otherwise = Right False
+  
+B4 b4 === B4 b4a
+       |  b4 == b4a = Right True
+       | otherwise = Right False
+
+F1 f1 === F1 f1a  
+       | f1 == f1a = Right True 
+       | otherwise = Right False
+
+F2 f2 === F2 f2a  
+       | f2 == f2a = Right True 
+       | otherwise = Right False 
+
+F3 f3  === F3 f3a  
+      | f3 == f3a = Right True
+      | otherwise = Right False
+
+F4 f4  === F4 f4a  
+      | f4 == f4a = Right True
+      | otherwise = Right False
+    --------------------------- lines ----------------------
+BackBottomLine b1 b4 === BackBottomLine b1a b4a
+      | (b1 == b1a) && (b4 == b4a) = Right True
+      | otherwise = Right False
+
+
+BackTopLine b2 b3 === BackTopLine b2a b3a
+      | (b2 == b2a) && (b3 == b3a) = Right True
+      | otherwise = Right False
+
+BottomFrontLine f1 f4 === BottomFrontLine f1a f4a
+      | (f1 == f1a) && (f4 == f4a) = Right True
+      | otherwise = Right False
+
+BottomLeftLine b1 f1 === BottomLeftLine b1a f1a
+      | (b1 == b1a) && (f1 == f1a) = Right True
+      | otherwise = Right False
+
+BottomRightLine b4 f4  === BottomRightLine b4a f4a
+      | (b4 == b4a) && (f4 == f4a) = Right True
+      | otherwise = Right False
+
+FrontTopLine f2 f3 === FrontTopLine f2a f3a
+      | (f2 == f2a) && (f3 == f3a) = Right True
+      | otherwise = Right False
+
+TopLeftLine b2 f2 === TopLeftLine b2a f2a
+      | (b2 == b2a) && (f2 == f2a) = Right True
+      | otherwise = Right False
+
+TopRightLine b3 f3 === TopRightLine b3a f3a
+      | (b3 == b3a) && (f3 == f3a) = Right True
+      | otherwise = Right False
+
+FrontLeftLine f1 f2 === FrontLeftLine f1' f2'
+      | (f1 == f1') && (f2 == f2') = Right True
+      | otherwise = Right False
+
+BackLeftLine b1 b2 === BackLeftLine b1' b2'
+  | (b1 == b1') && (b2 == b2') = Right True
+  | otherwise = Right False
+
+    ------------------------------- faces ---------------------------
+FrontFace f1 f2 f3 f4 === FrontFace f1a f2a f3a f4a
+      | (f1 == f1a) && (f2 == f2a) && (f3 == f3a) && (f4 == f4a) = Right True
+      | otherwise = Right False
+    
+BottomFace b1 f1 b4 f4 === BottomFace b1a f1a b4a f4a
+      | (b1 == b1a) && (f1 == f1a) && (b4 == b4a) && (f4 == f4a) = Right True
+      | otherwise = Right False
+    
+TopFace b2 f2 b3 f3 === TopFace b2a f2a b3a f3a
+      | (b2 == b2a) && (f2 == f2a) && (b3 == b3a) && (f3 == f3a) = Right True
+      | otherwise = Right False
+
+RightFace b3 b4 f3 f4 === RightFace b3a b4a f3a f4a
+      | (b3 == b3a) && (b4 == b4a) && (f3 == f3a) && (f4 == f4a) = Right True
+      | otherwise = Right False
+
+LeftFace b1 b2 f1 f2 === LeftFace b1a b2a f1a f2a
+      | (b1 == b1a) && (b2 == b2a) && (f1 == f1a) && (f2 == f2a) = Right True
+      | otherwise = Right False
+
+BackFace b1 b2 b3 b4 === BackFace b1a b2a b3a b4a
+      | (b1 == b1a) && (b2 == b2a) && (b3 == b3a) && (b4 == b4a)  = Right True
+      | otherwise = Right False
+    ---------------------------------- cubes --------------------
+CubePoints f1 f2 f3 f4 b1 b2 b3 b4 === CubePoints f1a f2a f3a f4a b1a b2a b3a b4a
+      | (f1 == f1a) && (f2 == f2a) && (f3 == f3a) && (f4 == f4a) && (b1 == b1a) && ( b2 == b2a) && (b3 == b3a) && (b4 == b4a) = Right True
+      | otherwise = Right False
+
+CornerPointsError errMessage' === CornerPointsError errMessage'' =
+      Right $ errMessage' == errMessage''
+
+(CornerPointsNothing) === CornerPointsNothing = Right True
+(CornerPointsNothing) === _ = Right False
+(_) === CornerPointsNothing = Right False
+
+(===) anyThingElse isFalseOrNeedsAPatterMatch = Left $ "CornerPoints.CornerPoints === has missing or illegal pattern match for: " ++
+                                                         (cpointType anyThingElse) ++ " and " ++ (cpointType isFalseOrNeedsAPatterMatch)
 
     
 --------------------------------------------------- add cubes +++ ---------------------------------------------------
@@ -795,102 +914,7 @@ getCornerPointsWithIndex errMsg cutterFaces index =
     Nothing -> CornerPointsError errMsg 
     Just a  -> a
 
--- ToDo: Fill in missing pattern matches.
-instance Center CornerPoints where
-  center (B1 point) = point
-  center (B4 point) = point
-  center (F1 point) = point
-  center (F4 point) = point
-  center (BottomLeftLine b1 f1) = b1 <-|-> f1
-  center (BottomRightLine f4 b4) = f4 <-|-> b4
-  center (LeftFace b1 b2 f1 f2) = (b1 <-|-> b2) <-|-> (f1 <-|-> f2)
-  center (RightFace b3 b4 f3 f4) = (b3 <-|-> b4) <-|-> (f3 <-|-> f4)
-  center (BackLeftLine b1 b2) = b1 <-|-> b2
-  center (FrontLeftLine f1 f2) = f1 <-|-> f2
 
-
-instance CenterA CornerPoints where
-  centerA (B1 point) = Right point
-  centerA (B4 point) = Right point
-  centerA (F1 point) = Right point
-  centerA (F4 point) = Right point
-  centerA (BottomLeftLine b1 f1) = b1 <-||-> f1
-  centerA (BottomRightLine f4 b4) = f4 <-||-> b4
-  --centerA (LeftFace b1 b2 f1 f2) = (Right (b1 <-||-> b2)) <*>  <*> (<-||-> f1) <*> ( <-||-> f2)
-  centerA (LeftFace b1 b2 f1 f2) =
-    case (b1 <-||-> b2) of
-      Left e -> Left e
-      Right p ->
-        case (f1<-||-> f2) of
-          Left e -> Left e
-          Right p' ->
-            p <-||-> p'
-
-  
-{-
-  centerA (Right (RightFace b3 b4 f3 f4)) = ((Right b3) <-||-> (Right b4)) <-||-> ((Right f3) <-||-> (Right f4))
-  centerA (Right (BackLeftLine b1 b2)) = (Right b1) <-||-> (Right b2)
-  centerA (Right (FrontLeftLine f1 f2)) = (Right f1) <-||-> (Right f2)
-
-  
-  (Right (BottomLeftLine b1 f1)) <-||-> (Right (B1 b1')) =
-    (Right (b1')) <-||-> (centerA $ Right (BottomLeftLine b1 f1))
-  (Right (B1 b1')) <-||-> (Right (BottomLeftLine b1 f1)) =
-    (Right (BottomLeftLine b1 f1)) <-||-> (Right (B1 b1'))
-
-  (Right (BottomRightLine f4 b4)) <-||-> (Right (B1 b1)) =
-    (centerA $ Right (BottomRightLine f4 b4)) <-||-> (Right (b1))
--}
-instance Distant CornerPoints where
-  calculateDistance  (BottomRightLine f4 b4) (B1 b1) =
-     calculateDistance
-       (center $ BottomRightLine f4 b4)
-       b1
-  calculateDistance  (BottomRightLine f4 b4) (F1 f1) =
-    calculateDistance
-      (center $ BottomRightLine f4 b4)
-      f1
-  calculateDistance  (BottomLeftLine f1 b1) (B1 b1') =
-     calculateDistance
-       (center $ BottomLeftLine f1 b1)
-       b1'
-  calculateDistance  (BottomLeftLine f1 b1) (F1 f1') =
-     calculateDistance
-       (center $ BottomLeftLine f1 b1)
-       f1'
-  calculateDistance _ CornerPointsNothing = Distance 0.0
-  calculateDistance CornerPointsNothing _ = Distance 0.0
-
-
-instance DistantA CornerPoints where
-  calculateDistanceA  (BottomRightLine f4 b4) (B1 b1) =
-    case
-     calculateDistanceA
-       (center $ BottomRightLine f4 b4)
-       b1
-    of
-      Right distance -> Right distance
-      Left e -> Left e
-  {-
-  calculateDistanceA  (BottomRightLine f4 b4) (F1 f1) =
-    calculateDistanceA
-      (center $ BottomRightLine f4 b4)
-      f1
-  calculateDistanceA  (BottomLeftLine f1 b1) (B1 b1') =
-     calculateDistanceA
-       (center $ BottomLeftLine f1 b1)
-       b1'
-  calculateDistanceA  (BottomLeftLine f1 b1) (F1 f1') =
-     calculateDistanceA
-       (center $ BottomLeftLine f1 b1)
-       f1'
-  calculateDistanceA _ CornerPointsNothing = DistanceA 0.0
-  calculateDistanceA CornerPointsNothing _ = DistanceA 0.0
-
-  calculateDistanceA missingPatternMatchCpoint1 missingPatternMatchCpoint1 =
-    --this is why is must be an Either. To handle the unmatched patterns.
-    --Will have to change Joiners.Delaunay line 66ish where it used by getAvgDistanceA.
--}
 --this would return a Constr instead, if that would be better.
 -- Will need to see how it gets used.
 --showMeTheType :: CornerPoints -> Constr

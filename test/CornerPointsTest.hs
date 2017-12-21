@@ -4,11 +4,11 @@ import Test.HUnit
 
 import CornerPoints.CornerPoints(CornerPoints(..), (+++), (++++), (+++>), (|+++|), CornerPointsBuilder(..), (&+++#@), (|@+++#@|), (@+++#@),
                                 cornerPointsError, isCubePoints, isCubePointsList)
-import CornerPoints.Points (Point(..), center ,(<-|->))
+import CornerPoints.Points (Point(..))
 import CornerPoints.FaceConversions(backFaceFromFrontFace, upperFaceFromLowerFace, lowerFaceFromUpperFace )
 import CornerPoints.Transpose (transposeZ)
 
-import Math.Distance(Distance(..),calculateDistance)
+import Math.Distance(Distance(..),calculateDistance, center ,(<-|->))
 
 cornerPointsTestDo = do
 

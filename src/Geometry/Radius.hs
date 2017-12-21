@@ -14,10 +14,10 @@ import Geometry.Angle(Angle(..), getQuadrantAngle)
 
 import CornerPoints.Radius(Radius(..))
 import CornerPoints.Points(Point(..) )
-import qualified CornerPoints.Points as P (calculateDistance, calculateXYDistance ) 
+import qualified CornerPoints.Points as P ( ) 
 
 import Math.Trigonometry(sinDegrees, cosDegrees)
-import Math.Distance(Distance(..))
+import Math.Distance(Distance(..),calculateDistance, calculateXYDistance)
 
 import Control.Lens
 

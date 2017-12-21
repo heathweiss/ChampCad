@@ -1,8 +1,8 @@
 module PointsTest(pointsTestDo) where
 
-import CornerPoints.Points(Point(..), calculateDistance, calculateXYDistance, center ,(<-|->))
+import CornerPoints.Points(Point(..))
 
-import  Math.Distance(Distance(..))
+import  Math.Distance(Distance(..), calculateDistance, calculateXYDistance, center ,(<-|->))
 
 import Test.HUnit
 

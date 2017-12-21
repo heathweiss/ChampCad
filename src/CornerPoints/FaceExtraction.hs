@@ -17,8 +17,10 @@ module CornerPoints.FaceExtraction (
  extractB1, extractB2, extractB3, extractB4,
  contains
  ) where
-import CornerPoints.CornerPoints(CornerPoints(..), cpointType)
+import CornerPoints.CornerPoints(CornerPoints(..), cpointType, (===))
 import CornerPoints.Points(Point(..))
+
+import Helpers.Applicative(extractE)
 
 extractBottomFace :: CornerPoints -> CornerPoints
 extractBottomFace (CubePoints f1 f2 f3 f4 b1 b2 b3 b4) = BottomFace b1 f1 b4 f4
@@ -99,12 +101,14 @@ extractF3 (CubePoints f1 f2 f3 f4 b1 b2 b3 b4) = F3 f3
 
 extractF4 :: CornerPoints -> CornerPoints
 extractF4 (BottomFrontLine f1 f4) = F4 f4
+extractF4 (BottomRightLine b4 f4) = F4 f4
 extractF4 (FrontRightLine f3 f4) = F4 f4
 extractF4 (CubePoints f1 f2 f3 f4 b1 b2 b3 b4) = F4 f4
 
 extractB1 :: CornerPoints -> CornerPoints
 extractB1 (CubePoints _ _ _ _ b1 _ _ _) = B1 b1
 extractB1 (BottomLeftLine b1 f1) = B1 b1
+
 
 extractB2 :: CornerPoints -> CornerPoints
 extractB2 (CubePoints _ _ _ _ _ b2 _ _) = B2 b2
@@ -127,8 +131,76 @@ Known uses:
 Joiners.Deluanay used it to join [CornerPoints]'s
 -}
 contains :: CornerPoints -> CornerPoints -> Either String Bool
+
+contains  (BottomLeftLine b1 f1) (F1 f1') =
+  ((F1 f1') === (extractF1 (BottomLeftLine b1 f1))) 
+
+contains  (BottomLeftLine b1 f1) (B1 b1') =
+  ((B1 b1') === (extractB1 (BottomLeftLine b1 f1)))
+  
+contains  (BottomLeftLine b1 f1) (B4 b4) =
+  --There is no B4 in a BtmLeftLn, so make it a B1
+  ((B1 b4) === (extractB1 (BottomLeftLine b1 f1))) 
+
+contains  (LeftFace b1 b2 f1 f2) (FrontLeftLine f1' f2') =
+  ((FrontLeftLine f1' f2') === (extractFrontLeftLine (LeftFace b1 b2 f1 f2))) 
+    
+contains  (LeftFace b1 b2 f1 f2) (BackLeftLine b1' b2') =
+  ( (extractBackLeftLine $ LeftFace b1 b2 f1 f2) === (BackLeftLine b1' b2') )
+  
+contains (BottomRightLine b4 f4) (F4 f4') =
+  case f4 == f4' of
+    True -> Right True
+    False -> Right False
+
+contains (BottomRightLine b4 f4) (B4 b4') =
+  case b4 == b4' of
+    True -> Right True
+    False -> Right False
+
+contains (RightFace b3 b4 f3 f4) (FrontRightLine f3' f4') =
+  case (f3 == f3') && (f4 == f4') of
+    True -> Right True
+    False -> Right False
+
+contains (RightFace b3 b4 f3 f4) (BackRightLine b3' b4') =
+  case (b3 == b3') && (b4 == b4') of
+    True -> Right True
+    False -> Right False
+
+contains (RightFace b3 b4 f3 f4) (BackLeftLine b1 b2) =
+  case (b4 == b1) && (b3 == b2) of
+    True -> Right True
+    False -> Right False
+
+contains (RightFace b3 b4 f3 f4) (FrontLeftLine f1 f2) =
+  case (f4 == f1) && (f3 == f2) of
+    True -> Right True
+    False -> Right False
+
+--LeftFace and BackRightLine"
+contains  (LeftFace b1 b2 f1 f2) (BackRightLine b3 b4) =
+  case (b1 == b4) && (b2 == b3) of
+    True -> Right True
+    False -> Right False
+
+contains a b =
+  Left $ "CornerPoints.FaceExtraction.contains: illegal or unhandled pattern match for: " ++ (cpointType a) ++ " and " ++ (cpointType b)
+
+{-
 contains  (BottomLeftLine b1 f1) (F1 f1') =
   case ((F1 f1') == (extractF1 (BottomLeftLine b1 f1))) of
+    True -> Right True
+    False -> Right False
+
+contains  (BottomLeftLine b1 f1) (B1 b1') =
+  case ((B1 b1') == (extractB1 (BottomLeftLine b1 f1))) of
+    True -> Right True
+    False -> Right False
+
+contains  (BottomLeftLine b1 f1) (B4 b4) =
+  --There is no B4 in a BtmLeftLn, so make it a B1
+  case ((B1 b4) == (extractB1 (BottomLeftLine b1 f1))) of
     True -> Right True
     False -> Right False
 
@@ -142,5 +214,35 @@ contains  (LeftFace b1 b2 f1 f2) (BackLeftLine b1' b2') =
     True -> Right True
     False -> Right False 
 
-contains a b =
-  Left $ "CornerPoints.FaceExtraction.contains: illegal or unhandled pattern match for: " ++ (cpointType a) ++ " and " ++ (cpointType b)
+contains (BottomRightLine b4 f4) (F4 f4') =
+  case f4 == f4' of
+    True -> Right True
+    False -> Right False
+
+contains (BottomRightLine b4 f4) (B4 b4') =
+  case b4 == b4' of
+    True -> Right True
+    False -> Right False
+
+contains (RightFace b3 b4 f3 f4) (FrontRightLine f3' f4') =
+  case (f3 == f3') && (f4 == f4') of
+    True -> Right True
+    False -> Right False
+
+contains (RightFace b3 b4 f3 f4) (BackRightLine b3' b4') =
+  case (b3 == b3') && (b4 == b4') of
+    True -> Right True
+    False -> Right False
+
+contains (RightFace b3 b4 f3 f4) (BackLeftLine b1 b2) =
+  case (b4 == b1) && (b3 == b2) of
+    True -> Right True
+    False -> Right False
+
+-- RightFace and FrontLeftLine"
+contains (RightFace b3 b4 f3 f4) (FrontLeftLine f1 f2) =
+  case (f4 == f1) && (f3 == f2) of
+    True -> Right True
+    False -> Right False
+
+-}

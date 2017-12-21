@@ -286,6 +286,8 @@ The 1st parameter(raisee) is the Cpoint which will be raised.
 The 2nd param(raiser) is the Cpoint which is raising.
 So if raiser is a BottomLeftLine, it will raise the raiser to a BottomLeftLine.
 
+The logic is based on standard radial system of moving clockwise, eg: B4 +++> [B1,B1]
+
 Will return a Left is it is not a valid raise, such a raising a B1 to a CubePoints.
 -}
 raisedTo :: CornerPoints -> CornerPoints -> Either String CornerPoints
@@ -296,7 +298,20 @@ raisedTo (BackLeftLine b1' b2') ( LeftFace b1 b2 f1 f2) = Right $ LeftFace b1' b
 
 raisedTo (B1 b1') (BottomLeftLine b1 f1) = Right $ BottomLeftLine b1' f1
 
+raisedTo (B1 b1) (BottomRightLine b4 f4) = Right $ BottomLeftLine b1 f4
+
+raisedTo (B4 b4) (BottomLeftLine b1 f1) = Right $ BottomLeftLine b4 f1
+
 raisedTo (F1 f1') (BottomLeftLine b1 f1) = Right $ BottomLeftLine b1 f1'
+
+raisedTo (F1 f1) (BottomRightLine b4 f4) = Right $ BottomLeftLine b4 f1
+
+raisedTo (BackLeftLine b1 b2) (RightFace b3 b4 f3 f4) = Right $ LeftFace b1 b2 f4 f3
+                                                                        
+raisedTo (FrontLeftLine f1 f2) (RightFace b3 b4 f3 f4) = Right $ LeftFace b4 b3 f1 f2
+
+-- BackRightLine and LeftFace"
+raisedTo (BackRightLine b3 b4) ( LeftFace b1 b2 f1 f2) = Right $ LeftFace b4 b3 f1 f2
   
 raisedTo a b =
   Left $ "FaceConversions.raisedTo: illegal or missing pattern match for " ++ (cpointType a) ++ " and " ++ (cpointType b)

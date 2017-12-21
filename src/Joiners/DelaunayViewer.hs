@@ -17,7 +17,7 @@ import CornerPoints.Transpose(transposeZ)
 
 import Geometry.Angle(Angle(..))
 
-import Joiners.Delaunay(delaunay, delaunayA)
+import Joiners.Delaunay(delaunay, delaunayA, delaunayB)
 
 import Stl.StlBase(Triangle(..), newStlShape)
 import Stl.StlCornerPoints((|+++^|), Faces(..) )
@@ -81,7 +81,7 @@ bottomPointsBuilder = do
 
 
 
-  
+  {-
   --Use delaunay joiner to join the <innerBack/outerFront>Points into a [Bottom<Left/Right>Line]
   bottomLeftRightLines <- buildCubePointsListSingle "delaunay"
                 (delaunay
@@ -89,6 +89,12 @@ bottomPointsBuilder = do
                    innerBackBottomPoints
                    [] []
                 )
+  -}
+  --Use delaunayB joiner to join the <innerBack/outerFront>Points into a [Bottom<Left/Right>Line]
+  bottomLeftRightLines <- buildCubePointsListSingle "delaunay"
+                (delaunayB outerFrontBottomPoints [innerBackBottomPoints])
+
+  
   --create the [BottomFace] by: (head bottomLeftRightLines) +++> (tail bottomLeftRightLines)
   btmFaces <- buildCubePointsListSingle "btmFaces"
            ((head bottomLeftRightLines) +++> (tail bottomLeftRightLines)
@@ -133,16 +139,28 @@ frontBackFacesBuilder = do
   let
   {-----------------Build the 2 cylinders, and extract required bottom points to be joined as [BottomFace]-------------}
   --Create the inner cylinder which will supply the [B<1/4>] used to build the inner wall.
-  backFaces <- buildCubePointsListSingle "back faces"
+  backFaces1 <- buildCubePointsListSingle "back faces"
                             
                             (let
                                 --build the inner cylinder
                                angles = ([Angle a | a <- [0,5..360]] )
-                               cylinder' = cylinder [Radius 40 | r <- [1..]] [Radius 50 | r <- [1..]] angles (Point 0 0 0) 100
+                               cylinder' = cylinder [Radius 20 | r <- [1..]] [Radius 50 | r <- [1..]] angles (Point 0 (-20) 0) 100
                              in
                               --extract all the Back points. Note that 1st the first cube needs B4 and B1 extracted.
                               (extractBackRightLine $ head cylinder') : (map (extractBackLeftLine) cylinder')
                             )
+
+  backFaces2 <- buildCubePointsListSingle "back faces"
+                            
+                            (let
+                                --build the inner cylinder
+                               angles = ([Angle a | a <- [0,5..360]] )
+                               cylinder' = cylinder [Radius 15 | r <- [1..]] [Radius 50 | r <- [1..]] angles (Point 0 (20) 0) 100
+                             in
+                              --extract all the Back points. Note that 1st the first cube needs B4 and B1 extracted.
+                              (extractBackRightLine $ head cylinder') : (map (extractBackLeftLine) cylinder')
+                            )
+  
   
   --Create the outer cylinder which supplies the [F<1/4>] used to build the outer wall.
   frontFaces <- buildCubePointsListSingle "frontFaces"
@@ -162,20 +180,17 @@ frontBackFacesBuilder = do
   --Use delaunay joiner to join the <innerBack/outerFront>Points into a [Bottom<Left/Right>Line]
   frontBackFaces <- buildCubePointsListSingle "frontBackFaces"
               
-                (delaunayA
-                   frontFaces
-                   backFaces
-                   [] []
-                )
+                --(delaunayA frontFaces backFaces1 [] [])
+                (delaunayB frontFaces [backFaces1, backFaces2])
               
-  {-
+  
   --create the [BottomFace] by: (head bottomLeftRightLines) +++> (tail bottomLeftRightLines)
   cubes <- buildCubePointsListSingle "btmFaces"
            ((head frontBackFaces) +++> (tail frontBackFaces)
            )
 
   
-  -}
+  
   return frontBackFaces
 
 
@@ -204,3 +219,24 @@ showValFrontBackFacesBuilder = do
         (Left e) -> liftIO $ print $ e
         (Right a) -> do
           liftIO $ print $ show a
+
+{-
+ Joiners.Delaunay.removeIfUsed: did not find a used cpoint in inner/outer perimeters for: \n
+advancingCpoint:
+LeftFace {
+b1 = Point {x_axis = 3.4862297099063264, y_axis = -39.84778792366982, z_axis = 0.0},
+b2 = Point {x_axis = 3.4862297099063264, y_axis = -39.84778792366982, z_axis = 100.0},
+f1 = Point {x_axis = 0.0, y_axis = -80.0, z_axis = 0.0},
+f2 = Point {x_axis = 0.0, y_axis = -80.0, z_axis = 100.0}}\n
+
+outer cpoint:
+BackLeftLine {
+b1 = Point {x_axis = 3.4862297099063264, y_axis = -39.84778792366982, z_axis = 0.0},
+b2 = Point {x_axis = 3.4862297099063264, y_axis = -39.84778792366982, z_axis = 100.0}}\n
+
+inner cpoint:
+FrontLeftLine {
+f1 = Point {x_axis = 13.891854213354426, y_axis = -78.78462024097664, z_axis = 0.0},
+f2 = Point {x_axis = 13.891854213354426, y_axis = -78.78462024097664, z_axis = 100.0}}"
+
+-}

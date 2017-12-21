@@ -2,7 +2,7 @@
 module CornerPoints.Slope(addSlope) where
 
 import CornerPoints.CornerPoints(CornerPoints(..))
-import CornerPoints.Points(Point(..), calculateDistance, calculateXYDistance)
+import CornerPoints.Points(Point(..),)
 import CornerPoints.Radius(Radius(..))
 import CornerPoints.Create(adjustRadiusForSlope)
 
@@ -11,7 +11,7 @@ import Geometry.Angle(Angle(..), rotateAngle, getQuadrantAngle, RotateFactor(..)
 
 
 import Math.Trigonometry(sinDegrees, cosDegrees, coTanDegrees)
-import Math.Distance(Distance(..))
+import Math.Distance(Distance(..),  calculateDistance, calculateXYDistance)
 
 import Control.Lens
 

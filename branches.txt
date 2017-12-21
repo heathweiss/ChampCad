@@ -2,6 +2,6 @@ B: master
  B: delaunayApplicative
     -can't get Joiners.Deluanay.delaunayA to compile for applicative.
    B: delaunayApplicativeB
-      -get rid of Joiners.Deluanay:
-       -OrderCpoints, getAvgDistance, 
-      -use a list of [CornerPoints] for all inner cpoints
+      -created applicative version of Delaunay.
+      -Lots of changes so everthing is an Either.
+      -Can insert a single perimeter, but 2 gives bad stl.
