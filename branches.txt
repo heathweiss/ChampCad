@@ -1,3 +1,5 @@
 B: master
  B: delaunay
     -work on the deluanay joiner
+    B: maybePerim
+       -use Maybe perimeter lists
