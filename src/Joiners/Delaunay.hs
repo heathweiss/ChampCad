@@ -3,7 +3,7 @@
 Join together 2,3,or 4 [CornerPoints].
 Eg: cutting a cylinder out of a scanned tread.
 -}
-module Joiners.Delaunay(delaunay, delaunayA, delaunayB, removeIfUsed, ensureGoodHeadDistance, orderByDistance, removeOneOrBothIfUsed, extractI) where
+module Joiners.Delaunay(delaunay, delaunayA, delaunayB, removeIfUsed, ensureGoodHeadDistance, orderByDistance, extractI) where
 
 import Data.Typeable
 
@@ -42,57 +42,125 @@ delaunayB     [] _ =
 delaunayB      _ [] =
   [CornerPointsError "Joiners.Delaunay.delaunayB: empty inner [[CornerPoints]]"]
 
-delaunayB  (o:outerPerimeters) innerPerimeters =
+delaunayB  outerPerimeters innerPerimeters =
   
-  let 
-      --remove any [] from innerPerimeters
-      --order the inner perims lists by head distance from the advancing line
-      --For this first call, advancing line will be head of outer perims
-      orderedInnerPerims = orderByDistance (removeEmpty innerPerimeters) o
-      
-      advancingCpoint = ((\x -> o +++ (head $ head x))) <$> orderedInnerPerims
+  let --As this is the very 1st AdvancingCPoint, build it from head OuterPermiter, and the nearest head InnerPerimiter
+      initialAdvancingCpoint :: Maybe Perimeters -> Maybe Perimeters -> Either String AdvancingCPoint
+      initialAdvancingCpoint innerPerims outerPerims =
+        let
+          createCpoint :: Maybe Perimeters -> Maybe Perimeters  -> Either String AdvancingCPoint
+          createCpoint (Just(InnerPerimeters (i:is))) (Just (OuterPerimeter (o:os))) = Right $ AdvancingCPoint $ o +++ (head i)
+          createCpoint _ Nothing = Left "Joiners.Delaunay.deluanayB was given an empty outer perimeter"
+          createCpoint Nothing _ = Left "Joiners.Delaunay.deluanayB was given an empty inner perimeters"
+            
+        in
+        createCpoint  innerPerims outerPerims
 
-      --remove the used cpoint from the perims.
-      --todo: it should cx all cpoints in all perimeters.
-      innerOuterRemoved = extractE( removeOneOrBothIfUsed (o:outerPerimeters) <$> (fmap safeHead orderedInnerPerims) <*> advancingCpoint)
+      advancingCpoint :: Either String AdvancingCPoint
+      advancingCpoint = initialAdvancingCpoint
+                         (justifyPerimeters' $ InnerPerimeters $ removeEmpty innerPerimeters) --justifiedInnerPerims
+                         (justifyPerimeters' $ OuterPerimeter outerPerimeters) --justifiedOuterPerims
       
+      perimsWithAdvancingCpointBldrRemoved =
+                           extractE
+                             (innerOuterRemoved' <$>
+                                                 orderedInnerPerims'
+                                                   (justifyPerimeters' $ OuterPerimeter outerPerimeters)
+                                                   (justifyPerimeters' $ InnerPerimeters $ removeEmpty innerPerimeters) <*>  
+                                                 Right (justifyPerimeters' $ OuterPerimeter outerPerimeters) <*>
+                                                 advancingCpoint
+                             )
+
       
   in
   case delaunayB' <$> 
-        ( extractOuterPerimsWithAdvancingCpointRemoved <$> innerOuterRemoved ) <*>
-          --If used to build advancing cpoint, should have cpoint removed.
-        
-        --(extractInnerPerimsWithAdvancingCpointRemoved <$> innerOuterRemoved <*> fmap tail orderedInnerPerims ) <*>
-        (removeEmpty <$> (extractInnerPerimsWithAdvancingCpointRemoved <$> innerOuterRemoved <*> fmap safeTail orderedInnerPerims )) <*>
-        --If used to build advancing cpoint, should have cpoint removed.
-        --Why using fmap tail orderedInnerPerims. Because it appends the head that was used, onto the unused tail.
-        
+        (fst <$> perimsWithAdvancingCpointBldrRemoved) <*>
+        (snd <$> perimsWithAdvancingCpointBldrRemoved) <*>
         advancingCpoint <*>                             --The advancing Cpoint just created.
-        --appendAdvancingCpointToJoinedCpoints advancingCpoint  --joined cpoints with the advancing cpoint added to it.
-        (appendAdvancingCpointToJoinedCpoints <$> advancingCpoint <*> Right [])  --joined cpoints with the advancing cpoint added to it.
+        (appendAdvancingCpointToJoinedCpointsE <$> advancingCpoint <*> Right [])  --joined cpoints with the advancing cpoint added to it.
         
   of
     Left e -> [CornerPointsError $ "Joiners.DeluanayB(Left e): " ++  e]
     Right (Left e) -> [CornerPointsError $ "Joiners.DeluanayB(Righ(Left e)): " ++ e]
     Right (Right val) -> val
     
-  --[CornerPointsError "filler to compile"]
 
-delaunayB' ::  [CornerPoints] -> --outer perim cpoints with cpoint removed if used to create advancing cpoint.
-               [[CornerPoints]] -> -- inner cpoints with cpoint removed, if it was used to create advancing cpoint.
-               CornerPoints -> -- advancing cpoint. This has to be appended to joinedCpoints inside delaunayB'
+delaunayB' ::  --[CornerPoints] -> --outer perim cpoints with cpoint removed if used to create advancing cpoint.
+               Maybe Perimeters -> --inner
+               
+               
+               --[[CornerPoints]] -> -- inner cpoints with cpoint removed, if it was used to create advancing cpoint.
+               Maybe Perimeters -> --outer
+               
+               AdvancingCPoint -> -- advancing cpoint. This has to be appended to joinedCpoints inside delaunayB'
                [CornerPoints] ->   -- joinedCpoints. Should move this after advancing point.
                Either String [CornerPoints] -- joined cpoints or error
 
-delaunayB' (o:outerPerimeters) (i:innerPerimeters) advancingCpoint joinedCpoints =
-  let
-    orderedNonEmptyInnerPerimsE = orderByDistance (removeEmpty (i:innerPerimeters)) advancingCpoint
+delaunayB' Nothing Nothing _ joinedCpoints = Right $ reverse joinedCpoints
 
+delaunayB' innerPerimeters outerPerimeters  advancingCpoint joinedCpoints =
+  let
+    safeO :: Maybe Perimeters -> Maybe CornerPoints
+    safeO Nothing = Nothing
+    safeO (Just (OuterPerimeter outerPerimeter)) =
+      case (length outerPerimeter) == 0 of
+        True -> Nothing
+        False -> Just $ head outerPerimeter
+    --orderedNonEmptyInnerPerimsE = orderByDistance (removeEmpty (i:innerPerimeters)) advancingCpoint
+    orderedNonEmptyInnerPerimsE = orderByDistance innerPerimeters advancingCpoint
+    
     --need to: first cx for distance to decide if outer/inner perim point is used to build advancingCpointNewE
     --advancingCpointNewE = ((\x -> (head $ head x) `raisedTo` advancingCpoint )) <$> orderedNonEmptyInnerPerimsE
     advancingCpointNewE = newAdvancingCpointE <$>
-                           calculateDistanceA advancingCpoint o <*>
-                           (extractE ((\is ->  calculateDistanceA advancingCpoint $ head $ head is) <$> orderedNonEmptyInnerPerimsE)) <*>
+                           (calculateJustDistance advancingCpoint  orderedNonEmptyInnerPerimsE) <*>
+                           (calculateJustDistance advancingCpoint (Right outerPerimeters)) <*>
+                           (Right $ safeO outerPerimeters) <*>
+                           orderedNonEmptyInnerPerimsE <*>
+                           (Right advancingCpoint)
+                           
+    --advancingCpointNewE = advancingCpoint
+
+    
+    --remove the used cpoint from the perims.
+    --todo: it should cx all cpoints in all perimeters.
+    --innerOuterRemoved = extractE( removeOneOrBothIfUsed (o:outerPerimeters) <$> (fmap head orderedNonEmptyInnerPerimsE) <*> (extractE advancingCpointNewE))
+    --innerOuterRemoved = extractE (innerOuterRemoved' innerPerimeters outerPerimeters <$> extractE advancingCpointNewE )
+    innerOuterRemoved = extractE (innerOuterRemoved' <$> orderedNonEmptyInnerPerimsE <*> Right outerPerimeters <*> extractE advancingCpointNewE )
+  in
+    --Right [CornerPointsError "filler to compile"]
+    extractE
+    (delaunayB' <$> 
+        (fst <$> innerOuterRemoved ) <*>
+          --If used to build advancing cpoint, should have cpoint removed.
+        
+        --(extractInnerPerimsWithAdvancingCpointRemoved <$> innerOuterRemoved <*> fmap tail orderedNonEmptyInnerPerimsE ) <*>
+        --(removeEmpty <$> (extractInnerPerimsWithAdvancingCpointRemoved <$> innerOuterRemoved <*> fmap safeTail orderedNonEmptyInnerPerimsE )) <*>
+        (snd <$> innerOuterRemoved ) <*>
+        --If used to build advancing cpoint, should have cpoint removed.
+
+        
+        (extractE advancingCpointNewE) <*>                             --The advancing Cpoint just created.
+        (appendAdvancingCpointToJoinedCpointsE <$> (extractE advancingCpointNewE) <*> Right joinedCpoints)  --joined cpoints with the advancing cpoint added to it.
+    )
+        
+  
+
+--delaunayB' _ _ _  = Right [CornerPointsError "filler to compile"]
+{-
+--delaunayB' (o:outerPerimeters) (i:innerPerimeters) advancingCpoint joinedCpoints =
+delaunayB' (Just (o:outerPerimeters)) (Just(i:innerPerimeters)) advancingCpoint joinedCpoints =
+  let
+    --orderedNonEmptyInnerPerimsE = orderByDistance (removeEmpty (i:innerPerimeters)) advancingCpoint
+    orderedNonEmptyInnerPerimsE = orderByDistance (Just (i:innerPerimeters)) advancingCpoint
+
+    --need to: first cx for distance to decide if outer/inner perim point is used to build advancingCpointNewE
+    --advancingCpointNewE = ((\x -> (head $ head x) `raisedTo` advancingCpoint )) <$> orderedNonEmptyInnerPerimsE
+    advancingCpointNewE =
+      newAdvancingCpointE <$>
+                           --calculateDistanceA advancingCpoint o <*>
+                           calculateJustDistance advancingCpoint (Right $ Just (o:outerPerimeters)) <*>
+                           --(extractE ((\is ->  calculateDistanceA advancingCpoint $ head $ head is) <$> orderedNonEmptyInnerPerimsE)) <*>
+                           (extractE ((calculateJustDistance advancingCpoint)<$> orderedNonEmptyInnerPerimsE)) <*>
                            Right o <*>
                            orderedNonEmptyInnerPerimsE <*>
                            Right advancingCpoint
@@ -122,7 +190,8 @@ delaunayB' (o:outerPerimeters) (i:innerPerimeters) advancingCpoint joinedCpoints
         
   
 
-delaunayB' [] (i:innerPerimeters) advancingCpoint joinedCpoints =
+--delaunayB' [] (i:innerPerimeters) advancingCpoint joinedCpoints =
+delaunayB' Nothing (Just(i:innerPerimeters)) advancingCpoint joinedCpoints =
     let
     orderedNonEmptyInnerPerimsE = orderByDistance (removeEmpty (i:innerPerimeters)) advancingCpoint
 
@@ -162,7 +231,8 @@ delaunayB' [] (i:innerPerimeters) advancingCpoint joinedCpoints =
         (appendAdvancingCpointToJoinedCpoints <$> (extractE advancingCpointNewE) <*> Right joinedCpoints)  --joined cpoints with the advancing cpoint added to it.
     )
 
-delaunayB' (o:outerPerimeters) [] advancingCpoint joinedCpoints =
+--delaunayB' (o:outerPerimeters) [] advancingCpoint joinedCpoints =
+delaunayB' (Just(o:outerPerimeters)) Nothing advancingCpoint joinedCpoints =
     let
     --orderedNonEmptyInnerPerimsE = orderByDistance (removeEmpty (i:innerPerimeters)) advancingCpoint
     orderedNonEmptyInnerPerimsE = Right []
@@ -206,8 +276,9 @@ delaunayB' (o:outerPerimeters) [] advancingCpoint joinedCpoints =
 delaunayB' [] [] advancingCpoint joinedCpoints =
 -}
 
-delaunayB' [] [] _ joinedCpoints = Right $ reverse joinedCpoints
-
+--delaunayB' [] [] _ joinedCpoints = Right $ reverse joinedCpoints
+delaunayB' Nothing Nothing _ joinedCpoints = Right $ reverse joinedCpoints
+-}
 --extract the first cpoint from the first list of inner perims.
 --do i have enough patter matches. Could go with length checks
 --this could be in Helpers.List
@@ -220,20 +291,96 @@ extractI (x:xs) =
   case (length x) == 0 of
     True -> Left "Joiners.Delaunay.extractI: attempt to get i from [[]:xs]"
     False -> Right $ head x
-  
+
+orderedInnerPerims' :: Maybe Perimeters ->  Maybe Perimeters ->  Either String (Maybe Perimeters)
+orderedInnerPerims'     (Just (InnerPerimeters justifiedInnerPerims)) (Just (OuterPerimeter (o:outerPerims)))  =
+            orderByDistance (Just(InnerPerimeters justifiedInnerPerims)) (AdvancingCPoint o)
+orderedInnerPerims' Nothing _ = Left "Joiners.Delaunay.DelauanayB orderedInnerPerims has empty outer perims passed in"
+orderedInnerPerims' _ Nothing = Left "Joiners.Delaunay.DelauanayB orderedInnerPerims has empty inner perims passed in"
+
+
+        
 --extractI [(x:xs):ys] = Right x
 --extractI [(x:xs):[]] = Right x
-  
+data Perimeters =
+  OuterPerimeter {_outerPerimeter :: [CornerPoints]}
+  |
+  InnerPerimeters {_innerPerimeters :: [[CornerPoints]]}
+  |
+  InnerPerimeter {_innerPerimeter :: [CornerPoints]}
 
-newAdvancingCpointE :: DistanceA -> --from center of advancing cpoint to head of outer perims
-                            DistanceA -> --from center of advancing cpoint to head of head of orderedNonEmptyInnerPerims
-                            CornerPoints -> --The head $ outer perims
-                            [[CornerPoints]] -> --[[]] of all inner perimters
-                            CornerPoints -> --the current advancingCpoint, from which advancingCpointNew is build from.
-                            Either String CornerPoints
+data AdvancingCPoint =
+ AdvancingCPoint {_advancingCpoint :: CornerPoints}
+
+
+calculateJustDistance :: AdvancingCPoint -> Either String (Maybe Perimeters) -> Either String (Maybe DistanceA)
+calculateJustDistance _ (Left e) = Left e
+calculateJustDistance _ (Right Nothing) = Right Nothing
+--calculateJustDistance advancingCpoint' (Right (Just (InnerPerimeters innerPerims))) = Right $ Just $  calculateDistanceA advancingCpoint' $ head $ head innerPerims
+calculateJustDistance (AdvancingCPoint advancingCpoint) (Right (Just (InnerPerimeters (innerPerim:innerPerims)))) =
+  case calculateDistanceA advancingCpoint $ head innerPerim of
+    Left e -> Left e
+    Right distanceA -> Right $ Just distanceA
+--calculateJustDistance advancingCpoint' (Right (Just (OuterPerimeter outerPerim))) = Right $ Just $  calculateDistanceA advancingCpoint' $ head outerPerim
+calculateJustDistance (AdvancingCPoint advancingCpoint) (Right (Just (OuterPerimeter outerPerim))) =
+  case calculateDistanceA advancingCpoint $ head outerPerim of
+    Left e -> Left e
+    Right distanceA -> Right $ Just distanceA
+
+{-
+calculateJustDistance :: CornerPoints -> Either String (Maybe [[CornerPoints]]) -> Either String (Maybe [[CornerPoints]])
+calculateJustDistance advancingCpoint' (Left e) = Left e
+calculateJustDistance advancingCpoint' (Right Nothing) = Right Nothing
+calculateJustDistance advancingCpoint' (Right (Just innerPerims)) = Right $ Just $  calculateDistanceA advancingCpoint' $ head $ head innerPerims
+-}
+
+newAdvancingCpointE :: Maybe DistanceA -> --from center of advancing cpoint to head of innerPerim
+                       Maybe DistanceA -> --from center of advancing cpoint to outerPerim
+                       Maybe CornerPoints -> --The head $ outer perims
+                       Maybe Perimeters -> --[[]] of all inner perimters
+                       AdvancingCPoint -> --the current advancingCpoint, from which advancingCpointNew is build from.
+                       Either String AdvancingCPoint
                             --Right: the new advancing cpoint build from advancingCpoint and closes perim cpoint
                             --Left: the eror
-newAdvancingCpointE outerDistance innerDistance outerCpoint innerPerimeters advancingCpoint =
+newAdvancingCpointE (Just innerDistance) (Just outerDistance)  (Just outerCpoint) (Just(InnerPerimeter innerPerimeter)) (AdvancingCPoint advancingCpoint) =
+      case outerDistance <= innerDistance of
+        True ->
+          case outerCpoint `raisedTo` advancingCpoint of
+            Left e -> Left e
+            Right cpoint -> Right $ AdvancingCPoint cpoint
+        False ->
+          case (head innerPerimeter) `raisedTo` advancingCpoint of
+            Left e -> Left e
+            Right cpoint -> Right $ AdvancingCPoint cpoint
+--should not need
+--newAdvancingCpointE _ (Just outerDistance)  Nothing _  advancingCpoint =
+  --Left "Joiners.Delaunay.newAdvancingCpointE shows an outer distance, but there is no outer cpoint"
+
+--should not need
+--newAdvancingCpointE _ (Just innerDistance) _ Nothing advancingCpoint =
+--  Left "Joiners.Delaunay.newAdvancingCpointE shows an inner distance, but there are no innerPerimeters"
+      
+newAdvancingCpointE (Just innerDistance) Nothing  _ (Just(InnerPerimeter innerPerimeter)) (AdvancingCPoint advancingCpoint) =
+  case (head innerPerimeter) `raisedTo` advancingCpoint of
+    Left e -> Left e
+    Right cpoint -> Right $ AdvancingCPoint cpoint
+
+newAdvancingCpointE  Nothing (Just outerDistance) (Just outerCpoint) _ (AdvancingCPoint advancingCpoint) =
+  case outerCpoint `raisedTo` advancingCpoint of
+    Left e -> Left e
+    Right cpoint -> Right $ AdvancingCPoint cpoint
+ 
+{-
+newAdvancingCpointE :: Maybe DistanceA -> --from center of advancing cpoint to head of outer perims
+                       Maybe DistanceA -> --from center of advancing cpoint to head of head of orderedNonEmptyInnerPerims
+                       Maybe CornerPoints -> --The head $ outer perims
+                       --Maybe [[CornerPoints]] -> --[[]] of all inner perimters
+                       Maybe Perimeters -> --[[]] of all inner perimters
+                       CornerPoints -> --the current advancingCpoint, from which advancingCpointNew is build from.
+                       Either String CornerPoints
+                            --Right: the new advancing cpoint build from advancingCpoint and closes perim cpoint
+                            --Left: the eror
+newAdvancingCpointE (Just outerDistance) (Just innerDistance) (Just outerCpoint) (Just (InnerPerimeters innerPerimeters)) advancingCpoint =
       case outerDistance <= innerDistance of
         True -> outerCpoint `raisedTo` advancingCpoint
         --False -> extractE (((\i' advancingCpoint' -> (head $ head i') `raisedTo` advancingCpoint' )) <$> orderedNonEmptyInnerPerimsE <*> Right advancingCpoint)
@@ -246,89 +393,179 @@ newAdvancingCpointE outerDistance innerDistance outerCpoint innerPerimeters adva
         Right False -> (fmap (head $ head) orderedNonEmptyInnerPerimsE)
      -}
 
+newAdvancingCpointE (Just outerDistance) _ Nothing _  advancingCpoint =
+  Left "Joiners.Delaunay.newAdvancingCpointE shows an outer distance, but there is no outer cpoint"
 
+newAdvancingCpointE _ (Just innerDistance) _ Nothing advancingCpoint =
+  Left "Joiners.Delaunay.newAdvancingCpointE shows an inner distance, but there are no innerPerimeters"
+      
+newAdvancingCpointE (Nothing) (Just innerDistance) _ (Just(InnerPerimeters innerPerimeters)) advancingCpoint =
+  (head $ head innerPerimeters) `raisedTo` advancingCpoint 
+
+newAdvancingCpointE (Just outerDistance) Nothing (Just outerCpoint) _ advancingCpoint =
+  outerCpoint `raisedTo` advancingCpoint
+
+
+-}
+--version used prior to delaunayB
 appendAdvancingCpointToJoinedCpoints advancingCpoint joinedCpoints = advancingCpoint : joinedCpoints
+
+--version used in delaunayB
+appendAdvancingCpointToJoinedCpointsE :: AdvancingCPoint -> [CornerPoints] -> [CornerPoints]
+appendAdvancingCpointToJoinedCpointsE (AdvancingCPoint advancingCpoint) joinedCpoints = advancingCpoint : joinedCpoints
 
 --extract the outer perimeters from the innerOuterRemoved 
 extractOuterPerimsWithAdvancingCpointRemoved (inner,outer) = outer -- [[CornerPointsError "inner perims with used cpoint removed filler"]]
 
 ----extract the inner perimeters from the innerOuterRemoved. Then append them back onto $ tail orderedInnerPerims 
+extractInnerPerimsWithAdvancingCpointRemoved :: ((Maybe [CornerPoints]), a) -> Maybe [[CornerPoints]] -> Maybe [[CornerPoints]] 
+extractInnerPerimsWithAdvancingCpointRemoved ((Just inner, _)) (Just innerPerimsTail) = Just $ inner : innerPerimsTail -- [[CornerPointsError "inner perims with used cpoint removed filler"]]
+extractInnerPerimsWithAdvancingCpointRemoved ((Nothing), _) (Just innerPerimsTail) = Just innerPerimsTail
+extractInnerPerimsWithAdvancingCpointRemoved ((Nothing), _) (Nothing) = Nothing
+      --extractInnerPerimsWithAdvancingCpointRemoved (Left e) _ = Left e
+
+{-
 extractInnerPerimsWithAdvancingCpointRemoved :: ([CornerPoints],[CornerPoints]) -> [[CornerPoints]] -> [[CornerPoints]] 
 extractInnerPerimsWithAdvancingCpointRemoved (inner,outer) innerPerimsTail = inner : innerPerimsTail -- [[CornerPointsError "inner perims with used cpoint removed filler"]]
       --extractInnerPerimsWithAdvancingCpointRemoved (Left e) _ = Left e
+-}
 
---remove the head cpoint if used in the advancing line.
-  --can be 1 or both lists
---ensures that at least 1 is removed
---error if none are removed
-removeOneOrBothIfUsed :: [CornerPoints] -> --the outer list
-                         [CornerPoints] -> --the inner list
-                         CornerPoints ->   --advancing cpoint
-                         Either String ([CornerPoints],[CornerPoints]) --the 2 lists, one with a cpoint removed
-                         --left if no cpoints, or 2 cpoints removed
-removeOneOrBothIfUsed (o:outerCpoints) (i:innerCpoints) advancingPoint =
+headOfOrderedInnerPerims :: Maybe Perimeters  -> Maybe Perimeters
+headOfOrderedInnerPerims (Just (InnerPerimeters(x:xs))) = Just $ InnerPerimeter x
+headOfOrderedInnerPerims (Nothing) = Nothing
+
+
+innerOuterRemoved' :: (Maybe Perimeters) -> (Maybe Perimeters) -> AdvancingCPoint -> Either String ((Maybe Perimeters),(Maybe Perimeters))
+innerOuterRemoved' (Just (InnerPerimeters(innerPerimeter:innerPerimeters))) (Just (OuterPerimeter (o:outerPerimeter ))) advancingCpoint =
   let
-    process :: Bool -> --outer perims
+    --remove the head cpoint if used in the advancing line.
+    --can be 1 or both lists
+    --ensures that at least 1 is removed
+    --error if none are removed
+    removeOneOrBothIfUsed :: Maybe Perimeters -> --inner perims
+                         Maybe Perimeters -> --outer perims
+                         AdvancingCPoint ->   --advancing cpoint
+                         Either String ((Maybe Perimeters),(Maybe Perimeters))
+                         --left if no cpoints, or 2 cpoints removed
+    removeOneOrBothIfUsed  (Just (InnerPerimeter(i:innerPerimeter))) (Just (OuterPerimeter(o:outerPerimeter))) (AdvancingCPoint advancingPoint) =
+     let
+      
+      
+      process :: Bool -> --outer perims
                Bool -> --inner perims
-               Either String ([CornerPoints],[CornerPoints]) --the inner list
+               --Either String ([CornerPoints],[CornerPoints]) --the inner list
+               Either String ((Maybe Perimeters),(Maybe Perimeters))
                
-    process True True =
-      Right (outerCpoints, innerCpoints)
-    process True False =
-      Right (outerCpoints, i:innerCpoints)
-    process False True =
-      Right (o:outerCpoints, innerCpoints)
-    process False False =
-      Left $ "Joiners.Delaunay.removeIfUsed: did not find a used cpoint in inner/outer perimeters for: \n advancingCpoint: " ++
+      process True True =
+       --Right (justifyPerimeters outerPerimeter, justifyPerimeters innerPerimeter)
+       Right (justifyPerimeters' $ InnerPerimeter innerPerimeter, justifyPerimeters' $ OuterPerimeter outerPerimeter)
+      
+      process True False =
+       --Right (justifyPerimeters outerPerimeter, justifyPerimeters $ i:innerPerimeter)
+       Right (justifyPerimeters' $ InnerPerimeter $ i:innerPerimeter, justifyPerimeters' $ OuterPerimeter outerPerimeter)
+      
+      process False True =
+       --Right (justifyPerimeters $ o:outerPerimeter, justifyPerimeters innerPerimeter)
+       Right (justifyPerimeters' $ InnerPerimeter innerPerimeter , justifyPerimeters' $ OuterPerimeter $ o:outerPerimeter)
+      
+      process False False =
+       Left $ "Joiners.Delaunay.removeIfUsed: did not find a used cpoint in inner/outer perimeters for: \n advancingCpoint: " ++
              (show advancingPoint) ++
              "\n outer cpoint: " ++ (show o) ++
              "\n inner cpoint: " ++ (show i)
       
-  in
-    case process <$>  advancingPoint `contains` o <*> advancingPoint `contains` i of
+     in
+     case process <$>   advancingPoint `contains` i <*> advancingPoint `contains` o  of
       Right (Left e) -> Left e
+      --Right (Right val) -> Right val
       Right val -> val
-      Right (Right val) -> Right val
       Left e -> Left $ "Joiners.Delaunay.removeIfUsed: threw error from 'contains': " ++ e
-
-removeOneOrBothIfUsed (o:outerCpoints) [] advancingPoint =
-  let
-    process :: Bool -> --outer perims
-               Either String ([CornerPoints],[CornerPoints]) --the inner list
-               
-    process True =
-      Right (outerCpoints, [])
-    process False  =
-      Left $ "Joiners.Delaunay.removeIfUsed: did not find a used cpoint in outer perimeters for: " ++ (show advancingPoint) ++ " containing " ++ (show o)
     
-      
-      
-  in
-    case process <$>  advancingPoint `contains` o  of
-      Right (Left e) -> Left e
-      Right val -> val
-      Left e -> Left $ "Joiners.Delaunay.removeIfUsed: threw error from 'contains': " ++ e
-
-removeOneOrBothIfUsed [] (i:innerCpoints) advancingPoint =
-  let
-    process :: Bool -> --outer perims
-               Either String ([CornerPoints],[CornerPoints]) --the inner list
+    removeOneOrBothIfUsed Nothing (Just (OuterPerimeter(o:outerPerimeter)))  (AdvancingCPoint advancingPoint) =
+     let
+      process :: Bool -> --outer perims
+               --Either String ([CornerPoints],[CornerPoints]) --the inner list
+               Either String (Maybe Perimeters,Maybe Perimeters) --the inner list
                
-    process True =
-      Right ([], innerCpoints)
-    process False  =
-      Left $ "Joiners.Delaunay.removeIfUsed: did not find a used cpoint in inner perimeters for: " ++ (show advancingPoint) ++ " containing " ++ (show i)
-    
+      process True =
+       --Right (outerCpoints, []) justifyPerimeters
+       Right (Nothing, justifyPerimeters' $  OuterPerimeter outerPerimeter)
+      process False  =
+       Left $ "Joiners.Delaunay.removeIfUsed: did not find a used cpoint in outer perimeters for: " ++ (show advancingPoint) ++ " containing " ++ (show o)
       
       
-  in
-    case process <$>  advancingPoint `contains` i  of
+      
+     in
+     case process <$>  advancingPoint `contains` o  of
       Right (Left e) -> Left e
       Right val -> val
       Left e -> Left $ "Joiners.Delaunay.removeIfUsed: threw error from 'contains': " ++ e
+    
+    removeOneOrBothIfUsed (Just (InnerPerimeter(i:innerPerimeter))) Nothing  (AdvancingCPoint advancingPoint) =
+     let
+      process :: Bool -> --outer perims
+               --Either String ([CornerPoints],[CornerPoints]) --the inner list
+               Either String (Maybe Perimeters,Maybe Perimeters) --the inner list
+               
+      process True =
+       --Right ([], innerCpoints)
+       Right (Nothing, justifyPerimeters' $ InnerPerimeter innerPerimeter)
+      process False  =
+       Left $ "Joiners.Delaunay.removeIfUsed: did not find a used cpoint in inner perimeters for: " ++ (show advancingPoint) ++ " containing " ++ (show i)
+      
+      
+      
+     in
+     case process <$>  advancingPoint `contains` i  of
+      Right (Left e) -> Left e
+      Right val -> val
+      Left e -> Left $ "Joiners.Delaunay.removeIfUsed: threw error from 'contains': " ++ e
+    
+    removeOneOrBothIfUsed Nothing Nothing _ =
+     Right (Nothing, Nothing)
+  
+  
+  in
+        case (removeOneOrBothIfUsed (Just (InnerPerimeters(innerPerimeter:innerPerimeters))) (Just (OuterPerimeter (o:outerPerimeter ))) advancingCpoint) of
+          Left e -> Left e
+          --Right (Left e) -> Left e
+          (Right (outerPerimeter,Just (InnerPerimeter innerPerimeter))) ->
+            Right (outerPerimeter,(Just $ InnerPerimeters (innerPerimeter : innerPerimeters)))
+          (Right (outerPerimeter,Nothing)) ->
+            (Right (outerPerimeter,Nothing))
 
-removeOneOrBothIfUsed [] [] _ =
-  Right ([], [])
+{-
+innerOuterRemoved' :: (Maybe Perimeters) -> (Maybe Perimeters) -> AdvancingCPoint -> Either String ((Maybe Perimeters),(Maybe Perimeters))
+innerOuterRemoved' (Just (InnerPerimeters(innerPerimeter:innerPerimeters))) (Just (OuterPerimeter (o:outerPerimeter ))) advancingCpoint =
+        case (removeOneOrBothIfUsed (Just (InnerPerimeters(innerPerimeter:innerPerimeters))) (Just (OuterPerimeter (o:outerPerimeter ))) advancingCpoint) of
+          Left e -> Left e
+          --Right (Left e) -> Left e
+          (Right (outerPerimeter,Just (InnerPerimeter innerPerimeter))) ->
+            Right (outerPerimeter,(Just $ InnerPerimeters (innerPerimeter : innerPerimeters)))
+          (Right (outerPerimeter,Nothing)) ->
+            (Right (outerPerimeter,Nothing))
+-}
+
+justifyPerimeters :: [a] -> Maybe [a]
+justifyPerimeters list =
+  case (length list) == 0 of
+    True -> Nothing
+    False -> Just list
+
+justifyPerimeters' :: Perimeters -> Maybe Perimeters
+justifyPerimeters' (OuterPerimeter outerPerimeter) =
+      case (length outerPerimeter) == 0 of
+        True -> Nothing
+        False -> Just $ OuterPerimeter outerPerimeter
+justifyPerimeters' (InnerPerimeter innerPerimeter) =
+      case (length innerPerimeter) == 0 of
+        True -> Nothing
+        False -> Just $ InnerPerimeter innerPerimeter
+justifyPerimeters' (InnerPerimeters innerPerimeters) =
+      case (length innerPerimeters) == 0 of
+        True -> Nothing
+        False -> Just $ InnerPerimeters innerPerimeters
+        
       
 -- |
 -- Make sure that all the inner perimters will have a valid DistanceA from the advancing cpoints calc' from outer perim cpoints and head of each [inner perims] .
@@ -358,25 +595,62 @@ ensureGoodHeadDistance  [] cleanedPerimeters _ =
 
 -- | Order the innerPermiters by distance to the advancing Cpoint
       
-orderByDistance :: [[CornerPoints]] -> -- [[good inner perim distance CornerPoints]]. 
-                    CornerPoints ->    -- The outer perim cpoint
-                    Either String [[CornerPoints]]    -- [[good inner perim distance CornerPoints]] ordered by distance to advancing line
-
-orderByDistance  [] _ =
+orderByDistance ::  Maybe Perimeters ->
+                    AdvancingCPoint ->    -- The outer perim cpoint
+                    Either String (Maybe Perimeters)    -- [[good inner perim distance CornerPoints]] ordered by distance to advancing line
+{-
+orderByDistance  Nothing _ =
   --Left $ "Joiners.Deluanay.orderByDistance: empty [[inner perimeters]] passed in"
-  Right []
+  Right Nothing
+-}
+orderByDistance  (Just(InnerPerimeters innerPerimeters)) (AdvancingCPoint distanceFromThisCpoint) = 
+     let sorter innerPerimeter =
+          calculateDistanceA <$>
+              (head innerPerimeter) `raisedTo` ((head innerPerimeter) +++ distanceFromThisCpoint) <*> Right (head innerPerimeter)
+     in
+     --Right $ sortOn (sorter) innerPerimeters
+     case (length $ removeEmpty innerPerimeters) == 0 of
+       True -> Right Nothing
+       False ->
+         case (sortOn sorter <$>  Right innerPerimeters) of
+           Left e -> Left e
+           Right val -> Right $ Just $ InnerPerimeters val 
+
+orderByDistance Nothing _ = Right Nothing
+orderByDistance  (Just(InnerPerimeter _)) _ = Left "Deluanay.orderByDistance only works on InnerPerimeters but had an InnerPerimeter passed in "
+orderByDistance  (Just(OuterPerimeter _)) _ = Left "Deluanay.orderByDistance only works on InnerPerimeters but had an OuterPerimeter passed in " 
+{-
+orderByDistance :: --[[CornerPoints]] -> -- [[good inner perim distance CornerPoints]].
+                    Maybe [[CornerPoints]] ->
+                    CornerPoints ->    -- The outer perim cpoint
+                    --Either String [[CornerPoints]]    -- [[good inner perim distance CornerPoints]] ordered by distance to advancing line
+                    Either String (Maybe [[CornerPoints]])    -- [[good inner perim distance CornerPoints]] ordered by distance to advancing line
+
+orderByDistance  Nothing _ =
+  --Left $ "Joiners.Deluanay.orderByDistance: empty [[inner perimeters]] passed in"
+  Right Nothing
   
+orderByDistance  (Just innerPerimeters) outerPerimCpoint = 
+     let sorter j =
+          calculateDistanceA <$>
+              (head j) `raisedTo` ((head j) +++ outerPerimCpoint) <*> Right (head j)
+     in
+     --Right $ sortOn (sorter) innerPerimeters
+     Just (sortOn sorter <$>  Right innerPerimeters)
+
+-}
+
+{-
 orderByDistance  (innerPerimeters) outerPerimCpoint = 
      let sorter j =
           calculateDistanceA <$>
               (head j) `raisedTo` ((head j) +++ outerPerimCpoint) <*> Right (head j)
-          
-           
      in
      --Right $ sortOn (sorter) innerPerimeters
      (sortOn sorter <$>  Right innerPerimeters)
+-}
 
-{-keep this orig until tested.
+{-keep this orig until tested as it no longer used the DistanceA 100000000.0
 orderByDistance  (innerPerimeters) outerPerimCpoint = 
      let sorter j =
           case calculateDistanceA <$>

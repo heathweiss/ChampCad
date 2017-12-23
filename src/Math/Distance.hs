@@ -1,5 +1,5 @@
 module Math.Distance(Distance(..), Distant, calculateDistance, getOrdering, fromDistance, calculateXYDistance,
-                     DistanceA(..), DistantA, calculateDistanceA, getOrderingA, fromDistanceA, (<-||->), (<-|->), center, centerA) where
+                     DistanceA(..), DistantA, calculateDistanceA, getOrderingA, {-fromDistanceA,-} (<-||->), (<-|->), center, centerA) where
 
 import Math.Equal(equal)
 
@@ -44,10 +44,10 @@ getOrdering    (Distance d) (Distance d')
 data DistanceA =
   DistanceA {distance :: Double}
  deriving (Show, Ord)
-
+{-
 fromDistanceA :: DistanceA -> Double
 fromDistanceA (DistanceA d) = d
-
+-}
 
 instance Eq DistanceA where
     DistanceA d == DistanceA d'
@@ -59,6 +59,7 @@ instance Eq DistanceA where
 -- Currently used by CornerPoints and Points.
 class DistantA a where
   calculateDistanceA :: a -> a -> Either String DistanceA
+  
 
 -- | Compare 2 Distance for an Ordering base on underlying distance.
 getOrderingA :: DistanceA ->  DistanceA -> Ordering
@@ -101,7 +102,6 @@ instance DistantA CornerPoints where
   calculateDistanceA (BackLeftLine b1 b2) (RightFace b3 b4 f3 f4) =
     calculateDistanceA (RightFace b3 b4 f3 f4) (BackLeftLine b1 b2)
 
--- LeftFace and BackRightLine"
   calculateDistanceA (LeftFace b1 b2 f1 f2) (BackRightLine b3 b4) =
     extractE (calculateDistanceA <$> centerA (LeftFace b1 b2 f1 f2) <*> centerA (BackRightLine b3 b4))
   calculateDistanceA (BackRightLine b3 b4) (LeftFace b1 b2 f1 f2) =
@@ -143,7 +143,6 @@ instance DistantA CornerPoints where
   calculateDistanceA   (F1 f1') (BottomLeftLine b1 f1) =
     calculateDistanceA  (BottomLeftLine b1 f1) (F1 f1')
 
-  -- RightFace and BackRightLine
   calculateDistanceA (RightFace b3 b4 f3 f4) (BackRightLine b3' b4') =
     extractE (calculateDistanceA <$> centerA (RightFace b3 b4 f3 f4) <*> centerA (BackRightLine b3' b4'))
   calculateDistanceA (BackRightLine b3' b4') (RightFace b3 b4 f3 f4) =
@@ -151,7 +150,6 @@ instance DistantA CornerPoints where
   
   calculateDistanceA  cpoint1 cpoint2 =
     Left $ "CornerPoints.calculateDistanceA: missing pattern match for: " ++ (cpointType cpoint1) ++  " and "  ++ (cpointType cpoint2)
-
 
    
 -- | Given a 2 points, caluclate the distance between the points.
@@ -170,6 +168,21 @@ instance Distant Point where
         Distance $ sqrt (x**2 + y**2 + z**2)
 
 -- | Given a 2 points, caluclate the distance between the points.
+{-
+instance DistantA Point where
+  calculateDistanceA    point1   point2  =
+    let
+        distance :: Point -> Point -> Point
+        distance    (Point x y z)    (Point x1 y1 z1) =
+          --Point (abs $ x - x1) (abs $ y - y1) (abs $ z - z1)
+          Point (x - x1) (y - y1) (z - z1)
+        p = distance point1 point2
+        x = x_axis p
+        y = y_axis p
+        z = z_axis p
+    in 
+        Right $ Just $ DistanceA $ sqrt (x**2 + y**2 + z**2)
+-}
 instance DistantA Point where
   calculateDistanceA    point1   point2  =
     let
