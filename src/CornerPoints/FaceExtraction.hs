@@ -132,6 +132,37 @@ Joiners.Deluanay used it to join [CornerPoints]'s
 -}
 contains :: CornerPoints -> CornerPoints -> Either String Bool
 
+contains (F1 f1) (F1 f1') =
+  case f1 == f1' of
+    True -> Right True
+    False -> Right False
+
+contains (F4 f4) (F4 f4') =
+  case f4 == f4' of
+    True -> Right True
+    False -> Right False
+
+contains (F4 f4) (F1 f1) =
+  case f4 == f1 of
+    True -> Right True
+    False -> Right False
+
+contains (F1 f1) (F4 f4)  =
+  case f4 == f1 of
+    True -> Right True
+    False -> Right False
+
+contains (F1 f1) (B4 b4)  =
+  case b4 == f1 of
+    True -> Right True
+    False -> Right False
+
+contains (B4 b4) (F1 f1)   =
+  case b4 == f1 of
+    True -> Right True
+    False -> Right False
+
+    
 contains  (BottomLeftLine b1 f1) (F1 f1') =
   ((F1 f1') === (extractF1 (BottomLeftLine b1 f1))) 
 
