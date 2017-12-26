@@ -1,7 +1,6 @@
 B: master
  B: delaunay
     -work on the deluanay joiner
-    -now has maybe Perimeters
-    B: cleanup
-       -cleaned out the old delaunay and delaunayA
+    -has maybe Perimeters
+    -everthing is Either except for the return val of delaunay, which needs CornerPointsError to work with Builder.Monad
         
