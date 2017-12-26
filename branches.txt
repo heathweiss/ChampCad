@@ -3,4 +3,7 @@ B: master
     -work on the deluanay joiner
     -has maybe Perimeters
     -everthing is Either except for the return val of delaunay, which needs CornerPointsError to work with Builder.Monad
+    B: parameters
+       -make fx's such as createAdvancingCPoint and removeIfUsed be passed into delauany so it can be used as a framework for different fx's
+       -make a datatype for the joinedCpoints, so other things can be added for the new fx's to be passed in.
         
