@@ -1,6 +1,7 @@
 B: master
  B: delaunay
     -work on the deluanay joiner
-    B: maybePerim
-       -use Maybe perimeter lists
+    -now has maybe Perimeters
+    B: cleanup
+       -clean out the old delaunay and delaunayA
         
