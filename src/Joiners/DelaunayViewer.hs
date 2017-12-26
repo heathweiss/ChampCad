@@ -17,7 +17,7 @@ import CornerPoints.Transpose(transposeZ)
 
 import Geometry.Angle(Angle(..))
 
-import Joiners.Delaunay(delaunay, delaunayA, delaunayB)
+import Joiners.Delaunay({-delaunay, delaunayA,-} delaunayB)
 
 import Stl.StlBase(Triangle(..), newStlShape)
 import Stl.StlCornerPoints((|+++^|), Faces(..) )

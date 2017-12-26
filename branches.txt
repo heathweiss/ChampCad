@@ -3,5 +3,5 @@ B: master
     -work on the deluanay joiner
     -now has maybe Perimeters
     B: cleanup
-       -clean out the old delaunay and delaunayA
+       -cleaned out the old delaunay and delaunayA
         

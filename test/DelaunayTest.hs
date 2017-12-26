@@ -6,7 +6,7 @@ import CornerPoints.CornerPoints(CornerPoints(..), (+++), (+++>), (|+++|), Corne
                                 cornerPointsError, isCubePoints, isCubePointsList)
 import CornerPoints.Points (Point(..), )
 
-import Joiners.Delaunay(delaunay, delaunayB, removeIfUsed, ensureGoodHeadDistance, orderByDistance,
+import Joiners.Delaunay(delaunayB, orderByDistance,
                         removeAdvCPointFromIOPerims, extractI, Perimeters(..), AdvancingCPoint(..))
 
 import Math.Distance(center ,(<-|->), centerA)
@@ -18,10 +18,7 @@ delaunayTestDo = do
 
   putStrLn ""
   putStrLn "delaunayTestDo"
-  runTestTT removeIfUsedTest1
-  runTestTT ensureGoodHeadDistanceTest1
-  runTestTT ensureGoodHeadDistanceTest2
-
+  
   runTestTT extractITest1
   runTestTT extractITest2
   runTestTT extractITest3
@@ -62,24 +59,7 @@ rightFace =
        f3 = Point 0 (-1) 1,
        f4 = Point 0 (-1) 0
       }
--- ================================================= removeIfUsed ========================================
-removeIfUsedTest1 = TestCase $ assertEqual
-  "removeIfUsedTest1"
-   (Right [])
-   (let
-         f1 = Point 0 1 0
-         f2 = Point 0 1 1
-         b1 = Point 0 0 0
-         b2 = Point 0 0 1
-         frontLeftLine  = FrontLeftLine f1 f2
-         leftFace = LeftFace   b1 b2 f1 f2
-         
-    in
-    
-     removeIfUsed
-      [frontLeftLine]
-      leftFace
-   )
+
 
 -- ======================================== extractI tests =======================================
 
@@ -108,19 +88,6 @@ extractITest5 = TestCase $ assertEqual
   (Left "Joiners.Delaunay.extractI: attempt to get i from [[]:xs]")
    (extractI   [[],[]]) 
   
--- =====================================ensureGoodHeadDistance tests ===============================
-ensureGoodHeadDistanceTest1 = TestCase $ assertEqual
-  "ensureGoodHeadDistanceTest1"
-  (Left "FaceConversions.raisedTo: illegal or missing pattern match for F1 and FrontLeftLine" )
-   (ensureGoodHeadDistance  [[F1 $ Point 0 0 0]] [] (F2 $ Point 0 0 0))
-
--- ()
-
-ensureGoodHeadDistanceTest2 = TestCase $ assertEqual
-  "ensureGoodHeadDistanceTest2"
-   (Right [[B1 $ Point 0 0 0]])
-   (ensureGoodHeadDistance  [[B1 $ Point 0 0 0]]  [] (F1 (Point 0 0 0) ) )
-
 -- ---------------------------------------- orderByDistance tests ========================================
 
 
