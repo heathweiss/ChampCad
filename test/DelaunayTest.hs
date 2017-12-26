@@ -6,11 +6,13 @@ import CornerPoints.CornerPoints(CornerPoints(..), (+++), (+++>), (|+++|), Corne
                                 cornerPointsError, isCubePoints, isCubePointsList)
 import CornerPoints.Points (Point(..), )
 
-import Joiners.Delaunay(delaunay, delaunayB, removeIfUsed, ensureGoodHeadDistance, orderByDistance, removeOneOrBothIfUsed, extractI)
+import Joiners.Delaunay(delaunay, delaunayB, removeIfUsed, ensureGoodHeadDistance, orderByDistance,
+                        removeAdvCPointFromIOPerims, extractI, Perimeters(..), AdvancingCPoint(..))
 
 import Math.Distance(center ,(<-|->), centerA)
 
 import Helpers.List(removeEmpty, safeHead )
+import Helpers.Applicative(extractE)
 
 delaunayTestDo = do
 
@@ -28,6 +30,9 @@ delaunayTestDo = do
   
   runTestTT orderByDistanceTest1
   runTestTT orderByDistanceTest2
+  runTestTT orderByDistanceTest3
+  runTestTT orderByDistanceTest4
+  runTestTT orderByDistanceTest5
   runTestTT orderedInnerPerimsTest1
   runTestTT advancingCpointTest1
   runTestTT removeAdvancingCpointFromPerimsTest1
@@ -121,27 +126,42 @@ ensureGoodHeadDistanceTest2 = TestCase $ assertEqual
 
 orderByDistanceTest1 = TestCase $ assertEqual
   "orderByDistanceTest1"
-   (Right [[B1 $ Point 0 0 0], [B1 $ Point 0 0 10]])
-   (orderByDistance  [[B1 $ Point 0 0 10], [B1 $ Point 0 0 0]] (F1 (Point 10 0 0) ) )
+   (Right $ Just $ InnerPerimeters  [[B1 $ Point 0 0 0], [B1 $ Point 0 0 10]])
+   (orderByDistance (Just $ InnerPerimeters [[B1 $ Point 0 0 10], [B1 $ Point 0 0 0]]) (AdvancingCPoint (F1 (Point 10 0 0))) )
 
 orderByDistanceTest2 = TestCase $ assertEqual
   "orderByDistanceTest2"
-   (Right [[(B1 $ Point 0 0 0), (B1 $ Point 0 0 110)], [(B1 $ Point 0 0 10), (B1 $ Point 0 0 110)]])
-   (orderByDistance  [[(B1 $ Point 0 0 10), (B1 $ Point 0 0 110)], [(B1 $ Point 0 0 0), (B1 $ Point 0 0 110)]] (F1 (Point 10 0 0) ) )
+   (Right $ Just $ InnerPerimeters [[(B1 $ Point 0 0 0), (B1 $ Point 0 0 110)], [(B1 $ Point 0 0 10), (B1 $ Point 0 0 110)]])
+   (orderByDistance  (Just $ InnerPerimeters [[(B1 $ Point 0 0 10), (B1 $ Point 0 0 110)], [(B1 $ Point 0 0 0), (B1 $ Point 0 0 110)]]) (AdvancingCPoint (F1 (Point 10 0 0))) )
 
+orderByDistanceTest3 = TestCase $ assertEqual
+  "orderByDistanceTest3"
+   (Right Nothing)
+   (orderByDistance  (Just $ InnerPerimeters []) (AdvancingCPoint (F1 (Point 10 0 0))) )
 
+orderByDistanceTest4 = TestCase $ assertEqual
+  "orderByDistanceTest4"
+   (Right Nothing)
+   (orderByDistance  (Just $ InnerPerimeters [[]]) (AdvancingCPoint (F1 (Point 10 0 0))) )
+
+orderByDistanceTest5 = TestCase $ assertEqual
+  "orderByDistanceTest5"
+   (Right (Just (InnerPerimeters {_innerPerimeters = [[B1 {b1 = Point {x_axis = 0.0, y_axis = 0.0, z_axis = 10.0}},B1 {b1 = Point {x_axis = 0.0, y_axis = 0.0, z_axis = 110.0}}]]})))
+   (orderByDistance  (Just $ InnerPerimeters [[],[(B1 $ Point 0 0 10), (B1 $ Point 0 0 110)]]) (AdvancingCPoint (F1 (Point 10 0 0))) )
 
 ------------------- set points for delaunayB (and support fx's testing --------------------------------
-inner2 =
-  [B4 $ Point 0 4 1,
-   B1 $ Point 3 6 1
-  ]
 
-inner1 =
+
+inner1a =
   [B4 $ Point 0 (-7) 0,
    B1 $ Point 2 (-5) 0
   ]
 
+inner1b =
+  [B4 $ Point 0 4 1,
+   B1 $ Point 3 6 1
+  ]
+  
 outer1 =
   [F4 $ Point 0 (-19) 0,
    F1 $ Point 6 (-17) 0
@@ -152,8 +172,8 @@ outer1 =
 ------------------- delaunayB: from set points --------------------------------
 orderedInnerPerimsTest1 = TestCase $ assertEqual
   "orderedInnerPerimsTest1"
-   (Right [inner1, inner2])
-   (orderByDistance  [inner1, inner2] (head outer1 ) )
+   (Right $ Just $ InnerPerimeters [inner1a, inner1b])
+   (orderByDistance  (Just $ InnerPerimeters [inner1a, inner1b]) (AdvancingCPoint (head outer1)) )
 
 
 --build the initial advancingCpoint in delaunayB from:
@@ -163,15 +183,11 @@ advancingCpointTest1 = TestCase $ assertEqual
   "advancingCpointTest1"
    (Right $ BottomRightLine {f4=(Point 0 (-19) 0), b4=(Point 0 (-7) 0)})
    (let
-       orderedInnerPerims = orderByDistance  [inner1, inner2] (head outer1 )
+       orderedInnerPerims = orderByDistance (Just $ InnerPerimeters [inner1a, inner1b]) (AdvancingCPoint $ head outer1 )
        o = F4 $ Point 0 (-19) 0
     in
-      ((\x -> o +++ (head $ head x))) <$> orderedInnerPerims
+      ((\(Just (InnerPerimeters innerPerimeters)) -> o +++ (head $ head innerPerimeters))) <$> orderedInnerPerims
    )
-
-
-
-
 
 --build the initial advancingCpoint in delaunayB from:
   --head outer1Perims
@@ -179,83 +195,48 @@ advancingCpointTest1 = TestCase $ assertEqual
 --now remove the used cpoints from inner/outer lists
   --because this is initial call, there should be on removed from inner and outer perims
 removeAdvancingCpointFromPerimsTest1 = TestCase $ assertEqual
-  "removeAdvancingCpointFromPerimsTest1"
-  (Right
-   (
-    (tail outer1),
-    (tail inner1)
-   )
-  )
+  "can't remove advancingCpoint which does not exist in Perimeters"
+  (Left "Joiners.Delaunay.removeAdvCPointFromIOPerims head $ InnerPerimeters = [B4 {b4 = Point {x_axis = 0.0, y_axis = -7.0, z_axis = 0.0}},B1 {b1 = Point {x_axis = 2.0, y_axis = -5.0, z_axis = 0.0}}]:is did not remove the advancingCpoint because : Joiners.Delaunay.removeAdvCPointFromIOPerims InnerPerimeter = B4 {b4 = Point {x_axis = 0.0, y_axis = -7.0, z_axis = 0.0}}:is, OuterPerimeter = F4 {f4 = Point {x_axis = 0.0, y_axis = -19.0, z_axis = 0.0}}:os did not remove the advancingCpoint: F1 {f1 = Point {x_axis = 11.0, y_axis = 22.0, z_axis = 33.0}}because advancingCpoint because it was not contained in either one.")
+
+  
   (let
-      o = head outer1
-        --1st advancing line so we know it is head outer perimeters
-      orderedInnerPerims = orderByDistance (removeEmpty  [[], inner1, inner2]) o
+     advancingCpoint = AdvancingCPoint $ F1 $ Point 11 22 33 --a point that is not part of Perimeters
+      
+     orderedInnerPerims :: Either String (Maybe Perimeters)
+     orderedInnerPerims = Right (Just $ (InnerPerimeters [inner1a, inner1b]))
         --distance from o, as that is the initial advancing line.
-      advancingCpoint = ((\x -> o +++ (head $ head x))) <$> orderedInnerPerims
-        --the actual advancingCpoints calc'd by adding o to the nearest inner perim
       
    in
-     --because it is used applicatively, it will return a Right Right ...
-     case removeOneOrBothIfUsed outer1 <$> (fmap (head) orderedInnerPerims) <*> advancingCpoint of
-       Left e -> Left e
-       Right (Right val) -> Right val
-       Right (Left e) -> Left e
-       --Right val -> Right val
-     
+      extractE (removeAdvCPointFromIOPerims <$> orderedInnerPerims <*>  (Right (Just (OuterPerimeter outer1))) <*> Right advancingCpoint)
   )
 
---give an advancingCpoint that should be in outer perims, while inner perims is []
---now remove the used cpoints from outer list
+--do an orderByDistance on (Just $ InnerPerimeters [])
+--now try to remove the advancingCpoint from outer list, where it does not exist.
 removeAdvancingCpointFromPerimsTest2 = TestCase $ assertEqual
   "removeAdvancingCpointFromPerimsTest2"
-  (Right
-   (
-    (tail outer1),
-    ([])
-   )
-  )
+  (Left "Joiners.Delaunay.removeAdvCPointFromIOPerims: InnerPerimter = Nothing, OuterPermeter = F1 {f1 = Point {x_axis = 6.0, y_axis = -17.0, z_axis = 0.0}} :os did not remove advancingCpoint: F4 {f4 = Point {x_axis = 0.0, y_axis = -19.0, z_axis = 0.0}} because it was not contained in o ")
   (let
-      o = head outer1
-        --1st advancing line so we know it is head outer perimeters
-      orderedInnerPerims = orderByDistance ([]) o
-      advancingCpoint = Right $ BottomRightLine {f4=Point 0 (-19) 0, b4=Point 0 0 0} 
-        --should contain o  
-      
+      orderedInnerPerims = orderByDistance (Just $ InnerPerimeters []) advancingCpoint
+      advancingCpoint = AdvancingCPoint $ head outer1
    in
-     --because it is used applicatively, it will return a Right Right ...
-     case removeOneOrBothIfUsed outer1 <$> (fmap (safeHead) orderedInnerPerims) <*> advancingCpoint of
-       Left e -> Left e
-       Right (Right val) -> Right val
-       Right (Left e) -> Left e
+      extractE (removeAdvCPointFromIOPerims  <$> orderedInnerPerims <*> Right(Just(OuterPerimeter $ tail outer1))  <*> Right advancingCpoint)
   )
 
---give an advancingCpoint that is not in outer perims, while inner perims is []
---now attemp to remove the used cpoints from outer list
+--give an advancingCpoint that is in outerPerimemeter, while inner perims is []
+--now remove the used cpoints from outerPerimeter
 removeAdvancingCpointFromPerimsTest3 = TestCase $ assertEqual
   "removeAdvancingCpointFromPerimsTest3"
-  (Left "Joiners.Delaunay.removeIfUsed: did not find a used cpoint in outer perimeters for: BottomRightLine {b4 = Point {x_axis = 0.0, y_axis = 0.0, z_axis = 0.0}, f4 = Point {x_axis = 0.0, y_axis = -19999.0, z_axis = 0.0}} containing F4 {f4 = Point {x_axis = 0.0, y_axis = -19.0, z_axis = 0.0}}"
-  )
+  (Right (Nothing,Just (OuterPerimeter {_outerPerimeter = [F1 {f1 = Point {x_axis = 6.0, y_axis = -17.0, z_axis = 0.0}}]})))
   (let
-      o = head outer1
+      advancingCpoint = AdvancingCPoint $ head outer1
         --1st advancing line so we know it is head outer perimeters
-      orderedInnerPerims = orderByDistance ([]) o
-        --distance from o, as that is the initial advancing line.
-      --advancingCpoint = ((\x -> o +++ (head $ head x))) <$> orderedInnerPerims
-      --F4 {f4 = Point {x_axis = 0.0, y_axis = -19.0, z_axis = 0.0}}
-      advancingCpoint = Right $ BottomRightLine {f4=Point 0 (-19999) 0, b4=Point 0 0 0} 
-        --just a filler, as there will be no innerPerims to remove it from.
-      
-        --the actual advancingCpoints calc'd by adding o to the nearest inner perim
+      orderedInnerPerims = orderByDistance (Just $ InnerPerimeters []) advancingCpoint
       
    in
      --because it is used applicatively, it will return a Right Right ...
-     case removeOneOrBothIfUsed outer1 <$> (fmap (safeHead) orderedInnerPerims) <*> advancingCpoint of
-       Left e -> Left e
-       Right (Right val) -> Right val
-       Right (Left e) -> Left e
-       --Right val -> Right val
-     
+     extractE (removeAdvCPointFromIOPerims  <$> orderedInnerPerims <*> Right (Just $ OuterPerimeter outer1) <*> Right advancingCpoint) 
   )
+
 
 --give an advancingCpoint that should be in inner perims, while outer perims is []
 --now remove the used cpoints from outer list
@@ -263,30 +244,27 @@ removeAdvancingCpointFromPerimsTest4 = TestCase $ assertEqual
   "removeAdvancingCpointFromPerimsTest4"
   (Right
    (
-    [],tail inner1
+    Just $ InnerPerimeters [tail inner1a, inner1b],
+    Nothing
    )
   )
   (let
-      o = head outer1
+      o = AdvancingCPoint $ head outer1
         --1st advancing line so we know it is head outer perimeters
-      orderedInnerPerims = orderByDistance ([inner1, inner2]) o
+      orderedInnerPerims = orderByDistance (Just $ InnerPerimeters [inner1a, inner1b]) o
       --B4 {b4 = Point {x_axis = 0.0, y_axis = -7.0, z_axis = 0.0}}
-      advancingCpoint = Right $ BottomRightLine {f4=Point 0 (-19) 0, b4=Point 0 (-7) 0} 
+      advancingCpoint = AdvancingCPoint $ BottomRightLine {f4=Point 0 (-19) 0, b4=Point 0 (-7) 0} 
         --should contain o  
       
    in
-     --because it is used applicatively, it will return a Right Right ...
-     case removeOneOrBothIfUsed [] <$> (fmap (safeHead) orderedInnerPerims) <*> advancingCpoint of
-       Left e -> Left e
-       Right (Right val) -> Right val
-       Right (Left e) -> Left e
+     extractE (removeAdvCPointFromIOPerims <$> orderedInnerPerims <*> Right Nothing <*> Right advancingCpoint)
   )
 
 outer2 = outer1 ++ [F1 $ Point 10 (-11) 0]
 
---build the intial BtmRightLine from head <outer1/inner1>
+--build the intial BtmRightLine from head <outer1/inner1a>
 --remove the used cpoints
---build the next advancing cpoint from <outer1/inner1>
+--build the next advancing cpoint from <outer1/inner1a>
   --this is where i need Deluanay to simplify
 advancingCpointTest2 = TestCase $ assertEqual
   "advancingCpointTest2"
@@ -316,31 +294,15 @@ advancingCpointTest2 = TestCase $ assertEqual
      b1 = Point {x_axis = 3.0, y_axis = 6.0, z_axis = 1.0},
      f1 = Point {x_axis = 10.0, y_axis = -11.0, z_axis = 0.0}}]
   )
-  (delaunayB outer2 [inner1, inner2])
+  (delaunayB outer2  [inner1a, inner1b] )
 
 {-
-[BottomRightLine {
-b4 = Point {x_axis = 0.0, y_axis = -7.0, z_axis = 0.0},
-f4 = Point {x_axis = 0.0, y_axis = -19.0, z_axis = 0.0}},
+but got: [CornerPointsError {errMessage = "Joiners.DeluanayB(Righ(Left e)): Joiners.Deluanay.newAdvancingCpointE had Nothing passed in for all parameters except:
 
-BottomLeftLine {
-b1 = Point {x_axis = 0.0, y_axis = -7.0, z_axis = 0.0},
-f1 = Point {x_axis = 6.0, y_axis = -17.0, z_axis = 0.0}},
-
-BottomLeftLine {
-b1 = Point {x_axis = 0.0, y_axis = -7.0, z_axis = 0.0},
-f1 = Point {x_axis = 10.0, y_axis = -11.0, z_axis = 0.0}},
-
-BottomLeftLine {
-b1 = Point {x_axis = 2.0, y_axis = -5.0, z_axis = 0.0},
-f1 = Point {x_axis = 10.0, y_axis = -11.0, z_axis = 0.0}},
-
-BottomLeftLine {
-b1 = Point {x_axis = 0.0, y_axis = 4.0, z_axis = 1.0},
-f1 = Point {x_axis = 10.0, y_axis = -11.0, z_axis = 0.0}},
-
+AdvancingCPoint {_advancingCpoint =
 BottomLeftLine {
 b1 = Point {x_axis = 3.0, y_axis = 6.0, z_axis = 1.0},
-f1 = Point {x_axis = 10.0, y_axis = -11.0, z_axis = 0.0}}]
+f1 = Point {x_axis = 10.0, y_axis = -11.0, z_axis = 0.0}}}"}]
+
 
 -}
