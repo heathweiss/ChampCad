@@ -118,20 +118,55 @@ instance DistantA CornerPoints where
   calculateDistanceA (FrontLeftLine f1' f2') (LeftFace b1 b2 f1 f2) =
     calculateDistanceA (LeftFace b1 b2 f1 f2) (FrontLeftLine f1' f2')
   
-  calculateDistanceA  (BottomRightLine f4 b4) (B1 b1) =
-    extractE (calculateDistanceA <$> centerA (BottomRightLine f4 b4) <*> centerA (B1 b1))
-  calculateDistanceA (B1 b1)  (BottomRightLine f4 b4)  =
-    calculateDistanceA  (BottomRightLine f4 b4) (B1 b1)
+  calculateDistanceA  (BottomRightLine b4 f4) (B1 b1) =
+    extractE (calculateDistanceA <$> centerA (BottomRightLine b4 f4) <*> centerA (B1 b1))
+  calculateDistanceA (B1 b1)  (BottomRightLine b4 f4)  =
+    calculateDistanceA  (BottomRightLine b4 f4) (B1 b1)
   
-  calculateDistanceA  (BottomRightLine f4 b4) (F1 f1) =
-    extractE (calculateDistanceA <$> centerA (BottomRightLine f4 b4) <*> centerA (F1 f1))
-  calculateDistanceA (F1 f1)  (BottomRightLine f4 b4)  =
-    calculateDistanceA  (BottomRightLine f4 b4) (F1 f1)
+  calculateDistanceA  (BottomRightLine b4 f4) (F1 f1) =
+    extractE (calculateDistanceA <$> centerA (BottomRightLine b4 f4) <*> centerA (F1 f1))
+  calculateDistanceA (F1 f1)  (BottomRightLine b4 f4)  =
+    calculateDistanceA  (BottomRightLine b4 f4) (F1 f1)
+
+  -- ========================================================================================BRL BLL
+  --had to fix (BottomRightLine b4 f4) as points were swapped. Cx all others
+  calculateDistanceA  (BottomRightLine b4 f4) (BottomLeftLine b1 f1) =
+    extractE (calculateDistanceA <$> centerA (BottomRightLine b4 f4) <*> centerA (BottomLeftLine b1 f1))
+  calculateDistanceA (BottomLeftLine b1 f1) (BottomRightLine b4 f4) =
+    calculateDistanceA  (BottomRightLine b4 f4) (BottomLeftLine b1 f1)
+
+  -- ==========================================================================================BLL BLL
+  calculateDistanceA  (BottomLeftLine b1 f1) (BottomLeftLine b1' f1') =
+    extractE (calculateDistanceA <$> centerA (BottomLeftLine b1 f1) <*> centerA (BottomLeftLine b1' f1'))
+  
+  calculateDistanceA  (BottomRightLine b4 f4) (B4 b4') =
+    extractE (calculateDistanceA <$> centerA (BottomRightLine b4 f4) <*> centerA (B4 b4'))
+  calculateDistanceA (B4 b4')  (BottomRightLine b4 f4)  =
+    calculateDistanceA  (BottomRightLine b4 f4) (B4 b4')
   
   calculateDistanceA  (BottomLeftLine b1 f1) (B1 b1') =
     extractE (calculateDistanceA <$> centerA (BottomLeftLine b1 f1) <*> centerA (B1 b1'))
   calculateDistanceA   (B1 b1') (BottomLeftLine b1 f1) =
     calculateDistanceA  (BottomLeftLine b1 f1) (B1 b1')
+
+  calculateDistanceA  (B1 b1) (F1 f1) =
+    calculateDistanceA (b1) (f1)
+  calculateDistanceA   (F1 f1) (B1 b1)  =
+    calculateDistanceA  (B1 b1) (F1 f1)
+
+  calculateDistanceA  (B4 b4) (B4 b4') =
+    calculateDistanceA (b4) (b4')
+
+  calculateDistanceA  (B4 b4) (F4 f4) =
+    calculateDistanceA (b4) (f4)
+  calculateDistanceA   (F4 f4) (B4 b4) =
+    calculateDistanceA  (B4 b4) (F4 f4)
+
+  calculateDistanceA  (B4 b4) (F1 f1) =
+    calculateDistanceA (b4) (f1)
+  calculateDistanceA   (F1 f1) (B4 b4) =
+    calculateDistanceA  (B4 b4) (F1 f1)
+
   
   calculateDistanceA  (BottomLeftLine b1 f1) (B4 b4) =
     extractE (calculateDistanceA <$> centerA (BottomLeftLine b1 f1) <*> centerA (B4 b4))
@@ -147,10 +182,16 @@ instance DistantA CornerPoints where
     extractE (calculateDistanceA <$> centerA (RightFace b3 b4 f3 f4) <*> centerA (BackRightLine b3' b4'))
   calculateDistanceA (BackRightLine b3' b4') (RightFace b3 b4 f3 f4) =
     calculateDistanceA (RightFace b3 b4 f3 f4) (BackRightLine b3' b4')
+
+  calculateDistanceA (BackRightLine b3 b4) (FrontRightLine  f3 f4) =
+    extractE (calculateDistanceA <$> centerA (BackRightLine b3 b4) <*> centerA  (FrontRightLine  f3 f4))
+  calculateDistanceA (FrontRightLine  f3 f4) (BackRightLine b3 b4) =
+    calculateDistanceA (BackRightLine b3 b4) (FrontRightLine  f3 f4)
   
   calculateDistanceA  cpoint1 cpoint2 =
     Left $ "CornerPoints.calculateDistanceA: missing pattern match for: " ++ (cpointType cpoint1) ++  " and "  ++ (cpointType cpoint2)
 
+  
    
 -- | Given a 2 points, caluclate the distance between the points.
 instance Distant Point where
@@ -262,6 +303,7 @@ instance CenterA CornerPoints where
   centerA (BackLeftLine b1 b2) = b1 <-||-> b2
   centerA (FrontLeftLine f1 f2) = f1 <-||-> f2
   centerA (BackRightLine b3 b4) = b3 <-||-> b4
+  centerA (FrontRightLine f3 f4) = f3 <-||-> f4
   centerA (LeftFace b1 b2 f1 f2) =
     case (b1 <-||-> b2) of
       Left e -> Left e
@@ -279,7 +321,7 @@ instance CenterA CornerPoints where
           Right p' ->
             p <-||-> p'
   centerA cpoint =
-    Left $ "Math.Distance.centerA(Cornerpoints) has missing patter match for: " ++ (cpointType cpoint)
+    Left $ "Math.Distance.centerA(Cornerpoints) has missing pattern match for: " ++ (cpointType cpoint)
   
 {-
   centerA (Right (RightFace b3 b4 f3 f4)) = ((Right b3) <-||-> (Right b4)) <-||-> ((Right f3) <-||-> (Right f4))

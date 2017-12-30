@@ -304,14 +304,22 @@ raisedTo (B4 b4) (BottomLeftLine b1 f1) = Right $ BottomLeftLine b4 f1
 
 raisedTo (F1 f1') (BottomLeftLine b1 f1) = Right $ BottomLeftLine b1 f1'
 
+--is this what i need
+raisedTo (B1 b1) (F1 f1) = Right $ BottomLeftLine b1 f1
+
 raisedTo (F1 f1) (BottomRightLine b4 f4) = Right $ BottomLeftLine b4 f1
+
+raisedTo (B4 b4) (F4 f4) = Right $  BottomRightLine b4 f4
 
 raisedTo (BackLeftLine b1 b2) (RightFace b3 b4 f3 f4) = Right $ LeftFace b1 b2 f4 f3
                                                                         
 raisedTo (FrontLeftLine f1 f2) (RightFace b3 b4 f3 f4) = Right $ LeftFace b4 b3 f1 f2
 
--- BackRightLine and LeftFace"
 raisedTo (BackRightLine b3 b4) ( LeftFace b1 b2 f1 f2) = Right $ LeftFace b4 b3 f1 f2
+
+--not sure about this!!!!!!!!!!!!!!
+--It must be for the initial line, and so gives a RightFace
+raisedTo (BackRightLine b3 b4) (FrontRightLine f3 f4) = Right $ RightFace b3 b4 f3 f4  
   
 raisedTo a b =
   Left $ "FaceConversions.raisedTo: illegal or missing pattern match for " ++ (cpointType a) ++ " and " ++ (cpointType b)
