@@ -17,7 +17,7 @@ import CornerPoints.Transpose(transposeZ)
 
 import Geometry.Angle(Angle(..))
 
-import Joiners.Delaunay({-delaunay, delaunayA,-} delaunayB)
+import Joiners.Delaunay(delaunayBCurried, delaunayB)
 
 import Stl.StlBase(Triangle(..), newStlShape)
 import Stl.StlCornerPoints((|+++^|), Faces(..) )
@@ -61,7 +61,7 @@ bottomPointsBuilder = do
                             (let
                                 --build the inner cylinder
                                angles = ([Angle a | a <- [0,5..360]] )
-                               cylinder' = cylinder [Radius 40 | r <- [1..]] [Radius 50 | r <- [1..]] angles (Point 0 0 0) 10
+                               cylinder' = cylinder [Radius 30 | r <- [1..]] [Radius 150 | r <- [1..]] angles (Point 0 0 0) 10
                              in
                               --extract all the Back points. Note that 1st the first cube needs B4 and B1 extracted.
                               (extractB4 $ head cylinder') : (map (extractB1) cylinder')
@@ -75,7 +75,7 @@ bottomPointsBuilder = do
                                outerCylinder = cylinder [Radius 60 | r <- [1..]] [Radius 80 | r <- [1..]] anglesOuter (Point 0 0 0) 10
                              in
                              --extract all the Front points. Note that the first cube needs F4 and F1 extracted.
-                              (extractF4 $ head outerCylinder) : (map (extractF1) $ {-tail-}  outerCylinder)
+                              (extractF4 $ head outerCylinder) : (map (extractF1)  outerCylinder)
                             )
 
 
@@ -92,7 +92,7 @@ bottomPointsBuilder = do
   -}
   --Use delaunayB joiner to join the <innerBack/outerFront>Points into a [Bottom<Left/Right>Line]
   bottomLeftRightLines <- buildCubePointsListSingle "delaunay"
-                (delaunayB outerFrontBottomPoints [innerBackBottomPoints])
+                (delaunayBCurried  [innerBackBottomPoints] outerFrontBottomPoints)
 
   
   --create the [BottomFace] by: (head bottomLeftRightLines) +++> (tail bottomLeftRightLines)
@@ -105,7 +105,7 @@ bottomPointsBuilder = do
            (map ((transposeZ (+10)) . toTopFace) btmFaces)
            (btmFaces)
 
-  return cubes
+  return innerBackBottomPoints
 
 runBottomPointsBuilder :: IO ()
 runBottomPointsBuilder = do
@@ -121,7 +121,17 @@ runBottomPointsBuilder = do
           liftIO $ writeStlToFile $ newStlShape "entire geox" $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
           liftIO $ putStrLn "stl should have been output"
 
+showValBottomPointsBuilder :: IO ()
+showValBottomPointsBuilder = do
+  let
+    builder' = runExceptT bottomPointsBuilder
+    cpoints = ((execState $ builder') [])
+    valCpoints = ((evalState $ builder') [])
 
+  case valCpoints of
+        (Left e) -> liftIO $ print $ e
+        (Right a) -> do
+          liftIO $ print $ show a
 {-
 Cut 1 cylinder out of another by using outer faces of bigger cylinder and inner faces of inner cylinder.
 This will mean:
@@ -181,7 +191,7 @@ frontBackFacesBuilder = do
   frontBackFaces <- buildCubePointsListSingle "frontBackFaces"
               
                 --(delaunayA frontFaces backFaces1 [] [])
-                (delaunayB frontFaces [backFaces1, backFaces2])
+                (delaunayBCurried  [backFaces1, backFaces2] frontFaces)
               
   
   --create the [BottomFace] by: (head bottomLeftRightLines) +++> (tail bottomLeftRightLines)
