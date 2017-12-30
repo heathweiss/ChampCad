@@ -1,9 +1,11 @@
 B: master
  B: delaunay
-    -work on the deluanay joiner
-    -has maybe Perimeters
-    -everthing is Either except for the return val of delaunay, which needs CornerPointsError to work with Builder.Monad
+    -merged with parameters.
     B: parameters
+       -created delaunayBase, so as to leave delauany alone.
        -make fx's such as createAdvancingCPoint and removeIfUsed be passed into delauany so it can be used as a framework for different fx's
+        -done.
+        -also made an almost complete delauanyBase fx to get passed into delaunayBase for creating advancing line when there are both inner and outer perims available.
        -make a datatype for the joinedCpoints, so other things can be added for the new fx's to be passed in.
+        -not yet done
         
