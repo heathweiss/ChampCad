@@ -17,7 +17,7 @@ import CornerPoints.Transpose(transposeZ)
 
 import Geometry.Angle(Angle(..))
 
-import Joiners.Delaunay(delaunayBCurried, delaunayB)
+import Joiners.Advancer(advanceFromHeadUsingDistanceToCornerPoint)
 
 import Stl.StlBase(Triangle(..), newStlShape)
 import Stl.StlCornerPoints((|+++^|), Faces(..) )
@@ -40,7 +40,7 @@ import Control.Monad.Except
 import Control.Monad.Writer (WriterT, tell, execWriterT)
 import Control.Monad.Reader
 
-
+currentJoiner = advanceFromHeadUsingDistanceToCornerPoint
 
 {-
 Cut a cylinder out of another cylinder.
@@ -92,7 +92,7 @@ bottomPointsBuilder = do
   -}
   --Use delaunayB joiner to join the <innerBack/outerFront>Points into a [Bottom<Left/Right>Line]
   bottomLeftRightLines <- buildCubePointsListSingle "delaunay"
-                (delaunayBCurried  [innerBackBottomPoints] outerFrontBottomPoints)
+                (currentJoiner  [innerBackBottomPoints] outerFrontBottomPoints)
 
   
   --create the [BottomFace] by: (head bottomLeftRightLines) +++> (tail bottomLeftRightLines)
@@ -189,9 +189,7 @@ frontBackFacesBuilder = do
   
   --Use delaunay joiner to join the <innerBack/outerFront>Points into a [Bottom<Left/Right>Line]
   frontBackFaces <- buildCubePointsListSingle "frontBackFaces"
-              
-                --(delaunayA frontFaces backFaces1 [] [])
-                (delaunayBCurried  [backFaces1, backFaces2] frontFaces)
+                (currentJoiner  [backFaces1, backFaces2] frontFaces)
               
   
   --create the [BottomFace] by: (head bottomLeftRightLines) +++> (tail bottomLeftRightLines)

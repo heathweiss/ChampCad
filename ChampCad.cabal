@@ -34,7 +34,8 @@ library
                        Builder.ExceptStateIO
                        --Joiners
                        Joiners.Manual, Joiners.Auto, Joiners.Delaunay,
-                       Joiners.DelaunayViewer
+                       Joiners.DelaunayViewer, Joiners.Advancer,
+                       Joiners.AdvanceBase, Joiners.AdvanceSupport, Joiners.AdvanceToHeadOfPerimeters
                        --math
                        Math.Trigonometry, Math.Distance, Math.Equal, Math.Doubles
                        
