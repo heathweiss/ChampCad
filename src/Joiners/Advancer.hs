@@ -13,6 +13,8 @@ import Joiners.AdvanceToHeadOfPerimeters(orderInnerPerimsByDistanceFromHead, ord
 
 import CornerPoints.CornerPoints(CornerPoints(..))
 
+import  Geometry.Intercept(legalIntersection)
+
 import Math.Distance(DistanceA(..), calculateDistanceA)
 
 import Helpers.Applicative(extractE)
@@ -125,7 +127,7 @@ advancingCpointFromDoublePerimsUsingDistanceToCpoints
                              advancingOuterCpointE <*>                             --The advancing Cpoint just created.
                              (appendAdvancingCpointToJoinedCpointsE <$> advancingOuterCpointE <*> Right joinedCpoints)  --joined cpoints with the advancing cpoint added to it.
                         --outer distance >=
-        Right False ->
+        Right False -> --so inner perim is closer, but is it legal. If not, go with the outer perimeter
           let perimsWithAdvancingCpointBldrRemoved =
                 extractE
                   (removeAdvancingCPointFromPerimeters 
@@ -133,6 +135,60 @@ advancingCpointFromDoublePerimsUsingDistanceToCpoints
                    outerPerimeter' <$>
                      advancingInnerCpointE
                   )
+          in
+            let
+              -- =====================================================================================================================================================================
+              --check the new advancing cpont and cx for legal
+              
+              --make this wrapper because legalIntersection takes a Cpoint instead of an AdvancingCPoint
+              legalIntersection' :: AdvancingCPoint -> 
+                                            (CornerPoints -> --a perimeter cpoint
+                                             Either String Bool)
+              legalIntersection' (AdvancingCPoint advancingCPoint) =
+                legalIntersection advancingCPoint
+
+              -- ============================================================================================================================================================
+              --nfg: need to cx all original innerperimeters, before extraction, for legality, instead of (head $ getInnerPerimeterHead innerPerimeters').
+              --Will need to make a datatype, perhaps can contain the running advancing cpoints, and the [[inner perim]]
+              -- ==============================================================================================================================================================
+              isNewAdvancingCpointLegal  = extractE $ legalIntersection' <$>  advancingInnerCpointE <*> Right (head $ getInnerPerimeterHead innerPerimeters')
+
+              
+
+              makeFromInner =
+                extractE $
+                  delaunayBase'
+                    removeAdvancingCPointFromPerimeters
+                    createAdvancingCpointFromInnerPerimeters
+                    advancingCpointFromOuterPerims
+                    advancingCpointFromDoublePerimsUsingDistanceToCpoints <$> 
+                      (fst <$> perimsWithAdvancingCpointBldrRemoved ) <*>
+                      (snd <$> perimsWithAdvancingCpointBldrRemoved ) <*>
+                      advancingInnerCpointE <*>                             --The advancing Cpoint just created.
+                      (appendAdvancingCpointToJoinedCpointsE <$> advancingInnerCpointE <*> Right joinedCpoints)  --joined cpoints with the advancing cpoint added to it.
+            in
+              case isNewAdvancingCpointLegal of
+               Right True -> makeFromInner
+               Right False -> --use the code to build from the outerPerimeter. Should be a fuction to keep dry as this was copied from above.
+                 let perimsWithAdvancingCpointBldrRemoved =
+                       extractE
+                        (removeAdvancingCPointFromPerimeters 
+                         innerPerimeters' 
+                         outerPerimeter' <$>
+                          advancingOuterCpointE
+                      )
+                 in
+                 extractE $
+                   delaunayBase' removeAdvancingCPointFromPerimeters
+                            createAdvancingCpointFromInnerPerimeters
+                            advancingCpointFromOuterPerims
+                            advancingCpointFromDoublePerimsUsingDistanceToCpoints <$> 
+                             (fst <$> perimsWithAdvancingCpointBldrRemoved ) <*>
+                             (snd <$> perimsWithAdvancingCpointBldrRemoved ) <*>
+                             advancingOuterCpointE <*>                             --The advancing Cpoint just created.
+                             (appendAdvancingCpointToJoinedCpointsE <$> advancingOuterCpointE <*> Right joinedCpoints)  --joined cpoints with the advancing cpoint added to it.
+               Left e -> Left $ "opewrilsdfklsljf" ++ e
+          {-
           in
             extractE $
               delaunayBase'
@@ -143,6 +199,5 @@ advancingCpointFromDoublePerimsUsingDistanceToCpoints
                   (fst <$> perimsWithAdvancingCpointBldrRemoved ) <*>
                   (snd <$> perimsWithAdvancingCpointBldrRemoved ) <*>
                   advancingInnerCpointE <*>                             --The advancing Cpoint just created.
-                  (appendAdvancingCpointToJoinedCpointsE <$> advancingInnerCpointE <*> Right joinedCpoints)  --joined cpoints with the advancing cpoint added to it.
-
+                  (appendAdvancingCpointToJoinedCpointsE <$> advancingInnerCpointE <*> Right joinedCpoints)  --joined cpoints with the advancing cpoint added to it.-}
 

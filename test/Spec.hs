@@ -28,6 +28,7 @@ import LineScannerTest(lineScannerTestDo)
 import JoinerTest(joinerTestDo)
 import DistanceTest(distanceTestDo)
 import  DelaunayTest(delaunayTestDo)
+import InterceptTest(interceptTestDo)
 
 --main :: IO ()
 main = do
@@ -59,3 +60,4 @@ main = do
   joinerTestDo
   distanceTestDo
   delaunayTestDo
+  interceptTestDo

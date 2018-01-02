@@ -1,7 +1,10 @@
 {- |
 Datatypes and functions that are used by several Advancer modules.
 -}
-module Joiners.AdvanceSupport(Perimeters(..), AdvancingCPoint(..), justifyPerimeters, appendAdvancingCpointToJoinedCpointsE) where
+module Joiners.AdvanceSupport(Perimeters(..), AdvancingCPoint(..), ExtraLists(..),
+                              justifyPerimeters, appendAdvancingCpointToJoinedCpointsE) where
+
+
 
 import CornerPoints.CornerPoints(CornerPoints(..))
 
@@ -12,6 +15,9 @@ data Perimeters =
   |
   InnerPerimeter {_innerPerimeter :: [CornerPoints]}
   deriving (Show, Eq)
+
+data ExtraLists =
+  AppendedAndPerimeters {_joinedCpoints :: [CornerPoints], _origPerimeters :: [[CornerPoints]]}
 
 --ToDo: Change this to a newtype for efficiency as it only has 1 constructor. But will that change.
 data AdvancingCPoint =

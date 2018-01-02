@@ -19,7 +19,8 @@ These will be Back cornerpoints such as Back<Face/LeftLine/RightLine/TopLine...>
 -}
 module Joiners.AdvanceBase(delaunayBase, delaunayBase') where
 
-import Joiners.AdvanceSupport(Perimeters(..), AdvancingCPoint(..), justifyPerimeters, appendAdvancingCpointToJoinedCpointsE)
+import Joiners.AdvanceSupport(Perimeters(..), AdvancingCPoint(..), ExtraLists(..),
+                              justifyPerimeters, appendAdvancingCpointToJoinedCpointsE)
 import Joiners.AdvanceToHeadOfPerimeters(orderInnerPerimsByDistanceFromHead, orderedInnerPerims, removeContainedCPointFromHeadOfPerims, advancingCpointFromHeadOfInnerPerims,
                                          advancingCpointFromHeadOfOuterPerims)
 

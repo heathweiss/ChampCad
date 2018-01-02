@@ -1,7 +1,6 @@
 B: master
- B: delaunay
-    -merged with parameters.
+ B: intercept
+    has new intercept module to see if 2 lines intersect legally.
     B: parameters
-       removed Joiners.Delauany (left file there till sure no code req'd from it)
-       created the Joiners.Advance series of modules to break up delaunay.
+       need to pass in a datatype into deluanayBase<'> to handle joinedCpoints, and now original inner perims
         

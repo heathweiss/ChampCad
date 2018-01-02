@@ -119,6 +119,7 @@ library
                        Geometry.AngleRadius
                        Geometry.Rotation
                        Geometry.Vertex
+                       Geometry.Intercept
 
   build-depends:       base >= 4.7 && < 5
                      , HUnit >=1.2.5.2
@@ -188,6 +189,7 @@ test-suite ChampCad-test
                        JoinerTest
                        DistanceTest
                        DelaunayTest
+                       InterceptTest
  
   build-depends:       base
                      , ChampCad
