@@ -1,6 +1,3 @@
 B: master
- B: intercept
-    has new intercept module to see if 2 lines intersect legally.
-    B: parameters
-       need to pass in a datatype into deluanayBase<'> to handle joinedCpoints, and now original inner perims
-        
+ B: cleanup
+    get this mess of safe lists, big type signatures etc., cleaned up.
