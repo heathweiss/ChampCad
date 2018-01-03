@@ -17,7 +17,7 @@ gets removed from the interior of the OuterPerimeter.
 These will be Back cornerpoints such as Back<Face/LeftLine/RightLine/TopLine...> or B<1,2,3,4>
 
 -}
-module Joiners.AdvanceBase(delaunayBase, delaunayBase') where
+module Joiners.AdvanceBase(delaunayBase, delaunayBase', DelaunayBase'Signature) where
 
 import Joiners.AdvanceSupport(Perimeters(..), AdvancingCPoint(..), ExtraLists(..),
                               justifyPerimeters, appendAdvancingCpointToJoinedCpointsE)
@@ -103,8 +103,8 @@ delaunayBase   removeAdvancingCPointFromPerimeters
 ------------------------------------------------------------------ delaunayBase'----------------------------------------------------------------------
 ------------------------------------------------------------------ delaunayBase'----------------------------------------------------------------------
 ------------------------------------------------------------------ delaunayBase'----------------------------------------------------------------------
-
-delaunayBase' ::
+--was not able to reuse anywhere else so far.
+type DelaunayBase'Signature =
                --start of curried functions. Same as delaunayBase so refer to it for parameter info.
                ((Maybe Perimeters) -> (Maybe Perimeters) -> AdvancingCPoint -> Either String ((Maybe Perimeters),(Maybe Perimeters))) ->
                (
@@ -136,6 +136,8 @@ delaunayBase' ::
                                             --as that is how Builder.Monad handles it.
                                             --That is bad design decision that needs to be changed. Get rid of CornerPointsError. Will be a big job. :( 
 
+
+delaunayBase' :: DelaunayBase'Signature
 delaunayBase' removeAdvancingCPointFromPerimeters
               createAdvancingCpointFromInnerPerimeters
               advancingCpointFromOuterPerims
@@ -160,7 +162,10 @@ delaunayBase' removeAdvancingCPointFromPerimeters
               advancingCpointFromOuterPerims
               doublePerimDecision
               innerPerimeters outerPerimeters  advancingCpointIn joinedCpoints =
-  
+
+    let
+      delaunayBase'' = delaunayBase' removeAdvancingCPointFromPerimeters createAdvancingCpointFromInnerPerimeters advancingCpointFromOuterPerims doublePerimDecision
+    in
     --Cx all possible combinations of Perimeters. Also check for Perimeters containing [].
     --ToDo: See if there is a cleaner way to do this with something like K-Arrows, monads, applicative.
     case innerPerimeters of
@@ -169,7 +174,8 @@ delaunayBase' removeAdvancingCPointFromPerimeters
         delaunayBase' removeAdvancingCPointFromPerimeters createAdvancingCpointFromInnerPerimeters advancingCpointFromOuterPerims doublePerimDecision (Just $ InnerPerimeters []) outerPerimeters  advancingCpointIn joinedCpoints
       --re-call with InnerPerimeters
       Just (InnerPerimeter innerPerimeter') ->
-        delaunayBase' removeAdvancingCPointFromPerimeters createAdvancingCpointFromInnerPerimeters advancingCpointFromOuterPerims doublePerimDecision (Just $ InnerPerimeters [innerPerimeter']) outerPerimeters  advancingCpointIn joinedCpoints
+        delaunayBase'' (Just $ InnerPerimeters [innerPerimeter']) outerPerimeters  advancingCpointIn joinedCpoints
+        {-delaunayBase' removeAdvancingCPointFromPerimeters createAdvancingCpointFromInnerPerimeters advancingCpointFromOuterPerims doublePerimDecision (Just $ InnerPerimeters [innerPerimeter']) outerPerimeters  advancingCpointIn joinedCpoints-}
       
       --has InnerPerimeters
       Just (InnerPerimeters innerPerimeters') ->
@@ -179,12 +185,12 @@ delaunayBase' removeAdvancingCPointFromPerimeters
             case (outerPerimeters) of
               --inner empty, outer empty
               Nothing ->
-                delaunayBase' removeAdvancingCPointFromPerimeters createAdvancingCpointFromInnerPerimeters advancingCpointFromOuterPerims doublePerimDecision Nothing Nothing  advancingCpointIn joinedCpoints
+                delaunayBase'' Nothing Nothing  advancingCpointIn joinedCpoints
               --inner empty, outer good but not justified
               (Just (OuterPerimeter outerPerimeter')) ->
                 case justifyPerimeters (OuterPerimeter outerPerimeter') of
                   --inner: empty, outer: empty
-                  Nothing -> delaunayBase' removeAdvancingCPointFromPerimeters createAdvancingCpointFromInnerPerimeters advancingCpointFromOuterPerims doublePerimDecision Nothing Nothing  advancingCpointIn joinedCpoints
+                  Nothing -> delaunayBase'' Nothing Nothing  advancingCpointIn joinedCpoints
                   --inner: empty, outer: good
                   Just (OuterPerimeter outerPerimeter') -> 
                     let --advancing point from outerPerimeter' only
@@ -202,7 +208,7 @@ delaunayBase' removeAdvancingCPointFromPerimeters
                              )
                     in  --Left "inner: empty, outer: good filled to compile"
                       extractE $
-                         delaunayBase' removeAdvancingCPointFromPerimeters createAdvancingCpointFromInnerPerimeters advancingCpointFromOuterPerims doublePerimDecision<$> 
+                         delaunayBase'' <$> 
                            (fst <$> perimsWithAdvancingCpointBldrRemoved ) <*>
                            (snd <$> perimsWithAdvancingCpointBldrRemoved ) <*>
                            advancingCpointNewE <*>                             --The advancing Cpoint just created.
@@ -212,7 +218,7 @@ delaunayBase' removeAdvancingCPointFromPerimeters
           Just (InnerPerimeters innerPerimeters') ->
             case (outerPerimeters) of
               --inner empty, outer empty
-              Nothing -> delaunayBase' removeAdvancingCPointFromPerimeters createAdvancingCpointFromInnerPerimeters advancingCpointFromOuterPerims doublePerimDecision Nothing Nothing  advancingCpointIn joinedCpoints
+              Nothing -> delaunayBase'' Nothing Nothing  advancingCpointIn joinedCpoints
               --inner good, outer good but not justified
               (Just (OuterPerimeter outerPerimeter')) ->
                 case justifyPerimeters (OuterPerimeter outerPerimeter') of
@@ -225,7 +231,7 @@ delaunayBase' removeAdvancingCPointFromPerimeters
                       --Left "inner: good, outer: empty filled to compile"
                       
                       extractE $
-                         delaunayBase' removeAdvancingCPointFromPerimeters createAdvancingCpointFromInnerPerimeters advancingCpointFromOuterPerims doublePerimDecision<$> 
+                         delaunayBase'' <$> 
                            (fst <$> innerOuterRemoved ) <*>
                            (snd <$> innerOuterRemoved ) <*>
                            advancingCpointNewE <*>                             --The advancing Cpoint just created.
@@ -272,7 +278,11 @@ advancingCpointFromDoublePerimsUsingDistanceToCpoints
   outerPerimeter'
   advancingCpointIn
   joinedCpoints =
-     let getAdvancingCpoint (AdvancingCPoint advancingCpoint') = advancingCpoint'
+     let
+         delaunayBase'' = delaunayBase' removeAdvancingCPointFromPerimeters createAdvancingCpointFromInnerPerimeters
+                                        advancingCpointFromOuterPerims advancingCpointFromDoublePerimsUsingDistanceToCpoints
+                          
+         getAdvancingCpoint (AdvancingCPoint advancingCpoint') = advancingCpoint'
          getInnerPerimeterHead :: (Maybe (Perimeters )) -> [CornerPoints]
          getInnerPerimeterHead  (Just (InnerPerimeters (i:is))) =
            i
@@ -333,14 +343,13 @@ advancingCpointFromDoublePerimsUsingDistanceToCpoints
                  )
           in
             extractE $
-              delaunayBase' removeAdvancingCPointFromPerimeters
-                            createAdvancingCpointFromInnerPerimeters
-                            advancingCpointFromOuterPerims
-                            advancingCpointFromDoublePerimsUsingDistanceToCpoints <$> 
+            
+              delaunayBase''  <$> 
                              (fst <$> perimsWithAdvancingCpointBldrRemoved ) <*>
                              (snd <$> perimsWithAdvancingCpointBldrRemoved ) <*>
                              advancingOuterCpointE <*>                             --The advancing Cpoint just created.
                              (appendAdvancingCpointToJoinedCpointsE <$> advancingOuterCpointE <*> Right joinedCpoints)  --joined cpoints with the advancing cpoint added to it.
+            
                         --outer distance >=
         Right False ->
           let perimsWithAdvancingCpointBldrRemoved =
@@ -352,11 +361,7 @@ advancingCpointFromDoublePerimsUsingDistanceToCpoints
                   )
           in
             extractE $
-              delaunayBase'
-                removeAdvancingCPointFromPerimeters
-                createAdvancingCpointFromInnerPerimeters
-                advancingCpointFromOuterPerims
-                advancingCpointFromDoublePerimsUsingDistanceToCpoints <$> 
+              delaunayBase'' <$> 
                   (fst <$> perimsWithAdvancingCpointBldrRemoved ) <*>
                   (snd <$> perimsWithAdvancingCpointBldrRemoved ) <*>
                   advancingInnerCpointE <*>                             --The advancing Cpoint just created.

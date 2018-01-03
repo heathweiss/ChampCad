@@ -3,4 +3,5 @@ B: master
     get this mess of safe lists, big type signatures etc., cleaned up.
     commented out legalIntersection for now, till get cleaned up, as has missing pattern matches.
     B: typeSig
-       add type signature for Advancer' then curry in the fx's at start of each call
+       add type signature for DelaunayBase' then curry in the fx's at start of each call
+       --added type signature, but was not able to re-use it in Advancer.hs

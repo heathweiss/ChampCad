@@ -6,7 +6,7 @@ Then again, mixing and matching randomly may be a good way to get new results as
 -}
 module Joiners.Advancer(advanceFromHeadUsingDistanceToCornerPoint) where
 
-import Joiners.AdvanceBase(delaunayBase, delaunayBase')
+import Joiners.AdvanceBase(delaunayBase, delaunayBase', DelaunayBase'Signature)
 import Joiners.AdvanceSupport(Perimeters(..), AdvancingCPoint(..), justifyPerimeters, appendAdvancingCpointToJoinedCpointsE)
 import Joiners.AdvanceToHeadOfPerimeters(orderInnerPerimsByDistanceFromHead, orderedInnerPerims, removeContainedCPointFromHeadOfPerims, advancingCpointFromHeadOfInnerPerims,
                                          advancingCpointFromHeadOfOuterPerims)
@@ -34,7 +34,9 @@ This seems like it should be in Joiners.AdvanceToHeadOfPerimeters module, but it
 Could make pass in delaunayB', but the complexity of passing in functions is getting too much. Maybe there should be a separate module for
 functions such as this. If more come up, will make one.
 -}
-advancingCpointFromDoublePerimsUsingDistanceToCpoints :: ((Maybe Perimeters) -> (Maybe Perimeters) -> AdvancingCPoint -> Either String ((Maybe Perimeters),(Maybe Perimeters))) ->
+advancingCpointFromDoublePerimsUsingDistanceToCpoints :: 
+  
+                       ((Maybe Perimeters) -> (Maybe Perimeters) -> AdvancingCPoint -> Either String ((Maybe Perimeters),(Maybe Perimeters))) ->
                        --remove advancingCpoints from perimeters
                        (
                         Maybe Perimeters -> --[[]] of all inner perimters
@@ -57,7 +59,9 @@ advancingCpointFromDoublePerimsUsingDistanceToCpoints
   outerPerimeter'
   advancingCpointIn
   joinedCpoints =
-     let getAdvancingCpoint (AdvancingCPoint advancingCpoint') = advancingCpoint'
+     let delaunayBase'' = delaunayBase' removeAdvancingCPointFromPerimeters createAdvancingCpointFromInnerPerimeters
+                                        advancingCpointFromOuterPerims advancingCpointFromDoublePerimsUsingDistanceToCpoints
+         getAdvancingCpoint (AdvancingCPoint advancingCpoint') = advancingCpoint'
          getInnerPerimeterHead :: (Maybe (Perimeters )) -> [CornerPoints]
          getInnerPerimeterHead  (Just (InnerPerimeters (i:is))) =
            i
@@ -118,10 +122,7 @@ advancingCpointFromDoublePerimsUsingDistanceToCpoints
                  )
           in
             extractE $
-              delaunayBase' removeAdvancingCPointFromPerimeters
-                            createAdvancingCpointFromInnerPerimeters
-                            advancingCpointFromOuterPerims
-                            advancingCpointFromDoublePerimsUsingDistanceToCpoints <$> 
+              delaunayBase'' <$> 
                              (fst <$> perimsWithAdvancingCpointBldrRemoved ) <*>
                              (snd <$> perimsWithAdvancingCpointBldrRemoved ) <*>
                              advancingOuterCpointE <*>                             --The advancing Cpoint just created.
@@ -157,11 +158,7 @@ advancingCpointFromDoublePerimsUsingDistanceToCpoints
 
               makeFromInner =
                 extractE $
-                  delaunayBase'
-                    removeAdvancingCPointFromPerimeters
-                    createAdvancingCpointFromInnerPerimeters
-                    advancingCpointFromOuterPerims
-                    advancingCpointFromDoublePerimsUsingDistanceToCpoints <$> 
+                  delaunayBase'' <$> 
                       (fst <$> perimsWithAdvancingCpointBldrRemoved ) <*>
                       (snd <$> perimsWithAdvancingCpointBldrRemoved ) <*>
                       advancingInnerCpointE <*>                             --The advancing Cpoint just created.
