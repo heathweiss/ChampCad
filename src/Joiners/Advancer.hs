@@ -167,6 +167,8 @@ advancingCpointFromDoublePerimsUsingDistanceToCpoints
                       advancingInnerCpointE <*>                             --The advancing Cpoint just created.
                       (appendAdvancingCpointToJoinedCpointsE <$> advancingInnerCpointE <*> Right joinedCpoints)  --joined cpoints with the advancing cpoint added to it.
             in
+              makeFromInner
+              {-get rid of legal for now till i clean up my mess.
               case isNewAdvancingCpointLegal of
                Right True -> makeFromInner
                Right False -> --use the code to build from the outerPerimeter. Should be a fuction to keep dry as this was copied from above.
@@ -188,6 +190,7 @@ advancingCpointFromDoublePerimsUsingDistanceToCpoints
                              advancingOuterCpointE <*>                             --The advancing Cpoint just created.
                              (appendAdvancingCpointToJoinedCpointsE <$> advancingOuterCpointE <*> Right joinedCpoints)  --joined cpoints with the advancing cpoint added to it.
                Left e -> Left $ "opewrilsdfklsljf" ++ e
+-}
           {-
           in
             extractE $
