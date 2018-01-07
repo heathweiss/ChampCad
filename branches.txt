@@ -5,3 +5,5 @@ B: master
    -Intercept has new ExceptT Maybe type which has cleaned up the code immensely.
      -lineIntercept from Rosetta code does not work with negative cood's. Need better system.
         -Will try a branch that uses polar coods.
+  B: intercept:
+     -Geometry.Intercept.lineIntersection does not work with neg cood's. Fix it perhaps with polar cood's.
