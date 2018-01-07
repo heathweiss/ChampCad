@@ -1,7 +1,7 @@
 B: master
- B: cleanup
-    get this mess of safe lists, big type signatures etc., cleaned up.
-    commented out legalIntersection for now, till get cleaned up, as has missing pattern matches.
-    B: typeSig
-       add type signature for DelaunayBase' then curry in the fx's at start of each call
-       --added type signature, but was not able to re-use it in Advancer.hs
+   -have a delaunayBaseNM which replaces delaunayBase. Still has some issues.
+     -Got rid of Applicative and went to Monad. Much better/cleaner.
+     -Keep delaunayBase till these are worked out. May want to start printing shoes.
+   -Intercept has new ExceptT Maybe type which has cleaned up the code immensely.
+     -lineIntercept from Rosetta code does not work with negative cood's. Need better system.
+        -Will try a branch that uses polar coods.

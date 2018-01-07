@@ -12,14 +12,25 @@ If so, what is the point of interception
  -maybe need separate modules for Point vs CornerPoints
 -}
 module Geometry.Intercept(getChangeInX, getChangeInY, yIntercept, topCoderAreTheParallel, topCoderXRayIntercept, lineIntersection, onTheLine,
-                          segmentIntersection, segmentIntersectionBreakDown, legalIntersection, perimetersContainIllegalIntersection) where
+                          segmentIntersection, segmentIntersectionBreakDown, legalIntersection, perimetersContainIllegalIntersection,
+                          perimetersContainLegalIntersections, segmentIntersectionT, runSegmentIntersectionT) where
 
-import CornerPoints.CornerPoints(CornerPoints(..), cpointType)
+import CornerPoints.CornerPoints(CornerPoints(..), cpointType, (+++))
 import CornerPoints.Points (Point(..))
 
 import Math.Distance(DistanceA(..), calculateDistanceA, getOrderingA)
 
 import Helpers.Applicative(extractE, extractMaybe)
+
+import Control.Monad.Trans.Except
+import Control.Monad.Trans.Maybe
+import Control.Monad
+import Control.Monad.Trans
+import Control.Monad.State.Lazy
+import Control.Monad.State
+import Control.Monad.Except
+import Control.Monad.Writer (WriterT, tell, execWriterT)
+import Control.Monad.Reader
 
 {-
 calculate the slope of the line
@@ -172,9 +183,13 @@ test (BottomLeftLine b1 f1) (BackBottomLine b1' b4') =
 -- =================================================================================================
 -- https://rosettacode.org/wiki/Find_the_intersection_of_two_lines#Haskell
 --good for intersection of lines, but not segments
---need to see if point exists on a line
-
+--testing shows this fx is nfg. Can produce the wrong point of intersection. Their test works, but it is all positive cood's.
+-- | Do 2 inifinite lines intersect.
 lineIntersection :: CornerPoints -> CornerPoints -> Either String (Maybe Point)
+
+--lineIntersection (BottomLeftLine b1 f1 ) (BackBottomLine b1' b4) =
+--  lineIntersectionForGenericLine b1 f1 b1' b4
+
 lineIntersection (BottomLeftLine (Point ax ay az) (Point bx by bz) ) (BackBottomLine (Point px py pz) (Point qx qy qz)) =
   let (pqDX, abDX) = (px - qx, ax - bx)
       (pqDY, abDY) = (py - qy, ay - by)
@@ -187,11 +202,49 @@ lineIntersection (BottomLeftLine (Point ax ay az) (Point bx by bz) ) (BackBottom
        0 -> Right Nothing
        _ -> Right $ Just (Point (f pqDX abDX) (f pqDY abDY) 0)
 
+lineIntersection (BottomRightLine b4 f4 ) (BackBottomLine b1 b4') =
+  lineIntersectionForGenericLine b4 f4 b1 b4'
 
+lineIntersection line1 line2 =
+  Left $ "Geometry.Intercept.lineIntersection has missing pattern match for: " ++ (cpointType line1) ++ " and " ++ (cpointType line2)
+
+--all <backBottom/BackTop/...>lines are made of the same amount of points so make them generic.
+lineIntersectionForGenericLine :: Point -> Point -> Point -> Point -> Either String (Maybe Point)
+lineIntersectionForGenericLine (Point ax ay az) (Point bx by bz) (Point px py pz) (Point qx qy qz) =
+  let (pqDX, abDX) = (px - qx, ax - bx)
+      (pqDY, abDY) = (py - qy, ay - by)
+      determinant = abDX * pqDY - abDY * pqDX
+      f pq ab =
+        ((((ax * by) - (ay * bx)) * pq) - 
+         (((px * qy) - (py * qx)) * ab)) /
+        determinant
+  in case determinant of
+       0 -> Right Nothing
+       _ -> Right $ Just (Point (f pqDX abDX) (f pqDY abDY) 0)
+  
+-- | Do to Line Segments intersect.
+-- This is only segments, not rays or infinite lines.
 segmentIntersection :: CornerPoints -> --advancingCpoint
                             CornerPoints -> --perimeter
                             Either String Bool
 segmentIntersection (BottomLeftLine b1 f1 ) (BackBottomLine b1' b4) =
+  segmentIntersectionForGenericLine b1 f1 b1' b4
+
+-- BottomRightLine and BackBottomLine
+segmentIntersection (BottomRightLine b4 f4) (BackBottomLine b1 b4') =
+  segmentIntersectionForGenericLine b4 f4 b1 b4'
+
+segmentIntersection line1 line2 =
+  Left $ "Geometry.Intercept.segmentIntersection missing pattern match for: " ++ (cpointType line1) ++ " and " ++ (cpointType line2)
+  
+--All <BackFront/BottomLeft/...>Line have the same point pattern, so process them with generic function
+segmentIntersectionForGenericLine :: Point -> 
+                                     Point ->
+                                     Point ->
+                                     Point -> 
+                                     Either String Bool
+segmentIntersectionForGenericLine b1 f1 b1' b4  = do
+  
   case lineIntersection (BottomLeftLine b1 f1) (BackBottomLine b1' b4) of
     Left e -> Left $ "Geometry.Intercept.segmentIntersection got error from lineIntersection: " ++ e
     Right Nothing -> Right False --Right Nothing. I no longer return a Maybe
@@ -250,78 +303,237 @@ segmentIntersection (BottomLeftLine b1 f1 ) (BackBottomLine b1' b4) =
         process  _ False = False
         process _ _ = True
           
-    
+      
       in
         process <$> advancingCpointSegmentIntersectsPerimeterLine <*> perimeterSegmentIntersectsAdvancingCpointLine
-       {-
-       case (advancingCpointSegmentIntersectsPerimeterLine) && (perimeterSegmentIntersectsAdvancingCpointLine) of
-         True -> Right $ Just True
-         False -> Right $ Just False -}
 
-{-before adding Either to internal fx's
-segmentIntersection :: CornerPoints -> --advancingCpoint
-                            CornerPoints -> --perimeter
-                            Either String (Maybe Bool)
-segmentIntersection (BottomLeftLine b1 f1 ) (BackBottomLine b1' b4) =
-  case lineIntersection (BottomLeftLine b1 f1) (BackBottomLine b1' b4) of
-    Left e -> Left $ "Geometry.Intercept.segmentIntersection got error from lineIntersection: " ++ e
-    Right Nothing -> Right Nothing
-    Right (Just pointOfIntersection) ->
-      let
-        advancingCpointSegmentIntersectsPerimeterLine ::  Bool --add Either String once converted to bool
-        advancingCpointSegmentIntersectsPerimeterLine =
-          let
-            pointingInCorrectDirectionLine :: Bool
-            pointingInCorrectDirectionLine =
-              case getOrderingA <$> calculateDistanceA  f1 pointOfIntersection   <*> --length of B to intersection
-                                   calculateDistanceA b1 pointOfIntersection --A to intersection,
-              of
-                Right GT -> False
-                Right LT -> True
-                  
-                Right EQ -> True --not sure about this one. EQ would make advancingCpoint a Point
-                  
-          in
-          case getOrderingA <$> calculateDistanceA  b1 f1   <*> --length of BLL
-                               calculateDistanceA b1 pointOfIntersection --f1 of bll,
-          of
-            Right LT -> False
-            Right GT -> --True
-              pointingInCorrectDirectionLine
-            Right EQ -> --True
-              pointingInCorrectDirectionLine
-            --Left e   -> Left E
-        
-        perimeterSegmentIntersectsAdvancingCpointLine :: Bool --add either later
-        perimeterSegmentIntersectsAdvancingCpointLine = --LT if not long enough
-          let
-            pointingInCorrectDirectionLine :: Bool
-            pointingInCorrectDirectionLine =
-              case getOrderingA <$> calculateDistanceA  b4 pointOfIntersection   <*> --length of B to intersection
-                                   calculateDistanceA b1' pointOfIntersection --A to intersection,
-              of
-                Right GT -> False
-                Right LT -> True
-                Right EQ -> True --not sure about this one. EQ would make advancingCpoint a Point
-                  
-          in
-          case getOrderingA <$> calculateDistanceA  b1' b4   <*> --length of BLL
-                           calculateDistanceA b1' pointOfIntersection --f1 of bll,
-          of
-            Right LT -> False
-            Right GT -> --True
-              pointingInCorrectDirectionLine
-            Right EQ -> --True
-              pointingInCorrectDirectionLine
-            --Left e
-        
-   
-      in
-       case (advancingCpointSegmentIntersectsPerimeterLine) && (perimeterSegmentIntersectsAdvancingCpointLine) of
-         True -> Right $ Just True
-         False -> Right $ Just False
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------segmentIntersectionT-------------------------------------------------------------
+------------------------------------------------------------replacement for segmentIntersection-----------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------
+--should have been MaybeT 
+
+data SegementIntersectionError = SegementIntersectionError {errMsg :: String }
+  deriving Eq
+
+type SegmentIntersectionType = ExceptT SegementIntersectionError (Maybe) Point
+--type SegmentIntersectionType = MaybeT  (Except SegementIntersectionError) Point
+
+segmentIntersectionErrorHandler :: SegementIntersectionError -> SegmentIntersectionType 
+segmentIntersectionErrorHandler error = do
+  throwE error
+
+processSegment :: (CornerPoints -> CornerPoints -> Either String (Maybe Point)) -> String -> CornerPoints -> CornerPoints -> SegmentIntersectionType
+processSegment  processLines extraMsg advancingCpoint perimeter =
+  (processSegementOrFail  processLines extraMsg advancingCpoint perimeter) `catchError` segmentIntersectionErrorHandler
+
+processSegementOrFail :: (CornerPoints -> CornerPoints -> Either String (Maybe Point)) -> String -> CornerPoints -> CornerPoints -> SegmentIntersectionType
+processSegementOrFail processLines extraMsg advancingCpoint perimeter =
+  --this is where I would process the lines and cx for errors
+  case processLines advancingCpoint perimeter of
+    Left e -> 
+      throwE (SegementIntersectionError $ extraMsg ++ " " ++ e)
+    Right (maybePoint) -> lift maybePoint
+
+{-
+checkForPointOfIntersection :: String -> CornerPoints -> CornerPoints -> SegmentIntersectionType
+checkForPointOfIntersection =
+  processSegment lineIntersection
+-}
+segmentIntersectionT :: CornerPoints -> --advancingCpoint
+                        CornerPoints -> --perimeter
+                        SegmentIntersectionType
+
+segmentIntersectionT advancingCpoint perimeterLine =  do
+  --lineIntersection <- checkForPointOfIntersection "check for line intersection" advancingCpoint perimeterLine
+  lineIntersection <- (processSegment lineIntersection) "check for line intersection" advancingCpoint perimeterLine
+  
+  advancingCpointSegmentIntersectsPerimeterLine <- checkThatSegmentIntersectsPerimeter
+                                                   "advancingCpoint segment intersects perimeter line"
+                                                   (F1 lineIntersection) advancingCpoint 
+  return advancingCpointSegmentIntersectsPerimeterLine
+  --return lineIntersection
+
+
+--will it be needed, or will runSegmentIntersectionT be used.
+--converts to Either String (Maybe Point) as that is what all other fx's are running
+extractSegmentIntersectionT :: CornerPoints -> --advancingCpoint
+                               CornerPoints -> --perimeter
+                               Either String (Maybe Point)
+extractSegmentIntersectionT advancingCpoint perimeter = --do
+  case runExceptT $ segmentIntersectionT advancingCpoint perimeter of
+    Just (Right a) -> Right $ Just a
+    Just (Left (SegementIntersectionError e)) -> Left e
+    Nothing -> Right Nothing
+  --case segmentIntersectionT advancingCpoint perimeter of
+  --  Left (SegementIntersectionError msg) -> Left msg
+
+--will it be needed, or will extractSegmentIntersectionT be used.
+--converts to Either String (Maybe Point) as that is what all other fx's are running
+runSegmentIntersectionT :: SegmentIntersectionType -> Either String (Maybe Point)
+runSegmentIntersectionT segmentIntersectionType = --do
+  case runExceptT segmentIntersectionType of
+    Just (Right a) -> Right $ Just a
+    Just (Left (SegementIntersectionError e)) -> Left e
+    Nothing -> Right Nothing
+  --case segmentIntersectionT advancingCpoint perimeter of
+  --  Left (SegementIntersectionError msg) -> Left msg
+
+
+checkThatSegmentIntersectsPerimeter :: String -> CornerPoints -> CornerPoints -> SegmentIntersectionType
+checkThatSegmentIntersectsPerimeter  =
+  processSegment segmentIntersectsPoint
+
+--Use F1 to contain the pointOfIntersection, so types align for SegmentIntersectionType
+segmentIntersectsPoint :: CornerPoints -> CornerPoints -> Either String (Maybe Point)
+segmentIntersectsPoint (F1 pointOfIntersection) (BottomLeftLine b1 f1) = do
+  segmentIntersectsPointGenericLine pointOfIntersection b1 f1
+
+segmentIntersectsPoint pointOfIntersection segment =
+  Left $ "Geometry.Intercept.segmentIntersectsPoint missing pattern match for: pointOfIntersection: " ++ (cpointType pointOfIntersection) ++
+         " segment: " ++ (cpointType segment)
+
+{-
+Given: pointOfIntersection :: Point
+Point at which the segment intersects if it is a line of infinite length.
+
+Given: p1 p2 :: Point Point
+Two endpoints of the segment.
+
+Task:
+Check if the segment contains the pointOfIntersection.
+
+Return:
+Left e if calculateDistanceA throws an error.
+
+Right Nothing if segment does not contain the pointOfIntersection.
+
+Right Just pointOfIntersection: The pointOfIntersection which is contained by segment.
+-}
+segmentIntersectsPointGenericLine :: Point -> Point -> Point -> Either String (Maybe Point)
+segmentIntersectsPointGenericLine pointOfIntersection p1 p2 = do
+  distanceP2ToPointOfIntersection <- calculateDistanceA  p2 pointOfIntersection
+  distanceP1ToPointOfIntersection <- calculateDistanceA  p1 pointOfIntersection
+  distnaceP2ToP1 <- calculateDistanceA  p2 p1 
+
+  pointOfIntersectionNew <-
+    case (distnaceP2ToP1 >= distanceP2ToPointOfIntersection) && (distanceP1ToPointOfIntersection <= distnaceP2ToP1) of
+      True -> Right $ Just pointOfIntersection
+      False -> Right Nothing
+
+  return pointOfIntersectionNew
+
+{-
+data SegementIntersectionError = SegementIntersectionError {errMsg :: String }
+  deriving Eq
+
+type SegmentIntersectionType = ExceptT SegementIntersectionError (Maybe) Point
+
+segmentIntersectionErrorHandler :: SegementIntersectionError -> SegmentIntersectionType 
+segmentIntersectionErrorHandler error = do
+  throwE error
+
+processSegment :: (CornerPoints -> CornerPoints -> Either String (Maybe Point)) -> String -> CornerPoints -> CornerPoints -> SegmentIntersectionType
+processSegment  processLines extraMsg advancingCpoint perimeter =
+  (processSegementOrFail  processLines extraMsg advancingCpoint perimeter) `catchError` segmentIntersectionErrorHandler
+
+processSegementOrFail :: (CornerPoints -> CornerPoints -> Either String (Maybe Point)) -> String -> CornerPoints -> CornerPoints -> SegmentIntersectionType
+processSegementOrFail processLines extraMsg advancingCpoint perimeter =
+  --this is where I would process the lines and cx for errors
+  case processLines advancingCpoint perimeter of
+    Left e -> 
+      throwE (SegementIntersectionError $ extraMsg ++ " " ++ e)
+    Right (maybePoint) -> lift maybePoint
+
+checkForPointOfInterSection :: String -> CornerPoints -> CornerPoints -> SegmentIntersectionType
+checkForPointOfInterSection =
+  processSegment lineIntersection
+
+segmentIntersectionT :: CornerPoints -> --advancingCpoint
+                        CornerPoints -> --perimeter
+                        SegmentIntersectionType
+
+segmentIntersectionT advancingCpoint perimeterLine =  do
+  lineIntersection <- checkForPointOfInterSection "check for line intersection" advancingCpoint perimeterLine
+  
+  advancingCpointSegmentIntersectsPerimeterLine <- checkThatSegmentIntersectsPerimeter
+                                                   "advancingCpoint segment intersects perimeter line"
+                                                   advancingCpoint (F1 lineIntersection)
+  return lineIntersection
+
+checkThatSegmentIntersectsPerimeter :: String -> CornerPoints -> CornerPoints -> SegmentIntersectionType
+checkThatSegmentIntersectsPerimeter  =
+  processSegment segmentIntersectsPoint
+
+--Use F1 to contain the pointOfIntersection, so types align for SegmentIntersectionType
+segmentIntersectsPoint :: CornerPoints -> CornerPoints -> Either String (Maybe Point)
+segmentIntersectsPoint (F1 pointOfIntersection) (BottomLeftLine b1 f1) = do
+  segmentIntersectsPointGenericLine pointOfIntersection b1 f1
+
+segmentIntersectsPoint pointOfIntersection segment =
+  Left $ "Geometry.Intercept.segmentIntersectsPoint missing pattern match for: pointOfIntersection: " ++ (cpointType pointOfIntersection) ++
+         " segment: " ++ (cpointType segment)
+  
+segmentIntersectsPointGenericLine :: Point -> Point -> Point -> Either String (Maybe Point)
+segmentIntersectsPointGenericLine pointOfIntersection b1 f1 = do
+  distanceF1ToPointOfIntersection <- calculateDistanceA  f1 pointOfIntersection
+  distanceB1ToPointOfIntersection <- calculateDistanceA  b1 pointOfIntersection
+  distnaceF1ToB1 <- calculateDistanceA  f1 b1 
+
+  pointOfIntersectionNew <-
+    case (distnaceF1ToB1 >= distanceF1ToPointOfIntersection) && (distanceF1ToPointOfIntersection > distanceB1ToPointOfIntersection) of
+      True -> Right $ Just pointOfIntersection
+      False -> Right Nothing
+
+  return pointOfIntersectionNew
 
 -}
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------- MaybeT Excpept segmentIntersect--------------------------------------------------------------
+--but does it make any sense to have the Either inside the Maybe.
+type SegmentIntersectionTypeME = MaybeT (Either String) Point
+
+
+{-
+data SegementIntersectionErrorME = SegementIntersectionErrorME {errMsgME :: String }
+  deriving Eq
+
+segmentIntersectionME :: CornerPoints -> --advancingCpoint
+                        CornerPoints -> --perimeter
+                        SegmentIntersectionTypeME
+segmentIntersectionErrorHandlerME :: SegementIntersectionErrorME -> SegmentIntersectionTypeME 
+segmentIntersectionErrorHandlerME error = do
+  throwE error
+
+processSegmentME :: (CornerPoints -> CornerPoints -> Either String (Maybe Point)) -> String -> CornerPoints -> CornerPoints -> SegmentIntersectionTypeME
+processSegmentME  processLines extraMsg advancingCpoint perimeter =
+  (processSegementOrFailME  processLines extraMsg advancingCpoint perimeter) `catchError` segmentIntersectionErrorHandlerME
+
+processSegementOrFailME :: (CornerPoints -> CornerPoints -> Either String (Maybe Point)) -> String -> CornerPoints -> CornerPoints -> SegmentIntersectionTypeME
+processSegementOrFailME processLinesME extraMsg advancingCpoint perimeter =
+  --this is where I would process the lines and cx for errors
+  case processLinesME advancingCpoint perimeter of
+    Left e -> 
+      throwE (SegementIntersectionErrorME $ extraMsg ++ " " ++ e)
+    Right (maybePoint) -> lift maybePoint
+
+
+
+
+segmentIntersectionME :: CornerPoints -> CornerPoints -> SegmentIntersectionTypeME
+segmentIntersectionME advancingCpoint perimeterLine =  do
+  --lineIntersection <- checkForPointOfIntersection "check for line intersection" advancingCpoint perimeterLine
+  lineIntersection <- processSegmentME $ lineIntersection advancingCpoint perimeterLine
+  
+  advancingCpointSegmentIntersectsPerimeterLine <- segmentIntersectsPoint advancingCpoint (F1 lineIntersection)
+  return advancingCpointSegmentIntersectsPerimeterLine
+-}  
+  
 {- |
 If the new advancingCpoint does not intersect the perimeter, then it is legal.
 If it does intersect, but on a vertice, then it is legal. Should be the perimeter from which the new advancing line it to be built.
@@ -346,7 +558,7 @@ legalIntersection (BottomLeftLine b1 f1 ) (BackBottomLine b1' b4) =
         case pointOfIntersection of
           Nothing -> Right True
           Just pointOfIntersection ->
-            Right $ (pointOfIntersection ==  b1') || (pointOfIntersection ==  b4)
+            Right $ (pointOfIntersection ==  b1') || (pointOfIntersection ==  b4) 
       
   in 
     extractE $
@@ -354,7 +566,26 @@ legalIntersection (BottomLeftLine b1 f1 ) (BackBottomLine b1' b4) =
                                               lineIntersection (BottomLeftLine b1 f1 ) (BackBottomLine b1' b4)  <*>
                                               segmentIntersection (BottomLeftLine b1 f1 ) (BackBottomLine b1' b4)
 
-
+legalIntersection (BottomRightLine b4 f4) (BackBottomLine b1' b4') =
+  let
+    
+    
+    hasNoIntersectionOrIsOnVertice :: CornerPoints -> -- perimeter
+                        Maybe Point -> --point of intersection
+                        Bool  -> --is pointOfIntersection in perimeter segment
+                        Either String Bool
+    hasNoIntersectionOrIsOnVertice  _ _ False = Right True
+    hasNoIntersectionOrIsOnVertice  (BackBottomLine b1' b4') pointOfIntersection intersectsPerimeter =
+        case pointOfIntersection of
+          Nothing -> Right True
+          Just pointOfIntersection ->
+            Right $ (pointOfIntersection ==  b1') || (pointOfIntersection ==  b4') 
+      
+  in 
+    extractE $
+     hasNoIntersectionOrIsOnVertice (BackBottomLine b1' b4') <$>
+                                              lineIntersection (BottomRightLine b4 f4 ) (BackBottomLine b1' b4')  <*>
+                                              segmentIntersection (BottomRightLine b4 f4 ) (BackBottomLine b1' b4')
 
 legalIntersection advancingCpoint perimeter =
   Left $ "Geometry.Intercept.legalIntersection has missing or illegal pattern match for advancingCpoint: " ++ (cpointType advancingCpoint) ++ " and  perimeter: " ++ (cpointType perimeter)
@@ -366,8 +597,8 @@ perimetersContainIllegalIntersection (p:perimeters) cpoint =
     perimetersContainIllegalIntersection' (p:perimeter) cpoint =
       case legalIntersection cpoint p of
         Left e -> Left e
-        Right False -> perimetersContainIllegalIntersection' perimeter cpoint
-        Right True -> Right True
+        Right True -> perimetersContainIllegalIntersection' perimeter cpoint
+        Right False -> Right True
     perimetersContainIllegalIntersection' ([]) _ = Right False
 
   in
@@ -378,6 +609,12 @@ perimetersContainIllegalIntersection (p:perimeters) cpoint =
       Right True -> Right True
 
 perimetersContainIllegalIntersection [] _ = Right False
+
+perimetersContainLegalIntersections :: [[CornerPoints]] -> CornerPoints -> Either String Bool
+perimetersContainLegalIntersections perimeters cpoint = do
+  areTheyLegal <- perimetersContainIllegalIntersection perimeters cpoint
+  return $ not areTheyLegal
+  
 
 
 --temp fx to look inside of segmentIntersection

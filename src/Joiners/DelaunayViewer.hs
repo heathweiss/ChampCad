@@ -9,7 +9,7 @@ import Primitives.Cylindrical.Walled(cylinder)
 import CornerPoints.Radius(Radius(..))
 import CornerPoints.Points(Point(..))
 import CornerPoints.FaceExtraction(extractB1, extractB4, extractF1, extractF4, extractBackLeftLine, extractBackRightLine,
-                                  extractFrontLeftLine, extractFrontRightLine)
+                                  extractFrontLeftLine, extractFrontRightLine, extractBackBottomLine, extractBackFace)
 import CornerPoints.MeshGeneration(autoGenerateEachCube, autoGenerateEachFace)
 import CornerPoints.CornerPoints((+++>), (|+++|))
 import CornerPoints.FaceConversions(toTopFace)
@@ -17,7 +17,7 @@ import CornerPoints.Transpose(transposeZ)
 
 import Geometry.Angle(Angle(..))
 
-import Joiners.Advancer(advanceFromHeadUsingDistanceToCornerPoint)
+import Joiners.Advancer(advanceToHeadCPointDistanceNoIntersectionTest, advanceToHeadCPointDistanceNoIntersectionTestNM)
 
 import Stl.StlBase(Triangle(..), newStlShape)
 import Stl.StlCornerPoints((|+++^|), Faces(..) )
@@ -40,7 +40,8 @@ import Control.Monad.Except
 import Control.Monad.Writer (WriterT, tell, execWriterT)
 import Control.Monad.Reader
 
-currentJoiner = advanceFromHeadUsingDistanceToCornerPoint
+currentJoiner = advanceToHeadCPointDistanceNoIntersectionTestNM
+  --advanceToHeadCPointDistanceNoIntersectionTest
 
 {-
 Cut a cylinder out of another cylinder.
@@ -56,17 +57,15 @@ bottomPointsBuilder = do
   let
   {-----------------Build the 2 cylinders, and extract required bottom points to be joined as [BottomFace]-------------}
   --Create the inner cylinder which will supply the [B<1/4>] used to build the inner wall.
+  let
+    cylinder' = cylinder [Radius 30 | r <- [1..]] [Radius 150 | r <- [1..]] ([Angle a | a <- [0,5..360]] ) (Point 0 0 0) 10
+    
   innerBackBottomPoints <- buildCubePointsListSingle "innerBackBottomPoints"
                             
-                            (let
-                                --build the inner cylinder
-                               angles = ([Angle a | a <- [0,5..360]] )
-                               cylinder' = cylinder [Radius 30 | r <- [1..]] [Radius 150 | r <- [1..]] angles (Point 0 0 0) 10
-                             in
-                              --extract all the Back points. Note that 1st the first cube needs B4 and B1 extracted.
+                            ( --extract all the Back points. Note that 1st the first cube needs B4 and B1 extracted.
                               (extractB4 $ head cylinder') : (map (extractB1) cylinder')
                             )
-
+  
   --Create the outer cylinder which supplies the [F<1/4>] used to build the outer wall.
   outerFrontBottomPoints <- buildCubePointsListSingle "innerBackBottomPoints"
                             (let
@@ -92,7 +91,8 @@ bottomPointsBuilder = do
   -}
   --Use delaunayB joiner to join the <innerBack/outerFront>Points into a [Bottom<Left/Right>Line]
   bottomLeftRightLines <- buildCubePointsListSingle "delaunay"
-                (currentJoiner  [innerBackBottomPoints] outerFrontBottomPoints)
+                --(currentJoiner  [innerBackBottomPoints] outerFrontBottomPoints)
+                (currentJoiner [(map (extractBackBottomLine) cylinder')]  [innerBackBottomPoints] outerFrontBottomPoints  )
 
   
   --create the [BottomFace] by: (head bottomLeftRightLines) +++> (tail bottomLeftRightLines)
@@ -149,26 +149,25 @@ frontBackFacesBuilder = do
   let
   {-----------------Build the 2 cylinders, and extract required bottom points to be joined as [BottomFace]-------------}
   --Create the inner cylinder which will supply the [B<1/4>] used to build the inner wall.
+  let
+    innerCylinder1 =
+      cylinder [Radius 20 | r <- [1..]] [Radius 50 | r <- [1..]] ([Angle a | a <- [0,5..360]] ) (Point 0 (-20) 0) 100
+
+    innerCylinder2 =
+      cylinder [Radius 15 | r <- [1..]] [Radius 50 | r <- [1..]] ([Angle a | a <- [0,5..360]] ) (Point 0 (20) 0) 100 
+
+    
   backFaces1 <- buildCubePointsListSingle "back faces"
                             
-                            (let
-                                --build the inner cylinder
-                               angles = ([Angle a | a <- [0,5..360]] )
-                               cylinder' = cylinder [Radius 20 | r <- [1..]] [Radius 50 | r <- [1..]] angles (Point 0 (-20) 0) 100
-                             in
+                            (
                               --extract all the Back points. Note that 1st the first cube needs B4 and B1 extracted.
-                              (extractBackRightLine $ head cylinder') : (map (extractBackLeftLine) cylinder')
+                              (extractBackRightLine $ head innerCylinder1) : (map (extractBackLeftLine) innerCylinder1)
                             )
 
   backFaces2 <- buildCubePointsListSingle "back faces"
                             
-                            (let
-                                --build the inner cylinder
-                               angles = ([Angle a | a <- [0,5..360]] )
-                               cylinder' = cylinder [Radius 15 | r <- [1..]] [Radius 50 | r <- [1..]] angles (Point 0 (20) 0) 100
-                             in
-                              --extract all the Back points. Note that 1st the first cube needs B4 and B1 extracted.
-                              (extractBackRightLine $ head cylinder') : (map (extractBackLeftLine) cylinder')
+                            (--extract all the Back points. Note that 1st the first cube needs B4 and B1 extracted.
+                              (extractBackRightLine $ head innerCylinder2) : (map (extractBackLeftLine) innerCylinder2)
                             )
   
   
@@ -189,7 +188,8 @@ frontBackFacesBuilder = do
   
   --Use delaunay joiner to join the <innerBack/outerFront>Points into a [Bottom<Left/Right>Line]
   frontBackFaces <- buildCubePointsListSingle "frontBackFaces"
-                (currentJoiner  [backFaces1, backFaces2] frontFaces)
+                --(currentJoiner  [backFaces1, backFaces2] frontFaces)
+                (currentJoiner [(map extractBackFace innerCylinder1),(map extractBackFace innerCylinder2)]  [backFaces1, backFaces2] frontFaces )
               
   
   --create the [BottomFace] by: (head bottomLeftRightLines) +++> (tail bottomLeftRightLines)

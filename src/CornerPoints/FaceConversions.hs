@@ -317,6 +317,9 @@ raisedTo (FrontLeftLine f1 f2) (RightFace b3 b4 f3 f4) = Right $ LeftFace b4 b3 
 
 raisedTo (BackRightLine b3 b4) ( LeftFace b1 b2 f1 f2) = Right $ LeftFace b4 b3 f1 f2
 
+raisedTo (B4 b4') (BottomRightLine b4 f4) =
+  Right $ BottomLeftLine b4' f4
+
 --not sure about this!!!!!!!!!!!!!!
 --It must be for the initial line, and so gives a RightFace
 raisedTo (BackRightLine b3 b4) (FrontRightLine f3 f4) = Right $ RightFace b3 b4 f3 f4  

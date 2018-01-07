@@ -4,12 +4,15 @@ As the functions passed in to delaunayBase need to match up to work properly, it
 instead of the user trying to mix and match. To be successful at that, you need to know how the functions work together.
 Then again, mixing and matching randomly may be a good way to get new results as required.
 -}
-module Joiners.Advancer(advanceFromHeadUsingDistanceToCornerPoint) where
+module Joiners.Advancer(advanceToHeadCPointDistanceNoIntersectionTest, advanceToHeadCPointDistanceNoIntersectionTestNM) where
 
-import Joiners.AdvanceBase(delaunayBase, delaunayBase', DelaunayBase'Signature)
+import Joiners.AdvanceBase(delaunayBase, delaunayBase', delaunayBaseNM)
 import Joiners.AdvanceSupport(Perimeters(..), AdvancingCPoint(..), justifyPerimeters, appendAdvancingCpointToJoinedCpointsE)
-import Joiners.AdvanceToHeadOfPerimeters(orderInnerPerimsByDistanceFromHead, orderedInnerPerims, removeContainedCPointFromHeadOfPerims, advancingCpointFromHeadOfInnerPerims,
-                                         advancingCpointFromHeadOfOuterPerims)
+import Joiners.AdvanceToHeadOfPerimeters(orderInnerPerimsByDistanceFromHead, orderedInnerPerims,
+                                         removeContainedCPointFromHeadOfPerims, removeContainedCPointFromHeadOfPerimsNM,
+                                         advancingCpointFromHeadOfInnerPerims, advancingCpointFromHeadOfInnerPerimsNM,
+                                         advancingCpointFromHeadOfOuterPerims, advancingCpointFromHeadOfOuterPerimsNM,
+                                         advancingCpointFromDoublePerimsUsingDistanceToHeadOfPerimsCpointsNM)
 
 import CornerPoints.CornerPoints(CornerPoints(..))
 
@@ -22,12 +25,32 @@ import Helpers.Applicative(extractE)
 -- | All advancing is done from the head of perimeters.
 -- The tail of perimeters are never checked for Distance, to see if one of them
 -- would be a valid point to advance to.
-advanceFromHeadUsingDistanceToCornerPoint
+advanceToHeadCPointDistanceNoIntersectionTest
   = delaunayBase
-      (removeContainedCPointFromHeadOfPerims)
-      (advancingCpointFromHeadOfInnerPerims)
+      removeContainedCPointFromHeadOfPerims
+      advancingCpointFromHeadOfInnerPerims
       advancingCpointFromHeadOfOuterPerims
       advancingCpointFromDoublePerimsUsingDistanceToCpoints
+
+advanceToHeadCPointDistanceNoIntersectionTestNM
+  = delaunayBaseNM
+      --removeAdvancingCPointFromPerimeters
+      --((Maybe Perimeters) -> (Maybe Perimeters) -> AdvancingCPoint -> Either String (Perimeters, Perimeters)) ->
+      removeContainedCPointFromHeadOfPerimsNM
+
+      --createAdvancingCpointFromInnerPerimeters
+      --(Perimeters -> AdvancingCPoint -> Either String AdvancingCPoint) ->
+      advancingCpointFromHeadOfInnerPerimsNM
+
+      --advancingCpointFromOuterPerims
+      --(Perimeters -> AdvancingCPoint -> Either String AdvancingCPoint) ->
+      advancingCpointFromHeadOfOuterPerimsNM
+      
+      --((Perimeters) -> (Perimeters) -> [[CornerPoints]] -> AdvancingCPoint -> Either String AdvancingCPoint ) -> 
+      --doublePerimDecision, both perims have cpoints in them, so decide which to make advancingCpoint from.
+      advancingCpointFromDoublePerimsUsingDistanceToHeadOfPerimsCpointsNM
+                 
+
 
 {-
 This seems like it should be in Joiners.AdvanceToHeadOfPerimeters module, but it makes a call to delaunayBase', which would make it circular.

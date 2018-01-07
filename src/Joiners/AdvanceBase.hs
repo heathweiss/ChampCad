@@ -17,12 +17,13 @@ gets removed from the interior of the OuterPerimeter.
 These will be Back cornerpoints such as Back<Face/LeftLine/RightLine/TopLine...> or B<1,2,3,4>
 
 -}
-module Joiners.AdvanceBase(delaunayBase, delaunayBase', DelaunayBase'Signature) where
+module Joiners.AdvanceBase(delaunayBase, delaunayBase', delaunayBaseNM) where
 
 import Joiners.AdvanceSupport(Perimeters(..), AdvancingCPoint(..), ExtraLists(..),
                               justifyPerimeters, appendAdvancingCpointToJoinedCpointsE)
-import Joiners.AdvanceToHeadOfPerimeters(orderInnerPerimsByDistanceFromHead, orderedInnerPerims, removeContainedCPointFromHeadOfPerims, advancingCpointFromHeadOfInnerPerims,
-                                         advancingCpointFromHeadOfOuterPerims)
+import Joiners.AdvanceToHeadOfPerimeters(orderInnerPerimsByDistanceFromHead, orderedInnerPerims, removeContainedCPointFromHeadOfPerims,
+                                         advancingCpointFromHeadOfInnerPerims, advancingCpointFromHeadOfOuterPerims)
+                                         
 
 import CornerPoints.CornerPoints(CornerPoints(..))
 import CornerPoints.FaceConversions(raisedTo)
@@ -171,7 +172,8 @@ delaunayBase' removeAdvancingCPointFromPerimeters
     case innerPerimeters of
       Nothing ->
         --call again with InnerPerimeters [] to keep it DRY. The next section "Just (InnerPerimeter innerPerimeter')" will use justifyPerimeters to see that is is really Nothing.
-        delaunayBase' removeAdvancingCPointFromPerimeters createAdvancingCpointFromInnerPerimeters advancingCpointFromOuterPerims doublePerimDecision (Just $ InnerPerimeters []) outerPerimeters  advancingCpointIn joinedCpoints
+        --delaunayBase' removeAdvancingCPointFromPerimeters createAdvancingCpointFromInnerPerimeters advancingCpointFromOuterPerims doublePerimDecision (Just $ InnerPerimeters []) outerPerimeters  advancingCpointIn joinedCpoints
+        delaunayBase'' (Just $ InnerPerimeters []) outerPerimeters  advancingCpointIn joinedCpoints
       --re-call with InnerPerimeters
       Just (InnerPerimeter innerPerimeter') ->
         delaunayBase'' (Just $ InnerPerimeters [innerPerimeter']) outerPerimeters  advancingCpointIn joinedCpoints
@@ -254,6 +256,9 @@ delaunayBase' removeAdvancingCPointFromPerimeters
 {-
 This seems like it should be in Joiners.AdvanceToHeadOfPerimeters module, but it makes a call to delaunayBase', which would make it circular.
 Maybe it needs to take delaunayBase' as a param, then curry it in here.
+
+There is a new NM version in Joiners.AdvanceToHeadOfPerimeters
+-This 1 can be deleted when non-NM versions are removed
 -}
 advancingCpointFromDoublePerimsUsingDistanceToCpoints :: ((Maybe Perimeters) -> (Maybe Perimeters) -> AdvancingCPoint -> Either String ((Maybe Perimeters),(Maybe Perimeters))) ->
                        --remove advancingCpoints from perimeters
@@ -366,6 +371,215 @@ advancingCpointFromDoublePerimsUsingDistanceToCpoints
                   (snd <$> perimsWithAdvancingCpointBldrRemoved ) <*>
                   advancingInnerCpointE <*>                             --The advancing Cpoint just created.
                   (appendAdvancingCpointToJoinedCpointsE <$> advancingInnerCpointE <*> Right joinedCpoints)  --joined cpoints with the advancing cpoint added to it.
+
+
+
+-- ======================================================================= NM versions ===============================================================================
+type DelaunayBaseNM'Signature =
+               --start of curried functions. Same as delaunayBase so refer to it for parameter info.
+  
+               (Maybe Perimeters) -> (Maybe Perimeters) -> AdvancingCPoint -> Either String ((Maybe Perimeters),(Maybe Perimeters)) ->
+                 --removeAdvancingCPointFromPerimeters
+                 --this has to remain Mabye perims going in, as there may only be 1 perimeter left to go into the removing fx 
+
+               (Perimeters -> AdvancingCPoint -> Either String AdvancingCPoint) ->
+                  --createAdvancingCpointFromInnerPerimeters
+
+               (Perimeters -> AdvancingCPoint -> Either String AdvancingCPoint) ->
+                 --advancingCpointFromOuterPerims
+
+               ((Perimeters) -> (Perimeters) -> [[CornerPoints]] -> AdvancingCPoint -> Either String AdvancingCPoint ) -> 
+                 --doublePerimDecision, both perims have cpoints in them, so decide which to make advancingCpoint from.
+
+               --need the original raw inner perimeters as [[CornerPoints]] so can cx for legalIntersection.
+               --should make a newType, to try them out. May be a better choice for other perimeters as well.
+                 --could make a class of Intercept, so that [[]] [] and the newtype of raw perimeters would all use it.
+                --There really is no reason have fx's that process both inner/outer perimeters.
+                --Is there any need for the InnerPerimeter.
+                --for now, use [[CornerPoints]] as that is what Intercept module already uses
+               [[CornerPoints]] ->
+
+               --start of data being passed
+               Maybe Perimeters -> --inner perimeters
+               Maybe Perimeters -> --outer perimeters
+
+               
+
+               AdvancingCPoint -> -- The current advancing cpoint
+               [CornerPoints] ->   --joinedCpoints. The built up [CornerPoints] which gets joined radially with +++> to form the final shape.
+                                   --Each recursive call of delaunayBase' adds onto this list. 
+               Either String [CornerPoints] --The built up [CornerPoints] which gets joined radially with +++> to form the final shape.
+                                            --delaunayBase will convert from this Either to a [CornerPoints] which shows errors via CornerPointsError
+                                            --as that is how Builder.Monad handles it.
+                                            --That is bad design decision that needs to be changed. Get rid of CornerPointsError. Will be a big job. :( 
+
+
+--Everyting is good with perimeters, so build advancing cpoints, and adjust perimeters.
+delaunayBaseNM' removeAdvancingCPointFromPerimeters
+                createAdvancingCpointFromInnerPerimeters
+                advancingCpointFromOuterPerims
+                doublePerimDecision
+                rawInnerPerimeters
+                innerPerimeters outerPerimeter
+                advancingCpointIn joinedCpoints = do
+
+    let
+      delaunayBaseNM'' = delaunayBaseNM' removeAdvancingCPointFromPerimeters createAdvancingCpointFromInnerPerimeters
+                                         advancingCpointFromOuterPerims doublePerimDecision rawInnerPerimeters
+    --in
+    --Cx all possible combinations of Perimeters. Also check for Perimeters containing [].
+    --ToDo: See if there is a cleaner way to do this with something like K-Arrows, monads, applicative.
+    justifiedInnerPerimeters <-
+      case innerPerimeters of
+       (Just(OuterPerimeter _)) ->
+         Left "delaunayNM' had OuterPerimeter passed in for innerPerimeters"
+       (Just(InnerPerimeter _)) ->
+         Left "delaunayNM' had InnerPerimeter passed in for innerPerimeters"
+       Nothing -> Right Nothing 
+       (Just(InnerPerimeters (i:innerPerimeters))) ->
+         case (length i) == 0 of
+           True ->
+             case (length $ removeEmpty innerPerimeters) == 0 of
+               True ->
+                 Right Nothing
+               False -> Right $ Just $ InnerPerimeters innerPerimeters
+           False ->
+             Right $ Just $ InnerPerimeters (i:(removeEmpty innerPerimeters))
+           
+    justifiedOuterPerimeter <-
+      case outerPerimeter of
+        (Just(InnerPerimeter _)) -> Left "delaunayNM has InnerPerimeter passed in as OuterPerimeter"
+        (Just(InnerPerimeters _)) -> Left "delaunayNM has InnerPerimeters passed in as OuterPerimeter"
+        Nothing ->
+          Right Nothing
+        (Just(OuterPerimeter outerPerimeter)) ->
+          case (length outerPerimeter) == 0 of
+            True -> Right Nothing
+            False -> Right $ Just $ OuterPerimeter outerPerimeter
+
+
+    returnVal <-
+      case (justifiedInnerPerimeters, justifiedOuterPerimeter) of
+        (Nothing,Nothing) -> Right $ reverse joinedCpoints
+        (Nothing,(Just (OuterPerimeter(outerPerimeter)))) -> do
+          advancingCpointNew <- advancingCpointFromOuterPerims (OuterPerimeter outerPerimeter) (advancingCpointIn)
+            
+          perimsWithAdvancingCpointBldrRemoved <-
+                      (removeAdvancingCPointFromPerimeters 
+                       Nothing 
+                        (Just $ OuterPerimeter outerPerimeter) advancingCpointNew
+                   )
+          returnVal <-
+            delaunayBaseNM'' 
+                           (fst perimsWithAdvancingCpointBldrRemoved )
+                           (snd perimsWithAdvancingCpointBldrRemoved ) 
+                           advancingCpointNew                              --The advancing Cpoint just created.
+                           (appendAdvancingCpointToJoinedCpointsE advancingCpointNew joinedCpoints)  --joined cpoints with the advancing cpoint added to it.
+          return returnVal
+        ((Just (InnerPerimeters innerPerimeters)),Nothing) -> do
+          advancingCpointNew <- createAdvancingCpointFromInnerPerimeters (InnerPerimeters innerPerimeters) (advancingCpointIn)
+            
+          perimsWithAdvancingCpointBldrRemoved <-
+                      (removeAdvancingCPointFromPerimeters 
+                        (Just $ InnerPerimeters innerPerimeters) Nothing advancingCpointNew
+                         
+                   )
+          returnVal <-
+            delaunayBaseNM'' 
+                           (fst perimsWithAdvancingCpointBldrRemoved )
+                           (snd perimsWithAdvancingCpointBldrRemoved ) 
+                           advancingCpointNew                              --The advancing Cpoint just created.
+                           (appendAdvancingCpointToJoinedCpointsE advancingCpointNew joinedCpoints)  --joined cpoints with the advancing cpoint added to it.
+          return returnVal
+        ((Just (InnerPerimeters innerPerimeters)),(Just (OuterPerimeter(outerPerimeter)))) -> do
+          advancingCpointNew <- doublePerimDecision (InnerPerimeters innerPerimeters) (OuterPerimeter outerPerimeter) rawInnerPerimeters (advancingCpointIn)
+            
+          perimsWithAdvancingCpointBldrRemoved <-
+                      (removeAdvancingCPointFromPerimeters 
+                        (Just $ InnerPerimeters innerPerimeters) (Just $ OuterPerimeter outerPerimeter) advancingCpointNew
+                         
+                   )
+          returnVal <-
+            delaunayBaseNM'' 
+                           (fst perimsWithAdvancingCpointBldrRemoved )
+                           (snd perimsWithAdvancingCpointBldrRemoved ) 
+                           advancingCpointNew                              --The advancing Cpoint just created.
+                           (appendAdvancingCpointToJoinedCpointsE advancingCpointNew joinedCpoints)  --joined cpoints with the advancing cpoint added to it.
+          return returnVal
+          
+    return returnVal       
+    
+
+-- ===================================================================================================================================================
+delaunayBaseNM ::  
+                 ((Maybe Perimeters) -> (Maybe Perimeters) -> AdvancingCPoint -> Either String (Maybe Perimeters, Maybe Perimeters)) ->
+                 --removeAdvancingCPointFromPerimeters
+
+                 (Perimeters -> AdvancingCPoint -> Either String AdvancingCPoint) ->
+                 --createAdvancingCpointFromInnerPerimeters
+
+                 (Perimeters -> AdvancingCPoint -> Either String AdvancingCPoint) ->
+                 --advancingCpointFromOuterPerims
+                   
+                 ((Perimeters) -> (Perimeters) -> [[CornerPoints]] -> AdvancingCPoint -> Either String AdvancingCPoint ) -> 
+                 --doublePerimDecision, both perims have cpoints in them, so decide which to make advancingCpoint from.
+
+                 [[CornerPoints]] -> --raw inner perims
+                 
+                 --end of curried functions.
+                 --start of actual data being passed.
+                 [[CornerPoints]] -> --inner perim cpoints
+                 [CornerPoints] -> --outer perim cpoints
+                 [CornerPoints]
+delaunayBaseNM removeAdvancingCPointFromPerimeters
+               createAdvancingCpointFromInnerPerimeters
+               advancingCpointFromOuterPerims
+               doublePerimDecision
+               rawInnerPerimeters
+               innerPerimeters outerPerimeter  =
+  
+  let
+    delaunayBaseNM'' = delaunayBaseNM' removeAdvancingCPointFromPerimeters createAdvancingCpointFromInnerPerimeters advancingCpointFromOuterPerims  doublePerimDecision rawInnerPerimeters 
+    process :: Either String [CornerPoints]
+    process = do
+      --As this is the very first advancingCpoint, build it from head outerPerimeters, and innerPerimeters
+      (OuterPerimeter (o: justifiedOuterPerimeter)) <-
+        case (length  outerPerimeter) == 0 of
+          True -> Left "empty outerPerimeters passed into delaunayBaseNM"
+          False -> Right $ OuterPerimeter outerPerimeter
+
+      (InnerPerimeters (i:innerPerimeters)) <-
+        case (length $ removeEmpty innerPerimeters) == 0 of
+          True -> Left "deluanaBaseNM has empty InnerPerimeters"
+          False -> Right $ InnerPerimeters innerPerimeters
+
+      advancingCpoint <- createAdvancingCpointFromInnerPerimeters (InnerPerimeters (i:innerPerimeters)) (AdvancingCPoint o)
+
+      perimsWithAdvancingCpointBldrRemoved <-
+        (removeAdvancingCPointFromPerimeters 
+            (Just $ (InnerPerimeters (i:innerPerimeters)))  (Just $ OuterPerimeter outerPerimeter) advancingCpoint)
+
+      appended <- Right $ appendAdvancingCpointToJoinedCpointsE advancingCpoint  []
+
+      delaunay <-
+        delaunayBaseNM'' 
+        (fst perimsWithAdvancingCpointBldrRemoved)
+        (snd perimsWithAdvancingCpointBldrRemoved)
+        advancingCpoint 
+        appended
+      
+      return delaunay
+      
+  in
+  case process  of
+    Left e -> [CornerPointsError $ "Joiners.DeluanayB(Left e): " ++  e]
+    Right val -> val
+
+
+
+
+
+
 
 
 

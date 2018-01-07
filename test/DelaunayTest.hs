@@ -5,8 +5,11 @@ import Test.HUnit
 import CornerPoints.CornerPoints(CornerPoints(..), (+++), (+++>), (|+++|), CornerPointsBuilder(..), (&+++#@), (|@+++#@|), (@+++#@),
                                 cornerPointsError, isCubePoints, isCubePointsList)
 import CornerPoints.Points (Point(..), )
+import CornerPoints.Radius(Radius(..))
+import CornerPoints.FaceExtraction(extractB1, extractB4, extractF1, extractF4, extractBackLeftLine, extractBackRightLine,
+                                  extractFrontLeftLine, extractFrontRightLine, extractBackBottomLine, extractBackFace)
 
-import Joiners.Advancer(advanceFromHeadUsingDistanceToCornerPoint)
+import Joiners.Advancer(advanceToHeadCPointDistanceNoIntersectionTest, advanceToHeadCPointDistanceNoIntersectionTestNM)
 import Joiners.AdvanceToHeadOfPerimeters(orderInnerPerimsByDistanceFromHead, orderedInnerPerims, removeContainedCPointFromHeadOfPerims,
                                         advancingCpointFromHeadOfInnerPerims, advancingCpointFromHeadOfOuterPerims)
 
@@ -17,6 +20,10 @@ import Math.Distance(Distance(..), Distant, calculateDistance, DistanceA(..), Di
 
 import Helpers.List(removeEmpty, safeHead )
 import Helpers.Applicative(extractE)
+
+import Primitives.Cylindrical.Walled(cylinder)
+
+import Geometry.Angle(Angle(..))
 
 delaunayTestDo = do
 
@@ -56,6 +63,60 @@ delaunayTestDo = do
   runTestTT createCpointByDistanceTest1
   runTestTT createCpointByDistanceTest1a
   runTestTT createCpointByDistanceTest2
+
+  runTestTT safeListTest
+  --runTestTT safeListTest1
+
+  runTestTT seeInitialAdvancingCpoint
+  runTestTT see2ndAdvancingCpoint
+
+-- ====================================================== delaunay viewer builder test =============================================
+{-
+Cx the shapes in delaunay viewr as they are failing somewhere in : bottomPointsBuilder with both inner and outer cpoint intersections were illegal
+See InterceptTest for intercepts
+-}
+
+--create the inner/outer cylinders
+innerCylinder = cylinder [Radius 10 | r <- [1..]] [Radius 10 | r <- [1..]] ([Angle a | a <- [0,5..360]] ) (Point 0 0 0) 10
+ 
+innerCylinderPoints = (extractB4 $ head innerCylinder) : (map (extractB1) innerCylinder)
+innerCylinderLines =
+  map (extractBackBottomLine) innerCylinder
+  
+outerCylinder =  cylinder [Radius 20 | r <- [1..]] [Radius 20 | r <- [1..]] ([Angle a | a <- [0,10..360]]) (Point 0 0 0) 10
+outerCylinderPoints = (extractF4 $ head outerCylinder) : (map (extractF1)  outerCylinder)
+
+
+
+seeInitialAdvancingCpoint = TestCase $ assertEqual
+  "the first advancing point, hand made"
+  ([BottomRightLine
+    {
+      b4 = Point {x_axis = 0.0, y_axis = -10.0, z_axis = 0.0},
+      f4 = Point {x_axis = 0.0, y_axis = -20.0, z_axis = 0.0}
+    }
+   ])
+  (advanceToHeadCPointDistanceNoIntersectionTestNM
+    [[head innerCylinderLines]] [[head innerCylinderPoints]]  [head outerCylinderPoints]
+  )
+
+see2ndAdvancingCpoint = TestCase $ assertEqual
+  "the first advancing point, hand made"
+  ([BottomRightLine
+    {b4 = Point {x_axis = 0.0, y_axis = -30.0, z_axis = 0.0},
+     f4 = Point {x_axis = 0.0, y_axis = -80.0, z_axis = 0.0}
+    }
+   ])
+  (advanceToHeadCPointDistanceNoIntersectionTestNM
+    [take 2 innerCylinderLines] [take 2 innerCylinderPoints]  $ take 2 outerCylinderPoints
+  )
+
+{-
+[BottomRightLine {b4 = Point {x_axis = 0.0, y_axis = -30.0, z_axis = 0.0}, f4 = Point {x_axis = 0.0, y_axis = -80.0, z_axis = 0.0}},
+BottomLeftLine {b1 = Point {x_axis = 2.614672282429745, y_axis = -29.885840942752367, z_axis = 0.0}, f1 = Point {x_axis = 0.0, y_axis = -80.0, z_axis = 0.0}}]
+-}
+  
+-- ====================================================== end: delaunay viewer builder test =============================================
   
 leftFace =
   LeftFace
@@ -96,6 +157,21 @@ outer1 =
    F1 $ Point 6 (-17) 0
   ]
 
+-- ==================================================== handle empty lists, or lists with [[]] [[],[]] and Nothing==========================
+--does delaunay allow any form of emty lists
+--this gets caught in AdvanceToHeadOfPerimeters advancingCpointFromHeadOfInnerPerims line 191
+  --get rid of justify perims with some better method.
+safeListTest = TestCase $ assertEqual
+  "[] [] into delaunay"
+  ([CornerPointsError {errMessage = "Joiners.DeluanayB(Left e): Joiners.Delaunay.advancingCpointFromHeadOfInnerPerims: had empty inner perimeters passed in"}])
+  (advanceToHeadCPointDistanceNoIntersectionTest [] [])
+
+--this one cause Prelude.head empty list error. Don't run it for now.
+safeListTest1 = TestCase $ assertEqual
+  "[inner1a] [] into delaunay"
+  ([CornerPointsError {errMessage = "Joiners.DeluanayB(Left e): Joiners.Delaunay.advancingCpointFromHeadOfInnerPerims: had empty inner perimeters passed in"}])
+  (advanceToHeadCPointDistanceNoIntersectionTest [inner1a] [])
+  
 
 -- ---------------------------------------- orderInnerPerimsByDistanceFromHead tests ========================================
 orderInnerPerimsByDistanceFromHeadTest = TestCase $ assertEqual
@@ -264,7 +340,7 @@ removeAdvancingCpointFromPerimsTest4 = TestCase $ assertEqual
 
 outer2 = outer1 ++ [F1 $ Point 10 (-11) 0]
 
---advanceFromHeadUsingDistanceToCornerPoint:
+--advanceToHeadCPointDistanceNoIntersectionTest:
 --Uses shortest distance from advancingCpoint to head inner1<a/b>
 --Uses head outer2
 advancingCpointTest2 = TestCase $ assertEqual
@@ -277,7 +353,7 @@ advancingCpointTest2 = TestCase $ assertEqual
     BottomLeftLine {b1 = Point {x_axis = 2.0, y_axis = -5.0, z_axis = 0.0}, f1 = Point {x_axis = 10.0, y_axis = -11.0, z_axis = 0.0}},
     BottomLeftLine {b1 = Point {x_axis = 0.0, y_axis = 4.0, z_axis = 1.0}, f1 = Point {x_axis = 10.0, y_axis = -11.0, z_axis = 0.0}}]
   )
-  (advanceFromHeadUsingDistanceToCornerPoint [inner1a, inner1b] outer2  )
+  (advanceToHeadCPointDistanceNoIntersectionTest [inner1a, inner1b] outer2  )
 -- ========================================================advancingCpointFromHeadOfInnerPerims===============================================
 advancingCpointFromHeadOfPerimsTest1 = TestCase $ assertEqual
   "got the head of first innerPerimeter"
@@ -416,7 +492,7 @@ createCpointByDistanceTest1a = TestCase $ assertEqual
      ]
 
    in
-    advanceFromHeadUsingDistanceToCornerPoint [inner4a, inner4b] outer4
+    advanceToHeadCPointDistanceNoIntersectionTest [inner4a, inner4b] outer4
   )
 
 {-

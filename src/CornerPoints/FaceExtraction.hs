@@ -118,6 +118,7 @@ extractB3 (CubePoints _ _ _ _ _ _ b3 _ ) = B3 b3
 
 extractB4 :: CornerPoints -> CornerPoints
 extractB4 (CubePoints _ _ _ _ _ _ _ b4 ) = B4 b4
+extractB4 (BottomRightLine b4 f4) = B4 b4
 
 {- | ------------------------------------------------ contains ------------------------------------------------
 A bool indicating if a CornerPoints is embedded in another, such as an F1 in a FrontLeftLine.
@@ -188,6 +189,9 @@ contains (BottomRightLine b4 f4) (B4 b4') =
   case b4 == b4' of
     True -> Right True
     False -> Right False
+
+contains (B4 b4') (BottomRightLine b4 f4)  =
+  Right False
 
 contains (RightFace b3 b4 f3 f4) (FrontRightLine f3' f4') =
   case (f3 == f3') && (f4 == f4') of
