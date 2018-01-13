@@ -1,0 +1,390 @@
+src/CornerPoints/Create.hs[36m:[mimport Geometry.Angle(Angle(..), get[1;31mQuad[mrantAngle, RotateFactor(..))
+src/CornerPoints/Create.hs[36m:[m                                 baseOfAngle = (angle $ get[1;31mQuad[mrantAngle verticalAngle)
+src/CornerPoints/Create.hs[36m:[m                                    case get[1;31mQuad[mrantAngle verticalAngle of
+src/CornerPoints/Create.hs[36m:[m                                      ([1;31mQuad[mrant1Angle _) -> x_axis' + length
+src/CornerPoints/Create.hs[36m:[m                                      ([1;31mQuad[mrant2Angle _) -> x_axis' + length
+src/CornerPoints/Create.hs[36m:[m                                      ([1;31mQuad[mrant3Angle _) -> x_axis' - length
+src/CornerPoints/Create.hs[36m:[m                                      ([1;31mQuad[mrant4Angle _) -> x_axis' - length
+src/CornerPoints/Create.hs[36m:[m                                    case get[1;31mQuad[mrantAngle verticalAngle of
+src/CornerPoints/Create.hs[36m:[m                                      ([1;31mQuad[mrant1Angle _) -> y_axis' - length
+src/CornerPoints/Create.hs[36m:[m                                      ([1;31mQuad[mrant2Angle _) -> y_axis' + length
+src/CornerPoints/Create.hs[36m:[m                                      ([1;31mQuad[mrant3Angle _) -> y_axis' + length
+src/CornerPoints/Create.hs[36m:[m                                      ([1;31mQuad[mrant4Angle _) -> y_axis' - length
+src/CornerPoints/Create.hs[36m:[m-------------------------------get[1;31mQuad[mrantAngle( radialAngle)------------------------------->
+src/CornerPoints/Create.hs[36m:[m                                 quadrantAngle = (angle $ get[1;31mQuad[mrantAngle radialAngle)
+src/CornerPoints/Create.hs[36m:[m                                    case get[1;31mQuad[mrantAngle radialAngle of
+src/CornerPoints/Create.hs[36m:[m                                      ([1;31mQuad[mrant1Angle _) -> x_axis' + length  
+src/CornerPoints/Create.hs[36m:[m                                      ([1;31mQuad[mrant2Angle _) -> x_axis' + length  
+src/CornerPoints/Create.hs[36m:[m                                      ([1;31mQuad[mrant3Angle _) -> x_axis' - length 
+src/CornerPoints/Create.hs[36m:[m                                      ([1;31mQuad[mrant4Angle _) -> x_axis' - length 
+src/CornerPoints/Create.hs[36m:[m                                    case get[1;31mQuad[mrantAngle radialAngle of
+src/CornerPoints/Create.hs[36m:[m                                      ([1;31mQuad[mrant1Angle _) -> y_axis' - length  
+src/CornerPoints/Create.hs[36m:[m                                      ([1;31mQuad[mrant2Angle _) -> y_axis' + length  
+src/CornerPoints/Create.hs[36m:[m                                      ([1;31mQuad[mrant3Angle _) -> y_axis' + length  
+src/CornerPoints/Create.hs[36m:[m                                      ([1;31mQuad[mrant4Angle _) -> y_axis' - length 
+src/CornerPoints/HorizontalFaces.hs[36m:[mimport Geometry.Angle(Angle(..), rotateAngle, get[1;31mQuad[mrantAngle, RotateFactor(..))
+src/CornerPoints/HorizontalFaces.hs[36m:[m[1;31mQuad[mrantAngle
+src/CornerPoints/Slope.hs[36m:[mimport Geometry.Angle(Angle(..), rotateAngle, get[1;31mQuad[mrantAngle, RotateFactor(..))
+src/CornerPoints/Slope.hs[36m:[m    quadrantAngle = (angle $ get[1;31mQuad[mrantAngle (xyAngle))
+src/CornerPoints/Slope.hs[36m:[m           case get[1;31mQuad[mrantAngle (xyAngle) of
+src/CornerPoints/Slope.hs[36m:[m             ([1;31mQuad[mrant1Angle _) -> x_axis' + length  
+src/CornerPoints/Slope.hs[36m:[m             ([1;31mQuad[mrant2Angle _) -> x_axis' + length  
+src/CornerPoints/Slope.hs[36m:[m             ([1;31mQuad[mrant3Angle _) -> x_axis' - length 
+src/CornerPoints/Slope.hs[36m:[m             ([1;31mQuad[mrant4Angle _) -> x_axis' - length 
+src/CornerPoints/Slope.hs[36m:[m          case get[1;31mQuad[mrantAngle (xyAngle) of
+src/CornerPoints/Slope.hs[36m:[m            ([1;31mQuad[mrant1Angle _) -> y_axis' - length  
+src/CornerPoints/Slope.hs[36m:[m            ([1;31mQuad[mrant2Angle _) -> y_axis' + length  
+src/CornerPoints/Slope.hs[36m:[m            ([1;31mQuad[mrant3Angle _) -> y_axis' + length  
+src/CornerPoints/Slope.hs[36m:[m            ([1;31mQuad[mrant4Angle _) -> y_axis' - length 
+src/CornerPoints/VerticalFaces.hs[36m:[mimport Geometry.Angle(Angle(..), rotateAngle, get[1;31mQuad[mrantAngle, RotateFactor(..))
+src/Examples/Diffs/MTLDiff.hs[36m:[mimport Geometry.Angle(Angle(..), rotateAngle, get[1;31mQuad[mrantAngle, RotateFactor(..))
+src/Examples/OpenBionicsCom/OpenBionicsDotComDesignWork.hs[36m:[mimport Geometry.Angle(Angle(..), rotateAngle, get[1;31mQuad[mrantAngle, RotateFactor(..))
+src/Examples/OpenHand/FlexiSocket.hs[36m:[mimport Geometry.Angle(RotateFactor, getXYAngle, Angle(..), get[1;31mQuad[mrantAngle, rotateAngle)
+src/Examples/OpenHand/FlexiSocket.hs[36m:[mimport Geometry.Vertex(getXWith[1;31mQuad[mrant, getYWith[1;31mQuad[mrant, Vertex(..), adjustPointAxis)
+src/Examples/OpenHand/SocketMount.hs[36m:[mimport Geometry.Angle(Angle(..), rotateAngle, get[1;31mQuad[mrantAngle, RotateFactor(..), )
+src/Examples/OpenHand/Wrist.hs[36m:[mimport Geometry.Angle(Angle(..), rotateAngle, get[1;31mQuad[mrantAngle, RotateFactor(..), )
+src/Examples/Primitives/Cube.hs[36m:[mimport Geometry.Angle(Angle(..), rotateAngle, get[1;31mQuad[mrantAngle, RotateFactor(..))
+src/Examples/Primitives/Cylinders.hs[36m:[mimport Geometry.Angle(Angle(..), rotateAngle, get[1;31mQuad[mrantAngle, RotateFactor(..))
+src/Examples/Primitives/Squared.hs[36m:[mimport Geometry.Angle(Angle(..), rotateAngle, get[1;31mQuad[mrantAngle, RotateFactor(..))
+src/Examples/Scan/WalkerSocketDesignWork.hs[36m:[mimport Geometry.Angle(Angle(..), rotateAngle, get[1;31mQuad[mrantAngle, RotateFactor(..))
+src/Examples/Scan/WalkerSocketProcessScan.hs[36m:[mimport Geometry.Angle(Angle(..), rotateAngle, get[1;31mQuad[mrantAngle, RotateFactor(..))
+src/Examples/ShoeLift/GeoxShoe.hs[36m:[mimport Geometry.Angle(Angle(..), rotateAngle, get[1;31mQuad[mrantAngle, RotateFactor(..))
+src/Examples/ShoeLift/SnowBoardBoot.hs[36m:[mimport Geometry.Angle(Angle(..), rotateAngle, get[1;31mQuad[mrantAngle, RotateFactor(..))
+src/Geometry/Angle.hs[36m:[mmodule Geometry.Angle(Angle(..), rotateAngle, get[1;31mQuad[mrantAngle, RotateFactor(..), getXYAngle, get[1;31mQuad[mrant, [1;31mQuad[mrant(..)) where
+src/Geometry/Angle.hs[36m:[mThere are 4 quadrants to work with therfore the [1;31mQuad[marant1/2/3/4Angle
+src/Geometry/Angle.hs[36m:[mdata Angle =         [1;31mQuad[mrant1Angle  { angle::Double}
+src/Geometry/Angle.hs[36m:[m                   | [1;31mQuad[mrant2Angle  { angle::Double}
+src/Geometry/Angle.hs[36m:[m                   | [1;31mQuad[mrant3Angle  { angle::Double}
+src/Geometry/Angle.hs[36m:[m                   | [1;31mQuad[mrant4Angle  { angle::Double}
+src/Geometry/Angle.hs[36m:[mdata [1;31mQuad[mrant =   [1;31mQuad[mrant1
+src/Geometry/Angle.hs[36m:[m                | [1;31mQuad[mrant2
+src/Geometry/Angle.hs[36m:[m                | [1;31mQuad[mrant3
+src/Geometry/Angle.hs[36m:[m                | [1;31mQuad[mrant4
+src/Geometry/Angle.hs[36m:[mEach quadrant will be 90 degrees with [1;31mQuad[mrant 1 being 0-90 degrees.
+src/Geometry/Angle.hs[36m:[mget[1;31mQuad[mrantAngle :: Angle ->  Angle
+src/Geometry/Angle.hs[36m:[mget[1;31mQuad[mrantAngle (Angle currAngle )
+src/Geometry/Angle.hs[36m:[m  | currAngle < 0 = get[1;31mQuad[mrantAngle (Angle (360 - currAngle))
+src/Geometry/Angle.hs[36m:[m  | currAngle <= 90 = [1;31mQuad[mrant1Angle currAngle
+src/Geometry/Angle.hs[36m:[m  | currAngle <= 180 = [1;31mQuad[mrant2Angle (180 - currAngle)
+src/Geometry/Angle.hs[36m:[m  | currAngle <= 270 = [1;31mQuad[mrant3Angle $ currAngle - 180   -- 90 - (270 - currAngle)
+src/Geometry/Angle.hs[36m:[m  | currAngle <= 360 = [1;31mQuad[mrant4Angle (360 - currAngle)
+src/Geometry/Angle.hs[36m:[m  | currAngle > 360 = get[1;31mQuad[mrantAngle (Angle(currAngle - 360))
+src/Geometry/Angle.hs[36m:[mget[1;31mQuad[mrant :: Angle -> [1;31mQuad[mrant
+src/Geometry/Angle.hs[36m:[mget[1;31mQuad[mrant (Angle angle')
+src/Geometry/Angle.hs[36m:[m  | angle' < 0 = get[1;31mQuad[mrant $ Angle $ angle' + 360
+src/Geometry/Angle.hs[36m:[m  | angle'  <= 90 = [1;31mQuad[mrant1
+src/Geometry/Angle.hs[36m:[m  | angle' <= 180 = [1;31mQuad[mrant2
+src/Geometry/Angle.hs[36m:[m  | angle' <= 270 = [1;31mQuad[mrant3
+src/Geometry/Angle.hs[36m:[m  | angle' <= 360 = [1;31mQuad[mrant4
+src/Geometry/Angle.hs[36m:[m  | otherwise = get[1;31mQuad[mrant $ Angle $ angle' - 360
+src/Geometry/Angle.hs[36m:[mget[1;31mQuad[mrant ([1;31mQuad[mrant1Angle _) = [1;31mQuad[mrant1
+src/Geometry/Angle.hs[36m:[mget[1;31mQuad[mrant ([1;31mQuad[mrant2Angle _) = [1;31mQuad[mrant2
+src/Geometry/Angle.hs[36m:[mget[1;31mQuad[mrant ([1;31mQuad[mrant3Angle _) = [1;31mQuad[mrant3
+src/Geometry/Angle.hs[36m:[mget[1;31mQuad[mrant ([1;31mQuad[mrant4Angle _) = [1;31mQuad[mrant4
+src/Geometry/Radius.hs[36m:[mimport Geometry.Angle(Angle(..), get[1;31mQuad[mrantAngle)
+src/Geometry/Radius.hs[36m:[m  Radius $ ((cosDegrees (angle $ get[1;31mQuad[mrantAngle angle')) * radius')
+src/Geometry/Radius.hs[36m:[m  let quadrantAngle = (angle $ get[1;31mQuad[mrantAngle angle')
+src/Geometry/Rotation.hs[36m:[mimport Geometry.Angle(RotateFactor, getXYAngle, Angle(..), get[1;31mQuad[mrantAngle, rotateAngle, )
+src/Geometry/Rotation.hs[36m:[mimport Geometry.Vertex(getXWith[1;31mQuad[mrant, getYWith[1;31mQuad[mrant, Vertex(..), adjustPointAxis)
+src/Geometry/Rotation.hs[36m:[m|adjustPointAxis X : getXWith[1;31mQuad[mrant
+src/Geometry/Rotation.hs[36m:[m|adjustPointAxis Y : getYWith[1;31mQuad[mrant
+src/Geometry/Rotation.hs[36m:[m      (adjustPointAxis (getXWith[1;31mQuad[mrant rotatedAngle xyRadius)) . (adjustPointAxis (getYWith[1;31mQuad[mrant rotatedAngle xyRadius)) $ origin {z_axis = (z_axis pointToRotate)}
+src/Geometry/Slope.hs[36m:[mimport Geometry.Angle(Angle(..), rotateAngle, get[1;31mQuad[mrantAngle, RotateFactor(..))
+src/Geometry/Slope.hs[36m:[m  slopeAdjustedForVerticalAngleBase xSlope ySlope (get[1;31mQuad[mrantAngle verticalAngle)
+src/Geometry/Slope.hs[36m:[mslopeAdjustedForVerticalAngleBase (PosXSlope xSlope) (PosYSlope ySlope) ([1;31mQuad[mrant1Angle verticalAngle)
+src/Geometry/Slope.hs[36m:[mslopeAdjustedForVerticalAngleBase (PosXSlope xSlope) (NegYSlope ySlope) ([1;31mQuad[mrant1Angle verticalAngle) =
+src/Geometry/Slope.hs[36m:[mslopeAdjustedForVerticalAngleBase (NegXSlope xSlope) (PosYSlope ySlope) ([1;31mQuad[mrant1Angle verticalAngle) =
+src/Geometry/Slope.hs[36m:[mslopeAdjustedForVerticalAngleBase (NegXSlope xSlope) (NegYSlope ySlope) ([1;31mQuad[mrant1Angle verticalAngle)
+src/Geometry/Slope.hs[36m:[mslopeAdjustedForVerticalAngleBase (PosXSlope xSlope) (PosYSlope ySlope) ([1;31mQuad[mrant2Angle verticalAngle) =
+src/Geometry/Slope.hs[36m:[mslopeAdjustedForVerticalAngleBase (PosXSlope xSlope) (NegYSlope ySlope) ([1;31mQuad[mrant2Angle verticalAngle)
+src/Geometry/Slope.hs[36m:[mslopeAdjustedForVerticalAngleBase (NegXSlope xSlope) (PosYSlope ySlope) ([1;31mQuad[mrant2Angle verticalAngle)
+src/Geometry/Slope.hs[36m:[mslopeAdjustedForVerticalAngleBase (NegXSlope xSlope) (NegYSlope ySlope) ([1;31mQuad[mrant2Angle verticalAngle) =
+src/Geometry/Slope.hs[36m:[mslopeAdjustedForVerticalAngleBase (PosXSlope xSlope) (PosYSlope ySlope) ([1;31mQuad[mrant3Angle verticalAngle)
+src/Geometry/Slope.hs[36m:[mslopeAdjustedForVerticalAngleBase (PosXSlope xSlope) (NegYSlope ySlope) ([1;31mQuad[mrant3Angle verticalAngle) =
+src/Geometry/Slope.hs[36m:[mslopeAdjustedForVerticalAngleBase (NegXSlope xSlope) (PosYSlope ySlope) ([1;31mQuad[mrant3Angle verticalAngle)  =
+src/Geometry/Slope.hs[36m:[mslopeAdjustedForVerticalAngleBase (NegXSlope xSlope) (NegYSlope ySlope) ([1;31mQuad[mrant3Angle verticalAngle)
+src/Geometry/Slope.hs[36m:[mslopeAdjustedForVerticalAngleBase (PosXSlope xSlope) (PosYSlope ySlope) ([1;31mQuad[mrant4Angle verticalAngle) =
+src/Geometry/Slope.hs[36m:[mslopeAdjustedForVerticalAngleBase (PosXSlope xSlope) (NegYSlope ySlope) ([1;31mQuad[mrant4Angle verticalAngle)
+src/Geometry/Slope.hs[36m:[mslopeAdjustedForVerticalAngleBase (NegXSlope xSlope) (PosYSlope ySlope) ([1;31mQuad[mrant4Angle verticalAngle)
+src/Geometry/Slope.hs[36m:[mslopeAdjustedForVerticalAngleBase (NegXSlope xSlope) (NegYSlope ySlope) ([1;31mQuad[mrant4Angle verticalAngle) =
+src/Geometry/Vertex.hs[36m:[mmodule Geometry.Vertex(getXWith[1;31mQuad[mrant, getYWith[1;31mQuad[mrant, Vertex(..), adjustPointAxis) where
+src/Geometry/Vertex.hs[36m:[mimport Geometry.Angle(get[1;31mQuad[mrantAngle, Angle(..))
+src/Geometry/Vertex.hs[36m:[m[1;31mQuad[m1X = 1
+src/Geometry/Vertex.hs[36m:[m[1;31mQuad[m2Y = 2
+src/Geometry/Vertex.hs[36m:[mdata Vertex =   [1;31mQuad[m1X {length :: Double}
+src/Geometry/Vertex.hs[36m:[m              | [1;31mQuad[m2X {length :: Double}
+src/Geometry/Vertex.hs[36m:[m              | [1;31mQuad[m3X {length :: Double}
+src/Geometry/Vertex.hs[36m:[m              | [1;31mQuad[m4X {length :: Double}
+src/Geometry/Vertex.hs[36m:[m              | [1;31mQuad[m1Y {length :: Double}
+src/Geometry/Vertex.hs[36m:[m              | [1;31mQuad[m2Y {length :: Double}
+src/Geometry/Vertex.hs[36m:[m              | [1;31mQuad[m3Y {length :: Double}
+src/Geometry/Vertex.hs[36m:[m              | [1;31mQuad[m4Y {length :: Double}
+src/Geometry/Vertex.hs[36m:[mEg: [1;31mQuad[m1X says it is in quadrant 1 so it is a positive value as the is in the positive x-axis quadrant.
+src/Geometry/Vertex.hs[36m:[mgetXWith[1;31mQuad[mrant :: Angle -> Radius -> Vertex
+src/Geometry/Vertex.hs[36m:[mgetXWith[1;31mQuad[mrant (Angle angle') (Radius radius') =
+src/Geometry/Vertex.hs[36m:[m  case get[1;31mQuad[mrantAngle (Angle angle') of
+src/Geometry/Vertex.hs[36m:[m    [1;31mQuad[mrant1Angle angle'' -> [1;31mQuad[m1X $ (xTrig angle'') * radius'
+src/Geometry/Vertex.hs[36m:[m    [1;31mQuad[mrant2Angle angle'' -> [1;31mQuad[m2X $ (xTrig angle'') * radius'
+src/Geometry/Vertex.hs[36m:[m    [1;31mQuad[mrant3Angle angle'' -> [1;31mQuad[m3X $ (xTrig angle'') * radius'
+src/Geometry/Vertex.hs[36m:[m    [1;31mQuad[mrant4Angle angle'' -> [1;31mQuad[m4X $ (xTrig angle'') * radius'
+src/Geometry/Vertex.hs[36m:[mgetXWith[1;31mQuad[mrant quadrantAngle (Radius radius') =
+src/Geometry/Vertex.hs[36m:[m   [1;31mQuad[mrant1Angle angle' -> [1;31mQuad[m1X $ (xTrig angle') * radius'
+src/Geometry/Vertex.hs[36m:[m   [1;31mQuad[mrant2Angle angle' -> [1;31mQuad[m2X $ (xTrig angle') * radius'
+src/Geometry/Vertex.hs[36m:[m   [1;31mQuad[mrant3Angle angle' -> [1;31mQuad[m3X $ (xTrig angle') * radius'
+src/Geometry/Vertex.hs[36m:[m   [1;31mQuad[mrant4Angle angle' -> [1;31mQuad[m4X $ (xTrig angle') * radius'
+src/Geometry/Vertex.hs[36m:[mEg: [1;31mQuad[m1Y says it is in quadrant 1 so it is a positive value as the is in the positive y-axis quadrant.
+src/Geometry/Vertex.hs[36m:[mgetYWith[1;31mQuad[mrant :: Angle -> Radius -> Vertex
+src/Geometry/Vertex.hs[36m:[mgetYWith[1;31mQuad[mrant (Angle angle') (Radius radius') =
+src/Geometry/Vertex.hs[36m:[m  case get[1;31mQuad[mrantAngle (Angle angle') of
+src/Geometry/Vertex.hs[36m:[m    [1;31mQuad[mrant1Angle angle'' -> [1;31mQuad[m1Y $ (yTrig angle'') * radius'
+src/Geometry/Vertex.hs[36m:[m    [1;31mQuad[mrant2Angle angle'' -> [1;31mQuad[m2Y $ (yTrig angle'') * radius'
+src/Geometry/Vertex.hs[36m:[m    [1;31mQuad[mrant3Angle angle'' -> [1;31mQuad[m3Y $ (yTrig angle'') * radius'
+src/Geometry/Vertex.hs[36m:[m    [1;31mQuad[mrant4Angle angle'' -> [1;31mQuad[m4Y $ (yTrig angle'') * radius'
+src/Geometry/Vertex.hs[36m:[mgetYWith[1;31mQuad[mrant quadrantAngle (Radius radius') =
+src/Geometry/Vertex.hs[36m:[m   [1;31mQuad[mrant1Angle angle' -> [1;31mQuad[m1Y $ (yTrig angle') * radius'
+src/Geometry/Vertex.hs[36m:[m   [1;31mQuad[mrant2Angle angle' -> [1;31mQuad[m2Y $ (yTrig angle') * radius'
+src/Geometry/Vertex.hs[36m:[m   [1;31mQuad[mrant3Angle angle' -> [1;31mQuad[m3Y $ (yTrig angle') * radius'
+src/Geometry/Vertex.hs[36m:[m   [1;31mQuad[mrant4Angle angle' -> [1;31mQuad[m4Y $ (yTrig angle') * radius'
+src/Geometry/Vertex.hs[36m:[mEg: Adusting a Point 1 2 3 with a [1;31mQuad[m1Y 10 will decrease the y-axis resulting in Point 1 -8 3 
+src/Geometry/Vertex.hs[36m:[m    [1;31mQuad[m1X x -> point {x_axis = (x_axis point) + x}
+src/Geometry/Vertex.hs[36m:[m    [1;31mQuad[m2X x -> point {x_axis = (x_axis point) + x}
+src/Geometry/Vertex.hs[36m:[m    [1;31mQuad[m3X x -> point {x_axis = (x_axis point) - x}
+src/Geometry/Vertex.hs[36m:[m    [1;31mQuad[m4X x -> point {x_axis = (x_axis point) - x}
+src/Geometry/Vertex.hs[36m:[m    [1;31mQuad[m1Y y -> point {y_axis = (y_axis point) - y}
+src/Geometry/Vertex.hs[36m:[m    [1;31mQuad[m2Y y -> point {y_axis = (y_axis point) + y}
+src/Geometry/Vertex.hs[36m:[m    [1;31mQuad[m3Y y -> point {y_axis = (y_axis point) + y}
+src/Geometry/Vertex.hs[36m:[m    [1;31mQuad[m4Y y -> point {y_axis = (y_axis point) - y}
+src/Primitives/Cubical.hs[36m:[mimport Geometry.Angle(Angle(..), rotateAngle, get[1;31mQuad[mrantAngle, RotateFactor(..))
+src/Primitives/Cylindrical/Solid.hs[36m:[mimport Geometry.Angle(Angle(..), rotateAngle, get[1;31mQuad[mrantAngle, RotateFactor(..))
+src/Primitives/Cylindrical/Walled.hs[36m:[mimport Geometry.Angle(Angle(..), rotateAngle, get[1;31mQuad[mrantAngle, RotateFactor(..))
+test/AngleTest.hs[36m:[mimport Geometry.Angle(Angle(..), rotateAngle, get[1;31mQuad[mrantAngle, RotateFactor(..), getXYAngle, get[1;31mQuad[mrant, [1;31mQuad[mrant(..))
+test/AngleTest.hs[36m:[m  runTestTT quad1X11Y101OffsetInto[1;31mQuad[m2Test -----------------------------------------
+test/AngleTest.hs[36m:[m  runTestTT quad1OffsetInto[1;31mQuad[m4Test
+test/AngleTest.hs[36m:[m  runTestTT quad2OffsetInto[1;31mQuad[m1Test
+test/AngleTest.hs[36m:[m  runTestTT quad4To[1;31mQuad[m1RotateTest
+test/AngleTest.hs[36m:[m  runTestTT quad1To[1;31mQuad[m1RotateTest
+test/AngleTest.hs[36m:[m  --get[1;31mQuad[mrant
+test/AngleTest.hs[36m:[m  runTestTT get[1;31mQuad[mrantLessThanZeroTest
+test/AngleTest.hs[36m:[m  runTestTT get[1;31mQuad[mrantGreaterThanZeroTest
+test/AngleTest.hs[36m:[m  runTestTT get[1;31mQuad[mrant1ZeroTest
+test/AngleTest.hs[36m:[m  runTestTT get[1;31mQuad[mrant1Test
+test/AngleTest.hs[36m:[m  runTestTT get[1;31mQuad[mrant1_90Test
+test/AngleTest.hs[36m:[m  runTestTT get[1;31mQuad[mrant2Test
+test/AngleTest.hs[36m:[m  runTestTT get[1;31mQuad[mrant2_180Test
+test/AngleTest.hs[36m:[m  runTestTT get[1;31mQuad[mrant3Test
+test/AngleTest.hs[36m:[m  runTestTT get[1;31mQuad[mrant3_270Test
+test/AngleTest.hs[36m:[m  runTestTT get[1;31mQuad[mrant4Test
+test/AngleTest.hs[36m:[m  runTestTT get[1;31mQuad[mrant4_360Test
+test/AngleTest.hs[36m:[mquad1X11Y101OffsetInto[1;31mQuad[m2Test = TestCase $ assertEqual
+test/AngleTest.hs[36m:[m  "quad1X11Y101OffsetInto[1;31mQuad[m2Test"
+test/AngleTest.hs[36m:[mquad1OffsetInto[1;31mQuad[m4Test = TestCase $ assertEqual
+test/AngleTest.hs[36m:[m  "quad1OffsetInto[1;31mQuad[m4Test"
+test/AngleTest.hs[36m:[mquad2OffsetInto[1;31mQuad[m1Test = TestCase $ assertEqual
+test/AngleTest.hs[36m:[m  "quad2OffsetInto[1;31mQuad[m1Test"
+test/AngleTest.hs[36m:[mquad4To[1;31mQuad[m1RotateTest = TestCase $ assertEqual
+test/AngleTest.hs[36m:[m  "quad4To[1;31mQuad[m1RotateTest"
+test/AngleTest.hs[36m:[mquad1To[1;31mQuad[m1RotateTest = TestCase $ assertEqual
+test/AngleTest.hs[36m:[m  "quad1To[1;31mQuad[m1RotateTest"
+test/AngleTest.hs[36m:[mget[1;31mQuad[mrantLessThanZeroTest = TestCase $ assertEqual
+test/AngleTest.hs[36m:[m  "get[1;31mQuad[mrantLessThanZeroTest"
+test/AngleTest.hs[36m:[m  ([1;31mQuad[mrant4)
+test/AngleTest.hs[36m:[m  (get[1;31mQuad[mrant $ Angle (-10))
+test/AngleTest.hs[36m:[mget[1;31mQuad[mrantGreaterThanZeroTest = TestCase $ assertEqual
+test/AngleTest.hs[36m:[m  "get[1;31mQuad[mrantGreaterThanZeroTest"
+test/AngleTest.hs[36m:[m  ([1;31mQuad[mrant1)
+test/AngleTest.hs[36m:[m  (get[1;31mQuad[mrant $ Angle (380))
+test/AngleTest.hs[36m:[mget[1;31mQuad[mrant1ZeroTest = TestCase $ assertEqual
+test/AngleTest.hs[36m:[m  "get[1;31mQuad[mrant1ZeroTest"
+test/AngleTest.hs[36m:[m  ([1;31mQuad[mrant1)
+test/AngleTest.hs[36m:[m  (get[1;31mQuad[mrant $ Angle (0))
+test/AngleTest.hs[36m:[mget[1;31mQuad[mrant1Test = TestCase $ assertEqual
+test/AngleTest.hs[36m:[m  "get[1;31mQuad[mrant1Test"
+test/AngleTest.hs[36m:[m  ([1;31mQuad[mrant1)
+test/AngleTest.hs[36m:[m  (get[1;31mQuad[mrant $ Angle (10))
+test/AngleTest.hs[36m:[mget[1;31mQuad[mrant1_90Test = TestCase $ assertEqual
+test/AngleTest.hs[36m:[m  "get[1;31mQuad[mrant1_90Test"
+test/AngleTest.hs[36m:[m  ([1;31mQuad[mrant1)
+test/AngleTest.hs[36m:[m  (get[1;31mQuad[mrant $ Angle (90))
+test/AngleTest.hs[36m:[mget[1;31mQuad[mrant2Test = TestCase $ assertEqual
+test/AngleTest.hs[36m:[m  "get[1;31mQuad[mrant2Test"
+test/AngleTest.hs[36m:[m  ([1;31mQuad[mrant2)
+test/AngleTest.hs[36m:[m  (get[1;31mQuad[mrant $ Angle (110))
+test/AngleTest.hs[36m:[mget[1;31mQuad[mrant2_180Test = TestCase $ assertEqual
+test/AngleTest.hs[36m:[m  "get[1;31mQuad[mrant2_180Test"
+test/AngleTest.hs[36m:[m  ([1;31mQuad[mrant2)
+test/AngleTest.hs[36m:[m  (get[1;31mQuad[mrant $ Angle (180))
+test/AngleTest.hs[36m:[mget[1;31mQuad[mrant3Test = TestCase $ assertEqual
+test/AngleTest.hs[36m:[m  "get[1;31mQuad[mrant3Test"
+test/AngleTest.hs[36m:[m  ([1;31mQuad[mrant3)
+test/AngleTest.hs[36m:[m  (get[1;31mQuad[mrant $ Angle (190))
+test/AngleTest.hs[36m:[mget[1;31mQuad[mrant3_270Test = TestCase $ assertEqual
+test/AngleTest.hs[36m:[m  "get[1;31mQuad[mrant3_270Test"
+test/AngleTest.hs[36m:[m  ([1;31mQuad[mrant3)
+test/AngleTest.hs[36m:[m  (get[1;31mQuad[mrant $ Angle (270))
+test/AngleTest.hs[36m:[mget[1;31mQuad[mrant4Test = TestCase $ assertEqual
+test/AngleTest.hs[36m:[m  "get[1;31mQuad[mrant4Test"
+test/AngleTest.hs[36m:[m  ([1;31mQuad[mrant4)
+test/AngleTest.hs[36m:[m  (get[1;31mQuad[mrant $ Angle (290))
+test/AngleTest.hs[36m:[mget[1;31mQuad[mrant4_360Test = TestCase $ assertEqual
+test/AngleTest.hs[36m:[m  "get[1;31mQuad[mrant4_360Test"
+test/AngleTest.hs[36m:[m  ([1;31mQuad[mrant4)
+test/AngleTest.hs[36m:[m  (get[1;31mQuad[mrant $ Angle (360))
+test/CornerPointsCreateTest.hs[36m:[mimport Geometry.Angle(Angle(..), rotateAngle, get[1;31mQuad[mrantAngle, RotateFactor(..))
+test/CornerPointsCreateTest.hs[36m:[m  ( let degrees = (sinDegrees  (angle $ get[1;31mQuad[mrantAngle (Angle 1)) )
+test/CornerPointsCreateTest.hs[36m:[m  ( let degrees = (cosDegrees  (angle $ get[1;31mQuad[mrantAngle (Angle 1)) )
+test/CornerPointsCreateTest.hs[36m:[m        sinX = (sinDegrees  (angle $ get[1;31mQuad[mrantAngle angle') )
+test/CornerPointsCreateTest.hs[36m:[m        cosY = (cosDegrees  (angle $ get[1;31mQuad[mrantAngle angle') )
+test/GeometryRadiusTest.hs[36m:[mimport Geometry.Angle(RotateFactor, getXYAngle, Angle(..), get[1;31mQuad[mrantAngle, rotateAngle, )
+test/GeometryRadiusTest.hs[36m:[mimport Geometry.Vertex(getXWith[1;31mQuad[mrant, getYWith[1;31mQuad[mrant, Vertex(..), adjustPointAxis)
+test/GeometryRadiusTest.hs[36m:[m       rotatedPoint = (adjustPointAxis (getXWith[1;31mQuad[mrant rotatedAngle xyRadius)) . (adjustPointAxis (getYWith[1;31mQuad[mrant rotatedAngle xyRadius)) $ origin
+test/GeometryRadiusTest.hs[36m:[m  ([1;31mQuad[m1X 2.7212895296815116)
+test/GeometryRadiusTest.hs[36m:[m       --rotatedPoint = (adjustPointAxis (getXWith[1;31mQuad[mrant rotatedAngle xyRadius)) . (adjustPointAxis (getYWith[1;31mQuad[mrant rotatedAngle xyRadius)) $ origin
+test/GeometryRadiusTest.hs[36m:[m      getXWith[1;31mQuad[mrant rotatedAngle xyRadius
+test/GeometryRadiusTest.hs[36m:[m  --but got: [1;31mQuad[m2X {length = 10.02172570778901}
+test/HorizontalFacesTest.hs[36m:[mimport Geometry.Angle(Angle(..), rotateAngle, get[1;31mQuad[mrantAngle, RotateFactor(..))
+test/MathPolarTest.hs[36m:[mimport Geometry.Angle(Angle(..), rotateAngle, get[1;31mQuad[mrantAngle, RotateFactor(..))
+test/MathPolarTest.hs[36m:[m  runTestTT get[1;31mQuad[mrantAngleTest
+test/MathPolarTest.hs[36m:[m  runTestTT get[1;31mQuad[mrantAngleTest2
+test/MathPolarTest.hs[36m:[m  runTestTT get[1;31mQuad[mrantAngleTest3
+test/MathPolarTest.hs[36m:[m  runTestTT get[1;31mQuad[mrantAngleTest4
+test/MathPolarTest.hs[36m:[m  runTestTT get[1;31mQuad[mrantAngleTest5
+test/MathPolarTest.hs[36m:[m  runTestTT get[1;31mQuad[mrantAngleTest6
+test/MathPolarTest.hs[36m:[m  runTestTT get[1;31mQuad[mrantAngleTest7
+test/MathPolarTest.hs[36m:[m  --runTestTT set[1;31mQuad[mrant1YvalTest
+test/MathPolarTest.hs[36m:[m  --runTestTT set[1;31mQuad[mrant2YvalTest
+test/MathPolarTest.hs[36m:[m  --runTestTT set[1;31mQuad[mrant2Yval170Test
+test/MathPolarTest.hs[36m:[m  --runTestTT set[1;31mQuad[mrant3Xval190Test
+test/MathPolarTest.hs[36m:[msetYPolarityFor[1;31mQuad[mrant :: [1;31mQuad[mrantAngle -> Double -> Double
+test/MathPolarTest.hs[36m:[msetYPolarityFor[1;31mQuad[mrant angle val = case getCurrent[1;31mQuad[mrant angle of
+test/MathPolarTest.hs[36m:[m                                     [1;31mQuad[mrant1 -> negate val
+test/MathPolarTest.hs[36m:[m                                     [1;31mQuad[mrant2 -> val
+test/MathPolarTest.hs[36m:[m                                     [1;31mQuad[mrant3 -> val
+test/MathPolarTest.hs[36m:[m                                     [1;31mQuad[mrant4 -> negate val
+test/MathPolarTest.hs[36m:[m{-Moved setX/YPolarityFor[1;31mQuad[mrant into createCornerPoint. Leave these here for now, in case further testing is required.
+test/MathPolarTest.hs[36m:[mset[1;31mQuad[mrant1YvalTest = TestCase $ assertEqual
+test/MathPolarTest.hs[36m:[m  (setYPolarityFor[1;31mQuad[mrant ([1;31mQuad[mrant1Angle 1) 1   )
+test/MathPolarTest.hs[36m:[mset[1;31mQuad[mrant2YvalTest = TestCase $ assertEqual
+test/MathPolarTest.hs[36m:[m  (setYPolarityFor[1;31mQuad[mrant ([1;31mQuad[mrant2Angle 1) 1   )
+test/MathPolarTest.hs[36m:[mset[1;31mQuad[mrant2Yval170Test = TestCase $ assertEqual
+test/MathPolarTest.hs[36m:[m  (setYPolarityFor[1;31mQuad[mrant ([1;31mQuad[mrant2Angle 170) 1   )
+test/MathPolarTest.hs[36m:[mset[1;31mQuad[mrant3Xval190Test = TestCase $ assertEqual
+test/MathPolarTest.hs[36m:[m  (setXPolarityFor[1;31mQuad[mrant ([1;31mQuad[mrant3Angle 190) 1   )
+test/MathPolarTest.hs[36m:[m{-get[1;31mQuad[mrantAngle doen't need to be exported, but leave in case more testing is needed.
+test/MathPolarTest.hs[36m:[mget[1;31mQuad[mrantAngleTest = TestCase $ assertEqual 
+test/MathPolarTest.hs[36m:[m  "get[1;31mQuad[mrantAngleTest" ([1;31mQuad[mrant1Angle 10) (get[1;31mQuad[mrantAngle (Angle 10)  )
+test/MathPolarTest.hs[36m:[mget[1;31mQuad[mrantAngleTest2 = TestCase $ assertEqual 
+test/MathPolarTest.hs[36m:[m  "get[1;31mQuad[mrantAngleTest2" ([1;31mQuad[mrant2Angle 80) (get[1;31mQuad[mrantAngle (Angle 100) )
+test/MathPolarTest.hs[36m:[mget[1;31mQuad[mrantAngleTest3 = TestCase $ assertEqual 
+test/MathPolarTest.hs[36m:[m  "get[1;31mQuad[mrantAngleTest3" ([1;31mQuad[mrant2Angle 10) (get[1;31mQuad[mrantAngle (Angle 170) )
+test/MathPolarTest.hs[36m:[mget[1;31mQuad[mrantAngleTest4 = TestCase $ assertEqual 
+test/MathPolarTest.hs[36m:[m  "get[1;31mQuad[mrantAngleTest4" ([1;31mQuad[mrant3Angle 10) (get[1;31mQuad[mrantAngle (Angle 190) )
+test/MathPolarTest.hs[36m:[mget[1;31mQuad[mrantAngleTest5 = TestCase $ assertEqual 
+test/MathPolarTest.hs[36m:[m  "get[1;31mQuad[mrantAngleTest5" ([1;31mQuad[mrant3Angle 80) (get[1;31mQuad[mrantAngle (Angle 260) )
+test/MathPolarTest.hs[36m:[mget[1;31mQuad[mrantAngleTest6 = TestCase $ assertEqual 
+test/MathPolarTest.hs[36m:[m  "get[1;31mQuad[mrantAngleTest6" ([1;31mQuad[mrant4Angle 80) (get[1;31mQuad[mrantAngle (Angle 280) )
+test/MathPolarTest.hs[36m:[mget[1;31mQuad[mrantAngleTest7 = TestCase $ assertEqual 
+test/MathPolarTest.hs[36m:[m  "get[1;31mQuad[mrantAngleTest7" ([1;31mQuad[mrant4Angle 10) (get[1;31mQuad[mrantAngle (Angle 350) )
+test/MathPolarTest.hs[36m:[mcreateCornerPoint :: (Point-> CornerPoints) -> Point -> Radius ->  [1;31mQuad[mrantAngle -> Slope -> CornerPoints  
+test/MathPolarTest.hs[36m:[m    (adjustRadiusForSlope (Radius 1) (slopeAdjustedForVerticalAngle (PosXSlope 0) (PosYSlope 0) (xy[1;31mQuad[mrantAngle 90)))
+test/MathPolarTest.hs[36m:[m    (Angle 90)--(xy[1;31mQuad[mrantAngle 90)
+test/MathPolarTest.hs[36m:[m    (slopeAdjustedForVerticalAngle (PosXSlope 0) (PosYSlope 0) (xy[1;31mQuad[mrantAngle 90))
+test/MathPolarTest.hs[36m:[m    --(adjustRadiusForSlope (Radius 1) (slopeAdjustedForVerticalAngle (PosXSlope 0) (PosYSlope 0) (xy[1;31mQuad[mrantAngle 90)))
+test/MathPolarTest.hs[36m:[m    (Angle 90)--(xy[1;31mQuad[mrantAngle 90)
+test/MathPolarTest.hs[36m:[m    --(slopeAdjustedForVerticalAngle (PosXSlope 0) (PosYSlope 0) (xy[1;31mQuad[mrantAngle 90))
+test/MathPolarTest.hs[36m:[m    (adjustRadiusForSlope (Radius 10) (slopeAdjustedForVerticalAngle (PosXSlope 0) (PosYSlope 0) (xy[1;31mQuad[mrantAngle 10)))
+test/MathPolarTest.hs[36m:[m    (Angle 10)--(xy[1;31mQuad[mrantAngle 10)
+test/MathPolarTest.hs[36m:[m    (slopeAdjustedForVerticalAngle (PosXSlope 0) (PosYSlope 0) (xy[1;31mQuad[mrantAngle 10))
+test/MathPolarTest.hs[36m:[m    --(adjustRadiusForSlope (Radius 10) (slopeAdjustedForVerticalAngle (PosXSlope 0) (PosYSlope 0) (xy[1;31mQuad[mrantAngle 10)))
+test/MathPolarTest.hs[36m:[m    (Angle 10)--(xy[1;31mQuad[mrantAngle 10)
+test/MathPolarTest.hs[36m:[m    --(slopeAdjustedForVerticalAngle (PosXSlope 0) (PosYSlope 0) (xy[1;31mQuad[mrantAngle 10))
+test/MathPolarTest.hs[36m:[m    (Angle 10)--(xy[1;31mQuad[mrantAngle 10)
+test/VertexTest.hs[36m:[mimport Geometry.Vertex(getXWith[1;31mQuad[mrant, getYWith[1;31mQuad[mrant, Vertex(..), adjustPointAxis)
+test/VertexTest.hs[36m:[m  runTestTT quad1XFrom[1;31mQuad[mAngleTest
+test/VertexTest.hs[36m:[m  runTestTT quad2XFrom[1;31mQuad[mAngleTest
+test/VertexTest.hs[36m:[m  runTestTT quad3XFrom[1;31mQuad[mAngleTest
+test/VertexTest.hs[36m:[m  runTestTT quad4XFrom[1;31mQuad[mAngleTest
+test/VertexTest.hs[36m:[m  runTestTT quad1YFrom[1;31mQuad[mAngleTest
+test/VertexTest.hs[36m:[m  runTestTT quad2YFrom[1;31mQuad[mAngleTest
+test/VertexTest.hs[36m:[m  runTestTT quad3YFrom[1;31mQuad[mAngleTest
+test/VertexTest.hs[36m:[m  runTestTT quad4YFrom[1;31mQuad[mAngleTest
+test/VertexTest.hs[36m:[m  runTestTT adjustPoint[1;31mQuad[m1XAxisTest
+test/VertexTest.hs[36m:[m  runTestTT adjustPoint[1;31mQuad[m2XAxisTest
+test/VertexTest.hs[36m:[m  runTestTT adjustPoint[1;31mQuad[m3XAxisTest
+test/VertexTest.hs[36m:[m  runTestTT adjustPoint[1;31mQuad[m4XAxisTest
+test/VertexTest.hs[36m:[m  runTestTT adjustPoint[1;31mQuad[m1YAxisTest
+test/VertexTest.hs[36m:[m  runTestTT adjustPoint[1;31mQuad[m2YAxisTest
+test/VertexTest.hs[36m:[m  runTestTT adjustPoint[1;31mQuad[m3YAxisTest
+test/VertexTest.hs[36m:[m  runTestTT adjustPoint[1;31mQuad[m4YAxisTest
+test/VertexTest.hs[36m:[m  ([1;31mQuad[m1X 0.7071067811865475)
+test/VertexTest.hs[36m:[m  (getXWith[1;31mQuad[mrant (Angle 45) (Radius 1)  )
+test/VertexTest.hs[36m:[mquad1XFrom[1;31mQuad[mAngleTest = TestCase $ assertEqual
+test/VertexTest.hs[36m:[m  "quad1XFrom[1;31mQuad[mAngleTest"
+test/VertexTest.hs[36m:[m  ([1;31mQuad[m1X 0.7071067811865475)
+test/VertexTest.hs[36m:[m  (getXWith[1;31mQuad[mrant ([1;31mQuad[mrant1Angle 45) (Radius 1)  )
+test/VertexTest.hs[36m:[m  ([1;31mQuad[m2X 0.984807753012208)
+test/VertexTest.hs[36m:[m  (getXWith[1;31mQuad[mrant (Angle 100) (Radius 1)  )
+test/VertexTest.hs[36m:[mquad2XFrom[1;31mQuad[mAngleTest = TestCase $ assertEqual
+test/VertexTest.hs[36m:[m  "quad2XFrom[1;31mQuad[mAngleTest"
+test/VertexTest.hs[36m:[m  ([1;31mQuad[m2X 0.984807753012208)
+test/VertexTest.hs[36m:[m  (getXWith[1;31mQuad[mrant ([1;31mQuad[mrant2Angle 80) (Radius 1)  )
+test/VertexTest.hs[36m:[m  ([1;31mQuad[m3X 0.984807753012208)
+test/VertexTest.hs[36m:[m  (getXWith[1;31mQuad[mrant (Angle 260) (Radius 1)  )
+test/VertexTest.hs[36m:[mquad3XFrom[1;31mQuad[mAngleTest = TestCase $ assertEqual
+test/VertexTest.hs[36m:[m  "quad3XFrom[1;31mQuad[mAngleTest"
+test/VertexTest.hs[36m:[m  ([1;31mQuad[m3X 0.984807753012208)
+test/VertexTest.hs[36m:[m  (getXWith[1;31mQuad[mrant ([1;31mQuad[mrant3Angle 80) (Radius 1)  )
+test/VertexTest.hs[36m:[m  ([1;31mQuad[m4X 0.984807753012208)
+test/VertexTest.hs[36m:[m  (getXWith[1;31mQuad[mrant (Angle 280) (Radius 1)  )
+test/VertexTest.hs[36m:[mquad4XFrom[1;31mQuad[mAngleTest = TestCase $ assertEqual
+test/VertexTest.hs[36m:[m  "quad4XFrom[1;31mQuad[mAngleTest"
+test/VertexTest.hs[36m:[m  ([1;31mQuad[m4X 0.984807753012208)
+test/VertexTest.hs[36m:[m  (getXWith[1;31mQuad[mrant ([1;31mQuad[mrant4Angle 80) (Radius 1)  )
+test/VertexTest.hs[36m:[m  ([1;31mQuad[m1Y 0.17364817766693041)
+test/VertexTest.hs[36m:[m  (getYWith[1;31mQuad[mrant (Angle 80) (Radius 1)  )
+test/VertexTest.hs[36m:[mquad1YFrom[1;31mQuad[mAngleTest = TestCase $ assertEqual
+test/VertexTest.hs[36m:[m  "quad1YFrom[1;31mQuad[mAngleTest"
+test/VertexTest.hs[36m:[m  ([1;31mQuad[m1Y (0.17364817766693041))
+test/VertexTest.hs[36m:[m  (getYWith[1;31mQuad[mrant ([1;31mQuad[mrant1Angle 80) (Radius 1)  )
+test/VertexTest.hs[36m:[m  ([1;31mQuad[m2Y 0.17364817766693041)
+test/VertexTest.hs[36m:[m  (getYWith[1;31mQuad[mrant (Angle 100) (Radius 1)  )
+test/VertexTest.hs[36m:[mquad2YFrom[1;31mQuad[mAngleTest = TestCase $ assertEqual
+test/VertexTest.hs[36m:[m  "quad2YFrom[1;31mQuad[mAngleTest"
+test/VertexTest.hs[36m:[m  ([1;31mQuad[m2Y 0.17364817766693041)
+test/VertexTest.hs[36m:[m  (getYWith[1;31mQuad[mrant ([1;31mQuad[mrant2Angle 80) (Radius 1)  )
+test/VertexTest.hs[36m:[m  ([1;31mQuad[m3Y 0.17364817766693041)
+test/VertexTest.hs[36m:[m  (getYWith[1;31mQuad[mrant (Angle 260) (Radius 1)  )
+test/VertexTest.hs[36m:[mquad3YFrom[1;31mQuad[mAngleTest = TestCase $ assertEqual
+test/VertexTest.hs[36m:[m  "quad3YFrom[1;31mQuad[mAngleTest"
+test/VertexTest.hs[36m:[m  ([1;31mQuad[m3Y 0.17364817766693041)
+test/VertexTest.hs[36m:[m  (getYWith[1;31mQuad[mrant ([1;31mQuad[mrant3Angle 80) (Radius 1)  )
+test/VertexTest.hs[36m:[m  ([1;31mQuad[m4Y 0.17364817766693041)
+test/VertexTest.hs[36m:[m  (getYWith[1;31mQuad[mrant (Angle 280) (Radius 1)  )
+test/VertexTest.hs[36m:[mquad4YFrom[1;31mQuad[mAngleTest = TestCase $ assertEqual
+test/VertexTest.hs[36m:[m  "quad4YFrom[1;31mQuad[mAngleTest"
+test/VertexTest.hs[36m:[m  ([1;31mQuad[m4Y 0.17364817766693041)
+test/VertexTest.hs[36m:[m  (getYWith[1;31mQuad[mrant ([1;31mQuad[mrant4Angle 80) (Radius 1)  )
+test/VertexTest.hs[36m:[madjustPoint[1;31mQuad[m1XAxisTest = TestCase $ assertEqual
+test/VertexTest.hs[36m:[m  "adjustPoint[1;31mQuad[m1XAxisTest"
+test/VertexTest.hs[36m:[m  (adjustPointAxis ([1;31mQuad[m1X 1) (Point 0 0 0))
+test/VertexTest.hs[36m:[madjustPoint[1;31mQuad[m2XAxisTest = TestCase $ assertEqual
+test/VertexTest.hs[36m:[m  "adjustPoint[1;31mQuad[m2XAxisTest"
+test/VertexTest.hs[36m:[m  (adjustPointAxis ([1;31mQuad[m2X 1) (Point 0 0 0))
+test/VertexTest.hs[36m:[madjustPoint[1;31mQuad[m3XAxisTest = TestCase $ assertEqual
+test/VertexTest.hs[36m:[m  "adjustPoint[1;31mQuad[m3XAxisTest"
+test/VertexTest.hs[36m:[m  (adjustPointAxis ([1;31mQuad[m3X 1) (Point 0 0 0))
+test/VertexTest.hs[36m:[madjustPoint[1;31mQuad[m4XAxisTest = TestCase $ assertEqual
+test/VertexTest.hs[36m:[m  "adjustPoint[1;31mQuad[m4XAxisTest"
+test/VertexTest.hs[36m:[m  (adjustPointAxis ([1;31mQuad[m4X 1) (Point 0 0 0))
+test/VertexTest.hs[36m:[madjustPoint[1;31mQuad[m1YAxisTest = TestCase $ assertEqual
+test/VertexTest.hs[36m:[m  "adjustPoint[1;31mQuad[m1YAxisTest"
+test/VertexTest.hs[36m:[m  (adjustPointAxis ([1;31mQuad[m1Y 1) (Point 0 0 0))
+test/VertexTest.hs[36m:[madjustPoint[1;31mQuad[m2YAxisTest = TestCase $ assertEqual
+test/VertexTest.hs[36m:[m  "adjustPoint[1;31mQuad[m2YAxisTest"
+test/VertexTest.hs[36m:[m  (adjustPointAxis ([1;31mQuad[m2Y 1) (Point 0 0 0))
+test/VertexTest.hs[36m:[madjustPoint[1;31mQuad[m3YAxisTest = TestCase $ assertEqual
+test/VertexTest.hs[36m:[m  "adjustPoint[1;31mQuad[m3YAxisTest"
+test/VertexTest.hs[36m:[m  (adjustPointAxis ([1;31mQuad[m3Y 1) (Point 0 0 0))
+test/VertexTest.hs[36m:[madjustPoint[1;31mQuad[m4YAxisTest = TestCase $ assertEqual
+test/VertexTest.hs[36m:[m  "adjustPoint[1;31mQuad[m4YAxisTest"
+test/VertexTest.hs[36m:[m  (adjustPointAxis ([1;31mQuad[m4Y 1) (Point 0 0 0))
+test/VerticalFacesTest.hs[36m:[mimport Geometry.Angle(Angle(..), rotateAngle, get[1;31mQuad[mrantAngle, RotateFactor(..))

@@ -17,7 +17,7 @@ gets removed from the interior of the OuterPerimeter.
 These will be Back cornerpoints such as Back<Face/LeftLine/RightLine/TopLine...> or B<1,2,3,4>
 
 -}
-module Joiners.AdvanceBase(delaunayBase, delaunayBase', delaunayBaseNM) where
+module Joiners.AdvanceBase(delaunayBase, delaunayBase', delaunayBaseNM, delaunayBaseNM') where
 
 import Joiners.AdvanceSupport(Perimeters(..), AdvancingCPoint(..), ExtraLists(..),
                               justifyPerimeters, appendAdvancingCpointToJoinedCpointsE)
@@ -539,7 +539,9 @@ delaunayBaseNM removeAdvancingCPointFromPerimeters
                innerPerimeters outerPerimeter  =
   
   let
-    delaunayBaseNM'' = delaunayBaseNM' removeAdvancingCPointFromPerimeters createAdvancingCpointFromInnerPerimeters advancingCpointFromOuterPerims  doublePerimDecision rawInnerPerimeters 
+    delaunayBaseNM'' = delaunayBaseNM'
+                         removeAdvancingCPointFromPerimeters
+                         createAdvancingCpointFromInnerPerimeters advancingCpointFromOuterPerims  doublePerimDecision rawInnerPerimeters 
     process :: Either String [CornerPoints]
     process = do
       --As this is the very first advancingCpoint, build it from head outerPerimeters, and innerPerimeters

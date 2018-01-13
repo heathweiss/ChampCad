@@ -11,7 +11,7 @@
 
 module Examples.Persist.SingleLineTable where
 
-import CornerPoints.Points(Point(..))
+import CornerPoints.Points(Point(Point))
 import CornerPoints.CornerPoints(CornerPoints(..), (+++),(+++>),(|+++|))
 import CornerPoints.MeshGeneration(autoGenerateEachCube, autoGenerateEachFace)
 

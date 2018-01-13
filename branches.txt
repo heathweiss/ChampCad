@@ -7,3 +7,19 @@ B: master
         -Will try a branch that uses polar coods.
   B: intercept:
      -Geometry.Intercept.lineIntersection does not work with neg cood's. Fix it perhaps with polar cood's.
+      -added PolarIntercept module for this, but that has not worked out.
+      -added <line/segment>Intersection fx's from Gloss pkg, int Intercept module, and they are working.
+     
+
+    Next: Test <il>legalIntersection then use it in Advancer module
+
+
+Should be able to get rid of PolarIntercept.
+-keep the ExceptT Erorr Maybe Point somewhere as I have that worked out.
+  -Maybe I should use it in Advancer' 
+ Maybe it can be used in the Intercept module, though the new Gloss fx's should eliminate that.
+
+Make legalIntersection fx's use the gloss fx's
+Get rid of nearly everything else in Intercept module. 
+Do some better testing on what is left.
+

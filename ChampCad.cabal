@@ -34,7 +34,7 @@ library
                        Builder.ExceptStateIO
                        --Joiners
                        Joiners.Manual, Joiners.Auto, Joiners.Delaunay,
-                       Joiners.DelaunayViewer, Joiners.Advancer,
+                       Joiners.DelaunayViewer, Joiners.Advancer, Joiners.AdvanceComposable
                        Joiners.AdvanceBase, Joiners.AdvanceSupport, Joiners.AdvanceToHeadOfPerimeters
                        --math
                        Math.Trigonometry, Math.Distance, Math.Equal, Math.Doubles
@@ -119,7 +119,7 @@ library
                        Geometry.AngleRadius
                        Geometry.Rotation
                        Geometry.Vertex
-                       Geometry.Intercept
+                       Geometry.Intercept, Geometry.PolarIntercept
 
   build-depends:       base >= 4.7 && < 5
                      , HUnit >=1.2.5.2
@@ -190,6 +190,8 @@ test-suite ChampCad-test
                        DistanceTest
                        DelaunayTest
                        InterceptTest
+                       PolarInterceptTest
+                       AdvanceToHeadOfPerimetersTest
  
   build-depends:       base
                      , ChampCad

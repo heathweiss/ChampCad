@@ -11,9 +11,10 @@ If so, what is the point of interception
  -2 lines would intercept at a Pointx
  -maybe need separate modules for Point vs CornerPoints
 -}
-module Geometry.Intercept(getChangeInX, getChangeInY, yIntercept, topCoderAreTheParallel, topCoderXRayIntercept, lineIntersection, onTheLine,
-                          segmentIntersection, segmentIntersectionBreakDown, legalIntersection, perimetersContainIllegalIntersection,
-                          perimetersContainLegalIntersections, segmentIntersectionT, runSegmentIntersectionT) where
+module Geometry.Intercept(getChangeInX, getChangeInY, yIntercept, topCoderAreTheParallel, rayIntersection, lineIntersection, onTheLine,
+                          segmentIntersectionBool, segmentIntersectionBoolBreakDown, legalIntersection, perimetersContainIllegalIntersection,
+                          perimetersContainLegalIntersections, segmentIntersectionT, runSegmentIntersectionT, segmentIntersection,
+                          closestPointOnLineParamGloss) where
 
 import CornerPoints.CornerPoints(CornerPoints(..), cpointType, (+++))
 import CornerPoints.Points (Point(..))
@@ -31,6 +32,250 @@ import Control.Monad.State
 import Control.Monad.Except
 import Control.Monad.Writer (WriterT, tell, execWriterT)
 import Control.Monad.Reader
+
+lineIntersection = lineIntersectionGloss -- lineIntersectionRosetta
+--lineIntersection = lineIntersectionRosetta
+
+rayIntersection = topCoderXRayIntercept
+
+segmentIntersection = segmentIntersectionGloss
+
+legalIntersection = legalIntersectionGloss
+--legalIntersection = legalIntersectionBool
+-------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------
+------------------------------------------------gloss---------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------
+
+-- https://hackage.haskell.org/package/gloss-1.11.1.1/docs/src/Graphics-Gloss-Geometry-Line.html#intersectLineLine
+--from the Gloss package.
+--I added the z axis
+
+lineIntersectionGloss :: CornerPoints -> CornerPoints -> Either String (Maybe Point)
+lineIntersectionGloss (BottomLeftLine (Point ax ay az) (Point bx by bz) ) (BackBottomLine (Point px py pz) (Point qx qy qz)) =
+  Right $ lineIntersectionGloss' (Point ax ay az) (Point bx by bz) (Point px py pz) (Point qx qy qz)
+
+lineIntersectionGloss (BottomRightLine b4 f4) (BackBottomLine b1 b4') =
+  Right $ lineIntersectionGloss' b4 f4 b1 b4'
+
+lineIntersectionGloss c1 c2 =
+  Left $ "gloss intercept missing pattern match for " ++ (cpointType c1) ++ " and " ++ (cpointType c2)
+
+lineIntersectionGloss'
+        :: Point        -- ^ `P1`
+        -> Point        -- ^ `P2`
+        -> Point        -- ^ `P3`
+        -> Point        -- ^ `P4`
+        -> Maybe Point
+
+lineIntersectionGloss' (Point x1 y1 z1) (Point x2 y2 z2) (Point x3 y3 z3) (Point x4 y4 z4)
+ = let  dx12    = x1 - x2
+        dx34    = x3 - x4
+
+        dy12    = y1 - y2
+        dy34    = y3 - y4
+
+        --dz12    = z1 - z2
+        --dz34    = z3 - z4
+        
+        den     = dx12 * dy34  - dy12 * dx34
+        
+
+   in if den == 0
+        then Nothing
+        else let
+                det12   = x1*y2 - y1*x2
+                det34   = x3*y4 - y3*x4 
+
+                numx    = det12 * dx34 - dx12 * det34
+                numy    = det12 * dy34 - dy12 * det34
+             in Just $ Point (numx / den) ( numy / den) z1 --what to return for the z as I am only looking at intersection in 2D
+
+{-orig from gloss pkg
+intersectLineLine 
+        :: Point        -- ^ `P1`
+        -> Point        -- ^ `P2`
+        -> Point        -- ^ `P3`
+        -> Point        -- ^ `P4`
+        -> Maybe Point
+
+intersectLineLine (x1, y1) (x2, y2) (x3, y3) (x4, y4)
+ = let  dx12    = x1 - x2
+        dx34    = x3 - x4
+
+        dy12    = y1 - y2
+        dy34    = y3 - y4
+        
+        den     = dx12 * dy34  - dy12 * dx34
+
+   in if den == 0
+        then Nothing
+        else let
+                det12   = x1*y2 - y1*x2
+                det34   = x3*y4 - y3*x4 
+
+                numx    = det12 * dx34 - dx12 * det34
+                numy    = det12 * dy34 - dy12 * det34
+             in Just (numx / den, numy / den)
+
+-}
+segmentIntersectionGloss :: CornerPoints -> CornerPoints -> Either String (Maybe Point)
+segmentIntersectionGloss (BottomLeftLine b1 f1 ) (BackBottomLine b1' b4) =
+  segmentIntersectionGloss' b1 f1 b1' b4
+segmentIntersectionGloss c1 c2 =
+  Left $ "segmentIntersectionGloss: missing pattern match for: " ++ (cpointType c1) ++ " and " ++ (cpointType c2)
+
+--see: https://wiki.haskell.org/Pattern_guard on how this gaurd patten works
+segmentIntersectionGloss' :: Point -> Point -> Point -> Point -> Either String (Maybe Point)
+segmentIntersectionGloss' p1 p2 p3 p4
+        | (Just p0)     <- lineIntersectionGloss' p1 p2 p3 p4
+        , t12           <- closestPointOnLineParamGloss p1 p2 p0
+        , t23           <- closestPointOnLineParamGloss p3 p4 p0
+        , t12 >= 0 && t12 <= 1
+        , t23 >= 0 && t23 <= 1
+        = Right $ Just p0
+        
+        | otherwise
+        = Right $ Nothing
+
+{-original from gloss pkg
+intersectSegSeg
+        :: Point        -- ^ `P1`
+        -> Point        -- ^ `P2`
+        -> Point        -- ^ `P3`
+        -> Point        -- ^ `P4`
+        -> Maybe Point
+
+intersectSegSeg p1 p2 p3 p4
+        -- TODO: merge closest point checks with intersection, reuse subterms.
+        | Just p0       <- intersectLineLine p1 p2 p3 p4
+        , t12           <- closestPointOnLineParam p1 p2 p0
+        , t23           <- closestPointOnLineParam p3 p4 p0
+        , t12 >= 0 && t12 <= 1
+        , t23 >= 0 && t23 <= 1
+        = Just p0
+        
+        | otherclosestPointOnLineParamGlosswise
+        = Nothing
+
+-}  
+
+legalIntersectionGloss :: CornerPoints -> --advancingCpoint may intersect 
+                     CornerPoints -> --a perimeter cpoint
+                     Either String (Bool) --with and erorr, or legally: no intersection, or intersection at a vertice
+legalIntersectionGloss CornerPointsNothing _ = Right True
+legalIntersectionGloss _ CornerPointsNothing = Right True
+legalIntersectionGloss (BottomLeftLine b1 f1 ) (BackBottomLine b1' b4) =
+  let
+    
+    
+    hasNoIntersectionOrIsOnVertice :: CornerPoints -> -- perimeter
+                        Maybe Point -> --point of intersection, which can now come from segmentIntersectionGloss
+                        Either String Bool
+    hasNoIntersectionOrIsOnVertice  _ Nothing = Right True
+    hasNoIntersectionOrIsOnVertice  (BackBottomLine b1' b4) pointOfIntersection  =
+        case pointOfIntersection of
+          Nothing -> Right True
+          Just pointOfIntersection ->
+            Right $ (pointOfIntersection ==  b1') || (pointOfIntersection ==  b4) 
+      
+  in 
+    extractE $
+     hasNoIntersectionOrIsOnVertice (BackBottomLine b1' b4) <$>
+                                              segmentIntersectionGloss (BottomLeftLine b1 f1 ) (BackBottomLine b1' b4) 
+                                            
+
+legalIntersectionGloss (BottomRightLine b4 f4) (BackBottomLine b1' b4') =
+  let
+    
+    
+    hasNoIntersectionOrIsOnVertice :: CornerPoints -> -- perimeter
+                        Maybe Point -> --point of intersection
+                        Bool  -> --is pointOfIntersection in perimeter segment
+                        Either String Bool
+    hasNoIntersectionOrIsOnVertice  _ _ False = Right True
+    hasNoIntersectionOrIsOnVertice  (BackBottomLine b1' b4') pointOfIntersection intersectsPerimeter =
+        case pointOfIntersection of
+          Nothing -> Right True
+          Just pointOfIntersection ->
+            Right $ (pointOfIntersection ==  b1') || (pointOfIntersection ==  b4') 
+      
+  in 
+    extractE $
+     hasNoIntersectionOrIsOnVertice (BackBottomLine b1' b4') <$>
+                                              lineIntersection (BottomRightLine b4 f4 ) (BackBottomLine b1' b4')  <*>
+                                              segmentIntersectionBool (BottomRightLine b4 f4 ) (BackBottomLine b1' b4')
+
+legalIntersectionGloss advancingCpoint perimeter =
+  Left $ "Geometry.Intercept.legalIntersectionGloss has missing or illegal pattern match for advancingCpoint: " ++ (cpointType advancingCpoint) ++ " and  perimeter: " ++ (cpointType perimeter)
+
+
+closestPointOnLineParamGloss
+        :: Point        -- ^ `P1`
+        -> Point        -- ^ `P2`
+        -> Point        -- ^ `P3`
+        -> Double
+--unlike gloss, I cx'd for /0 when lines are perpendicular, in which case I return numerator
+--what shoul be returned for z
+--perhaps need to look at cross product instead of dot procuct. See safaribooks: 3d math primer for graphics, 2,12
+closestPointOnLineParamGloss (Point x1 y1 z1) (Point x2 y2 z2) (Point x3 y3 z3) =
+  let
+    numerator = ((Point (x3 - x1)(y3 - y1){-(z3 - z1)-}0) `dotV` (Point (x2 - x1)(y2 - y1){-(z2 - z1)-}0))
+    denominator = ((Point (x2 - x1)(y2 - y1){-(z2 - z1)-}0) `dotV` (Point (x2 - x1)(y2 - y1){-(z2 - z1)-}0))
+  in
+  case denominator == 0 of
+    True -> numerator
+    False ->
+      numerator
+      /
+      denominator
+  {-
+case ((Point (x2 - x1)(y2 - y1){-(z2 - z1)-}0) `dotV` (Point (x2 - x1)(y2 - y1){-(z2 - z1)-}0)) == 0 of
+    True -> ((Point (x3 - x1)(y3 - y1){-(z3 - z1)-}0) `dotV` (Point (x2 - x1)(y2 - y1){-(z2 - z1)-}0))
+    False ->
+      ((Point (x3 - x1)(y3 - y1){-(z3 - z1)-}0) `dotV` (Point (x2 - x1)(y2 - y1){-(z2 - z1)-}0))
+      /
+      ((Point (x2 - x1)(y2 - y1){-(z2 - z1)-}0) `dotV` (Point (x2 - x1)(y2 - y1){-(z2 - z1)-}0))
+-}
+    
+   
+    
+{-
+closestPointOnLineParamGloss (Point x1 y1 z1) (Point x2 y2 z2) (Point x3 y3 z3) =
+  ((Point (x3 - x1)(y3 - y1){-(z3 - z1)-}0) `dotV` (Point (x2 - x1)(y2 - y1){-(z2 - z1)-}0))
+  / ((Point (x2 - x1)(y2 - y1){-(z2 - z1)-}0) `dotV` (Point (x2 - x1)(y2 - y1){-(z2 - z1)-}0))
+-}
+{-
+closestPointOnLineParam
+        :: Point        -- ^ `P1`
+        -> Point        -- ^ `P2`
+        -> Point        -- ^ `P3`
+        -> Float
+
+closestPointOnLineParam p1 p2 p3
+        = (p3 - p1) `dotV` (p2 - p1) 
+        / (p2 - p1) `dotV` (p2 - p1)
+-}
+-- | The dot product of two vectors.
+dotV :: Point -> Point -> Double
+dotV (Point x1  y1 z1) (Point x2  y2 z2) =
+  
+  x1 * y1 + x2 * y2 
+
+{-
+-- | The dot product of two vectors.
+dotV :: Vector -> Vector -> Float
+dotV (x1, x2) (y1, y2)
+= x1 * y1 + x2 * y2
+-}
+
+--------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------
+------------------------------------------------end of gloss--------------------------------------------------
+--------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------
 
 {-
 calculate the slope of the line
@@ -93,9 +338,12 @@ topCoderAreTheParallel (BottomLeftLine b1 f1) (BackBottomLine b1' b4') =
     a2xb1Cx = multDistanceA <$> a2 <*> b1Cx
   in
     (==) <$> a1xb2Cx <*> a2xb1Cx 
-      
+
+
 
 --cx for intercept of 2 Rays (inifinite lines)
+--test fails.
+--do i even need this.
 topCoderXRayIntercept :: CornerPoints -> CornerPoints -> Either String (Maybe CornerPoints)
 topCoderXRayIntercept (BottomLeftLine b1 f1) (BackBottomLine b1' b4') =
   let
@@ -183,14 +431,14 @@ test (BottomLeftLine b1 f1) (BackBottomLine b1' b4') =
 -- =================================================================================================
 -- https://rosettacode.org/wiki/Find_the_intersection_of_two_lines#Haskell
 --good for intersection of lines, but not segments
---testing shows this fx is nfg. Can produce the wrong point of intersection. Their test works, but it is all positive cood's.
+--testing shows this fx is nfg. Can produce the wrong point of intersect
 -- | Do 2 inifinite lines intersect.
-lineIntersection :: CornerPoints -> CornerPoints -> Either String (Maybe Point)
+lineIntersectionRosetta :: CornerPoints -> CornerPoints -> Either String (Maybe Point)
 
 --lineIntersection (BottomLeftLine b1 f1 ) (BackBottomLine b1' b4) =
 --  lineIntersectionForGenericLine b1 f1 b1' b4
 
-lineIntersection (BottomLeftLine (Point ax ay az) (Point bx by bz) ) (BackBottomLine (Point px py pz) (Point qx qy qz)) =
+lineIntersectionRosetta (BottomLeftLine (Point ax ay az) (Point bx by bz) ) (BackBottomLine (Point px py pz) (Point qx qy qz)) =
   let (pqDX, abDX) = (px - qx, ax - bx)
       (pqDY, abDY) = (py - qy, ay - by)
       determinant = abDX * pqDY - abDY * pqDX
@@ -202,15 +450,15 @@ lineIntersection (BottomLeftLine (Point ax ay az) (Point bx by bz) ) (BackBottom
        0 -> Right Nothing
        _ -> Right $ Just (Point (f pqDX abDX) (f pqDY abDY) 0)
 
-lineIntersection (BottomRightLine b4 f4 ) (BackBottomLine b1 b4') =
-  lineIntersectionForGenericLine b4 f4 b1 b4'
+lineIntersectionRosetta (BottomRightLine b4 f4 ) (BackBottomLine b1 b4') =
+  lineIntersectionRosettaForGenericLine b4 f4 b1 b4'
 
-lineIntersection line1 line2 =
-  Left $ "Geometry.Intercept.lineIntersection has missing pattern match for: " ++ (cpointType line1) ++ " and " ++ (cpointType line2)
+lineIntersectionRosetta line1 line2 =
+  Left $ "Geometry.Intercept.lineIntersectionRosetta has missing pattern match for: " ++ (cpointType line1) ++ " and " ++ (cpointType line2)
 
 --all <backBottom/BackTop/...>lines are made of the same amount of points so make them generic.
-lineIntersectionForGenericLine :: Point -> Point -> Point -> Point -> Either String (Maybe Point)
-lineIntersectionForGenericLine (Point ax ay az) (Point bx by bz) (Point px py pz) (Point qx qy qz) =
+lineIntersectionRosettaForGenericLine :: Point -> Point -> Point -> Point -> Either String (Maybe Point)
+lineIntersectionRosettaForGenericLine (Point ax ay az) (Point bx by bz) (Point px py pz) (Point qx qy qz) =
   let (pqDX, abDX) = (px - qx, ax - bx)
       (pqDY, abDY) = (py - qy, ay - by)
       determinant = abDX * pqDY - abDY * pqDX
@@ -224,29 +472,30 @@ lineIntersectionForGenericLine (Point ax ay az) (Point bx by bz) (Point px py pz
   
 -- | Do to Line Segments intersect.
 -- This is only segments, not rays or infinite lines.
-segmentIntersection :: CornerPoints -> --advancingCpoint
+-- Need a version that returns an Either String (Maybe Point), such as gloss has
+segmentIntersectionBool :: CornerPoints -> --advancingCpoint
                             CornerPoints -> --perimeter
                             Either String Bool
-segmentIntersection (BottomLeftLine b1 f1 ) (BackBottomLine b1' b4) =
-  segmentIntersectionForGenericLine b1 f1 b1' b4
+segmentIntersectionBool (BottomLeftLine b1 f1 ) (BackBottomLine b1' b4) =
+  segmentIntersectionBoolForGenericLine b1 f1 b1' b4
 
 -- BottomRightLine and BackBottomLine
-segmentIntersection (BottomRightLine b4 f4) (BackBottomLine b1 b4') =
-  segmentIntersectionForGenericLine b4 f4 b1 b4'
+segmentIntersectionBool (BottomRightLine b4 f4) (BackBottomLine b1 b4') =
+  segmentIntersectionBoolForGenericLine b4 f4 b1 b4'
 
-segmentIntersection line1 line2 =
-  Left $ "Geometry.Intercept.segmentIntersection missing pattern match for: " ++ (cpointType line1) ++ " and " ++ (cpointType line2)
+segmentIntersectionBool line1 line2 =
+  Left $ "Geometry.Intercept.segmentIntersectionBool missing pattern match for: " ++ (cpointType line1) ++ " and " ++ (cpointType line2)
   
 --All <BackFront/BottomLeft/...>Line have the same point pattern, so process them with generic function
-segmentIntersectionForGenericLine :: Point -> 
+segmentIntersectionBoolForGenericLine :: Point -> 
                                      Point ->
                                      Point ->
                                      Point -> 
                                      Either String Bool
-segmentIntersectionForGenericLine b1 f1 b1' b4  = do
+segmentIntersectionBoolForGenericLine b1 f1 b1' b4  = do
   
-  case lineIntersection (BottomLeftLine b1 f1) (BackBottomLine b1' b4) of
-    Left e -> Left $ "Geometry.Intercept.segmentIntersection got error from lineIntersection: " ++ e
+  case lineIntersectionRosetta (BottomLeftLine b1 f1) (BackBottomLine b1' b4) of
+    Left e -> Left $ "Geometry.Intercept.segmentIntersectionBool got error from lineIntersectionRosetta: " ++ e
     Right Nothing -> Right False --Right Nothing. I no longer return a Maybe
     Right (Just pointOfIntersection) ->
       let
@@ -262,7 +511,7 @@ segmentIntersectionForGenericLine b1 f1 b1' b4  = do
                 Right LT -> Right True
                   
                 Right EQ -> Right True --not sure about this one. EQ would make advancingCpoint a Point
-                Left e -> Left $ "Geometry.Intercept.segmentIntersection.advancingCpointSegmentIntersectsPerimeterLine.pointingInCorrectDirectionLine had an error: " ++ e
+                Left e -> Left $ "Geometry.Intercept.segmentIntersectionBool.advancingCpointSegmentIntersectsPerimeterLine.pointingInCorrectDirectionLine had an error: " ++ e
           in
           case getOrderingA <$> calculateDistanceA  b1 f1   <*> --length of BLL
                                calculateDistanceA b1 pointOfIntersection --f1 of bll,
@@ -272,7 +521,7 @@ segmentIntersectionForGenericLine b1 f1 b1' b4  = do
               pointingInCorrectDirectionLine
             Right EQ -> --True
               pointingInCorrectDirectionLine
-            Left e   -> Left $ "Geometry.Intercept.segmentIntersection.advancingCpointSegmentIntersectsPerimeterLine had an error : " ++ e
+            Left e   -> Left $ "Geometry.Intercept.segmentIntersectionBool.advancingCpointSegmentIntersectsPerimeterLine had an error : " ++ e
         
         perimeterSegmentIntersectsAdvancingCpointLine :: Either String Bool --add either later
         perimeterSegmentIntersectsAdvancingCpointLine = --LT if not long enough
@@ -285,7 +534,7 @@ segmentIntersectionForGenericLine b1 f1 b1' b4  = do
                 Right GT -> Right False
                 Right LT -> Right True
                 Right EQ -> Right True --not sure about this one. EQ would make advancingCpoint a Point
-                Left e -> Left $ "Geometry.Intercept.segmentIntersection.perimeterSegmentIntersectsAdvancingCpointLine.pointingInCorrectDirectionLine had an error: " ++ e
+                Left e -> Left $ "Geometry.Intercept.segmentIntersectionBool.perimeterSegmentIntersectsAdvancingCpointLine.pointingInCorrectDirectionLine had an error: " ++ e
           in
           case getOrderingA <$> calculateDistanceA  b1' b4   <*> --length of BLL
                            calculateDistanceA b1' pointOfIntersection --f1 of bll,
@@ -295,7 +544,7 @@ segmentIntersectionForGenericLine b1 f1 b1' b4  = do
               pointingInCorrectDirectionLine
             Right EQ -> --True
               pointingInCorrectDirectionLine
-            Left e -> Left $ "Geometry.Intercept.segmentIntersection.perimeterSegmentIntersectsAdvancingCpointLine had an error: " ++ e
+            Left e -> Left $ "Geometry.Intercept.segmentIntersectionBool.perimeterSegmentIntersectsAdvancingCpointLine had an error: " ++ e
         
         process :: Bool -> Bool -> Bool
         process False False = False
@@ -349,7 +598,7 @@ segmentIntersectionT :: CornerPoints -> --advancingCpoint
 
 segmentIntersectionT advancingCpoint perimeterLine =  do
   --lineIntersection <- checkForPointOfIntersection "check for line intersection" advancingCpoint perimeterLine
-  lineIntersection <- (processSegment lineIntersection) "check for line intersection" advancingCpoint perimeterLine
+  lineIntersection <- (processSegment lineIntersectionRosetta) "check for line intersection" advancingCpoint perimeterLine
   
   advancingCpointSegmentIntersectsPerimeterLine <- checkThatSegmentIntersectsPerimeter
                                                    "advancingCpoint segment intersects perimeter line"
@@ -396,7 +645,7 @@ segmentIntersectsPoint pointOfIntersection segment =
   Left $ "Geometry.Intercept.segmentIntersectsPoint missing pattern match for: pointOfIntersection: " ++ (cpointType pointOfIntersection) ++
          " segment: " ++ (cpointType segment)
 
-{-
+{- |
 Given: pointOfIntersection :: Point
 Point at which the segment intersects if it is a line of infinite length.
 
@@ -540,12 +789,13 @@ If it does intersect, but on a vertice, then it is legal. Should be the perimete
 If it does intersect, not on a vertice, thin it is illegal, as advancingCpoint is probably crossing this perimenter on it's way to another.
 
 -}
-legalIntersection :: CornerPoints -> --advancingCpoint may intersect 
+
+legalIntersectionBool :: CornerPoints -> --advancingCpoint may intersect 
                      CornerPoints -> --a perimeter cpoint
                      Either String (Bool) --with and erorr, or legally: no intersection, or intersection at a vertice
-legalIntersection CornerPointsNothing _ = Right True
-legalIntersection _ CornerPointsNothing = Right True
-legalIntersection (BottomLeftLine b1 f1 ) (BackBottomLine b1' b4) =
+legalIntersectionBool CornerPointsNothing _ = Right True
+legalIntersectionBool _ CornerPointsNothing = Right True
+legalIntersectionBool (BottomLeftLine b1 f1 ) (BackBottomLine b1' b4) =
   let
     
     
@@ -564,9 +814,10 @@ legalIntersection (BottomLeftLine b1 f1 ) (BackBottomLine b1' b4) =
     extractE $
      hasNoIntersectionOrIsOnVertice (BackBottomLine b1' b4) <$>
                                               lineIntersection (BottomLeftLine b1 f1 ) (BackBottomLine b1' b4)  <*>
-                                              segmentIntersection (BottomLeftLine b1 f1 ) (BackBottomLine b1' b4)
+                                              segmentIntersectionBool (BottomLeftLine b1 f1 ) (BackBottomLine b1' b4) 
+                                              --segmentIntersectionGloss (BottomLeftLine b1 f1 ) (BackBottomLine b1' b4)
 
-legalIntersection (BottomRightLine b4 f4) (BackBottomLine b1' b4') =
+legalIntersectionBool (BottomRightLine b4 f4) (BackBottomLine b1' b4') =
   let
     
     
@@ -585,11 +836,14 @@ legalIntersection (BottomRightLine b4 f4) (BackBottomLine b1' b4') =
     extractE $
      hasNoIntersectionOrIsOnVertice (BackBottomLine b1' b4') <$>
                                               lineIntersection (BottomRightLine b4 f4 ) (BackBottomLine b1' b4')  <*>
-                                              segmentIntersection (BottomRightLine b4 f4 ) (BackBottomLine b1' b4')
+                                              segmentIntersectionBool (BottomRightLine b4 f4 ) (BackBottomLine b1' b4')
 
-legalIntersection advancingCpoint perimeter =
-  Left $ "Geometry.Intercept.legalIntersection has missing or illegal pattern match for advancingCpoint: " ++ (cpointType advancingCpoint) ++ " and  perimeter: " ++ (cpointType perimeter)
+legalIntersectionBool advancingCpoint perimeter =
+  Left $ "Geometry.Intercept.legalIntersectionBool has missing or illegal pattern match for advancingCpoint: " ++ (cpointType advancingCpoint) ++ " and  perimeter: " ++ (cpointType perimeter)
 
+--fails for illegal intersection in 2nd pos of 2nd list in perimeters
+--test segmentInterceptTest3 shows the intercept
+--need to test to see if legal
 perimetersContainIllegalIntersection :: [[CornerPoints]] -> CornerPoints -> Either String Bool
 perimetersContainIllegalIntersection (p:perimeters) cpoint =
   let
@@ -612,14 +866,20 @@ perimetersContainIllegalIntersection [] _ = Right False
 
 perimetersContainLegalIntersections :: [[CornerPoints]] -> CornerPoints -> Either String Bool
 perimetersContainLegalIntersections perimeters cpoint = do
+  containIllegal <- perimetersContainIllegalIntersection perimeters cpoint
+  return $ not containIllegal
+  
+{-
+perimetersContainLegalIntersections :: [[CornerPoints]] -> CornerPoints -> Either String Bool
+perimetersContainLegalIntersections perimeters cpoint = do
   areTheyLegal <- perimetersContainIllegalIntersection perimeters cpoint
   return $ not areTheyLegal
-  
 
+-}
 
---temp fx to look inside of segmentIntersection
-segmentIntersectionBreakDown :: CornerPoints -> CornerPoints -> Either String Ordering
-segmentIntersectionBreakDown (BottomLeftLine (Point ax ay az) (Point bx by bz) ) (BackBottomLine (Point px py pz) (Point qx qy qz)) =
+--temp fx to look inside of segmentIntersectionBool
+segmentIntersectionBoolBreakDown :: CornerPoints -> CornerPoints -> Either String Ordering
+segmentIntersectionBoolBreakDown (BottomLeftLine (Point ax ay az) (Point bx by bz) ) (BackBottomLine (Point px py pz) (Point qx qy qz)) =
   case lineIntersection (BottomLeftLine (Point ax ay az) (Point bx by bz) ) (BackBottomLine (Point px py pz) (Point qx qy qz)) of
     Right Nothing -> Left "got Nothing intersection"
     Right (Just (Point x y z)) ->
@@ -650,7 +910,8 @@ segmentIntersectionBreakDown (BottomLeftLine (Point ax ay az) (Point bx by bz) )
 -- http://bit-player.org/wp-content/extras/bph-publications/BeautifulCode-2007-Hayes.pdf
 --is this not intersection of lines again, without knowing about segements
   --Not even that, as it takes three point, and sees if they are on the same line. But::::
-
+--order does not matter, is checking if they are all in a line, in any order
+--return 0 if true(all in a line) else some other value
 onTheLine :: Point -> Point -> Point -> Double
 onTheLine (Point x1 y1 z1) (Point x2 y2 z2) (Point x3 y3 z3) =
   (x1 - x3) * (y2 - y3) - (x2 - x3) * (y1 - y3)

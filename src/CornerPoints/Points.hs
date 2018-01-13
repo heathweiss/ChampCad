@@ -1,5 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable #-}
-module CornerPoints.Points (Point(..), transposeZ, {-calculateDistance, calculateXYDistance, Center, center ,(<-|->), CenterA, (<-||->), centerA-}) where
+module CornerPoints.Points (Point(..), transposeZ) where
 import TypeClasses.Transposable(TransposePoint, transposeX, transposeY, transposeZ, )
 
 import Data.Data
@@ -14,7 +14,8 @@ Points in 3D geometry.
 Know uses:
 Make up the corners of Cubes and Faces.
 -}
-data Point =  Point { x_axis :: Double, y_axis :: Double, z_axis :: Double } 
+data Point =  Point { x_axis :: Double, y_axis :: Double, z_axis :: Double }
+           |  Line {_p1 :: Point, _p2 :: Point}
               deriving (Show, Typeable, Data)
 
 {-
@@ -48,6 +49,12 @@ instance Eq Point where
     Point x y z == Point xa ya za
       |  (equal x xa) && (equal y ya)  && (equal z za) = True 
       | otherwise = False
+    Line p1 p2 == Line q1 q2
+      | (p1 == q1) && (p2 == q2) = True
+      | (p1 == q2) && (p2 == q2) = True
+      | otherwise = False
+    Line _ _ == Point _ _ _ = False
+    Point _ _ _ == Line _ _ = False
 
 
 instance TransposePoint Point where

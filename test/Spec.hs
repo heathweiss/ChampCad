@@ -29,6 +29,8 @@ import JoinerTest(joinerTestDo)
 import DistanceTest(distanceTestDo)
 import  DelaunayTest(delaunayTestDo)
 import InterceptTest(interceptTestDo)
+import PolarInterceptTest(polarInterceptTestDo)
+import AdvanceToHeadOfPerimetersTest(advanceToHeadOfPerimetersTestDo) 
 
 --main :: IO ()
 main = do
@@ -60,4 +62,6 @@ main = do
   joinerTestDo
   distanceTestDo
   delaunayTestDo
+  polarInterceptTestDo
   interceptTestDo
+  advanceToHeadOfPerimetersTestDo

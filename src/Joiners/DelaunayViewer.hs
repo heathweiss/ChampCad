@@ -4,6 +4,8 @@ Create some shapes to look at for building the Joiners.Delaunay module.
 
 module Joiners.DelaunayViewer() where
 
+import Test.HUnit
+
 import Primitives.Cylindrical.Walled(cylinder)
 
 import CornerPoints.Radius(Radius(..))
@@ -11,7 +13,7 @@ import CornerPoints.Points(Point(..))
 import CornerPoints.FaceExtraction(extractB1, extractB4, extractF1, extractF4, extractBackLeftLine, extractBackRightLine,
                                   extractFrontLeftLine, extractFrontRightLine, extractBackBottomLine, extractBackFace)
 import CornerPoints.MeshGeneration(autoGenerateEachCube, autoGenerateEachFace)
-import CornerPoints.CornerPoints((+++>), (|+++|))
+import CornerPoints.CornerPoints(CornerPoints(..), (+++>), (|+++|))
 import CornerPoints.FaceConversions(toTopFace)
 import CornerPoints.Transpose(transposeZ)
 
@@ -19,6 +21,14 @@ import Geometry.Angle(Angle(..))
 
 import Joiners.Advancer(advanceToHeadCPointDistanceNoIntersectionTest, advanceToHeadCPointDistanceNoIntersectionTestNM)
 
+import Joiners.AdvanceToHeadOfPerimeters(orderInnerPerimsByDistanceFromHead, orderedInnerPerims,
+                                         removeContainedCPointFromHeadOfPerims, removeContainedCPointFromHeadOfPerimsNM,
+                                         advancingCpointFromHeadOfInnerPerims, advancingCpointFromHeadOfInnerPerimsNM,
+                                         advancingCpointFromHeadOfOuterPerims, advancingCpointFromHeadOfOuterPerimsNM,
+                                         advancingCpointFromDoublePerimsUsingDistanceToHeadOfPerimsCpointsNM)
+import Joiners.AdvanceSupport(Perimeters(..), AdvancingCPoint(..), justifyPerimeters, appendAdvancingCpointToJoinedCpointsE)
+
+import Joiners.AdvanceBase(delaunayBase, delaunayBase', delaunayBaseNM, delaunayBaseNM')
 import Stl.StlBase(Triangle(..), newStlShape)
 import Stl.StlCornerPoints((|+++^|), Faces(..) )
 import Stl.StlFileWriter(writeStlToFile)
@@ -92,7 +102,7 @@ bottomPointsBuilder = do
   --Use delaunayB joiner to join the <innerBack/outerFront>Points into a [Bottom<Left/Right>Line]
   bottomLeftRightLines <- buildCubePointsListSingle "delaunay"
                 --(currentJoiner  [innerBackBottomPoints] outerFrontBottomPoints)
-                (currentJoiner [(map (extractBackBottomLine) cylinder')]  [innerBackBottomPoints] outerFrontBottomPoints  )
+                (currentJoiner [(map (extractBackBottomLine) cylinder')]  [take 3 innerBackBottomPoints] $ take 3 outerFrontBottomPoints  )
 
   
   --create the [BottomFace] by: (head bottomLeftRightLines) +++> (tail bottomLeftRightLines)
@@ -132,6 +142,19 @@ showValBottomPointsBuilder = do
         (Left e) -> liftIO $ print $ e
         (Right a) -> do
           liftIO $ print $ show a
+
+
+
+
+
+
+
+
+
+
+
+
+          
 {-
 Cut 1 cylinder out of another by using outer faces of bigger cylinder and inner faces of inner cylinder.
 This will mean:

@@ -241,29 +241,31 @@ removeContainedCPointFromHeadOfPerimsNM innerPerimetersUnOrdered outerPerimeter 
       case advancingCpoint `contains` o of
                Left e -> Left $ "Joiners.AdvanceToHeadOfPerimeters.removeContainedCPointFromHeadOfPerimsNM: InnerPerimter = Nothing, OuterPermeter = "
                              ++ (show o) ++ " :os did not remove advancingCpoint: " ++ (show advancingCpoint) ++ " because: " ++ e
-               Right True -> Right (Nothing, Just $ OuterPerimeter outerPerimeter)
+               Right True -> Right (Nothing, justifyPerimeters $ OuterPerimeter outerPerimeter)
                Right False -> Left $ "Joiners.AdvanceToHeadOfPerimeters.removeContainedCPointFromHeadOfPerimsNM: InnerPerimter = Nothing, OuterPermeter = "
                              ++ (show o) ++ " :os did not remove advancingCpoint: " ++ (show advancingCpoint) ++ " because it was not contained in head OuterPerimeter "
     process (Just(InnerPerimeters innerPerimeters)) Nothing =
       let
+        --previousInnerListThatWasProcessed is passed in and appended so as to be leftist, such as foldl/foldr
+        --Is that more efficient?
         processList :: (Maybe [CornerPoints]) -> [[CornerPoints]] ->   [[CornerPoints]] -> Either String [[CornerPoints]]
-        processList    (prev)                    ((i:innerPerimeters)) joinedPerims =
+        processList    (previousInnerListThatWasProcessed)                    ((i:innerPerimeters)) joinedPerims =
           case advancingCpoint `contains` (head i) of
             Left e -> Left e
             Right True ->
-              case prev of
-                Just prev ->
-                  processList (Just $ tail i) innerPerimeters (prev:joinedPerims)
+              case previousInnerListThatWasProcessed of
+                Just previousInnerListThatWasProcessed ->
+                  processList (Just $ tail i) innerPerimeters (previousInnerListThatWasProcessed:joinedPerims)
                 Nothing ->
                   processList (Just $ tail i) innerPerimeters (joinedPerims)
             Right False ->
-              case prev of
-                Just prev ->
-                  processList (Just i) innerPerimeters (prev:joinedPerims)
+              case previousInnerListThatWasProcessed of
+                Just previousInnerListThatWasProcessed ->
+                  processList (Just i) innerPerimeters (previousInnerListThatWasProcessed:joinedPerims)
                 Nothing ->
                   processList (Just i) innerPerimeters (joinedPerims)
-        processList (Just prev) [] joinedPerims  =
-          Right $ (( (prev:joinedPerims)))
+        processList (Just previousInnerListThatWasProcessed) [] joinedPerims  =
+          Right $ removeEmpty (previousInnerListThatWasProcessed:joinedPerims)
         processList Nothing [] joinedPerims  =
           Right $ (( joinedPerims))
              
@@ -271,7 +273,8 @@ removeContainedCPointFromHeadOfPerimsNM innerPerimetersUnOrdered outerPerimeter 
         case processList Nothing innerPerimeters [] of
           Left e -> Left e
           Right innerPerims ->
-            Right $ ((Just $ InnerPerimeters innerPerims),Nothing)
+            Right $ ((justifyPerimeters $ InnerPerimeters $ removeEmpty innerPerims),Nothing)
+        
 
     process (Just(InnerPerimeters innerPerimeters)) (Just(OuterPerimeter (o:outerPerimeter))) =
       --to keep it dry, call process for both inner/outer perims, with the other being Nothing,
