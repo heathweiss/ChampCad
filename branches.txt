@@ -10,12 +10,15 @@ B: master
       -added PolarIntercept module for this, but that has not worked out.
       -added <line/segment>Intersection fx's from Gloss pkg, int Intercept module, and they are working.
      
-
-    Next: Test <il>legalIntersection then use it in Advancer module
+     created AdvanceComposable module
+     -get rid of all types and stick to CornerPoints: done
+     -make them composable.:done
+     -can create the DelaunayView bottom points with naive fx's to the closest CPoint. 
+      -Will need to do missing pattern matches for doing it with legal intersections, then perhaps can do it to closest advCPoint.
 
 
 Should be able to get rid of PolarIntercept.
--keep the ExceptT Erorr Maybe Point somewhere as I have that worked out.
+-keep the ExceptT Error Maybe Point somewhere as I have that worked out.
   -Maybe I should use it in Advancer' 
  Maybe it can be used in the Intercept module, though the new Gloss fx's should eliminate that.
 

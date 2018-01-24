@@ -27,6 +27,10 @@ import Joiners.AdvanceToHeadOfPerimeters(orderInnerPerimsByDistanceFromHead, ord
                                          advancingCpointFromHeadOfOuterPerims, advancingCpointFromHeadOfOuterPerimsNM,
                                          advancingCpointFromDoublePerimsUsingDistanceToHeadOfPerimsCpointsNM)
 import Joiners.AdvanceSupport(Perimeters(..), AdvancingCPoint(..), justifyPerimeters, appendAdvancingCpointToJoinedCpointsE)
+import Joiners.AdvanceComposable(Advancer(..), naiveAdvCpointFromInnerPerims, naiveAdvCPointFromOuterPerims, advancerRecur,
+                                 advCPointFromClosestInnerOuterAdvCPoint, extractAdvCPointsFromAdvancer, advCPointFromClosestInnerOuterUsedCPoint,
+                                 createAdvCPointFromInnerPerimsCheckLegalIntersection)
+
 
 import Joiners.AdvanceBase(delaunayBase, delaunayBase', delaunayBaseNM, delaunayBaseNM')
 import Stl.StlBase(Triangle(..), newStlShape)
@@ -50,7 +54,10 @@ import Control.Monad.Except
 import Control.Monad.Writer (WriterT, tell, execWriterT)
 import Control.Monad.Reader
 
-currentJoiner = advanceToHeadCPointDistanceNoIntersectionTestNM
+
+currentNonComposableJoiner =
+  --advancingCpointFromDoublePerimsUsingDistanceToHeadOfPerimsCpointsNM
+  advanceToHeadCPointDistanceNoIntersectionTestNM
   --advanceToHeadCPointDistanceNoIntersectionTest
 
 {-
@@ -62,6 +69,8 @@ Uses the delaunay joiner to join the mismatched degrees.
 Bottom faces are build from the bottom points, and then a top must be added to get the
 final walled cylinder.
 -}
+
+
 bottomPointsBuilder :: ExceptStackCornerPointsBuilder
 bottomPointsBuilder = do
   let
@@ -93,17 +102,38 @@ bottomPointsBuilder = do
   {-
   --Use delaunay joiner to join the <innerBack/outerFront>Points into a [Bottom<Left/Right>Line]
   bottomLeftRightLines <- buildCubePointsListSingle "delaunay"
-                (delaunay
+                (delaunayBase
                    outerFrontBottomPoints
                    innerBackBottomPoints
                    [] []
                 )
-  -}
+  
   --Use delaunayB joiner to join the <innerBack/outerFront>Points into a [Bottom<Left/Right>Line]
   bottomLeftRightLines <- buildCubePointsListSingle "delaunay"
-                --(currentJoiner  [innerBackBottomPoints] outerFrontBottomPoints)
-                (currentJoiner [(map (extractBackBottomLine) cylinder')]  [take 3 innerBackBottomPoints] $ take 3 outerFrontBottomPoints  )
-
+                --(currentNonComposableJoiner  [innerBackBottomPoints] outerFrontBottomPoints)
+                (currentNonComposableJoiner [(map (extractBackBottomLine) cylinder')]  [take 3 innerBackBottomPoints] $ take 3 outerFrontBottomPoints  )
+  
+  -}
+  --use the composable joiner
+  bottomLeftRightLines <- buildCubePointsListSingle "delaunay"
+   (let
+     recurProcessor :: Advancer -> Either String Advancer
+     recurProcessor advancer = do
+       --advCPointFromInner <- naiveAdvCpointFromInnerPerims advancer
+       advCPointFromInner <- createAdvCPointFromInnerPerimsCheckLegalIntersection advancer
+       advCPointFromOuter <- naiveAdvCPointFromOuterPerims advancer
+       --newAdvancer       <- advCPointFromClosestInnerOuterUsedCPoint advCPointFromInner advCPointFromOuter advancer
+       newAdvancer       <- advCPointFromClosestInnerOuterAdvCPoint advCPointFromInner advCPointFromOuter advancer
+       advancerRecur recurProcessor newAdvancer
+    in
+    extractAdvCPointsFromAdvancer $ 
+     recurProcessor $
+          Advancer
+            (Just [innerBackBottomPoints])
+            (Just [innerBackBottomPoints])
+            (Just outerFrontBottomPoints) Nothing []
+   )
+  
   
   --create the [BottomFace] by: (head bottomLeftRightLines) +++> (tail bottomLeftRightLines)
   btmFaces <- buildCubePointsListSingle "btmFaces"
@@ -166,7 +196,7 @@ inner cylinder:
 -extract back faces
  -extract BackRightLine of 1st cube, and [BackLeftLine] of all cubes.
 -}
-
+{-
 frontBackFacesBuilder :: ExceptStackCornerPointsBuilder
 frontBackFacesBuilder = do
   let
@@ -211,8 +241,8 @@ frontBackFacesBuilder = do
   
   --Use delaunay joiner to join the <innerBack/outerFront>Points into a [Bottom<Left/Right>Line]
   frontBackFaces <- buildCubePointsListSingle "frontBackFaces"
-                --(currentJoiner  [backFaces1, backFaces2] frontFaces)
-                (currentJoiner [(map extractBackFace innerCylinder1),(map extractBackFace innerCylinder2)]  [backFaces1, backFaces2] frontFaces )
+                --(currentNonComposableJoiner  [backFaces1, backFaces2] frontFaces)
+                (currentNonComposableJoiner [(map extractBackFace innerCylinder1),(map extractBackFace innerCylinder2)]  [backFaces1, backFaces2] frontFaces )
               
   
   --create the [BottomFace] by: (head bottomLeftRightLines) +++> (tail bottomLeftRightLines)
@@ -250,7 +280,7 @@ showValFrontBackFacesBuilder = do
         (Left e) -> liftIO $ print $ e
         (Right a) -> do
           liftIO $ print $ show a
-
+-}
 {-
  Joiners.Delaunay.removeIfUsed: did not find a used cpoint in inner/outer perimeters for: \n
 advancingCpoint:
