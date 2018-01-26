@@ -57,6 +57,12 @@ lineIntersectionGloss :: CornerPoints -> CornerPoints -> Either String (Maybe Po
 lineIntersectionGloss (BottomLeftLine (Point ax ay az) (Point bx by bz) ) (BackBottomLine (Point px py pz) (Point qx qy qz)) =
   Right $ lineIntersectionGloss' (Point ax ay az) (Point bx by bz) (Point px py pz) (Point qx qy qz)
 
+lineIntersectionGloss (FrontTopLine (Point ax ay az) (Point bx by bz) ) (BackTopLine (Point px py pz) (Point qx qy qz)) =
+  Right $ lineIntersectionGloss' (Point ax ay az) (Point bx by bz) (Point px py pz) (Point qx qy qz)
+
+lineIntersectionGloss (TopLeftLine (Point ax ay az) (Point bx by bz) ) (BackTopLine (Point px py pz) (Point qx qy qz)) =
+  Right $ lineIntersectionGloss' (Point ax ay az) (Point bx by bz) (Point px py pz) (Point qx qy qz)
+
 lineIntersectionGloss (BottomRightLine b4 f4) (BackBottomLine b1 b4') =
   Right $ lineIntersectionGloss' b4 f4 b1 b4'
 
@@ -124,6 +130,9 @@ intersectLineLine (x1, y1) (x2, y2) (x3, y3) (x4, y4)
 segmentIntersectionGloss :: CornerPoints -> CornerPoints -> Either String (Maybe Point)
 segmentIntersectionGloss (BottomLeftLine b1 f1 ) (BackBottomLine b1' b4) =
   segmentIntersectionGloss' b1 f1 b1' b4
+segmentIntersectionGloss (BottomRightLine b4 f4) (BackBottomLine b1' b4') =
+  segmentIntersectionGloss' b4 f4 b1' b4'
+  
 segmentIntersectionGloss c1 c2 =
   Left $ "segmentIntersectionGloss: missing pattern match for: " ++ (cpointType c1) ++ " and " ++ (cpointType c2)
 
@@ -168,48 +177,47 @@ legalIntersectionGloss :: CornerPoints -> --advancingCpoint may intersect
 legalIntersectionGloss CornerPointsNothing _ = Right True
 legalIntersectionGloss _ CornerPointsNothing = Right True
 legalIntersectionGloss (BottomLeftLine b1 f1 ) (BackBottomLine b1' b4) =
-  let
-    
-    
-    hasNoIntersectionOrIsOnVertice :: CornerPoints -> -- perimeter
-                        Maybe Point -> --point of intersection, which can now come from segmentIntersectionGloss
-                        Either String Bool
-    hasNoIntersectionOrIsOnVertice  _ Nothing = Right True
-    hasNoIntersectionOrIsOnVertice  (BackBottomLine b1' b4) pointOfIntersection  =
-        case pointOfIntersection of
-          Nothing -> Right True
-          Just pointOfIntersection ->
-            Right $ (pointOfIntersection ==  b1') || (pointOfIntersection ==  b4) 
-      
-  in 
-    extractE $
-     hasNoIntersectionOrIsOnVertice (BackBottomLine b1' b4) <$>
-                                              segmentIntersectionGloss (BottomLeftLine b1 f1 ) (BackBottomLine b1' b4) 
-                                            
+  legalIntersectionGlossGenericForLines b1 f1 b1' b4
+
+--this should be where german hiker is failing
+legalIntersectionGloss (TopLeftLine b2 f2) (BackTopLine b2' b3') =
+  legalIntersectionGlossGenericForLines b2 f2 b2' b3'
+
+legalIntersectionGloss (TopRightLine p1 p2) (BackTopLine p3 p4) =
+  legalIntersectionGlossGenericForLines p1 p2 p3 p4
 
 legalIntersectionGloss (BottomRightLine b4 f4) (BackBottomLine b1' b4') =
-  let
-    
-    
-    hasNoIntersectionOrIsOnVertice :: CornerPoints -> -- perimeter
-                        Maybe Point -> --point of intersection
-                        Bool  -> --is pointOfIntersection in perimeter segment
-                        Either String Bool
-    hasNoIntersectionOrIsOnVertice  _ _ False = Right True
-    hasNoIntersectionOrIsOnVertice  (BackBottomLine b1' b4') pointOfIntersection intersectsPerimeter =
-        case pointOfIntersection of
-          Nothing -> Right True
-          Just pointOfIntersection ->
-            Right $ (pointOfIntersection ==  b1') || (pointOfIntersection ==  b4') 
-      
-  in 
-    extractE $
-     hasNoIntersectionOrIsOnVertice (BackBottomLine b1' b4') <$>
-                                              lineIntersection (BottomRightLine b4 f4 ) (BackBottomLine b1' b4')  <*>
-                                              segmentIntersectionBool (BottomRightLine b4 f4 ) (BackBottomLine b1' b4')
+  legalIntersectionGlossGenericForLines b4 f4 b1' b4'
+
+legalIntersectionGloss (BackTopLine p1 p2) (TopLeftLine p3 p4) =
+  legalIntersectionGlossGenericForLines p1 p2 p3 p4
+  
 
 legalIntersectionGloss advancingCpoint perimeter =
   Left $ "Geometry.Intercept.legalIntersectionGloss has missing or illegal pattern match for advancingCpoint: " ++ (cpointType advancingCpoint) ++ " and  perimeter: " ++ (cpointType perimeter)
+
+-- create a generic fx for lines for legalIntersectionGloss.
+legalIntersectionGlossGenericForLines ::
+                     Point -> Point -> Point -> Point -> 
+                     Either String (Bool)
+legalIntersectionGlossGenericForLines (Point xa ya za) (Point xb yb zb) (Point xa' ya' za') (Point xb' yb' zb') =
+  let
+    
+    
+    hasNoIntersectionOrIsOnVertice :: Point -> Point -> -- perimeter as generic points
+                        Maybe Point -> --point of intersection, which can now come from segmentIntersectionGloss
+                        Either String Bool
+    hasNoIntersectionOrIsOnVertice  _ _ Nothing = Right True
+    hasNoIntersectionOrIsOnVertice  (Point xa' ya' za') (Point xb' yb' zb') pointOfIntersection  =
+        case pointOfIntersection of
+          Nothing -> Right True
+          Just pointOfIntersection ->
+            Right $ (pointOfIntersection ==  (Point xa' ya' za')) || (pointOfIntersection ==  (Point xb' yb' zb')) 
+      
+  in 
+    extractE $
+     hasNoIntersectionOrIsOnVertice (Point xa' ya' za') (Point xb' yb' zb') <$>
+                                              segmentIntersectionGloss' (Point xa ya za) (Point xb yb zb) (Point xa' ya' za') (Point xb' yb' zb') 
 
 
 closestPointOnLineParamGloss
@@ -478,6 +486,9 @@ segmentIntersectionBool :: CornerPoints -> --advancingCpoint
                             Either String Bool
 segmentIntersectionBool (BottomLeftLine b1 f1 ) (BackBottomLine b1' b4) =
   segmentIntersectionBoolForGenericLine b1 f1 b1' b4
+
+segmentIntersectionBool (TopLeftLine pa1 pa2 ) (BackTopLine pb1 pb2) =
+  segmentIntersectionBoolForGenericLine pa1 pa2 pb1 pb2
 
 -- BottomRightLine and BackBottomLine
 segmentIntersectionBool (BottomRightLine b4 f4) (BackBottomLine b1 b4') =
@@ -850,7 +861,7 @@ perimetersContainIllegalIntersection (p:perimeters) cpoint =
     perimetersContainIllegalIntersection' :: [CornerPoints] -> CornerPoints -> Either String Bool
     perimetersContainIllegalIntersection' (p:perimeter) cpoint =
       case legalIntersection cpoint p of
-        Left e -> Left e
+        Left e -> Left $ "perimetersContainIllegalIntersection error: " ++  e
         Right True -> perimetersContainIllegalIntersection' perimeter cpoint
         Right False -> Right True
     perimetersContainIllegalIntersection' ([]) _ = Right False

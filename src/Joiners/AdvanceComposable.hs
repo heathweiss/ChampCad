@@ -13,9 +13,9 @@ which have already been modified for that advancing cpoint.
 Have an extractor fx that checks for Either status, and converst Right results to the [CornerPoints] used by Builder.Monad.
 Could have other extractor fx's that extract it differently, such as a Builder.Monad that does not use CornerPointsError.
 -}
-module Joiners.AdvanceComposable(Advancer(..), naiveAdvCpointFromInnerPerims, naiveAdvCPointFromOuterPerims, advancerRecur,
+module Joiners.AdvanceComposable(Advancer(..), OuterAdvancerOutput(..), naiveAdvCpointFromInnerPerims, naiveAdvCPointFromOuterPerims, advancerRecur,
                                  advCPointFromClosestInnerOuterAdvCPoint, extractAdvCPointsFromAdvancer, advCPointFromClosestInnerOuterUsedCPoint,
-                                 createAdvCPointFromInnerPerimsCheckLegalIntersection) where
+                                 createAdvCPointFromInnerPerimsCheckLegalIntersection, outerAdvancerOutPutHasLegalIntersections) where
 
 import Joiners.AdvanceSupport(justifyPerimeters)
 
@@ -81,41 +81,23 @@ data InnerAdvancerOutput =
     }
   deriving (Eq)
 
-{-
-data InnerAdvancerOutput =
-  InnerAdvancerOutput
-    {_innerPerimetersI  :: Maybe InnerPerimeters, -- | The remaining InnerPerimeters, after possibly removing the CornerPoint from which the just built AdvancintCPoint was made from.
-     _advancingCPointI  :: Maybe AdvancingCPoint, -- | The new AdvancingCPoint, which may have been built from the previous AdvancingCPoint and InnerPerimeters.
-     _advancingCPointsI :: AdvancingCPoints       -- | The [AdvancingCPoint] which may or may not have a new AdvancingCPoint appended onto it.
-    }
-  deriving (Eq)
 
--}
 
 instance Show InnerAdvancerOutput where
-  show (InnerAdvancerOutput (Just innerPerims) (Just advCPoint) (Just usedCPoint) _) =
+  show (InnerAdvancerOutput (Just innerPerims) (Just advCPoint) (Just usedCPoint) advCPoints) =
           " innerAdvancer: innerPerimeters length = " ++ (show $ length innerPerims) ++ " advCPoint: " ++ (show advCPoint) ++ " used cpoint: " ++ (show usedCPoint)
-  show (InnerAdvancerOutput Nothing (Just advCPoint) (Just usedCPoint) _) =
+          ++ " advCPoints length: " ++ (show $ length advCPoints)
+  show (InnerAdvancerOutput Nothing (Just advCPoint) (Just usedCPoint) advCPoints) =
           " innerAdvancer: innerPerims: Nothing" ++ " advCPoint: " ++ (show advCPoint) ++ " used cpoint: " ++ (show usedCPoint)
-  show (InnerAdvancerOutput (Just innerPerims) Nothing Nothing _) =
+          ++ " advCPoints length: " ++ (show $ length advCPoints)
+  show (InnerAdvancerOutput (Just innerPerims) Nothing Nothing advCPoints) =
           " innerAdvancer: innerPerimeters length = " ++ (show $ length innerPerims) ++ " advCPoint: Nothing; usedCPoint: Nothing"
-  show (InnerAdvancerOutput Nothing Nothing Nothing _) =
+          ++ " advCPoints length: " ++ (show $ length advCPoints)
+  show (InnerAdvancerOutput Nothing Nothing Nothing advCPoints) =
           " innerAdvancer: innerPerimeters Nothing; advancingCPoint Nothing; usedCPoint Nothing"
+          ++ " advCPoints length: " ++ (show $ length advCPoints)
   show innerAdvancer = "missing pattern match to show InnerAdvancerOutput " 
   
-{-
-instance Show InnerAdvancerOutput where
-  show (InnerAdvancerOutput (Just innerPerims) (Just advCPoint) _) =
-          " innerAdvancer: innerPerimeters length = " ++ (show $ length innerPerims) ++ " advCPoint: " ++ (show advCPoint)
-  show (InnerAdvancerOutput Nothing (Just advCPoint) _) =
-          " innerAdvancer: innerPerims: Nothing" ++ " advCPoint: " ++ (show advCPoint)
-  show (InnerAdvancerOutput (Just innerPerims) Nothing _) =
-          " innerAdvancer: innerPerimeters length = " ++ (show $ length innerPerims) ++ " advCPoint: Nothing"
-  show (InnerAdvancerOutput Nothing Nothing _) =
-          " innerAdvancer: innerPerimeters Nothing; advancingCPoint Nothing"
-  show innerAdvancer = "missing pattern match to show InnerAdvancerOutput " 
-
--}
 
 -- |
 -- The output datatype of the function which creates a new AdvancingCPoint using OuterPerimeter and current AdvancingCPoint.
@@ -129,38 +111,19 @@ data OuterAdvancerOutput =
     deriving (Eq)
 
 instance Show OuterAdvancerOutput where
-  show (OuterAdvancerOutput (Just outerPerimeter) (Just advCPoint) (Just usedCPoint) _) =
-    "OuterAdvancerOutput: outerPerimeter length == " ++ (show $ length outerPerimeter) ++ " advCPoint: " ++ (show advCPoint) ++ " used cpoint: " ++ (show usedCPoint)
-  show (OuterAdvancerOutput Nothing (Just advCPoint) (Just usedCPoint) _) =
-    "OuterAdvancerOutput: outerPerimeter Nothing;  advCPoint: " ++ (show advCPoint) ++ " used cpoint: " ++ (show usedCPoint)
-  show (OuterAdvancerOutput (Just outerPerimeter) Nothing Nothing _) =
-    "OuterAdvancerOutput: outerPerimeter length == " ++ (show $ length outerPerimeter) ++ " advCPoint: Nothing "
-  show (OuterAdvancerOutput Nothing Nothing Nothing _) =
-    "OuterAdvancerOutput: outerPerimeter Nothing  advCPoint: Nothing"
-  show outerAdvancerOutput = "missing pattern match to show OuterAdvancerOutput"
-
-{-
--- |
--- The output datatype of the function which creates a new AdvancingCPoint using OuterPerimeter and current AdvancingCPoint.
-data OuterAdvancerOutput =
-  OuterAdvancerOutput
-    {_outerPerimeterO   :: Maybe  OuterPerimeter, -- | The remaining OuterPerimeter, after removing the CornerPoint from which the just built AdvancintCPoint was made from.
-     _advancingCPointO  :: Maybe AdvancingCPoint, -- | The new AdvancingCPoint, which was built from the previous AdvancingCPoint and OuterPerimeter.
-     _advancingCPointsO :: AdvancingCPoints -- | The [AdvancingCPoint] which may or may not have a new AdvancingCPoint appended onto it.
-    }
-    deriving (Eq)
-
-instance Show OuterAdvancerOutput where
-  show (OuterAdvancerOutput (Just outerPerimeter) (Just advCPoint) _) =
+  show (OuterAdvancerOutput (Just outerPerimeter) (Just advCPoint) (Just usedCPoint) advCPoints) =
     "OuterAdvancerOutput: outerPerimeter length == " ++ (show $ length outerPerimeter) ++ " advCPoint: " ++ (show advCPoint)
-  show (OuterAdvancerOutput Nothing (Just advCPoint) _) =
-    "OuterAdvancerOutput: outerPerimeter Nothing;  advCPoint: " ++ (show advCPoint)
-  show (OuterAdvancerOutput (Just outerPerimeter) Nothing _) =
-    "OuterAdvancerOutput: outerPerimeter length == " ++ (show $ length outerPerimeter) ++ " advCPoint: Nothing "
-  show (OuterAdvancerOutput Nothing Nothing _) =
-    "OuterAdvancerOutput: outerPerimeter Nothing  advCPoint: Nothing"
+    ++ " used cpoint: " ++ (show usedCPoint) ++ " advCPoints length: " ++ (show $ length advCPoints)
+  show (OuterAdvancerOutput Nothing (Just advCPoint) (Just usedCPoint) advCPoints) =
+    "OuterAdvancerOutput: outerPerimeter Nothing;  advCPoint: " ++ (show advCPoint) ++ " used cpoint: "
+    ++ (show usedCPoint) ++ " advCPoints length: " ++ (show $ length advCPoints)
+  show (OuterAdvancerOutput (Just outerPerimeter) Nothing Nothing advCPoints) =
+    "OuterAdvancerOutput: outerPerimeter length == " ++ (show $ length outerPerimeter) ++ " advCPoint: Nothing; useCPoint Nothing"
+    ++ " advCPoints length: " ++ (show $ length advCPoints)
+  show (OuterAdvancerOutput Nothing Nothing Nothing advCPoints) =
+    "OuterAdvancerOutput: outerPerimeter Nothing  advCPoint: Nothing; usedCPoint Nothing" ++ " advCPoints length: " ++ (show $ length advCPoints)
   show outerAdvancerOutput = "missing pattern match to show OuterAdvancerOutput"
--}
+
 
 
 justifyMaybeNestedLists :: Maybe [[CornerPoints]] -> Maybe [[CornerPoints]]
@@ -248,7 +211,8 @@ naiveAdvCpointFromInnerPerims advancer = do
             --Right advCPoint -> Right $ InnerAdvancerOutput (Just innerPerimeters) (Just advCPoint) (advCPoint:(advancer^.advancingCpoints))
               --Above caused it to have a single point as innerPerim
               
-            Right advCPoint -> Right $ InnerAdvancerOutput (Just $ ((tail i) : innerPerimeters')) (Just advCPoint) (Just $ head i) (advCPoint:(advancer^.advancingCpoints))
+            --Right advCPoint -> Right $ InnerAdvancerOutput (Just $ ((tail i) : innerPerimeters')) (Just advCPoint) (Just $ head i) (advCPoint:(advancer^.advancingCpoints))
+            Right advCPoint -> Right $ InnerAdvancerOutput (justifyNestedLists $ ((tail i) : innerPerimeters')) (Just advCPoint) (Just $ head i) (advCPoint:(advancer^.advancingCpoints))
 {-
 naiveAdvCpointFromInnerPerims :: Advancer -> Either String InnerAdvancerOutput
 naiveAdvCpointFromInnerPerims (Advancer Nothing _ _ Nothing advancingCPoints)  = Right $ InnerAdvancerOutput Nothing Nothing advancingCPoints
@@ -282,7 +246,7 @@ createAdvCPointFromInnerPerimsCheckLegalIntersection :: Advancer -> Either Strin
 createAdvCPointFromInnerPerimsCheckLegalIntersection (Advancer Nothing _ _ Nothing advancingCPoints)  = Right $ InnerAdvancerOutput Nothing Nothing Nothing advancingCPoints
 createAdvCPointFromInnerPerimsCheckLegalIntersection (Advancer Nothing _ _ _ advancingCPoints)  = Right $ InnerAdvancerOutput Nothing Nothing Nothing advancingCPoints
 createAdvCPointFromInnerPerimsCheckLegalIntersection (Advancer innerPerimeters _ _ Nothing advancingCPoints)  = Right $ InnerAdvancerOutput innerPerimeters Nothing Nothing advancingCPoints
-createAdvCPointFromInnerPerimsCheckLegalIntersection (Advancer (Just innerPerims) (Just innerPerimsNoExt) (Just outerPerim) (Just advCPoint) advCPoints) = do
+createAdvCPointFromInnerPerimsCheckLegalIntersection (Advancer (Just innerPerims) (Just innerPerimsNoExt) _ (Just advCPoint) advCPoints) = do
   case (justifyNestedLists innerPerims) of
     Nothing -> Right $ InnerAdvancerOutput Nothing Nothing Nothing advCPoints
     Just (i:innerPerimeters) ->
@@ -291,10 +255,11 @@ createAdvCPointFromInnerPerimsCheckLegalIntersection (Advancer (Just innerPerims
             Right advCPoint ->
               case perimetersContainLegalIntersections innerPerimsNoExt advCPoint of
                 Right True ->
-                  Right $ InnerAdvancerOutput (justifyNestedLists innerPerimeters) (Just advCPoint) (Just $ head i) (advCPoint:advCPoints)
+                  --Right $ InnerAdvancerOutput (justifyNestedLists innerPerimeters) (Just advCPoint) (Just $ head i) (advCPoint:advCPoints)
+                  Right $ InnerAdvancerOutput (justifyNestedLists ((tail i) : innerPerimeters)) (Just advCPoint) (Just $ head i) (advCPoint:advCPoints)
                 Right False -> Right $ InnerAdvancerOutput (Just innerPerims) Nothing Nothing advCPoints
-                Left e -> Left $ "Joiners.AdvanceComposable.createAdvCPointFromInnerPerimsCheckLegalIntersection threw error: " ++ e
-createAdvCPointFromInnerPerimsCheckLegalIntersection advancer = Left $ "oiners.AdvanceComposable.createAdvCPointFromInnerPerimsCheckLegalIntersection: missing pattern match for: " ++ (show advancer)
+                Left e -> Left $ "Joiners.AdvanceComposable.createAdvCPointFromInnerPerimsCheckLegalIntersection.perimetersContainLegalIntersections threw error: " ++ e
+createAdvCPointFromInnerPerimsCheckLegalIntersection advancer = Left $ "Joiners.AdvanceComposable.createAdvCPointFromInnerPerimsCheckLegalIntersection: missing pattern match for: " ++ (show advancer)
 {-
 createAdvCPointFromInnerPerimsCheckLegalIntersection :: Advancer -> Either String InnerAdvancerOutput
 createAdvCPointFromInnerPerimsCheckLegalIntersection (Advancer Nothing _ _ Nothing advancingCPoints)  = Right $ InnerAdvancerOutput Nothing Nothing advancingCPoints
@@ -384,72 +349,24 @@ advCPointFromClosestInnerOuterAdvCPoint innerAdvancer outerAdvancer advancer =
          " outer advancer: " ++ (show outerAdvancer) ++
          " original Advancer passed into this fx call: " ++ (show advancer)
 
-{-
-advCPointFromClosestInnerOuterAdvCPoint :: InnerAdvancerOutput -> OuterAdvancerOutput -> Advancer -> Either String Advancer
-
-
--- Is the intial advCPoint, as there is not AdvCPoint supplied by Inner/Outer AdvancerOutput
-advCPointFromClosestInnerOuterAdvCPoint
-  (InnerAdvancerOutput (Just (i:innerPerimeters)) Nothing _ )
-  (OuterAdvancerOutput (Just (o:outerPerimeter)) Nothing _)
-  (Advancer _ (Just innerPerimsBeforeExrtnA) _ Nothing advCPointsA)
-  =
-  --take it from head of first innerP for now
-  let
-    advCPointNew = o +++ (head i)
-  in
-  Right $
-    Advancer
-      (Just ((tail i):innerPerimeters))
-      (Just innerPerimsBeforeExrtnA)
-      (Just outerPerimeter)
-      (Just advCPointNew)
-      (advCPointNew : advCPointsA)
-
---pattern match for the results of last test where inner/outer advancers both have candidate adv CPoints.
-advCPointFromClosestInnerOuterAdvCPoint 
-  (InnerAdvancerOutput innerPerimetersI (Just advancingCPointI) advancingCPointsI) --innerA
-  (OuterAdvancerOutput outerPerimeterO (Just advancingCPointO) advancingCPointsO)  --outerA
-  (Advancer innerPerimetersA innerPerimetersBeforeExtraction outerPerimeterA (Just advancingCPointA) _)  --advancer
-  = do
-  iDistance <- calculateDistanceA advancingCPointA advancingCPointI
-  oDistance <- calculateDistanceA advancingCPointA advancingCPointO
-  case iDistance <= oDistance of
-    True  -> Right $ Advancer innerPerimetersI innerPerimetersBeforeExtraction outerPerimeterA (Just advancingCPointI) advancingCPointsI
-    False -> Right $ Advancer innerPerimetersA innerPerimetersBeforeExtraction outerPerimeterO (Just advancingCPointO) advancingCPointsO
+-- | Check for legal intersections.
+-- If any are illegal, reset the advancingCPoint to Nothing
+outerAdvancerOutPutHasLegalIntersections :: OuterAdvancerOutput -> Maybe InnerPerimetersBeforeExtraction -> Either String OuterAdvancerOutput
+outerAdvancerOutPutHasLegalIntersections (OuterAdvancerOutput outerPerimeter Nothing usedCPoint advancingCPoints) _ =
+  Right $ (OuterAdvancerOutput outerPerimeter Nothing usedCPoint advancingCPoints)
+outerAdvancerOutPutHasLegalIntersections (OuterAdvancerOutput (Just outerPerimeter) (Just advCPoint) (Just usedCPoint) advancingCPoints) (Just innerPerimetersBeforeExtraction) =
+  case perimetersContainLegalIntersections innerPerimetersBeforeExtraction advCPoint of
+    Right True  -> Right (OuterAdvancerOutput (Just outerPerimeter) (Just advCPoint) (Just usedCPoint) advancingCPoints)
+    Right False -> Right (OuterAdvancerOutput (Just $ usedCPoint : outerPerimeter) Nothing Nothing (tail advancingCPoints))
+    Left e      -> Left $ "outerAdvancerOutPutHasLegalIntersections error: " ++ e
+outerAdvancerOutPutHasLegalIntersections (OuterAdvancerOutput Nothing (Just advCPoint) (Just usedCPoint) advancingCPoints) (Just innerPerimetersBeforeExtraction) =
+  case perimetersContainLegalIntersections innerPerimetersBeforeExtraction advCPoint of
+    Right True  -> Right (OuterAdvancerOutput Nothing (Just advCPoint) (Just usedCPoint) advancingCPoints)
+    Right False -> Right (OuterAdvancerOutput (Just [usedCPoint]) Nothing Nothing (tail advancingCPoints))
+    Left e      -> Left $ "outerAdvancerOutPutHasLegalIntersections error: " ++ e
   
-
---pattern match for the <inner/outer>Perims are Nothing but the outerPerims has produced an advCPoint.
-advCPointFromClosestInnerOuterAdvCPoint
-  --innerA
-  (InnerAdvancerOutput Nothing Nothing _)
-  --outerA
-  (OuterAdvancerOutput Nothing (Just advCPointO) advCPointsO)
-  --advancer
-  (Advancer Nothing  innerPerimetersBeforeExtraction (Just outerPerimeterA) (Just advCPointA) advCPointsA) =
-  Right $ Advancer Nothing innerPerimetersBeforeExtraction Nothing (Just advCPointO) advCPointsO
-
---pattern match for the innerPerims are done(so Nothing) but the outerPerims are still going.
-advCPointFromClosestInnerOuterAdvCPoint
-  --innerA
-  (InnerAdvancerOutput Nothing Nothing _)
-  --outerA
-  --(OuterAdvancerOutput Nothing (Just advCPointO) advCPointsO)
-  (OuterAdvancerOutput outerPerimeterO (Just advCPointO) advCPointsO)  --outerA
-  --advancer
-  (Advancer Nothing  innerPerimetersBeforeExtraction (Just outerPerimeterA) (Just advCPointA) advCPointsA) =
-  Right $ Advancer Nothing innerPerimetersBeforeExtraction  outerPerimeterO (Just advCPointO) advCPointsO
-
-
-  
-advCPointFromClosestInnerOuterAdvCPoint innerAdvancer outerAdvancer advancer =
-  
-  Left $ "Joiners.AdvanceComposable.advCPointFromClosestInnerOuterAdvCPoint: missing pattern matche for innerAdvancer: " ++ (show innerAdvancer) ++
-         " innerPerimetersBeforeExtraction: no need to show them" ++
-         " outer advancer: " ++ (show outerAdvancer) ++
-         " original Advancer passed into this fx call: " ++ (show advancer)
-
--}
+outerAdvancerOutPutHasLegalIntersections outerAdvancer _ =
+  Left $ "outerAdvancerOutPutHasLegalIntersections: missing pattern match for " ++ (show outerAdvancer)
 
 -- |
 -- Create a new AdvancingCPoint if one is not already supplied by <Inner/Outer>AdvancerOutput
@@ -457,26 +374,97 @@ advCPointFromClosestInnerOuterAdvCPoint innerAdvancer outerAdvancer advancer =
 -- If AdvancingCPoint is supplied by only 1 of <Inner/Outer>AdvancerOutput, use that 1
 advCPointFromClosestInnerOuterUsedCPoint :: InnerAdvancerOutput -> OuterAdvancerOutput -> Advancer -> Either String Advancer
 
+{-missing pattern match
+innerAdvancer:
+  innerPerims: length == 1
+  advCPoint:   TopLeftLine
+  useCPoint    B2
+  advCPoints   length == 33
+outerAdvancer:
+  outerPerim nothing
+  advCPoint  nothing
+  advCPoint  length == 32
 
--- Is the intial advCPoint, as there is not AdvCPoint supplied by Inner/Outer AdvancerOutput
+-}
+
+
+{-advCPointFromClosestInnerOuterUsedCPoint pattern matching
+InnerA     innerP's advCPt  usedCPt advCPts
+OuterA     outerP  advCPt   usedCPt advCPts
+Advancer   innerP  innerPBE outerP  advCPt  advCPts
+
+Return as is.. Recur fx must exit. Done. Need to revise as don't care what Advancer has.
+InnerA    Nothing  Nothing Nothing advCPointsI
+OuterA    Nothing Nothing  Nothing advCPtsA
+Advancer  _        _       _       _  _
+
+
+innerP built new advCPt(s). Pass them on. advanceRecur cx's if anything left to build advCPt from.
+InnerA    innerP  Jst advCpt  _ advCPointsI
+OuterA    outerP  Nothing     _ _
+Advancer  _       innerPBE    _ _ _
+
+-----------------------------------------------
+          innerP's advCPt  usedCPt advCPts
+InnerA    Nothing  Nothing Nothing advCPointsI
+
+          outerP  advCPt   usedCPt advCPts
+OuterA    Nothing Just a  Just u advCPointsA
+
+          innerP  innerPBE outerP  advCPt  advCPts
+Advancer  Nothing Nothing  Nothing Nothing advCPts
+
+-----------------------------------------------
+          innerP's advCPt  usedCPt advCPts
+InnerA    Nothing  Nothing Nothing advCPointsI
+
+          outerP  advCPt   usedCPt advCPts
+OuterA    just p  Just a  Just u advCPointsA
+
+          innerP  innerPBE outerP  advCPt  advCPts
+Advancer  Nothing Nothing  Nothing Nothing advCPts
+-}
+
+
+-- Is the intial advCPoint, as there is not AdvCPoint supplied, but there are perims to build from. 
 advCPointFromClosestInnerOuterUsedCPoint
-  (InnerAdvancerOutput (Just (i:innerPerimeters)) Nothing Nothing _ )
-  (OuterAdvancerOutput (Just (o:outerPerimeter)) Nothing Nothing _)
-  (Advancer _ (Just innerPerimsBeforeExrtnA) _ Nothing advCPointsA)
+  (InnerAdvancerOutput (Just (i:innerPerimeters)) Nothing _ _ )
+  (OuterAdvancerOutput (Just (o:outerPerimeter))  Nothing _ _)
+  (Advancer _ innerPBE _ Nothing advCPointsA)
   =
-  --take it from head of first innerP for now
+  --Build advCPt from head of first innerP and head of outerP for now.
+  --May need a smarter way to do this.
   let
     advCPointNew = o +++ (head i)
   in
   Right $
     Advancer
       (Just ((tail i):innerPerimeters))
-      (Just innerPerimsBeforeExrtnA)
+      innerPBE
       (Just outerPerimeter)
       (Just advCPointNew)
       (advCPointNew : advCPointsA)
 
+--innerP built new advCPt(s) so pass them on. Nothing left to build from so advanceRecur must exit. 
+advCPointFromClosestInnerOuterUsedCPoint
+  (InnerAdvancerOutput innerP (Just advCPtI) _ advCPtsI )
+  (OuterAdvancerOutput outerP Nothing       _ _       )
+  (Advancer _ innerPBE _ _ _)
+  =
+  Right $ Advancer innerP innerPBE outerP (Just advCPtI) advCPtsI
+
+
+--pattern match for the <inner/outer>Perims are Nothing but the outerPerims has produced an advCPoint.
+advCPointFromClosestInnerOuterUsedCPoint
+  (InnerAdvancerOutput innerP Nothing _  _) 
+  (OuterAdvancerOutput outerP (Just advCPtO) _ advCPtsO) 
+  (Advancer _  innerPBE _ _ _) 
+   = 
+  Right $ Advancer innerP innerPBE outerP (Just advCPtO) advCPtsO
+
 --pattern match for the results of last test where inner/outer advancers both have candidate adv CPoints.
+--Both inner/outer perims produced advCPt so decide which to use and pass it on.
+--Pass on inner/outer perims and let advanceRecur see if anything left to build from.
 advCPointFromClosestInnerOuterUsedCPoint 
   (InnerAdvancerOutput innerPerimetersI (Just advancingCPointI) (Just usedCPointI) advancingCPointsI) --innerA
   (OuterAdvancerOutput outerPerimeterO (Just advancingCPointO) (Just usedCPointO) advancingCPointsO)  --outerA
@@ -487,18 +475,34 @@ advCPointFromClosestInnerOuterUsedCPoint
   case iDistance <= oDistance of
     True  -> Right $ Advancer innerPerimetersI innerPerimetersBeforeExtraction outerPerimeterA (Just advancingCPointI) advancingCPointsI
     False -> Right $ Advancer innerPerimetersA innerPerimetersBeforeExtraction outerPerimeterO (Just advancingCPointO) advancingCPointsO
+
   
+advCPointFromClosestInnerOuterUsedCPoint innerAdvancer outerAdvancer advancer =
+  
+  Left $ "Joiners.AdvanceComposable.advCPointFromClosestInnerOuterUsedCPoint: missing pattern matche for innerAdvancer: " ++ (show innerAdvancer) ++
+         " outer advancer: " ++ (show outerAdvancer) ++
+         " original Advancer passed into this fx call: " ++ (show advancer)
 
---pattern match for the <inner/outer>Perims are Nothing but the outerPerims has produced an advCPoint.
+--not sure about this one. See where it fits in when done
+{-
 advCPointFromClosestInnerOuterUsedCPoint
-  --innerA
-  (InnerAdvancerOutput Nothing Nothing Nothing  _)
-  --outerA
-  (OuterAdvancerOutput Nothing (Just advCPointO) _ advCPointsO)
-  --advancer
-  (Advancer Nothing  innerPerimetersBeforeExtraction (Just outerPerimeterA) (Just advCPointA) advCPointsA) =
-  Right $ Advancer Nothing innerPerimetersBeforeExtraction Nothing (Just advCPointO) advCPointsO
+  (InnerAdvancerOutput innerPerimeters Nothing Nothing _ )
+  (OuterAdvancerOutput Nothing Nothing Nothing _)
+  (Advancer _ (Just innerPerimsBeforeExrtnA) _ (Just advCPointA) advCPointsA) =
+    Right $ Advancer Nothing  (Just innerPerimsBeforeExrtnA) Nothing Nothing advCPointsA
+-}
 
+--No advCPt was built and nothing left to build from. advanceRecur must exit
+--Do I really need this one.
+{-
+advCPointFromClosestInnerOuterUsedCPoint
+  (InnerAdvancerOutput Nothing Nothing Nothing _ )
+  (OuterAdvancerOutput Nothing Nothing Nothing _)
+  (Advancer Nothing Nothing Nothing Nothing advCPointsA) =
+    Right $ Advancer Nothing Nothing Nothing Nothing advCPointsA
+-}
+
+{-
 --pattern match for the innerPerims are done(so Nothing) but the outerPerims are still going.
 advCPointFromClosestInnerOuterUsedCPoint
   --innerA
@@ -509,22 +513,24 @@ advCPointFromClosestInnerOuterUsedCPoint
   --advancer
   (Advancer Nothing  innerPerimetersBeforeExtraction (Just outerPerimeterA) (Just advCPointA) advCPointsA) =
   Right $ Advancer Nothing innerPerimetersBeforeExtraction  outerPerimeterO (Just advCPointO) advCPointsO
+-}
 
 
-  
-advCPointFromClosestInnerOuterUsedCPoint innerAdvancer outerAdvancer advancer =
-  
-  Left $ "Joiners.AdvanceComposable.advCPointFromClosestInnerOuterUsedCPoint: missing pattern matche for innerAdvancer: " ++ (show innerAdvancer) ++
-         " innerPerimetersBeforeExtraction: no need to show them" ++
-         " outer advancer: " ++ (show outerAdvancer) ++
-         " original Advancer passed into this fx call: " ++ (show advancer)
 
 
+{-Pattern Matches
+          perimsI perimsIBE perimsO advCPt  advCPts
+--exit as there is nothing but orig inner perims. Done
+Advancer  Nothing Just PIBE Nothing Nothing advCPts
+-}
 
 -- | Check a Advancer to see if it has any <Inner/Outer>Perimeters left.
 -- If yes, make a recursive call to the function that contains this call of advancerRecur.
 -- If no, return the current Advancer.
 advancerRecur :: (Advancer -> Either String Advancer) -> Advancer -> Either String Advancer
+--Nothing left to build advCPts from, so exit. Whatever the advCPt is does not matter, but pass it on just in case want to look at it.
+advancerRecur _ (Advancer Nothing _ Nothing advCPt advCPts) =
+  Right $ Advancer Nothing Nothing Nothing advCPt advCPts
 --all out of perimeters
 advancerRecur _ (Advancer Nothing innerPerimetersBeforeExtraction Nothing advancingCPoint advancingCpoints) =
   Right (Advancer Nothing innerPerimetersBeforeExtraction Nothing advancingCPoint (reverse advancingCpoints))
@@ -748,6 +754,36 @@ processPerimetersBothLength2WithRecur = TestCase $ assertEqual
 
   )
 
+outerAdvancerOutPutHasLegalIntersectionsTest = TestCase $ assertEqual
+  "outerAdvancerOutPutHasLegalIntersections: has legal intersections"
+  (Left "filler")
+  --outerAdvancerOutPutHasLegalIntersections
+  (let
+    process = 
+     do
+      let
+       innerAdvancer =
+         Advancer
+          (Just ([take 2 $ head innerTestCylinderBtmExtractedAsVertices]))
+          (Just ([take 2 $ head innerTestCylinderBtmExtractedAsBackBtmLines]))
+          (Just $ take 2 outerTestCylinderBtmExtracted) Nothing []
+     
+      initialAdvCPointFromInner <- naiveAdvCpointFromInnerPerims innerAdvancer
+      initialAdvCPointFromOuter <- naiveAdvCPointFromOuterPerims innerAdvancer
+      advancerAfterInitialAdvCPoint <-  advCPointFromClosestInnerOuterAdvCPoint initialAdvCPointFromInner initialAdvCPointFromOuter innerAdvancer
+      secondAdvCPointFromInner <- naiveAdvCpointFromInnerPerims advancerAfterInitialAdvCPoint
+      secondAdvCPointFromOuter <- naiveAdvCPointFromOuterPerims advancerAfterInitialAdvCPoint
+      --advCPointFromClosestInnerOuterAdvCPoint secondAdvCPointFromInner secondAdvCPointFromOuter advancerAfterInitialAdvCPoint
+      legalizedSecondAdvCPointFromOuter <- outerAdvancerOutPutHasLegalIntersections secondAdvCPointFromOuter (Just ([take 2 $ head innerTestCylinderBtmExtractedAsBackBtmLines]))
+      return legalizedSecondAdvCPointFromOuter
+     
+   in
+     case process of
+       Left e -> Left e
+       Right (OuterAdvancerOutput _ advCPoint _ _) -> Right advCPoint
+       Right advancer -> Left "unmatched pattern in case process"
+  )
+
 runAllAdvancingCPointTests = do
   runTestTT advancingCPointTest
   runTestTT advancingCPointTest2
@@ -758,3 +794,4 @@ runAllAdvancingCPointTests = do
   runTestTT initialAdvCPointBuiltWithNaiveBuilder
   runTestTT secondAdvCPointBuiltWithNaiveBuilder
   runTestTT processPerimetersBothLength2WithRecur
+  runTestTT outerAdvancerOutPutHasLegalIntersectionsTest

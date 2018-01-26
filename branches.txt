@@ -5,8 +5,7 @@ B: master
    -Intercept has new ExceptT Maybe type which has cleaned up the code immensely.
      -lineIntercept from Rosetta code does not work with negative cood's. Need better system.
         -Will try a branch that uses polar coods.
-  B: intercept:
-     -Geometry.Intercept.lineIntersection does not work with neg cood's. Fix it perhaps with polar cood's.
+   -Geometry.Intercept.lineIntersection does not work with neg cood's. Fix it perhaps with polar cood's.
       -added PolarIntercept module for this, but that has not worked out.
       -added <line/segment>Intersection fx's from Gloss pkg, int Intercept module, and they are working.
      
@@ -16,6 +15,8 @@ B: master
      -can create the DelaunayView bottom points with naive fx's to the closest CPoint. 
       -Will need to do missing pattern matches for doing it with legal intersections, then perhaps can do it to closest advCPoint.
 
+  B: germanHiker
+     -create shoelift for made in germany hiking boots.
 
 Should be able to get rid of PolarIntercept.
 -keep the ExceptT Error Maybe Point somewhere as I have that worked out.
@@ -26,3 +27,9 @@ Make legalIntersection fx's use the gloss fx's
 Get rid of nearly everything else in Intercept module. 
 Do some better testing on what is left.
 
+
+Next:
+In AdvanceComposable. 
+-Hugely cleaned up pattern matches in advCPointFromClosestInnerOuterUsedCPoint but sitll need to ix pattern matches in advanceRecur.
+In GermanHikerBase:
+-Got rid of missing pattern match for advCPointFromClosestInnerOuterUsedCPoint, but now have illegal TopLeftLine +++ TopLeftLine.

@@ -300,14 +300,22 @@ raisedTo (B1 b1') (BottomLeftLine b1 f1) = Right $ BottomLeftLine b1' f1
 
 raisedTo (B1 b1) (BottomRightLine b4 f4) = Right $ BottomLeftLine b1 f4
 
+raisedTo (B2 b2) (TopRightLine b3 f3) = Right $ TopLeftLine b2 f3
+
+raisedTo (B2 b2') (TopLeftLine b2 f2) = Right $ TopLeftLine b2' f2
+
 raisedTo (B4 b4) (BottomLeftLine b1 f1) = Right $ BottomLeftLine b4 f1
 
 raisedTo (F1 f1') (BottomLeftLine b1 f1) = Right $ BottomLeftLine b1 f1'
+
+raisedTo (F2 f2') (TopLeftLine b2 f2) = Right $ TopLeftLine b2 f2'
 
 --is this what i need
 raisedTo (B1 b1) (F1 f1) = Right $ BottomLeftLine b1 f1
 
 raisedTo (F1 f1) (BottomRightLine b4 f4) = Right $ BottomLeftLine b4 f1
+
+raisedTo (F2 f2) (TopRightLine b3 f3) = Right $ TopLeftLine b3 f2
 
 raisedTo (B4 b4) (F4 f4) = Right $  BottomRightLine b4 f4
 
@@ -319,6 +327,8 @@ raisedTo (BackRightLine b3 b4) ( LeftFace b1 b2 f1 f2) = Right $ LeftFace b4 b3 
 
 raisedTo (B4 b4') (BottomRightLine b4 f4) =
   Right $ BottomLeftLine b4' f4
+
+--raisedTo (F1 f1) (FrontRightLine f3 f4)
 
 --not sure about this!!!!!!!!!!!!!!
 --It must be for the initial line, and so gives a RightFace

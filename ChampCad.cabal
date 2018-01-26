@@ -47,8 +47,7 @@ library
                        --database
                        Persistable.Mapping
                        Persistable.Radial
-                       --Examples
-                       -- Example ShoeLifts
+--Examples
                        Examples.ShoeLift.SnowBoardBoot
                        Examples.ShoeLift.GeoxShoe,
                        Examples.ShoeLift.SandalsAFO,
@@ -99,7 +98,8 @@ library
                        --openbionics.org
                        Examples.OpenBionicsOrg.FingerTubePlate
                        Examples.OpenBionicsOrg.FingerJoints
-                       
+ 
+                       Examples.ShoeLift.GermanHikers.GermanHikerBase                       
                        --Shapes
                        Primitives.Cylindrical.Walled, Primitives.Cubical
                        Primitives.Cylindrical.Solid

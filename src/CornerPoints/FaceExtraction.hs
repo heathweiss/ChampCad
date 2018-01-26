@@ -93,21 +93,25 @@ extractF2 (FrontTopLine f2 f3) = F2 f2
 extractF2 (FrontLeftLine f1 f2) = F2 f2
 extractF2 (CubePoints _ f2 _ _ _ _ _ _) = F2 f2
 extractF2 (TopFace _ f2 _ _) = F2 f2
+extractF2 (TopFace _ f2 _ _) = F2 f2
 
 extractF3 :: CornerPoints -> CornerPoints
 extractF3 (FrontTopLine f2 f3) = F3 f3
 extractF3 (FrontRightLine f3 f4) = F3 f3
+extractF3 (TopFace _ _ _ f3) = F3 f3
 extractF3 (CubePoints f1 f2 f3 f4 b1 b2 b3 b4) = F3 f3
 
 extractF4 :: CornerPoints -> CornerPoints
 extractF4 (BottomFrontLine f1 f4) = F4 f4
 extractF4 (BottomRightLine b4 f4) = F4 f4
-extractF4 (FrontRightLine f3 f4) = F4 f4
+extractF4 (FrontRightLine f3 f4)  = F4 f4
+extractF4 (BottomFace _ _ _ f4)   = F4 f4
 extractF4 (CubePoints f1 f2 f3 f4 b1 b2 b3 b4) = F4 f4
 
 extractB1 :: CornerPoints -> CornerPoints
 extractB1 (CubePoints _ _ _ _ b1 _ _ _) = B1 b1
 extractB1 (BottomLeftLine b1 f1) = B1 b1
+extractB1 (BottomFace b1 _ _ _) = B1 b1
 
 
 extractB2 :: CornerPoints -> CornerPoints
@@ -119,6 +123,7 @@ extractB3 (CubePoints _ _ _ _ _ _ b3 _ ) = B3 b3
 extractB4 :: CornerPoints -> CornerPoints
 extractB4 (CubePoints _ _ _ _ _ _ _ b4 ) = B4 b4
 extractB4 (BottomRightLine b4 f4) = B4 b4
+extractB4 (BottomFace _ _ b4 _) = B4 b4
 
 {- | ------------------------------------------------ contains ------------------------------------------------
 A bool indicating if a CornerPoints is embedded in another, such as an F1 in a FrontLeftLine.

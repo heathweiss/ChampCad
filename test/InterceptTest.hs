@@ -71,6 +71,10 @@ interceptTestDo = do
   runTestTT perimetersContainIllegalIntersectionTest4
   runTestTT perimetersContainIllegalIntersectionTest5
   runTestTT perimetersContainIllegalIntersectionTest6
+  runTestTT perimetersContainIllegalIntersectionTest7
+  runTestTT perimetersContainIllegalIntersectionTest8
+  runTestTT perimetersContainIllegalIntersectionTest9
+  runTestTT perimetersContainIllegalIntersectionTest10
   
   runTestTT perimetersContainLegalIntersectionTest
   runTestTT perimetersContainLegalIntersectionTesta
@@ -431,10 +435,10 @@ perimetersContainIllegalIntersectionTest = TestCase $ assertEqual
 
 perimetersContainIllegalIntersectionTest2 = TestCase $ assertEqual
   "missing pattern match throws error"
-  (Left "Geometry.Intercept.legalIntersectionGloss has missing or illegal pattern match for advancingCpoint: BackBottomLine and  perimeter: F1")
+  (Left "perimetersContainIllegalIntersection error: Geometry.Intercept.legalIntersectionGloss has missing or illegal pattern match for advancingCpoint: BackBottomLine and  perimeter: F1")
   (perimetersContainIllegalIntersection [[F1 $ Point 0 0 0]] (BackBottomLine {b1=Point (-2) (-5) 0, b4=Point 13 15 0}))
 
-
+---------------------------------------------------------------- change this for testig generic fx for legalIntersectionGloss.---------------------------------------------------------
 perimetersContainIllegalIntersectionTest3 = TestCase $ assertEqual
   "perimetersContainIllegalIntersection: has legal intersection from shared endpoint"
   (Right False)
@@ -460,8 +464,6 @@ perimetersContainIllegalIntersectionTest5 = TestCase $ assertEqual
    (BottomLeftLine {b1=Point (-3) (-3) 0, f1=Point 7 7 0})
   )
 
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------nfg
---do a segment intersection test on these values, passes as having an intersection
 perimetersContainIllegalIntersectionTest6 = TestCase $ assertEqual
   "perimetersContainIllegalIntersection: contains a single illegal intersection in the 2nd position of 2nd list"
   (Right True)
@@ -471,6 +473,33 @@ perimetersContainIllegalIntersectionTest6 = TestCase $ assertEqual
      BackBottomLine {b1=Point 5 9 0 , b4=Point 1 9 0}]
                                         ]
    (BottomLeftLine {b1=Point 3 3 0, f1=Point 3 10 0}))
+------------------------- test BackBottomLine BottomRightLine
+perimetersContainIllegalIntersectionTest7 = TestCase $ assertEqual
+  "perimetersContainIllegalIntersection: has legal intersection from shared endpoint"
+  (Right False)
+  (perimetersContainIllegalIntersection [[BackBottomLine {b1=Point 7 7 0 , b4=Point (-2) (-5) 0}]] (BottomRightLine {b4=Point (-3) (-3) 0, f4=Point 7 7 0}))
+
+perimetersContainIllegalIntersectionTest8 = TestCase $ assertEqual
+  "contains an illegal intersection"
+  (Right True)
+  (perimetersContainIllegalIntersection
+   [ [BackBottomLine {b1=Point 2 5 0 , b4=Point (-2) (-5) 0}]]
+   (BottomRightLine {b4=Point (-3) (-3) 0, f4=Point 7 7 0})
+  )
+-- test (TopLeftLine b2 f2) (BackTopLine b2' b3')
+perimetersContainIllegalIntersectionTest9 = TestCase $ assertEqual
+  "contains an illegal intersection"
+  (Right True)
+  (perimetersContainIllegalIntersection
+   [ [(BackTopLine {b2=Point (-3) (-3) 0, b3=Point 7 7 0})]]
+   
+   (TopLeftLine {b2=Point 2 5 0 , f2=Point (-2) (-5) 0})
+  )
+
+perimetersContainIllegalIntersectionTest10 = TestCase $ assertEqual
+  "perimetersContainIllegalIntersection: has legal intersection from shared endpoint"
+  (Right False)
+  (perimetersContainIllegalIntersection [[BackTopLine {b2=Point 7 7 0 , b3=Point (-2) (-5) 0}]] (TopLeftLine {b2=Point (-3) (-3) 0, f2=Point 7 7 0}))
 
 -- =========================================================== perimetersContainLegalIntersections ===========================================
 perimetersContainLegalIntersectionTest = TestCase $ assertEqual

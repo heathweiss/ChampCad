@@ -128,14 +128,11 @@ instance DistantA CornerPoints where
   calculateDistanceA (F1 f1)  (BottomRightLine b4 f4)  =
     calculateDistanceA  (BottomRightLine b4 f4) (F1 f1)
 
-  -- ========================================================================================BRL BLL
-  --had to fix (BottomRightLine b4 f4) as points were swapped. Cx all others
   calculateDistanceA  (BottomRightLine b4 f4) (BottomLeftLine b1 f1) =
     extractE (calculateDistanceA <$> centerA (BottomRightLine b4 f4) <*> centerA (BottomLeftLine b1 f1))
   calculateDistanceA (BottomLeftLine b1 f1) (BottomRightLine b4 f4) =
     calculateDistanceA  (BottomRightLine b4 f4) (BottomLeftLine b1 f1)
 
-  -- ==========================================================================================BLL BLL
   calculateDistanceA  (BottomLeftLine b1 f1) (BottomLeftLine b1' f1') =
     extractE (calculateDistanceA <$> centerA (BottomLeftLine b1 f1) <*> centerA (BottomLeftLine b1' f1'))
   
@@ -149,6 +146,11 @@ instance DistantA CornerPoints where
   calculateDistanceA   (B1 b1') (BottomLeftLine b1 f1) =
     calculateDistanceA  (BottomLeftLine b1 f1) (B1 b1')
 
+  calculateDistanceA (TopRightLine b3 f3) (B2 b2) =
+    extractE (calculateDistanceA <$> centerA (TopRightLine b3 f3) <*> centerA (B2 b2))
+  calculateDistanceA (B2 b2) (TopRightLine b3 f3) =
+    calculateDistanceA (TopRightLine b3 f3) (B2 b2) 
+    
   calculateDistanceA  (B1 b1) (F1 f1) =
     calculateDistanceA (b1) (f1)
   calculateDistanceA   (F1 f1) (B1 b1)  =
@@ -167,7 +169,6 @@ instance DistantA CornerPoints where
   calculateDistanceA   (F1 f1) (B4 b4) =
     calculateDistanceA  (B4 b4) (F1 f1)
 
-  
   calculateDistanceA  (BottomLeftLine b1 f1) (B4 b4) =
     extractE (calculateDistanceA <$> centerA (BottomLeftLine b1 f1) <*> centerA (B4 b4))
   calculateDistanceA   (B4 b4) (BottomLeftLine b1 f1) =
@@ -178,6 +179,22 @@ instance DistantA CornerPoints where
   calculateDistanceA   (F1 f1') (BottomLeftLine b1 f1) =
     calculateDistanceA  (BottomLeftLine b1 f1) (F1 f1')
 
+  calculateDistanceA (TopRightLine b3 f3) (F2 f2) =
+    extractE (calculateDistanceA <$> centerA (TopRightLine b3 f3) <*> centerA (F2 f2))
+  calculateDistanceA (F2 f2) (TopRightLine b3 f3)  =
+    calculateDistanceA (TopRightLine b3 f3) (F2 f2)
+
+  calculateDistanceA (TopLeftLine b2 f2) (B2 b2') =
+    extractE (calculateDistanceA <$> centerA (TopLeftLine b2 f2) <*> centerA (B2 b2'))
+  calculateDistanceA (B2 b2') (TopLeftLine b2 f2)  =
+    calculateDistanceA (TopLeftLine b2 f2) (B2 b2')
+
+  -----------------------------------------------------------------
+  calculateDistanceA (TopLeftLine b2 f2) (F2 f2') =
+    extractE (calculateDistanceA <$> centerA (TopLeftLine b2 f2) <*> centerA (F2 f2'))
+  calculateDistanceA (F2 f2') (TopLeftLine b2 f2)  =
+    calculateDistanceA (TopLeftLine b2 f2) (F2 f2')
+  
   calculateDistanceA (RightFace b3 b4 f3 f4) (BackRightLine b3' b4') =
     extractE (calculateDistanceA <$> centerA (RightFace b3 b4 f3 f4) <*> centerA (BackRightLine b3' b4'))
   calculateDistanceA (BackRightLine b3' b4') (RightFace b3 b4 f3 f4) =
@@ -295,8 +312,10 @@ instance CenterA Point where
   
 instance CenterA CornerPoints where
   centerA (B1 point) = Right point
+  centerA (B2 point) = Right point
   centerA (B4 point) = Right point
   centerA (F1 point) = Right point
+  centerA (F2 point) = Right point
   centerA (F4 point) = Right point
   centerA (BottomLeftLine b1 f1) = b1 <-||-> f1
   centerA (BottomRightLine f4 b4) = f4 <-||-> b4
@@ -304,6 +323,8 @@ instance CenterA CornerPoints where
   centerA (FrontLeftLine f1 f2) = f1 <-||-> f2
   centerA (BackRightLine b3 b4) = b3 <-||-> b4
   centerA (FrontRightLine f3 f4) = f3 <-||-> f4
+  centerA (TopRightLine b3 f3) = b3 <-||-> f3
+  centerA (TopLeftLine b2 f2) = b2 <-||-> f2
   centerA (LeftFace b1 b2 f1 f2) =
     case (b1 <-||-> b2) of
       Left e -> Left e
