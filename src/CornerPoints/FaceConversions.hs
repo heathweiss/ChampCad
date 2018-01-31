@@ -29,6 +29,7 @@ module CornerPoints.FaceConversions(
   toTopFace,
   toLeftFace,
   toBottomLeftLine,
+  toTopRightLine,
   raisedTo,
 ) where
 import CornerPoints.CornerPoints (CornerPoints(..), (+++), cpointType)
@@ -219,6 +220,10 @@ toFrontLeftLine (FrontRightLine f3 f4) = FrontLeftLine f4 f3
 toFrontRightLine :: CornerPoints -> CornerPoints
 toFrontRightLine (F4 f4) = FrontRightLine f4 f4
 toFrontRightLine (FrontLeftLine f1 f2) = FrontRightLine f2 f1
+
+toTopRightLine :: CornerPoints -> CornerPoints
+toTopRightLine (TopLeftLine b2 f2) = TopRightLine b2 f2
+toTopRightLine missingPatternMatch = CornerPointsError "FaceConversions.toTopRightLine: missing pattern match"
 
 f23LineFromF14Line :: CornerPoints -> CornerPoints
 f23LineFromF14Line (BottomFrontLine f1 f4) = FrontTopLine f1 f4

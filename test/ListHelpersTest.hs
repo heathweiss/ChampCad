@@ -10,6 +10,7 @@ listHelperTestDo = do
   runTestTT removeEmptyListsTest1
   runTestTT removeEmptyListsTest2
   runTestTT removeEmptyListsTest3
+  runTestTT removeEmptyListsTest4
 
 addTest = TestCase $ assertEqual
   ("hello")
@@ -41,3 +42,8 @@ removeEmptyListsTest3 = TestCase $ assertEqual
    ([["not an empty list"]])
    (removeEmpty [[],["not an empty list"],[]]
    )
+
+removeEmptyListsTest4 = TestCase $ assertEqual
+  "removeEmpty: [[], []]"
+  (0)
+  (length $ removeEmpty [[],[]])

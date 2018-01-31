@@ -173,7 +173,7 @@ intersectSegSeg p1 p2 p3 p4
 
 legalIntersectionGloss :: CornerPoints -> --advancingCpoint may intersect 
                      CornerPoints -> --a perimeter cpoint
-                     Either String (Bool) --with and erorr, or legally: no intersection, or intersection at a vertice
+                     Either String (Bool) --legally: no intersection, or intersection at a vertice. Error: thrown by legalIntersectionGlossGenericForLines or missing pattern match.
 legalIntersectionGloss CornerPointsNothing _ = Right True
 legalIntersectionGloss _ CornerPointsNothing = Right True
 legalIntersectionGloss (BottomLeftLine b1 f1 ) (BackBottomLine b1' b4) =
@@ -859,6 +859,25 @@ perimetersContainIllegalIntersection :: [[CornerPoints]] -> CornerPoints -> Eith
 perimetersContainIllegalIntersection (p:perimeters) cpoint =
   let
     perimetersContainIllegalIntersection' :: [CornerPoints] -> CornerPoints -> Either String Bool
+    perimetersContainIllegalIntersection' (p:ps) cpoint =
+      case legalIntersection cpoint p of
+        Left e -> Left $ "perimetersContainIllegalIntersection error: " ++  e
+        Right True -> perimetersContainIllegalIntersection' ps cpoint
+        Right False -> Right True
+    perimetersContainIllegalIntersection' ([]) _ = Right False
+
+  in
+    case perimetersContainIllegalIntersection' p cpoint of
+      Left e -> Left e
+      Right False ->
+        perimetersContainIllegalIntersection perimeters cpoint
+      Right True -> Right True
+
+{-
+perimetersContainIllegalIntersection :: [[CornerPoints]] -> CornerPoints -> Either String Bool
+perimetersContainIllegalIntersection (p:perimeters) cpoint =
+  let
+    perimetersContainIllegalIntersection' :: [CornerPoints] -> CornerPoints -> Either String Bool
     perimetersContainIllegalIntersection' (p:perimeter) cpoint =
       case legalIntersection cpoint p of
         Left e -> Left $ "perimetersContainIllegalIntersection error: " ++  e
@@ -873,6 +892,7 @@ perimetersContainIllegalIntersection (p:perimeters) cpoint =
         perimetersContainIllegalIntersection perimeters cpoint
       Right True -> Right True
 
+-}
 perimetersContainIllegalIntersection [] _ = Right False
 
 perimetersContainLegalIntersections :: [[CornerPoints]] -> CornerPoints -> Either String Bool

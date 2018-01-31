@@ -44,7 +44,6 @@ main = do
   faceExtractAndConvertTestDo  
   horizontalFacesTestDo
   jsonTestDo
-  listHelperTestDo
   mathPolarTestDo
   meshGenerationTest
   parseJuicyTestDo
@@ -63,5 +62,6 @@ main = do
   distanceTestDo
   delaunayTestDo
   polarInterceptTestDo
-  interceptTestDo
   advanceToHeadOfPerimetersTestDo
+  listHelperTestDo
+  interceptTestDo

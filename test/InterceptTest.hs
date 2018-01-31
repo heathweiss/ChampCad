@@ -59,6 +59,7 @@ interceptTestDo = do
   runTestTT legalInterceptTest9
   runTestTT legalInterceptTest10
   runTestTT legalInterceptTest11
+  runTestTT legalInterceptTest12
 
   runTestTT onTheLineTest
   runTestTT onTheLineTest2
@@ -88,6 +89,9 @@ interceptTestDo = do
   runTestTT lineIntersectionPerpendicularTest
   runTestTT closestPointOnLineParamGlossTest
   runTestTT segmentInterceptTest3AlmostPerpendicular
+
+  runTestTT legalInnerPerimTest1
+  runTestTT legalInnerPerimTest2
 
 -- ====================================================== delaunay viewer builder test =============================================
 {-
@@ -262,8 +266,45 @@ segmentInterceptTest6 = TestCase $ assertEqual
      segmentIntersection bll bbl
      
   )
---
 
+{--------------------------------------------------------------innerperims intercept-----------------------------------------
+Have a segment intercept a square on a vertice. The segment is not long enough to intercept on the far side of the square, so it is legal.
+This corresponds to an advCPnt cxing for legality from Joiners.AdvanceComposbable
+
+                       --------------- btlNotIntersected
+                       |             |
+                       |             |
+                       ------.-------- btlIntersected<Left/Right> 
+                             |  tll
+                             |  . is a legal intersection.
+                             |    Does not extend up to and intersect top line
+                               
+-}
+--has missing pattern match. Leave that way till see if later fx's show that, when cx'g for perimetersContainLegalIntersections
+legalInnerPerimTest1 = TestCase $ assertEqual
+  "segmentIntersection: tll and btlIntersectedLeft will intercept at  0 0 0 "
+  (Right Nothing)
+  (let
+     tll = TopLeftLine {b2=Point (-5) 0 0, f2=Point 12 12 0}
+     btlIntersectedLeft = BackTopLine {b2=Point 0 (-5) 0, b3=Point 0 0 0}
+      
+   in
+     segmentIntersection  btlIntersectedLeft tll
+     
+  )
+
+--should be legal, but gives false. Does not show the missing pattern match from test1
+legalInnerPerimTest2 = TestCase $ assertEqual
+  "segmentIntersection: tll and btlIntersectedLeft will intercept at  0 0 0 so it will be legal intersections"
+  (Right True)
+  (let
+     tll = TopLeftLine {b2=Point (-5) 0 0, f2=Point 12 12 0}
+     btlIntersectedLeft = BackTopLine {b2=Point 0 (-5) 0, b3=Point 0 0 0}
+      
+   in
+     perimetersContainLegalIntersections  [[btlIntersectedLeft]] tll
+     
+  )
 
 -- ========================================= legal intercept ==========================================
 legalInterceptTest = TestCase $ assertEqual
@@ -401,7 +442,19 @@ legalInterceptTest11 = TestCase $ assertEqual
    in
      legalIntersection bll bbl
   )
--- =====================================================================================================
+
+-- ========================================================================================================================================
+--see why german hiker does not use the innerP's beyond the initial advCPt
+legalInterceptTest12 = TestCase $ assertEqual
+  "legalInterceptTest12: should have a legal interception"
+  (Right True)
+  (let
+      tll = (TopRightLine (Point 1.7 (-1.9) 10) (Point 0 (-11.3) 18.75) )
+      btl = BackTopLine (Point 1.7 (-1.9) 10) (Point 0 (-2) 10)
+   in
+   legalIntersection  tll btl 
+  )
+
 --http://bit-player.org/wp-content/extras/bph-publications/BeautifulCode-2007-Hayes.pdf
 onTheLineTest = TestCase $ assertEqual
   "onTheLineTest  unsure if on line"
