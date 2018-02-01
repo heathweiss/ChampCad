@@ -17,6 +17,9 @@ B: master
 
   B: germanHiker
      -create shoelift for made in germany hiking boots.
+     -cant use legal intersections do to error.
+     B: cleanIntercept:
+        -get rid of unused junk, and rename to clear up module
 
 Should be able to get rid of PolarIntercept.
 -keep the ExceptT Error Maybe Point somewhere as I have that worked out.
@@ -30,6 +33,6 @@ Do some better testing on what is left.
 
 Next:
 In AdvanceComposable. 
--Hugely cleaned up pattern matches in advCPointFromClosestInnerOuterUsedCPoint but sitll need to ix pattern matches in advanceRecur.
+-Hugely cleaned up pattern matches in advCPointFromClosestInnerOuterUsedCPoint but sitll need to fix pattern matches in advanceRecur.
 In GermanHikerBase:
 -Got rid of missing pattern match for advCPointFromClosestInnerOuterUsedCPoint, but now have illegal TopLeftLine +++ TopLeftLine.
