@@ -2,10 +2,10 @@ module InterceptTest(interceptTestDo) where
 
 import Test.HUnit
 --
-import Geometry.Intercept(getChangeInX, getChangeInY, yIntercept, topCoderAreTheParallel, rayIntersection, lineIntersection,
+import Geometry.Intercept(getChangeInX, getChangeInY, yIntercept, {-topCoderAreTheParallel,-} lineIntersection,
                           onTheLine, legalIntersection, segmentIntersection,
                           perimetersContainIllegalIntersection, perimetersContainLegalIntersections,
-                          segmentIntersectionT, runSegmentIntersectionT, closestPointOnLineParamGloss)
+                          {-segmentIntersectionT, runSegmentIntersectionT,-} closestPointOnLineParamGloss)
 import Geometry.Angle(Angle(..))
 
 import CornerPoints.CornerPoints(CornerPoints(..), cpointType, (+++))
@@ -38,12 +38,12 @@ interceptTestDo = do
   --runTestTT getYInterceptTest
   --delete if get rid of yIntercept
 
-  runTestTT topCoderAreParallelTest
-  runTestTT topCoderAreParallelTest2
+  --runTestTT topCoderAreParallelTest
+  --runTestTT topCoderAreParallelTest2
 
-  runTestTT rosettaInterceptTest2
-  runTestTT segmentInterceptTest2
-  runTestTT rosettaInterceptTest5
+  --runTestTT rosettaInterceptTest2
+  --runTestTT segmentInterceptTest2
+  --runTestTT rosettaInterceptTest5
   runTestTT segmentInterceptTest5
   runTestTT segmentInterceptTest6
 
@@ -90,8 +90,107 @@ interceptTestDo = do
   runTestTT closestPointOnLineParamGlossTest
   runTestTT segmentInterceptTest3AlmostPerpendicular
 
-  runTestTT legalInnerPerimTest1
-  runTestTT legalInnerPerimTest2
+  runTestTT legalPerims1
+  runTestTT legalPerims1a
+  runTestTT legalPerims1aSeeLineIntersection
+  runTestTT legalPerims2
+  runTestTT legalPerims3
+  runTestTT legalPerims4
+  runTestTT legalPerims5
+
+{--------------------------------------------------------------innerperims intercept-----------------------------------------
+Have a segment intercept a square on a vertice. The segment is not long enough to intercept on the far side of the square, so it is legal.
+This corresponds to an advCPnt cxing for legality from Joiners.AdvanceComposbable
+
+                       --------------- btlNotIntersected
+                       |             |
+                       |             |
+                       ------.-------- btlIntersected<Left/Right> 
+                             |  tll
+                             |  . is a legal intersection.
+                             |    Does not extend up to and intersect top line
+                               
+-}
+legalPerims1 = TestCase $ assertEqual
+  "segmentIntersection: will not yet intercept. Fails as it shows intercept at Point {x_axis = 1.0, y_axis = 6.0, z_axis = 0.0}"
+  (Right Nothing)
+  (let
+     advCPt = TopLeftLine {f2=Point (-5) 0 0, b2=Point 0 5 0}
+     btlIntersectedLeft = BackTopLine {b2=Point 1 6 0, b3=Point 1 11 0}
+      
+   in
+     --gives same result whichever order passed in.
+     segmentIntersection advCPt btlIntersectedLeft 
+     --segmentIntersection btlIntersectedLeft advCPt  
+  )
+
+legalPerims1a = TestCase $ assertEqual
+  "segmentIntersection: same as legalPerims1 but with too points swapped, but it passes."
+  (Right Nothing)
+  (let
+     advCPt = TopLeftLine {b2=Point (-5) 0 0, f2=Point 0 5 0}
+     btlIntersectedLeft = BackTopLine {b2=Point 1 6 0, b3=Point 1 11 0}
+      
+   in
+     segmentIntersection btlIntersectedLeft advCPt
+  )
+
+legalPerims1aSeeLineIntersection = TestCase $ assertEqual
+  "segmentIntersection: look at  legalPerims1 lineIntersection. Is the same with points swapped."
+  (Right (Just (Point {x_axis = 1.0, y_axis = 6.0, z_axis = 0.0})))
+  (let
+     advCPt = TopLeftLine {f2=Point (-5) 0 0, b2=Point 0 5 0}
+     btlIntersectedLeft = BackTopLine {b2=Point 1 6 0, b3=Point 1 11 0}
+      
+   in
+     lineIntersection  advCPt btlIntersectedLeft
+  )
+
+legalPerims2 = TestCase $ assertEqual
+  "segmentIntersection: tll and btlIntersectedLeft will intercept at vertice as a legal intersection"
+  (Right True)
+  (let
+     tll = TopLeftLine {b2=Point (-5) 0 0, f2=Point 1 6 0}
+     btlIntersectedLeft = BackTopLine {b2=Point 1 6 0, b3=Point 1 11 0}
+      
+   in
+     perimetersContainLegalIntersections  [[btlIntersectedLeft]] tll
+     
+  )
+
+legalPerims3 = TestCase $ assertEqual
+  "segmentIntersection: tll and btlIntersectedLeft intercept at a non-vertice as an illegal intersection"
+  (Right False)
+  (let
+     tll = TopLeftLine {b2=Point (-5) 0 0, f2=Point 1 6 0}
+     btlIntersectedLeft = BackTopLine {b2=Point 1 5 0, b3=Point 1 11 0}
+      
+   in
+     perimetersContainLegalIntersections  [[btlIntersectedLeft]] tll
+     
+  )
+
+legalPerims4 = TestCase $ assertEqual
+  "segmentIntersection: tll will intercept btl1 at vertice as a legal intersection, but illegally intercept btl2 at a non-vertice "
+  (Right False)
+  (let
+     tll = TopLeftLine {b2=Point (-5) 0 0, f2=Point 6 11 0}
+     btl1 = BackTopLine {b2=Point 1 6 0, b3=Point 1 11 0}
+     btl2 = BackTopLine {b2=Point 6 8 0, b3=Point 6 14 0}
+   in
+     perimetersContainLegalIntersections  [[btl1,btl2]] tll
+  )
+
+legalPerims5 = TestCase $ assertEqual
+  "segmentIntersection: tll will intercept btl1 at vertice as a legal intersection, but illegally intercept btl2 at a non-vertice "
+  (Right True)
+  (let
+     tll = TopLeftLine {b2=Point (-5) 0 0, f2=Point 1 6 0}
+     btl1 = BackTopLine {b2=Point 1 6 0, b3=Point 1 11 0}
+     btl2 = BackTopLine {b2=Point 6 8 0, b3=Point 6 14 0}
+   in
+     perimetersContainLegalIntersections  [[btl1,btl2]] tll
+  )
 
 -- ====================================================== delaunay viewer builder test =============================================
 {-
@@ -172,74 +271,6 @@ getYInterceptTest = TestCase $ assertEqual
    in yIntercept bll bbl
   )
 -}
------------------------------------------------------------ top coder ----------------------------------------------------
-topCoderAreParallelTest = TestCase $ assertEqual
-  "bll and bbl are the same values starting from b1"
-  (Right True)
-  (let
-     bll = BottomLeftLine {b1=Point 2 (-5) 0, f1=Point 13 15 0}
-     bbl = BackBottomLine {b1=Point 2 (-5) 0, b4=Point 13 15 0}
-   in
-     topCoderAreTheParallel bll bbl
-  )
-
-
-topCoderAreParallelTest2 = TestCase $ assertEqual
-  "bll and bbl parallel in opposite direcetion but parallel"
-  (Right True)
-  (let
-     bll = BottomLeftLine {b1=Point 2 (-5) 0, f1=Point 13 15 0}
-     bbl = BackBottomLine {b1=Point 13 15 0 , b4=Point 2 (-5) 0}
-   in
-     topCoderAreTheParallel bll bbl
-  )
-
-
--- =================================================================================================
--- https://rosettacode.org/wiki/Find_the_intersection_of_two_lines#Haskell
-
-
-
-rosettaInterceptTest2 = TestCase $ assertEqual
-  "bll and bbl won't intercept at 7 7 0 as bll is too short"
-  (Right Nothing)
-  --(SegmentIntersectionType(Left "jkfdls"))
-  (let
-     bll = BottomLeftLine {b1=Point (-3) (-3) 0, f1=Point 3 3 0}
-     bbl = BackBottomLine {b1=Point (-2) (-5) 0, b4=Point 13 15 0}
-      
-   in
-     --segmentIntersection bll bbl
-     runSegmentIntersectionT $ segmentIntersectionT bll bbl
-  )
-
-segmentInterceptTest2 = TestCase $ assertEqual
-  "segmentIntersection: bll and bbl won't intercept at 7 7 0 as bll is too short"
-  (Right Nothing)
-  (let
-     bll = BottomLeftLine {b1=Point (-3) (-3) 0, f1=Point 3 3 0}
-     bbl = BackBottomLine {b1=Point (-2) (-5) 0, b4=Point 13 15 0}
-      
-   in
-     --segmentIntersection bll bbl
-     segmentIntersection bll bbl
-  )
-
-
-
---passed when using segmentIntersection 
-rosettaInterceptTest5 = TestCase $ assertEqual
-  "segmentIntersectionT: bll and bbl should intercept at 7 7 0 as it is just right"
-  --(Right True)
-  (Right $Just $Point {x_axis = 7, y_axis = 7, z_axis = 0})
-  (let
-     bll = BottomLeftLine {b1=Point (-3) (-3) 0, f1=Point 7 7 0}
-     bbl = BackBottomLine {b1=Point (-2) (-5) 0, b4=Point 13 15 0}
-      
-   in
-     --segmentIntersection bll bbl
-     runSegmentIntersectionT $ segmentIntersectionT bll bbl
-  )
 
 segmentInterceptTest5 = TestCase $ assertEqual
   "segmentIntersection: bll and bbl should intercept at 7 7 0 as it is just right"
@@ -267,44 +298,6 @@ segmentInterceptTest6 = TestCase $ assertEqual
      
   )
 
-{--------------------------------------------------------------innerperims intercept-----------------------------------------
-Have a segment intercept a square on a vertice. The segment is not long enough to intercept on the far side of the square, so it is legal.
-This corresponds to an advCPnt cxing for legality from Joiners.AdvanceComposbable
-
-                       --------------- btlNotIntersected
-                       |             |
-                       |             |
-                       ------.-------- btlIntersected<Left/Right> 
-                             |  tll
-                             |  . is a legal intersection.
-                             |    Does not extend up to and intersect top line
-                               
--}
---has missing pattern match. Leave that way till see if later fx's show that, when cx'g for perimetersContainLegalIntersections
-legalInnerPerimTest1 = TestCase $ assertEqual
-  "segmentIntersection: tll and btlIntersectedLeft will intercept at  0 0 0 "
-  (Right Nothing)
-  (let
-     tll = TopLeftLine {b2=Point (-5) 0 0, f2=Point 12 12 0}
-     btlIntersectedLeft = BackTopLine {b2=Point 0 (-5) 0, b3=Point 0 0 0}
-      
-   in
-     segmentIntersection  btlIntersectedLeft tll
-     
-  )
-
---should be legal, but gives false. Does not show the missing pattern match from test1
-legalInnerPerimTest2 = TestCase $ assertEqual
-  "segmentIntersection: tll and btlIntersectedLeft will intercept at  0 0 0 so it will be legal intersections"
-  (Right True)
-  (let
-     tll = TopLeftLine {b2=Point (-5) 0 0, f2=Point 12 12 0}
-     btlIntersectedLeft = BackTopLine {b2=Point 0 (-5) 0, b3=Point 0 0 0}
-      
-   in
-     perimetersContainLegalIntersections  [[btlIntersectedLeft]] tll
-     
-  )
 
 -- ========================================= legal intercept ==========================================
 legalInterceptTest = TestCase $ assertEqual
@@ -433,8 +426,8 @@ legalInterceptTest10 = TestCase $ assertEqual
 
 --segmentInterceptTest3 shows intersection at Nothing
 legalInterceptTest11 = TestCase $ assertEqual
-  "legalIntersection: they don't intersect"
-  (Right True)
+  "legalIntersection: they intersect illegaly"
+  (Right False)
   (let
      bll = (BottomLeftLine {b1=Point 3 3 0, f1=Point 3 10 0})
      bbl = BackBottomLine {b1=Point 5 9 0 , b4=Point 1 9 0}
@@ -488,7 +481,7 @@ perimetersContainIllegalIntersectionTest = TestCase $ assertEqual
 
 perimetersContainIllegalIntersectionTest2 = TestCase $ assertEqual
   "missing pattern match throws error"
-  (Left "perimetersContainIllegalIntersection error: Geometry.Intercept.legalIntersectionGloss has missing or illegal pattern match for advancingCpoint: BackBottomLine and  perimeter: F1")
+  (Left "perimetersContainIllegalIntersection error: Geometry.Intercept.legalIntersection has missing or illegal pattern match for advancingCpoint: BackBottomLine and  perimeter: F1")
   (perimetersContainIllegalIntersection [[F1 $ Point 0 0 0]] (BackBottomLine {b1=Point (-2) (-5) 0, b4=Point 13 15 0}))
 
 ---------------------------------------------------------------- change this for testig generic fx for legalIntersectionGloss.---------------------------------------------------------

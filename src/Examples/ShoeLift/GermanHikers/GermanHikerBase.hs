@@ -68,7 +68,7 @@ treadScanLayer = "bottom"
 databaseName = "src/Examples/ShoeLift/GermanHikers/lineScanner.db"
 
 --choose which builder to run to keep run/show builder dry
-currentBuilder = secondAdvCpt
+currentBuilder = topTreadBuilder --secondAdvCpt --
 
 runTreadScanBuilder :: IO () 
 runTreadScanBuilder = runSqlite databaseName $ do
@@ -123,17 +123,17 @@ topTreadBuilder ahr origin = do
                     --level off height till figure out problem
                     --[10 | x <- [1..]]
               in
-              --(extractF3 $ head topFaces) : (map (extractF2) topFaces)
+              (extractF3 $ head topFaces) : (map (extractF2) topFaces)
               --(extractF3 $ head topFaces) : (map (extractF2) $ take 1 topFaces)
-              [(extractF3 $ head topFaces)]
+              --[(extractF3 $ head topFaces)]
              )
   --let cylinder' = cylinder [Radius 20 | r <- [1..]] [Radius 20 | r <- [1..]] ([Angle a | a <- [0,5..360]] ) (Point 0 0 0) 10
                       
   --hole in center for alignment insert.
   alignmentPillar <- buildCubePointsListSingle "alignmentPillar"
                      (
-                      --(extractB3 $ head cylinder') : (map (extractB2) cylinder')
-                      (extractB3 $ head cylinder') : (map (extractB2) $ take 1 cylinder')
+                      (extractB3 $ head cylinder') : (map (extractB2) cylinder')
+                      --(extractB3 $ head cylinder') : (map (extractB2) $ take 1 cylinder')
                       --[(extractB3 $ head cylinder')] -- : (map (extractB2) $ take 1 cylinder')
                      )
 
@@ -144,7 +144,8 @@ topTreadBuilder ahr origin = do
      recurProcessor advancer = do
        advCPointFromInner <- createAdvCPointFromInnerPerimsCheckLegalIntersection advancer
        advCPointFromOuter <- naiveAdvCPointFromOuterPerims advancer
-       newAdvancer       <- advCPointFromClosestInnerOuterUsedCPoint advCPointFromInner advCPointFromOuter  advancer
+       legalizedAdvCPointFromOuter <- outerAdvancerOutPutHasLegalIntersections advCPointFromOuter (advancer^.innerPerimetersBeforeExtraction)
+       newAdvancer       <- advCPointFromClosestInnerOuterUsedCPoint advCPointFromInner legalizedAdvCPointFromOuter  advancer
        advancerRecur recurProcessor newAdvancer
     in
     extractAdvCPointsFromAdvancer $ 
@@ -273,8 +274,10 @@ secondAdvCpt ahr origin = do
        secondAdvCPointFromInner <- naiveAdvCpointFromInnerPerims initAdvCPtAdvancer 
        legalizedSecondAdvCPointFromInner <- checkInnerAdvCPtForLegality secondAdvCPointFromInner (advancer^.innerPerimetersBeforeExtraction)
        secondAdvCPointFromOuter <- naiveAdvCPointFromOuterPerims initAdvCPtAdvancer
+       legalizedSecondAdvCPointFromOuter <- outerAdvancerOutPutHasLegalIntersections secondAdvCPointFromOuter (advancer^.innerPerimetersBeforeExtraction)
+       --
        --advancerWithSecondAdvCPt <- advCPointFromClosestInnerOuterUsedCPoint secondAdvCPointFromInner secondAdvCPointFromOuter initAdvCPtAdvancer
-       advancerWithSecondAdvCPt <- advCPointFromClosestInnerOuterUsedCPoint legalizedSecondAdvCPointFromInner secondAdvCPointFromOuter initAdvCPtAdvancer
+       advancerWithSecondAdvCPt <- advCPointFromClosestInnerOuterUsedCPoint legalizedSecondAdvCPointFromInner legalizedSecondAdvCPointFromOuter initAdvCPtAdvancer
        return advancerWithSecondAdvCPt
      in
       case  
@@ -292,7 +295,7 @@ secondAdvCpt ahr origin = do
 
 ----------------------------------------------------- support test values-----------------------------------------------------------
 
-cylinder' = cylinder [Radius 20 | r <- [1..]] [Radius 20 | r <- [1..]] ([Angle a | a <- [0,5..360]] ) (Point 0 0 0) 10
+cylinder' = cylinder [Radius 20 | r <- [1..]] [Radius 20 | r <- [1..]] ([Angle a | a <- [0,5..360]] ) (Point 10 0 10) 10
 alignmentPillar =
   (extractB3 $ head cylinder') : (map (extractB2) cylinder')
 
