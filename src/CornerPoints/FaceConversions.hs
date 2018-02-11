@@ -12,6 +12,7 @@ module CornerPoints.FaceConversions(
   frontTopLineFromBackTopLine,
   bottomFrontLineFromBackBottomLine,
   backFaceFromFrontFace,
+  toB2, toB3, 
   toBackFace,
   toFrontFace,
   toFrontTopLine,
@@ -128,6 +129,12 @@ Typically used for the back face of a radial shape, where all back faces represe
 of the shape.
 -}
 --ToDo: Do not comply with rules. Used in MTLDiff example.
+toB3 :: CornerPoints -> CornerPoints
+toB3 (F3 f3) = B3 f3
+
+toB2 :: CornerPoints -> CornerPoints
+toB2 (F2 f2) = B2 f2
+
 toBackFace :: CornerPoints -> CornerPoints
 toBackFace (RightFace b3 b4 f3 f4) = BackFace b4 b3  f3 f4 
 toBackFace (LeftFace b1 b2 f1 f2) = BackFace f1 f2 b2 b1

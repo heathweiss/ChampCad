@@ -12,6 +12,9 @@ import CornerPoints.FaceExtraction(extractB1, extractB4, extractF1, extractF4, e
 import Joiners.Advancer(advanceToHeadCPointDistanceNoIntersectionTest, advanceToHeadCPointDistanceNoIntersectionTestNM)
 import Joiners.AdvanceToHeadOfPerimeters(orderInnerPerimsByDistanceFromHead, orderedInnerPerims, removeContainedCPointFromHeadOfPerims,
                                         advancingCpointFromHeadOfInnerPerims, advancingCpointFromHeadOfOuterPerims)
+import qualified Joiners.AdvanceComposable as AC (Advancer(..), OuterAdvancerOutput(..), InnerAdvancerOutput(..),naiveAdvCpointFromInnerPerims, naiveAdvCPointFromOuterPerims, advancerRecur,
+                                 advCPointFromClosestInnerOuterAdvCPoint, extractAdvCPointsFromAdvancer, advCPointFromClosestInnerOuterUsedCPoint,
+                                 createAdvCPointFromInnerPerimsCheckLegalIntersection, outerAdvancerOutPutHasLegalIntersections, checkInnerAdvCPtForLegality)
 
 import Joiners.AdvanceSupport(Perimeters(..), AdvancingCPoint(..), justifyPerimeters, appendAdvancingCpointToJoinedCpointsE)
 
@@ -24,6 +27,7 @@ import Helpers.Applicative(extractE)
 import Primitives.Cylindrical.Walled(cylinder)
 
 import Geometry.Angle(Angle(..))
+import Geometry.Intercept(perimetersContainLegalIntersections)
 
 delaunayTestDo = do
 
@@ -70,6 +74,41 @@ delaunayTestDo = do
   runTestTT seeInitialAdvancingCpoint
   runTestTT see2ndAdvancingCpoint
 
+  runTestTT outerPerimCrossesInnerPerimsTest
+  runTestTT outerPerimCrossesInnerPerimsTest_checkLegalIntersections
+--------------------------------------------------------- advanceComposable-------------------------------------------------------
+--Fails:
+  --Sees that it is illegal, but puts back in the wrong z_axis value for the advCPt.
+outerPerimCrossesInnerPerimsTest = TestCase $ assertEqual
+  "outerAdvancerOutPutHasLegalIntersections: outerPerim crosses innerPerim illegally"
+  (Right $ AC.OuterAdvancerOutput (Just [F2 $ Point (-5) 2 10]) Nothing Nothing [])
+    --got back the original outerAdv, but it should have been modified because of illegal intersection
+  --(Left "got back the original outerAdv, but it should have been modified because of illegal intersection")
+  (let
+      advCPt = TopLeftLine {b2=Point 8 (-11) 10, f2=Point (-5) 2 10}
+      innerPBE = [[BackTopLine {b2=Point (-8) 6 0, b3=Point (-8) 11 0}, BackTopLine {b2=Point (-5) 2 0, b3=Point (-8) 6 0}]]
+      outerAdv = AC.OuterAdvancerOutput Nothing (Just advCPt) (Just (F2 $ Point (-5) 2 10)) [advCPt]
+   in
+   AC.outerAdvancerOutPutHasLegalIntersections outerAdv (Just innerPBE) 
+  )
+
+{-
+OuterAdvancerOutput: outerPerimeter  == [F2 {f2 = Point {x_axis = -5.0, y_axis = 2.0, z_axis = 10.0}}] advCPoint: Nothing; useCPoint Nothing advCPoints length: 0
+OuterAdvancerOutput: outerPerimeter  == [F2 {f2 = Point {x_axis = -5.0, y_axis = 2.0, z_axis = 0.0}}] advCPoint: Nothing; useCPoint Nothing advCPoints length: 0
+
+-}
+
+--Fails: manually cx for legalIntersections from previous failing tests:
+--Use these values in InterceptTest module to see why it fails.
+outerPerimCrossesInnerPerimsTest_checkLegalIntersections = TestCase $ assertEqual
+  "perimetersContainLegalIntersections: outerPerim crosses innerPerim illegally"
+  (Right False)
+  (let
+      advCPt = TopLeftLine {b2=Point 8 (-11) 10, f2=Point (-5) 2 10}
+      innerPBE = [[BackTopLine {b2=Point (-8) 6 0, b3=Point (-8) 11 0}, BackTopLine {b2=Point (-5) 2 0, b3=Point (-8) 6 0}]]
+   in
+     perimetersContainLegalIntersections innerPBE advCPt
+  )
 -- ====================================================== delaunay viewer builder test =============================================
 {-
 Cx the shapes in delaunay viewr as they are failing somewhere in : bottomPointsBuilder with both inner and outer cpoint intersections were illegal
@@ -495,16 +534,7 @@ createCpointByDistanceTest1a = TestCase $ assertEqual
     advanceToHeadCPointDistanceNoIntersectionTest [inner4a, inner4b] outer4
   )
 
-{-
-[BottomRightLine {b4 = Point {x_axis = 0.0, y_axis = -7.0, z_axis = 0.0}, f4 = Point {x_axis = 0.0, y_axis = -19.0, z_axis = 0.0}},
- BottomLeftLine {b1 = Point {x_axis = 0.0, y_axis = -7.0, z_axis = 0.0}, f1 = Point {x_axis = 6.0, y_axis = -17.0, z_axis = 0.0}},
- BottomLeftLine {b1 = Point {x_axis = 2.0, y_axis = -5.0, z_axis = 0.0}, f1 = Point {x_axis = 6.0, y_axis = -17.0, z_axis = 0.0}},
- BottomLeftLine {b1 = Point {x_axis = 2.0, y_axis = -5.0, z_axis = 0.0}, f1 = Point {x_axis = 10.0, y_axis = -11.0, z_axis = 0.0}},
- BottomLeftLine {b1 = Point {x_axis = 1.0, y_axis = -2.0, z_axis = 0.0}, f1 = Point {x_axis = 10.0, y_axis = -11.0, z_axis = 0.0}}]
 
-
-
--}
 
 createCpointByDistanceTest2 = TestCase $ assertEqual
   "look at various values"
@@ -543,26 +573,5 @@ createCpointByDistanceTest2 = TestCase $ assertEqual
                         
    in
      isOuterDistanceLTInnerDistance
-     {-
-     case isOuterDistanceLTInnerDistance of
-            Left e -> Left $ "err1 " ++ e
-            --outer distance <
-            Right True ->
-              
-                   extractE
-                     (removeContainedCPointFromHeadOfPerims 
-                      (Just innerPerimeters) 
-                      (Just outerPerimeter) <$>
-                      advancingOuterCpointE
-                     )
-                   
-                        --outer distance >=
-            Right False ->
-              
-                               extractE
-                                (removeContainedCPointFromHeadOfPerims 
-                                 (Just innerPerimeters) 
-                                 (Just outerPerimeter) <$>
-                                 advancingInnerCpointE
-                                )-}
+     
   )

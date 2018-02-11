@@ -42,7 +42,7 @@ import CornerPoints.MeshGeneration(autoGenerateEachCube, autoGenerateEachFace)
 import CornerPoints.Radius (Radius(..))
 import Geometry.Angle(Angle(..))
 import CornerPoints.HorizontalFaces(createBottomFaces, createTopFaces, createTopFacesVariableHeight, createBottomFacesVariableHeight, createBottomFacesVariableHeight)
-import CornerPoints.FaceConversions(toTopFace, toBackFace, toFrontFace, toFrontLeftLine, toFrontRightLine, toBottomFace, toTopRightLine)
+import CornerPoints.FaceConversions(toTopFace, toBackFace, toFrontFace, toFrontLeftLine, toFrontRightLine, toBottomFace, toTopRightLine, toB2, toB3, toBackTopLine)
 import CornerPoints.FaceExtraction(extractBackFace, extractBackTopLine, extractFrontTopLine, extractFrontFace, extractLeftFace,
                                    extractFrontLeftLine, extractFrontRightLine, extractBackRightLine, extractBackLeftLine, extractBottomFace,
                                    extractTopFace, extractB4, extractB3, extractB2, extractB1, extractF4, extractF3, extractF2, extractF1)
@@ -60,6 +60,7 @@ import Test.HUnit
 import Control.Lens
 
 makeLenses ''Advancer
+makeLenses ''AngleHeightRadius
 
 --FaceExtraction(extractB1, extractB4, extractF1, extractF4, extractBackLeftLine, extractBackRightLine,
 --               extractFrontLeftLine, extractFrontRightLine, extractBackBottomLine, extractBackFace)
@@ -74,6 +75,8 @@ runTreadScanBuilder :: IO ()
 runTreadScanBuilder = runSqlite databaseName $ do
   layerId <- getBy $ nameUnique' treadScanLayer
   angleHeightRadiusEntity <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId layerId)] []
+  --angleHeightRadiusEntity <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId layerId), (angle angleHeightRadius') <=. 50] []
+    -- !work. Need to fix persistable to properly use make lenses.
   
   case layerId of
     Nothing -> liftIO $ putStrLn "tread scan layer was not found"
@@ -120,9 +123,9 @@ topTreadBuilder ahr origin = do
                     (extractRadii ahr)
                     (extractAngles ahr)
                     (extractHeights ahr)
-                    --level off height till figure out problem
-                    --[10 | x <- [1..]]
               in
+              --map (transposeZ (\z -> 25)) $ (extractF3 $ head topFaces) : (map (extractF2) topFaces)
+                --flatten to see if crossing inner perim problem is height related
               (extractF3 $ head topFaces) : (map (extractF2) topFaces)
               --(extractF3 $ head topFaces) : (map (extractF2) $ take 1 topFaces)
               --[(extractF3 $ head topFaces)]
@@ -130,14 +133,59 @@ topTreadBuilder ahr origin = do
   --let cylinder' = cylinder [Radius 20 | r <- [1..]] [Radius 20 | r <- [1..]] ([Angle a | a <- [0,5..360]] ) (Point 0 0 0) 10
                       
   --hole in center for alignment insert.
-  alignmentPillar <- buildCubePointsListSingle "alignmentPillar"
+  --using the cylinder. Try replacing with: createTopFacesVariableHeight in next fx.
+  --keep for now in case have troubles
+  {-
+  alignmentPillar' <- buildCubePointsListSingle "alignmentPillar"
                      (
                       (extractB3 $ head cylinder') : (map (extractB2) cylinder')
                       --(extractB3 $ head cylinder') : (map (extractB2) $ take 1 cylinder')
                       --[(extractB3 $ head cylinder')] -- : (map (extractB2) $ take 1 cylinder')
-                     )
+                     )-}
 
-  
+  alignmentPillar <- buildCubePointsListSingle "alignmentPillar"
+       (
+         let
+           backExtLength = 40
+           primaryRad = 19.9
+           backHeight = 15
+           topFaces =
+                    createTopFacesVariableHeight
+                    (Point 10 0 0) --origin
+                    --Variable lengths. Block out till find out why values < 20 !work
+                    ([Radius backExtLength | r <- [1..2]]
+                     ++
+                     [Radius primaryRad | r <- [1..33]]
+                     ++
+                     [Radius 80 | r <- [1..3]]
+                     ++
+                     [Radius primaryRad | r <- [1..32]]
+                     ++
+                     [Radius backExtLength | r <- [1..]]
+                    )
+                    --[Radius 21.35 | r <- [1..]] --fails soon as drops below 19.94
+                                             --25 works, but can see that it is using illegal outer perims.
+                                               --Looks like it is a height issue as it happens around center.
+                                               --Need to make/use equalsXY instead of == which uses xyz
+                    [Angle a | a <- [0,5..360]]
+                    --[20 | height <- [1..]]
+                    {- !work: Maybe the variable height causes illegal intersection as it is using xyz instead of only xy.-}
+                    ([backHeight | height <- [1..2]] ++ --heel
+                     [25 | height <- [1..26]] ++ --beside alignment pillar
+                     [20 | height <- [1..7]] ++ --forward of alignment pillar
+                     [22 | height <- [1,2,3]] ++ --toe
+                     [20 | height <- [1..6]] ++ --forward of alignment pillar
+                     [25 | height <- [1..23]] ++ --beside alignment pillar
+                     [backHeight | height <- [1..]] --heel
+                    )
+         in
+         --will need to implement toB3 and toF2 most likely.
+         --(toB3 . extractF3 $ head topFaces) : (map (toB2 . extractF2) topFaces)
+         map (toBackTopLine . extractFrontTopLine ) topFaces
+         
+       )
+
+  {-comment out for now to see results of alignmentPillar-}
   topLeftRightLines <- buildCubePointsListSingle "topLeftRightLines"
    (let
      recurProcessor :: Advancer -> Either String Advancer
@@ -151,8 +199,10 @@ topTreadBuilder ahr origin = do
     extractAdvCPointsFromAdvancer $ 
      recurProcessor $
           Advancer
+            --(Just [alignmentPillar])
+            (Just $ [(extractB3 $ head alignmentPillar) : (map (extractB2) alignmentPillar)])
+            --(Just [map extractBackTopLine cylinder'])
             (Just [alignmentPillar])
-            (Just [map extractBackTopLine cylinder'])
             (Just topFronts) Nothing []
    )
 
@@ -161,9 +211,11 @@ topTreadBuilder ahr origin = do
 
   cubes <- buildCubePointsListWithAdd "cubes"
            (topFaces)
-           (map (toBottomFace . (transposeZ (+ (-10)) )) topFaces) 
-                 
-  return topFronts
+           --(map (toBottomFace . (transposeZ (+ (-10)) )) topFaces)
+           (map (toBottomFace . (transposeZ (\z -> 13) )) topFaces) 
+  
+  return alignmentPillar
+
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --For initial advCPoint, naiveAdvCpointFromInnerPerims should not produce an advCPt, so return a [CornerPointsNothing]

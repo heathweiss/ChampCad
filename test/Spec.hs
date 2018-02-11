@@ -60,8 +60,9 @@ main = do
   lineScannerTestDo
   joinerTestDo
   distanceTestDo
-  delaunayTestDo
   polarInterceptTestDo
   advanceToHeadOfPerimetersTestDo
   listHelperTestDo
   interceptTestDo
+  delaunayTestDo
+  

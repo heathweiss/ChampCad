@@ -97,6 +97,11 @@ interceptTestDo = do
   runTestTT legalPerims3
   runTestTT legalPerims4
   runTestTT legalPerims5
+  runTestTT legalPerims6
+  runTestTT legalPerims6_cxPreviousFailingTest
+
+
+
 
 {--------------------------------------------------------------innerperims intercept-----------------------------------------
 Have a segment intercept a square on a vertice. The segment is not long enough to intercept on the far side of the square, so it is legal.
@@ -192,6 +197,25 @@ legalPerims5 = TestCase $ assertEqual
      perimetersContainLegalIntersections  [[btl1,btl2]] tll
   )
 
+legalPerims6 = TestCase $ assertEqual
+  "perimetersContainLegalIntersections: check failing test in DelaunayTest.outerPerimCrossesInnerPerimsTest_checkLegalIntersections"
+  (Right False)
+  (let
+     advCPt = TopLeftLine {b2=Point 8 (-11) 10, f2=Point (-5) 2 10}
+     innerPBE = [[BackTopLine {b2=Point (-8) 6 0, b3=Point (-8) 11 0}, BackTopLine {b2=Point (-5) 2 0, b3=Point (-8) 6 0}]]
+   in
+     perimetersContainLegalIntersections  innerPBE advCPt
+  )
+--
+legalPerims6_cxPreviousFailingTest = TestCase $ assertEqual
+  "legalIntersection: check prev failing test that should have this illegal intersection "
+  (Right False)
+  (let
+     advCPt = TopLeftLine {b2=Point 8 (-11) 10, f2=Point (-5) 2 10}
+     innerPBE = BackTopLine {b2=Point (-5) 2 0, b3=Point (-8) 6 0}
+   in
+     legalIntersection  innerPBE advCPt
+  )
 -- ====================================================== delaunay viewer builder test =============================================
 {-
 Cx the shapes in delaunay viewr as they are failing somewhere in : bottomPointsBuilder with both inner and outer cpoint intersections were illegal

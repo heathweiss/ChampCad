@@ -118,7 +118,8 @@ instance Show OuterAdvancerOutput where
     "OuterAdvancerOutput: outerPerimeter Nothing;  advCPoint: " ++ (show advCPoint) ++ " used cpoint: "
     ++ (show usedCPoint) ++ " advCPoints length: " ++ (show $ length advCPoints)
   show (OuterAdvancerOutput (Just outerPerimeter) Nothing Nothing advCPoints) =
-    "OuterAdvancerOutput: outerPerimeter length == " ++ (show $ length outerPerimeter) ++ " advCPoint: Nothing; useCPoint Nothing"
+    --"OuterAdvancerOutput: outerPerimeter length == " ++ (show $ length outerPerimeter) ++ " advCPoint: Nothing; useCPoint Nothing"
+    "OuterAdvancerOutput: outerPerimeter  == " ++ (show outerPerimeter) ++ " advCPoint: Nothing; useCPoint Nothing"
     ++ " advCPoints length: " ++ (show $ length advCPoints)
   show (OuterAdvancerOutput Nothing Nothing Nothing advCPoints) =
     "OuterAdvancerOutput: outerPerimeter Nothing  advCPoint: Nothing; usedCPoint Nothing" ++ " advCPoints length: " ++ (show $ length advCPoints)
@@ -417,7 +418,8 @@ advCPointFromClosestInnerOuterUsedCPoint
   = do
   iDistance <- calculateDistanceA advancingCPointA usedCPointI
   oDistance <- calculateDistanceA advancingCPointA usedCPointO
-  case iDistance <= oDistance of
+  --case iDistance <= oDistance of
+  case iDistance <= (DistanceA $ (distance oDistance) * 1.0) of
     True  -> Right $ Advancer innerPerimetersI innerPerimetersBeforeExtraction outerPerimeterA (Just advancingCPointI) advancingCPointsI
     False -> Right $ Advancer innerPerimetersA innerPerimetersBeforeExtraction outerPerimeterO (Just advancingCPointO) advancingCPointsO
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

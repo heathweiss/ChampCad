@@ -116,9 +116,13 @@ extractB1 (BottomFace b1 _ _ _) = B1 b1
 
 extractB2 :: CornerPoints -> CornerPoints
 extractB2 (CubePoints _ _ _ _ _ b2 _ _) = B2 b2
+extractB2 (TopFace b2 _ _ _) = B2 b2
+extractB2 (BackTopLine b2 _) = B2 b2
 
 extractB3 :: CornerPoints -> CornerPoints
 extractB3 (CubePoints _ _ _ _ _ _ b3 _ ) = B3 b3
+extractB3 (TopFace _ _ b3 _) = B3 b3
+extractB3 (BackTopLine _ b3) = B3 b3
 
 extractB4 :: CornerPoints -> CornerPoints
 extractB4 (CubePoints _ _ _ _ _ _ _ b4 ) = B4 b4
