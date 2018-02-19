@@ -12,7 +12,7 @@ module CornerPoints.FaceConversions(
   frontTopLineFromBackTopLine,
   bottomFrontLineFromBackBottomLine,
   backFaceFromFrontFace,
-  toB2, toB3, 
+  toB2, toB3, toF2,
   toBackFace,
   toFrontFace,
   toFrontTopLine,
@@ -135,6 +135,9 @@ toB3 (F3 f3) = B3 f3
 toB2 :: CornerPoints -> CornerPoints
 toB2 (F2 f2) = B2 f2
 
+toF2 :: CornerPoints -> CornerPoints
+toF2 (F3 f3) = F2 f3
+
 toBackFace :: CornerPoints -> CornerPoints
 toBackFace (RightFace b3 b4 f3 f4) = BackFace b4 b3  f3 f4 
 toBackFace (LeftFace b1 b2 f1 f2) = BackFace f1 f2 b2 b1
@@ -162,7 +165,8 @@ toBackBottomLine (BackRightLine b3 b4) = BackBottomLine b4 b3
 toBackBottomLine (B3 b3) = BackBottomLine b3 b3
 toBackBottomLine (B4 b4) = BackBottomLine b4 b4
 toBackBottomLine (B1 b1) = BackBottomLine b1 b1
-toBackBottomLine (BackLeftLine b1 b2) = BackBottomLine b2 b1 
+toBackBottomLine (BackLeftLine b1 b2) = BackBottomLine b2 b1
+toBackBottomLine (BottomFrontLine f1 f4) = BackBottomLine f1 f4
 
 toBackTopLine :: CornerPoints -> CornerPoints
 toBackTopLine (BackTopLine b2 b3) = BackTopLine b2 b3
@@ -192,6 +196,7 @@ toBottomFrontLine (F1 f1)                 = BottomFrontLine f1 f1
 toBottomFrontLine (FrontLeftLine f1 f2)   = BottomFrontLine f2 f1
 toBottomFrontLine (BottomFrontLine f1 f4) = BottomFrontLine f1 f4
 toBottomFrontLine (B2 b2)                 = BottomFrontLine b2 b2
+toBottomFrontLine (BackBottomLine b1 b4)  = BottomFrontLine b1 b4
 toBottomFrontLine cpoint = CornerPointsError $ "FaceConversions.toBottomFrontLine: unhandled or illegal pattern match for " ++ (cpointType cpoint)
 
 toBottomLeftLine :: CornerPoints -> CornerPoints
@@ -325,6 +330,7 @@ raisedTo (F2 f2') (TopLeftLine b2 f2) = Right $ TopLeftLine b2 f2'
 --is this what i need
 raisedTo (B1 b1) (F1 f1) = Right $ BottomLeftLine b1 f1
 
+
 raisedTo (F1 f1) (BottomRightLine b4 f4) = Right $ BottomLeftLine b4 f1
 
 raisedTo (F2 f2) (TopRightLine b3 f3) = Right $ TopLeftLine b3 f2
@@ -344,7 +350,9 @@ raisedTo (B4 b4') (BottomRightLine b4 f4) =
 
 --not sure about this!!!!!!!!!!!!!!
 --It must be for the initial line, and so gives a RightFace
-raisedTo (BackRightLine b3 b4) (FrontRightLine f3 f4) = Right $ RightFace b3 b4 f3 f4  
+raisedTo (BackRightLine b3 b4) (FrontRightLine f3 f4) = Right $ RightFace b3 b4 f3 f4
+
+raisedTo a (CornerPointsError msg) = Left $ "FaceConversions.raisedTo: illegal or missing pattern match for " ++ (cpointType a) ++ " and CornerPointsError msg: " ++ msg
   
 raisedTo a b =
   Left $ "FaceConversions.raisedTo: illegal or missing pattern match for " ++ (cpointType a) ++ " and " ++ (cpointType b)

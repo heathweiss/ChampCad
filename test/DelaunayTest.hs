@@ -13,7 +13,7 @@ import Joiners.Advancer(advanceToHeadCPointDistanceNoIntersectionTest, advanceTo
 import Joiners.AdvanceToHeadOfPerimeters(orderInnerPerimsByDistanceFromHead, orderedInnerPerims, removeContainedCPointFromHeadOfPerims,
                                         advancingCpointFromHeadOfInnerPerims, advancingCpointFromHeadOfOuterPerims)
 import qualified Joiners.AdvanceComposable as AC (Advancer(..), OuterAdvancerOutput(..), InnerAdvancerOutput(..),naiveAdvCpointFromInnerPerims, naiveAdvCPointFromOuterPerims, advancerRecur,
-                                 advCPointFromClosestInnerOuterAdvCPoint, extractAdvCPointsFromAdvancer, advCPointFromClosestInnerOuterUsedCPoint,
+                                 advCPointFromClosestInnerOuterAdvCPoint, extractAdvCPointsFromAdvancer, 
                                  createAdvCPointFromInnerPerimsCheckLegalIntersection, outerAdvancerOutPutHasLegalIntersections, checkInnerAdvCPtForLegality)
 
 import Joiners.AdvanceSupport(Perimeters(..), AdvancingCPoint(..), justifyPerimeters, appendAdvancingCpointToJoinedCpointsE)

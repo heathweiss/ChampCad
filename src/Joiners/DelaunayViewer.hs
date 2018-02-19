@@ -28,7 +28,7 @@ import Joiners.AdvanceToHeadOfPerimeters(orderInnerPerimsByDistanceFromHead, ord
                                          advancingCpointFromDoublePerimsUsingDistanceToHeadOfPerimsCpointsNM)
 import Joiners.AdvanceSupport(Perimeters(..), AdvancingCPoint(..), justifyPerimeters, appendAdvancingCpointToJoinedCpointsE)
 import Joiners.AdvanceComposable(Advancer(..), naiveAdvCpointFromInnerPerims, naiveAdvCPointFromOuterPerims, advancerRecur,
-                                 advCPointFromClosestInnerOuterAdvCPoint, extractAdvCPointsFromAdvancer, advCPointFromClosestInnerOuterUsedCPoint,
+                                 advCPointFromClosestInnerOuterAdvCPoint, extractAdvCPointsFromAdvancer, advCPointFromClosestInnerOuterUsedCPointBase,
                                  createAdvCPointFromInnerPerimsCheckLegalIntersection)
 
 
@@ -59,6 +59,8 @@ currentNonComposableJoiner =
   --advancingCpointFromDoublePerimsUsingDistanceToHeadOfPerimsCpointsNM
   advanceToHeadCPointDistanceNoIntersectionTestNM
   --advanceToHeadCPointDistanceNoIntersectionTest
+
+advCPointFromClosestInnerOuterUsedCPoint = advCPointFromClosestInnerOuterUsedCPointBase
 
 {-
 Cut a cylinder out of another cylinder.

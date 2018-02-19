@@ -112,6 +112,7 @@ extractB1 :: CornerPoints -> CornerPoints
 extractB1 (CubePoints _ _ _ _ b1 _ _ _) = B1 b1
 extractB1 (BottomLeftLine b1 f1) = B1 b1
 extractB1 (BottomFace b1 _ _ _) = B1 b1
+extractB1 (BackBottomLine b1 _) = B1 b1
 
 
 extractB2 :: CornerPoints -> CornerPoints
@@ -128,6 +129,7 @@ extractB4 :: CornerPoints -> CornerPoints
 extractB4 (CubePoints _ _ _ _ _ _ _ b4 ) = B4 b4
 extractB4 (BottomRightLine b4 f4) = B4 b4
 extractB4 (BottomFace _ _ b4 _) = B4 b4
+extractB4 (BackBottomLine _ b4) = B4 b4
 
 {- | ------------------------------------------------ contains ------------------------------------------------
 A bool indicating if a CornerPoints is embedded in another, such as an F1 in a FrontLeftLine.

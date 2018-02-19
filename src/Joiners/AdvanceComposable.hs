@@ -14,7 +14,7 @@ Have an extractor fx that checks for Either status, and converst Right results t
 Could have other extractor fx's that extract it differently, such as a Builder.Monad that does not use CornerPointsError.
 -}
 module Joiners.AdvanceComposable(Advancer(..), OuterAdvancerOutput(..), InnerAdvancerOutput(..), naiveAdvCpointFromInnerPerims, naiveAdvCPointFromOuterPerims, advancerRecur,
-                                 advCPointFromClosestInnerOuterAdvCPoint, extractAdvCPointsFromAdvancer, advCPointFromClosestInnerOuterUsedCPoint,
+                                 advCPointFromClosestInnerOuterAdvCPoint, extractAdvCPointsFromAdvancer, advCPointFromClosestInnerOuterUsedCPointBase,
                                  createAdvCPointFromInnerPerimsCheckLegalIntersection, outerAdvancerOutPutHasLegalIntersections, checkInnerAdvCPtForLegality) where
 
 import Joiners.AdvanceSupport(justifyPerimeters)
@@ -368,11 +368,11 @@ outerAdvancerOutPutHasLegalIntersections outerAdvancer _ =
 -- Create a new AdvancingCPoint if one is not already supplied by <Inner/Outer>AdvancerOutput
 -- If AdvancingCPoint is suppied by both <Inner/Outer>AdvancerOutput, choose the one which had the closes used cpoint
 -- If AdvancingCPoint is supplied by only 1 of <Inner/Outer>AdvancerOutput, use that 1
-advCPointFromClosestInnerOuterUsedCPoint :: InnerAdvancerOutput -> OuterAdvancerOutput -> Advancer -> Either String Advancer
+advCPointFromClosestInnerOuterUsedCPointBase ::  InnerAdvancerOutput -> OuterAdvancerOutput -> Advancer -> Either String Advancer
 
 
 -- Is the intial advCPoint, as there is no AdvCPoint supplied, but there are perims to build from. 
-advCPointFromClosestInnerOuterUsedCPoint
+advCPointFromClosestInnerOuterUsedCPointBase
   (InnerAdvancerOutput (Just (i:innerPerimeters)) Nothing _ _ )
   (OuterAdvancerOutput (Just (o:outerPerimeter))  Nothing _ _)
   (Advancer _ innerPBE _ Nothing advCPointsA)
@@ -392,7 +392,7 @@ advCPointFromClosestInnerOuterUsedCPoint
       (advCPointNew : advCPointsA)
 
 --innerP built new advCPt(s) so pass them on. Nothing left to build from so advanceRecur must exit. 
-advCPointFromClosestInnerOuterUsedCPoint
+advCPointFromClosestInnerOuterUsedCPointBase
   (InnerAdvancerOutput innerP (Just advCPtI) _ advCPtsI )
   (OuterAdvancerOutput outerP Nothing       _ _       )
   (Advancer _ innerPBE _ _ _)
@@ -401,7 +401,7 @@ advCPointFromClosestInnerOuterUsedCPoint
 
 
 --pattern match for the <inner/outer>Perims are Nothing but the outerPerims has produced an advCPoint.
-advCPointFromClosestInnerOuterUsedCPoint
+advCPointFromClosestInnerOuterUsedCPointBase
   (InnerAdvancerOutput innerP Nothing _  _) 
   (OuterAdvancerOutput outerP (Just advCPtO) _ advCPtsO) 
   (Advancer _  innerPBE _ _ _) 
@@ -411,7 +411,7 @@ advCPointFromClosestInnerOuterUsedCPoint
 --pattern match for the results of last test where inner/outer advancers both have candidate adv CPoints.
 --Both inner/outer perims produced advCPt so decide which to use and pass it on.
 --Pass on inner/outer perims and let advanceRecur see if anything left to build from.
-advCPointFromClosestInnerOuterUsedCPoint 
+advCPointFromClosestInnerOuterUsedCPointBase 
   (InnerAdvancerOutput innerPerimetersI (Just advancingCPointI) (Just usedCPointI) advancingCPointsI) --innerA
   (OuterAdvancerOutput outerPerimeterO (Just advancingCPointO) (Just usedCPointO) advancingCPointsO)  --outerA
   (Advancer innerPerimetersA innerPerimetersBeforeExtraction outerPerimeterA (Just advancingCPointA) _)  --advancer
@@ -422,9 +422,8 @@ advCPointFromClosestInnerOuterUsedCPoint
   case iDistance <= (DistanceA $ (distance oDistance) * 1.0) of
     True  -> Right $ Advancer innerPerimetersI innerPerimetersBeforeExtraction outerPerimeterA (Just advancingCPointI) advancingCPointsI
     False -> Right $ Advancer innerPerimetersA innerPerimetersBeforeExtraction outerPerimeterO (Just advancingCPointO) advancingCPointsO
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
---No advancingCPnt was build, even though there are innerP's still available. This is not the initial advCPnt as Advancer already has one.
-advCPointFromClosestInnerOuterUsedCPoint 
+
+advCPointFromClosestInnerOuterUsedCPointBase 
   (InnerAdvancerOutput (Just innerPerimetersI) Nothing _ _) 
   (OuterAdvancerOutput _ Nothing _ _) 
   (Advancer _ _ _ (Just advCPtA) _)
@@ -432,9 +431,9 @@ advCPointFromClosestInnerOuterUsedCPoint
   Left $ "No non-intial advCPnt created when there are still innerPerimeters available. Prev advCPt: " ++ (show advCPtA) ++
          " InnerPerimeters: " ++ (show innerPerimetersI)
   
-advCPointFromClosestInnerOuterUsedCPoint innerAdvancer outerAdvancer advancer =
+advCPointFromClosestInnerOuterUsedCPointBase innerAdvancer outerAdvancer advancer =
   
-  Left $ "Joiners.AdvanceComposable.advCPointFromClosestInnerOuterUsedCPoint: missing pattern matche for innerAdvancer: " ++ (show innerAdvancer) ++
+  Left $ "Joiners.AdvanceComposable.advCPointFromClosestInnerOuterUsedCPointBase: missing pattern matche for innerAdvancer: " ++ (show innerAdvancer) ++
          " outer advancer: " ++ (show outerAdvancer) ++
          " original Advancer passed into this fx call: " ++ (show advancer)
 
@@ -456,6 +455,8 @@ advCPointFromClosestInnerOuterUsedCPoint
   (Advancer Nothing Nothing Nothing Nothing advCPointsA) =
     Right $ Advancer Nothing Nothing Nothing Nothing advCPointsA
 -}
+
+
 
 {-
 --pattern match for the innerPerims are done(so Nothing) but the outerPerims are still going.
