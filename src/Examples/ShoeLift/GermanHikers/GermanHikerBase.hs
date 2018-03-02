@@ -158,6 +158,10 @@ showPillarsToGermanCenterRiserBuilder = runSqlite pillarDatabaseName $ do
       runGermanDatabase
 
 
+
+  
+
+
 --make a riser to convert from pillars to german centers
 pillarsToGermanCenterRiserBuilder :: AnglesHeightsRadii -> Point -> 
                                   AnglesHeightsRadii -> Point ->
@@ -275,7 +279,9 @@ germanCenterAngles ang = ((ang >= 32.94) && (ang <= 138.25))
                          ((ang >= 212.47) && (ang <= 332.16))
 
 --choose which builder to run to keep run/show builder dry
-currentGermanBuilder = topGermanTreadBuilder
+currentGermanBuilder = heelRiserBuilder
+                 --heelRiserBuilder
+                 --toeRiserBuilder
                  --germanCenterRiserWithBottomOffsetBuilder
                  --centerRiserBuilder
                  --flatRectangularTestCubeForCarbonFlexTestBuilder
@@ -329,6 +335,163 @@ showGermanTreadScanBuilderValue = runSqlite germanDatabaseName $ do
           liftIO $ print $ show a
 
 
+--make a riser for the heel. Will have flat bottom/top.
+heelRiserBuilder :: AnglesHeightsRadii -> Point -> ExceptStackCornerPointsBuilder
+heelRiserBuilder  ahr origin = do
+  let
+    angles ang = ang <= 32.94 || ang >= 332.16
+                       
+    toeAHR     = filter (\(AngleHeightRadius ang _ _ _) -> angles ang) ahr
+    height     = 50
+
+  let buildTopFrontLines :: Double -> AnglesHeightsRadii -> [CornerPoints]
+      buildTopFrontLines height ahr =
+              let
+                  topFaces =
+                    createTopFacesVariableHeight
+                    origin
+                    (extractRadii ahr)
+                    (extractAngles ahr)
+                    [height | val <- [1..]]
+              in
+              (extractF3 $ head topFaces) : (((map (extractF2) topFaces)) ++ [(toF2 . extractF3 $ head topFaces)]   )
+              --need to close the backend by putting the front point onto the end of list
+              
+  treadTopFrontLines  <- buildCubePointsListSingle "topFaces"
+               (buildTopFrontLines height toeAHR)
+  
+  let
+    centerAlignment height =
+         let
+           primaryRad = 10
+             --19.9 printed as 38.5 mm. Need 41 so increase by 1.1
+           topFaces =
+                    createTopFacesVariableHeight
+                    (Point 5 (-70) 50) --origin
+                    [Radius primaryRad | r <- [1..]] 
+                    [Angle a | a <- [0,5..360]]
+                    [height | _ <- [1..]]
+         in
+         map (toBackTopLine . extractFrontTopLine ) topFaces
+
+  pillarBackTopLines    <- buildCubePointsListSingle "pillar top faces"
+                    (centerAlignment height)
+
+  let topLeftRightLines innerPerims outerPerims =
+        let
+          recurProcessor :: Advancer -> Either String Advancer
+          recurProcessor advancer = do
+            advCPointFromInner <- createAdvCPointFromInnerPerimsCheckLegalIntersection advancer
+            advCPointFromOuter <- naiveAdvCPointFromOuterPerims advancer
+            legalizedAdvCPointFromOuter <- outerAdvancerOutPutHasLegalIntersections advCPointFromOuter (advancer^.innerPerimetersBeforeExtraction)
+            newAdvancer       <- advCPointFromClosestInnerOuterUsedCPoint advCPointFromInner legalizedAdvCPointFromOuter  advancer
+            advancerRecur recurProcessor newAdvancer
+         in
+         extractAdvCPointsFromAdvancer $ 
+          recurProcessor $
+               Advancer
+                 (Just $ [(extractB3 $ head innerPerims) : (map (extractB2) innerPerims)])
+                 (Just [innerPerims]) --innerPerims before extraction
+                 (Just $ outerPerims) Nothing []  --outer perims
+
+  
+  topAdvCPoints <- buildCubePointsListSingle "topAdvCPoints"
+                   (topLeftRightLines pillarBackTopLines treadTopFrontLines)
+  
+  topFaces <- buildCubePointsListSingle "pillarTopFaces"
+              ((head topAdvCPoints) +++> (tail topAdvCPoints))
+  
+  btmFaces  <- buildCubePointsListSingle "btmFaces"
+               (map (toBottomFace . (transposeZ (+ (-height)))) topFaces)
+
+  cubes    <- buildCubePointsListWithAdd "cubes"
+              topFaces
+              btmFaces
+   
+
+  return pillarBackTopLines
+       
+
+
+
+
+--make a riser for the toe. Will have flat bottom/top.
+--No need for a pillar.
+toeRiserBuilder :: AnglesHeightsRadii -> Point -> ExceptStackCornerPointsBuilder
+toeRiserBuilder  ahr origin = do
+  let
+    angles ang = ((ang >= 138.25) && (ang <= 212.47))
+    toeAHR     = filter (\(AngleHeightRadius ang _ _ _) -> angles ang) ahr
+    height     = 50
+
+  let buildTopFrontLines :: Double -> AnglesHeightsRadii -> [CornerPoints]
+      buildTopFrontLines height ahr =
+              let
+                  topFaces =
+                    createTopFacesVariableHeight
+                    origin
+                    (extractRadii ahr)
+                    (extractAngles ahr)
+                    [height | val <- [1..]]
+              in
+              (extractF3 $ head topFaces) : (((map (extractF2) topFaces)) ++ [(toF2 . extractF3 $ head topFaces)]   )
+              --need to close the backend by putting the front point onto the end of list
+              
+  treadTopFrontLines  <- buildCubePointsListSingle "topFaces"
+               (buildTopFrontLines height toeAHR)
+  
+  let
+    centerAlignment height =
+         let
+           primaryRad = 10
+             --19.9 printed as 38.5 mm. Need 41 so increase by 1.1
+           topFaces =
+                    createTopFacesVariableHeight
+                    (Point 0 100 50) --origin
+                    [Radius primaryRad | r <- [1..]] 
+                    [Angle a | a <- [0,5..360]]
+                    [height | _ <- [1..]]
+         in
+         map (toBackTopLine . extractFrontTopLine ) topFaces
+
+  pillarBackTopLines    <- buildCubePointsListSingle "pillar top faces"
+                    (centerAlignment height)
+
+  let topLeftRightLines innerPerims outerPerims =
+        let
+          recurProcessor :: Advancer -> Either String Advancer
+          recurProcessor advancer = do
+            advCPointFromInner <- createAdvCPointFromInnerPerimsCheckLegalIntersection advancer
+            advCPointFromOuter <- naiveAdvCPointFromOuterPerims advancer
+            legalizedAdvCPointFromOuter <- outerAdvancerOutPutHasLegalIntersections advCPointFromOuter (advancer^.innerPerimetersBeforeExtraction)
+            newAdvancer       <- advCPointFromClosestInnerOuterUsedCPoint advCPointFromInner legalizedAdvCPointFromOuter  advancer
+            advancerRecur recurProcessor newAdvancer
+         in
+         extractAdvCPointsFromAdvancer $ 
+          recurProcessor $
+               Advancer
+                 (Just $ [(extractB3 $ head innerPerims) : (map (extractB2) innerPerims)])
+                 (Just [innerPerims]) --innerPerims before extraction
+                 (Just $ outerPerims) Nothing []  --outer perims
+
+  
+  topAdvCPoints <- buildCubePointsListSingle "topAdvCPoints"
+                   (topLeftRightLines pillarBackTopLines treadTopFrontLines)
+  
+  topFaces <- buildCubePointsListSingle "pillarTopFaces"
+              ((head topAdvCPoints) +++> (tail topAdvCPoints))
+  
+  btmFaces  <- buildCubePointsListSingle "btmFaces"
+               (map (toBottomFace . (transposeZ (+ (-height)))) topFaces)
+
+  cubes    <- buildCubePointsListWithAdd "cubes"
+              topFaces
+              btmFaces
+   
+
+  return pillarBackTopLines
+       
+
 --used in conjuction with the offset version.
 --
 centerRiserBuilder :: AnglesHeightsRadii -> Point -> ExceptStackCornerPointsBuilder
@@ -364,7 +527,7 @@ centerRiserBuilder ahr origin = do
              --19.9 printed as 38.5 mm. Need 41 so increase by 1.1
            topFaces =
                     createTopFacesVariableHeight
-                    germanAlignmentOrigin --(Point 10 0 0) --origin
+                    (Point 0 10 50) --germanAlignmentOrigin -- --origin
                     [Radius primaryRad | r <- [1..]] 
                     [Angle a | a <- [0,5..360]]
                     [layerHeight | height <- [1..]]
@@ -402,7 +565,7 @@ centerRiserBuilder ahr origin = do
            (btmFaces)
            (topFaces) 
   
-  return centerAlignmentPillar
+  return topFaces
 
 --make a riser to convert from pillars to german centers
 germanCenterRiserWithBottomOffsetBuilder :: AnglesHeightsRadii -> Point -> ExceptStackCornerPointsBuilder
