@@ -341,7 +341,6 @@ createTopFaces inOrigin radii angles   =
       (head angles)
       
     ) 
-    +++
     B3 inOrigin
     +++>
     [(createCornerPoint

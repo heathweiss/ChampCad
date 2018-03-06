@@ -12,7 +12,7 @@ module CornerPoints.FaceConversions(
   frontTopLineFromBackTopLine,
   bottomFrontLineFromBackBottomLine,
   backFaceFromFrontFace,
-  toB2, toB3, toF2,
+  toB2, toB3, toF2, toF3,
   toBackFace,
   toFrontFace,
   toFrontTopLine,
@@ -134,9 +134,13 @@ toB3 (F3 f3) = B3 f3
 
 toB2 :: CornerPoints -> CornerPoints
 toB2 (F2 f2) = B2 f2
+toB2 (B3 b3) = B2 b3
+toB2 (F3 f3) = B2 f3
 
 toF2 :: CornerPoints -> CornerPoints
 toF2 (F3 f3) = F2 f3
+
+toF3 (F2 f2) = F3 f2
 
 toBackFace :: CornerPoints -> CornerPoints
 toBackFace (RightFace b3 b4 f3 f4) = BackFace b4 b3  f3 f4 

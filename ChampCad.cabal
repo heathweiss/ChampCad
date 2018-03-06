@@ -36,6 +36,7 @@ library
                        Joiners.Manual, Joiners.Auto, Joiners.Delaunay,
                        Joiners.DelaunayViewer, Joiners.Advancer, Joiners.AdvanceComposable
                        Joiners.AdvanceBase, Joiners.AdvanceSupport, Joiners.AdvanceToHeadOfPerimeters
+                       Joiners.RadialLines
                        --math
                        Math.Trigonometry, Math.Distance, Math.Equal, Math.Doubles
                        
@@ -61,6 +62,7 @@ library
                        Examples.ShoeLift.Pillars.Common
                        Examples.ShoeLift.Pillars.FlatScan
                        Examples.ShoeLift.Pillars.Pillars
+                       Examples.ShoeLift.GeoxFlex.GeoxFlexBuilder
 
                        Examples.Persist.SingleLineTable,
                        Examples.Persist.MappedToCornerPoints,
