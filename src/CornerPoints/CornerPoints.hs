@@ -10,6 +10,7 @@ CornerPoints(..),
 (@+++#@),
 (&+++#@),
 (|@+++#@|),
+(#+++#),
 scaleCornerPoints,
 scaleCornerPointsZ,
 CornerPointsBuilder(..),
@@ -928,3 +929,11 @@ getCornerPointsWithIndex errMsg cutterFaces index =
 cpointType :: CornerPoints -> String
 cpointType cpoint = showConstr . toConstr $ cpoint
 
+(#+++#) :: Either String CornerPoints -> Either String CornerPoints -> Either String CornerPoints
+(Right cPoint1) #+++# (Right cPoint2) =
+  let
+    cPointAdded = cPoint1 +++ cPoint2
+  in
+  case cPointAdded of
+    CornerPointsError msg -> Left msg
+    otherwise -> Right cPointAdded

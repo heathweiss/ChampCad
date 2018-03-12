@@ -326,7 +326,9 @@ createBottomFacesSquaredOffLengthenYSeparately inOrigin radii angles power lengt
        | angle <- tail angles
        | radius <- tail squaredRadii
      ]
+{-
 
+-}
 
 {------------------------------------------------------------------ createTopFaces ----------------------------
 
@@ -341,6 +343,7 @@ createTopFaces inOrigin radii angles   =
       (head angles)
       
     ) 
+    +++
     B3 inOrigin
     +++>
     [(createCornerPoint
@@ -355,6 +358,8 @@ createTopFaces inOrigin radii angles   =
        | angle <- tail angles
        | radius <- tail radii
     ]
+
+
 
 -- | Create [TopFace], all with a common origin for the BackTopLine.
 -- | The z-axis, or height, of the FrontTopLine's will vary according to a [Height].

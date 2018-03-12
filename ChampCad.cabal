@@ -194,6 +194,7 @@ test-suite ChampCad-test
                        InterceptTest
                        PolarInterceptTest
                        AdvanceToHeadOfPerimetersTest
+                       RadialLinesTest
  
   build-depends:       base
                      , ChampCad

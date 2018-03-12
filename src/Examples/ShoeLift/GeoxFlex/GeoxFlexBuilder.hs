@@ -10,6 +10,7 @@ Will use a rubber bootie for the bottom tread so it will be a match to the top t
 
 module Examples.ShoeLift.GeoxFlex.GeoxFlexBuilder() where
 
+import Joiners.RadialLines(getMinY, getMaxY, extractYaxis, createListOfYaxisValuesToMakeCubesOnFromRadialShapeAsTopFrontPoints)
 
 import Database.Persist
 import Database.Persist.Sqlite
@@ -49,10 +50,6 @@ import CornerPoints.FaceExtraction(extractBackFace, extractBackTopLine, extractF
                                    extractFrontLeftLine, extractFrontRightLine, extractBackRightLine, extractBackLeftLine, extractBottomFace, extractBottomFrontLine,
                                    extractTopFace, extractB4, extractB3, extractB2, extractB1, extractF4, extractF3, extractF2, extractF1)
 
-import Joiners.AdvanceComposable(Advancer(..), OuterAdvancerOutput(..), InnerAdvancerOutput(..),naiveAdvCpointFromInnerPerims, naiveAdvCPointFromOuterPerims, advancerRecur,
-                                 advCPointFromClosestInnerOuterAdvCPoint, extractAdvCPointsFromAdvancer, advCPointFromClosestInnerOuterUsedCPointBase,
-                                 createAdvCPointFromInnerPerimsCheckLegalIntersection, outerAdvancerOutPutHasLegalIntersections, checkInnerAdvCPtForLegality)
-
 import Stl.StlBase(Triangle(..), newStlShape)
 import Stl.StlCornerPoints((|+++^|), Faces(..) )
 import Stl.StlFileWriter(writeStlToFile)
@@ -84,7 +81,7 @@ showBuilderValue = runSqlite "src/Examples/ShoeLift/GeoxFlex/lineScanner.db" $ d
       case valCpoints of
         (Left e) -> liftIO $ print $ e
         (Right a) -> do
-        liftIO $ print $ show a
+          liftIO $ print $ show a
 
 --make a riser to convert from pillars to german centers
 runBuilder :: IO () 
@@ -122,8 +119,8 @@ topTreadBuilder :: AnglesHeightsRadii -> Point -> ExceptStackCornerPointsBuilder
 topTreadBuilder ahr origin = do
 
   let
-    pre180Angles ang  = (ang < 178.0)
-    post180Angles ang = (ang > 179.0)
+    pre180Angles ang  = (ang < 180.0)
+    post180Angles ang = (ang > 180.0)
     
     ahrPre180  = filter (\(AngleHeightRadius ang _ _ _) -> pre180Angles ang) ahr
     ahrPost180 = reverse $ filter (\(AngleHeightRadius ang _ _ _) -> post180Angles ang) ahr
@@ -135,8 +132,33 @@ topTreadBuilder ahr origin = do
     extractedPostRadii = extractRadii ahrPost180
     extractedPostAngles = extractAngles ahrPost180
     extractedPostHeights = extractHeights ahrPost180
-    
 
+  --build the top faces of the entire tread to be able to find <min/max>Y to build the grid list
+  --Could do this by creating the topFrontPoints of each side, finding <min/max>Y of each, and deriving them from that
+  topFacesEntireTread
+    <- buildCubePointsListSingle "topInnerFaces"
+              (let
+                  
+                  --the scan is missing 0 and 360 degrees as it is used to make up the faces by adding left and right sides together.
+                  --But for a test, will build it the normal way with: createTopFacesVariableHeight
+                  topFaces =
+                    createTopFacesVariableHeight
+                    origin
+                    (extractRadii ahr)
+                    (extractAngles ahr)
+                    (extractHeights ahr)
+               in
+               topFaces
+              )
+
+  
+  frontTopLinesEntireTread <- buildCubePointsListSingle "frontTopLines"
+    (map (extractFrontTopLine) topFacesEntireTread)
+
+  topFrontPointsEntireTread <- buildCubePointsListSingle "entireTreadAsTopFrontPoints"
+    ((extractF3 $ head frontTopLinesEntireTread) :  map (extractF2) frontTopLinesEntireTread)
+
+  
   -- --------------------------------------- original system left in place to compile
   preTopFaces
     <- buildCubePointsListSingle "topOuterFaces"
@@ -153,6 +175,8 @@ topTreadBuilder ahr origin = do
                in
                topFaces
               )
+
+  
 
   preTopRightVertices <- buildCubePointsListSingle "preTopRightLines"
      ((toB3 . extractF3 $ head preTopFaces) : map (toF3 . extractF2) (preTopFaces))
@@ -173,6 +197,24 @@ topTreadBuilder ahr origin = do
                in
                topFaces
               )
+
+  let minY =
+        let preMinY  = extractYaxis $ getMinY preTopFaces
+            postMinY = extractYaxis $ getMinY postTopFaces
+        in
+          case preMinY < postMinY of
+            True -> preMinY
+            False -> postMinY
+
+      mayY =
+        let preMaxY  = extractYaxis $ getMaxY preTopFaces
+            postMaxY = extractYaxis $ getMaxY postTopFaces
+        in
+          case preMaxY < postMaxY of
+            True -> preMaxY
+            False -> postMaxY
+       
+      grid = createListOfYaxisValuesToMakeCubesOnFromRadialShapeAsTopFrontPoints topFrontPointsEntireTread
 
   postTopLeftVertices <- buildCubePointsListSingle "preTopRightLines"
      ( let

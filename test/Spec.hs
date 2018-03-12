@@ -30,10 +30,12 @@ import DistanceTest(distanceTestDo)
 import  DelaunayTest(delaunayTestDo)
 import InterceptTest(interceptTestDo)
 import PolarInterceptTest(polarInterceptTestDo)
-import AdvanceToHeadOfPerimetersTest(advanceToHeadOfPerimetersTestDo) 
+import AdvanceToHeadOfPerimetersTest(advanceToHeadOfPerimetersTestDo)
+import RadialLinesTest(radialLinesTestDo)
 
 --main :: IO ()
 main = do
+  
   splicerTestDo
   builderMonadTest
   cornerPointsCreateTestDo
@@ -65,4 +67,4 @@ main = do
   listHelperTestDo
   interceptTestDo
   delaunayTestDo
-  
+  radialLinesTestDo
