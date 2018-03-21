@@ -13,11 +13,12 @@ Should extend off both ends of the shape.
 
 -}
 
-module Joiners.RadialLines(getMinY, getMaxY, extractYaxis, createListOfYaxisValuesToMakeCubesOnFromRadialShapeAsTopFrontPoints) where
+module Joiners.RadialLines(getMinY, getMaxY, extractYaxis, createYaxisGrid,
+                           splitOnXaxis, buildLeftRightLineFromGridAndLeadingTrailingCPointsBase) where
 
 import Test.HUnit
 
-import CornerPoints.CornerPoints(CornerPoints(..), cpointType, (+++), (+++>), (#+++#))
+import CornerPoints.CornerPoints(CornerPoints(..), cpointType, (+++), (+++>), (##+++#), (+++#))
 import CornerPoints.HorizontalFaces(createTopFacesVariableHeight, createBottomFacesVariableHeight)
 import CornerPoints.Radius (Radius(..))
 import Geometry.Angle(Angle(..))
@@ -35,7 +36,7 @@ radialLinesTestDo = do
   putStrLn ""
   putStrLn "RadialLinesTest"
   --runTestTT seeRadialShapeAsTopFrontPointsTest
-  runTestTT seeLeadingRadialShapeAsTopFrontPointsTest
+  --runTestTT seeLeadingRadialShapeAsTopFrontPointsTest
   runTestTT seeTrailingRadialShapeAsTopFrontPointsTest
   runTestTT seeMinYCpointOfLeadingRadialShapeAsTopFrontPointsTest
   runTestTT seeMinYCpointOfTrailingRadialShapeAsTopFrontPointsTest
@@ -74,6 +75,7 @@ radialLinesTestDo = do
   runTestTT adjustAxisTest4
   runTestTT adjustCornerPointsTest
   runTestTT adjustCornerPointsTest2
+  runTestTT adjustCornerPointsTest3
 
   -------------- create the final topFaces grid ------------------------------------
   runTestTT buildGridTopFacesTest
@@ -112,7 +114,8 @@ leadingRadialShapeAsTopFrontPoints = filter (splitOnXaxis (>) 0) radialShapeAsTo
 trailingRadialShapeAsTopFrontPoints =
   let list = filter (splitOnXaxis (<) 0) radialShapeAsTopFrontPoints
   in
-    (toF3 $ head list ) : (tail list)
+    --(toF3 $ head list ) : (tail list)
+    list
 --can be moved to RadialLines, or somewhere
 getMinY :: [CornerPoints] -> CornerPoints
 getMinY ((F2 (Point x y z)):cpoints) =
@@ -163,8 +166,8 @@ Start the [double] at minY
 -increment up to next event double and run list to max y
 -
 -}
-createListOfYaxisValuesToMakeCubesOnFromRadialShapeAsTopFrontPoints :: [CornerPoints] -> [Double]
-createListOfYaxisValuesToMakeCubesOnFromRadialShapeAsTopFrontPoints radialShapeAsTopFrontPoints =
+createYaxisGrid :: [CornerPoints] -> [Double]
+createYaxisGrid radialShapeAsTopFrontPoints =
   let
     leadingFrontTopPoints  = filter (splitOnXaxis (>) 0) radialShapeAsTopFrontPoints
     trailingFrontTopPoints = filter (splitOnXaxis (<) 0) radialShapeAsTopFrontPoints
@@ -428,44 +431,18 @@ buildLeftRightLineFromGridAndLeadingTrailingCPointsBase ::
 buildLeftRightLineFromGridAndLeadingTrailingCPointsBase 
                                                         (g:grid)
                                                         ((F3 (Point leadingX leadingY leadingZ) : leadingCPoints))
-                                                        ((F3 (Point trailingX trailingY trailingZ) : trailingCPoints))
+                                                        ((F2 (Point trailingX trailingY trailingZ) : trailingCPoints))
                                                      =
     extractE $
     buildLeftRightLineFromGridAndLeadingTrailingCPointsBase'
       (F3) (F2) grid
       ((F3 (Point leadingX leadingY leadingZ) : leadingCPoints))
       ((F3 (Point trailingX trailingY trailingZ) : trailingCPoints)) <$>
-      (Right $ B3 $ Point leadingX leadingY leadingZ) #+++# (Right $ B2 $ Point trailingX trailingY trailingZ) `appendE` []
+      --(Right $ B3 $ Point leadingX leadingY leadingZ) ##+++# (Right $ B2 $ Point trailingX trailingY trailingZ) `appendE` []
+      (B3 $ Point leadingX leadingY leadingZ) +++# (B2 $ Point trailingX trailingY trailingZ) `appendE` []
       
-      {-
-      ({-Just-} (leadingConstructor $ Point leadingX leadingY leadingZ))
-      ({-Just-} (trailingConstructor $ Point trailingX trailingY trailingZ))-}
-    {-
-    buildLeftRightLineFromGridAndLeadingTrailingCPointsBase'
-      (F3) (F2) grid
-      ((F3 (Point leadingX leadingY leadingZ) : leadingCPoints))
-      ((F3 (Point trailingX trailingY trailingZ) : trailingCPoints))
-      []
-      ({-Just-} (leadingConstructor $ Point leadingX leadingY leadingZ))
-      ({-Just-} (trailingConstructor $ Point trailingX trailingY trailingZ))
--}
       
-{-
-buildLeftRightLineFromGridAndLeadingTrailingCPointsBase (leadingConstructor)
-                                                        (trailingConstructor)
-                                                        (g:grid)
-                                                        ((F3 (Point leadingX leadingY leadingZ) : leadingCPoints))
-                                                        ((F3 (Point trailingX trailingY trailingZ) : trailingCPoints))
-                                                     =
-  
-    buildLeftRightLineFromGridAndLeadingTrailingCPointsBase'
-      (F3) (F2) grid
-      ((F3 (Point leadingX leadingY leadingZ) : leadingCPoints))
-      ((F3 (Point trailingX trailingY trailingZ) : trailingCPoints))
-      (Right (Just (leadingConstructor $ Point leadingX leadingY leadingZ)))
-      (Right (Just (trailingConstructor $ Point trailingX trailingY trailingZ)))
-      []
--}
+
 {-
 Child recur function:
 Given:
@@ -488,30 +465,7 @@ buildLeftRightLineFromGridAndLeadingTrailingCPointsBase' :: (Point -> CornerPoin
                                                         [CornerPoints] -> --trailing CPoints
                                                         [CornerPoints] -> --working list of final CPoints
                                                         Either String [CornerPoints]    --final CPoints
-{-
-buildLeftRightLineFromGridAndLeadingTrailingCPointsBase' :: (Point -> CornerPoints) ->
-                                                        (Point -> CornerPoints) ->
-                                                        [Double] ->
-                                                        [CornerPoints] -> --leading CPoints
-                                                        [CornerPoints] -> --trailing CPoints
-                                                        [CornerPoints] -> --working list of final CPoints
-                                                        {-Maybe-} CornerPoints -> --leading adjusted CPoint
-                                                        {-Maybe-} CornerPoints -> --trailing adjusted CPoint
-                                                        Either String [CornerPoints]    --final CPoints
 
-
-
-buildLeftRightLineFromGridAndLeadingTrailingCPointsBase' :: (Point -> CornerPoints) ->
-                                                        (Point -> CornerPoints) ->
-                                                        [Double] ->
-                                                        [CornerPoints] -> --leading CPoints
-                                                        [CornerPoints] -> --trailing CPoints
-                                                        (Either String (Maybe CornerPoints)) -> --leading adjusted CPoint
-                                                        (Either String (Maybe CornerPoints)) -> --trailing adjusted CPoint
-                                                        [CornerPoints] -> --working list of final CPoints
-                                                        Either String [CornerPoints]    --final CPoints
--}
---
 buildLeftRightLineFromGridAndLeadingTrailingCPointsBase' (leadingConstructor)
                                                      (trailingConstructor)
                                                      (g:grid)
@@ -538,16 +492,14 @@ buildLeftRightLineFromGridAndLeadingTrailingCPointsBase' (leadingConstructor)
     --Which is easier. Could do this here 1st, change the pattern matches, then go back and cx adjustCornerPoint, as the
     --problem is going to be coordinating all the cascading changes if adjustCornerPoint if done first.
 
+    
 
-    --leadingAdjustedCPoint = extractE $ adjustCornerPoint (leadingConstructor) g <$> leadingLeadingCPoint <*> trailingLeadingCPoint
     leadingAdjustedCPoint = removeMaybe "leadingAdjustedCPoint was Nothing" $  extractE $ adjustCornerPoint (leadingConstructor) g <$> leadingLeadingCPoint <*> trailingLeadingCPoint
-    --trailingAdjustedCPoint = extractE $ adjustCornerPoint (trailingConstructor) g <$> leadingTrailingCPoint <*>  trailingTrailingCPoint
     trailingAdjustedCPoint = removeMaybe "trailingAdjustedCPoint was Nothing" $ extractE $ adjustCornerPoint (trailingConstructor) g <$> leadingTrailingCPoint <*>  trailingTrailingCPoint
     --determine what type of line will be build.
     --The initial call of this fx will typically build a Back<Top/Bottom>Line.
     --After that Front<Top/Bottom>Line will be build as is standard when using +++>
-    --To simplify (not use Either) for missing pattern matches, default to making [TopFace]
-    --
+    
     leadingConstructor' =
       case leadingAdjustedCPoint of
         (Right (  (B3 (Point _ _ _)))) -> F3
@@ -559,25 +511,14 @@ buildLeftRightLineFromGridAndLeadingTrailingCPointsBase' (leadingConstructor)
         (Right (  (F2 (Point _ _ _)))) -> F2
         otherwise -> F2
 
-  {-
-  leadingConstructor' =
-      case leadingAdjustedCPoint of
-        (Right ( Just (B3 (Point _ _ _)))) -> F3
-        (Right ( Just (F3 (Point _ _ _)))) -> F3
-        otherwise -> F3
-    trailingConstructor' =
-      case trailingAdjustedCPoint of
-        (Right ( Just (B2 (Point _ _ _)))) -> F2
-        (Right ( Just (F2 (Point _ _ _)))) -> F2
-        otherwise -> F2
-  -}
+
   in
    extractE $
      buildLeftRightLineFromGridAndLeadingTrailingCPointsBase'
        leadingConstructor' trailingConstructor'
        grid
        leadingCPoints trailingCPoints <$>
-       ((leadingAdjustedCPoint #+++# trailingAdjustedCPoint) `appendE` workingCPoints) 
+       ((leadingAdjustedCPoint ##+++# trailingAdjustedCPoint) `appendE` workingCPoints) 
        
      
 
@@ -593,148 +534,7 @@ buildLeftRightLineFromGridAndLeadingTrailingCPointsBase' _
      lines =  reverse workingCPoints
    in
      Right $ (head lines) +++> (tail lines)
-{-
-buildLeftRightLineFromGridAndLeadingTrailingCPointsBase' (leadingConstructor)
-                                                     (trailingConstructor)
-                                                     (g:grid)
-                                                     leadingCPoints
-                                                     trailingCPoints
-                                                     workingCPoints
-                                                     ({-Just-} leadingCPoint)
-                                                     ({-Just-} trailingCPoint)
-                                                      =
-  --leftOff -- Change <leading/trailing>CPoint to Maybe (remove Either) then use Applicative to if fx ends instead of pattern matching to see if fx ends.
-          --Will also need to change the order of the params so workingCPoints is ahead, to work better with Applicative.
-  let
-    --For all the following:
-    --Can be Either because unhandled/illegal CornerPoint in leading/trailing [CornerPoints]
-    --Can be Maybe because of improper grid target values construction. There should be not grid value outside the range
-    --of the <leading/trailing>CPoints y_axis. But should gaurd against it.
-    leadingLeadingCPoint :: Either String (Maybe CornerPoints)
-    leadingLeadingCPoint = getLeadingCPoint g leadingCPoints
-    trailingLeadingCPoint = getTrailingCPoint g leadingCPoints
-    leadingTrailingCPoint = getLeadingCPoint g trailingCPoints
-    trailingTrailingCPoint = getTrailingCPoint g trailingCPoints
 
-    --at this point, cx leadingLeadingCPoint(and the other 3) for Nothing.
-    --If Nothing, make it a Left, otherwise remove the Maybe aspect as a Nothing makes no sense. It should be Left if this happens
-    --The alternative is to got back and cx adjustCornerPoint to be a Either String CornerPoints , and remove the Maybe.
-    --Which is easier. Could do this here 1st, change the pattern matches, then go back and cx adjustCornerPoint, as the
-    --problem is going to be coordinating all the cascading changes if adjustCornerPoint if done first.
-
-
-    --leadingAdjustedCPoint = extractE $ adjustCornerPoint (leadingConstructor) g <$> leadingLeadingCPoint <*> trailingLeadingCPoint
-    leadingAdjustedCPoint = removeMaybe "leadingAdjustedCPoint was Nothing" $  extractE $ adjustCornerPoint (leadingConstructor) g <$> leadingLeadingCPoint <*> trailingLeadingCPoint
-    --trailingAdjustedCPoint = extractE $ adjustCornerPoint (trailingConstructor) g <$> leadingTrailingCPoint <*>  trailingTrailingCPoint
-    trailingAdjustedCPoint = removeMaybe "trailingAdjustedCPoint was Nothing" $ extractE $ adjustCornerPoint (trailingConstructor) g <$> leadingTrailingCPoint <*>  trailingTrailingCPoint
-    --determine what type of line will be build.
-    --The initial call of this fx will typically build a Back<Top/Bottom>Line.
-    --After that Front<Top/Bottom>Line will be build as is standard when using +++>
-    --To simplify (not use Either) for missing pattern matches, default to making [TopFace]
-    --
-    leadingConstructor' =
-      case leadingAdjustedCPoint of
-        (Right (  (B3 (Point _ _ _)))) -> F3
-        (Right (  (F3 (Point _ _ _)))) -> F3
-        otherwise -> F3
-    trailingConstructor' =
-      case trailingAdjustedCPoint of
-        (Right (  (B2 (Point _ _ _)))) -> F2
-        (Right (  (F2 (Point _ _ _)))) -> F2
-        otherwise -> F2
-
-  {-
-  leadingConstructor' =
-      case leadingAdjustedCPoint of
-        (Right ( Just (B3 (Point _ _ _)))) -> F3
-        (Right ( Just (F3 (Point _ _ _)))) -> F3
-        otherwise -> F3
-    trailingConstructor' =
-      case trailingAdjustedCPoint of
-        (Right ( Just (B2 (Point _ _ _)))) -> F2
-        (Right ( Just (F2 (Point _ _ _)))) -> F2
-        otherwise -> F2
-  -}
-  in
-   extractE $
-     buildLeftRightLineFromGridAndLeadingTrailingCPointsBase'
-       leadingConstructor' trailingConstructor'
-       grid
-       leadingCPoints trailingCPoints
-       ((leadingCPoint +++ trailingCPoint) : workingCPoints) <$>
-         leadingAdjustedCPoint <*> trailingAdjustedCPoint
-     
-
-buildLeftRightLineFromGridAndLeadingTrailingCPointsBase' _
-                                                     _
-                                                     []
-                                                     _
-                                                     _
-                                                     workingCPoints
-                                                     ({-Just-} leadingCPoint)
-                                                     ({-Just-} trailingCPoint)
-                                                      =
-   let
-     lines =  reverse $ (leadingCPoint +++ trailingCPoint) : workingCPoints
-   in
-     Right $ (head lines) +++> (tail lines)
-
-
-
-buildLeftRightLineFromGridAndLeadingTrailingCPointsBase' (leadingConstructor)
-                                                     (trailingConstructor)
-                                                     (g:grid)
-                                                     leadingCPoints
-                                                     trailingCPoints
-                                                     (Right (Just leadingCPoint))
-                                                     (Right (Just trailingCPoint))
-                                                     workingCPoints =
-  leftOff -- Change <leading/trailing>CPoint to Maybe (remove Either) then use Applicative to if fx ends instead of pattern matching to see if fx ends.
-          --Will also need to change the order of the params so workingCPoints is ahead, to work better with Applicative.
-  let
-    leadingLeadingCPoint = getLeadingCPoint g leadingCPoints
-    trailingLeadingCPoint = getTrailingCPoint g leadingCPoints
-    leadingTrailingCPoint = getLeadingCPoint g trailingCPoints
-    trailingTrailingCPoint = getTrailingCPoint g trailingCPoints
-    leadingAdjustedCPoint = extractE $ adjustCornerPoint (leadingConstructor) g <$> leadingLeadingCPoint <*> trailingLeadingCPoint
-    trailingAdjustedCPoint = extractE $ adjustCornerPoint (trailingConstructor) g <$> leadingTrailingCPoint <*>  trailingTrailingCPoint
-    --determine what type of line will be build.
-    --The initial call of this fx will typically build a Back<Top/Bottom>Line.
-    --After that Front<Top/Bottom>Line will be build as is standard when using +++>
-    --To simplify (not use Either) for missing pattern matches, default to making [TopFace]
-    --
-    leadingConstructor' =
-      case leadingAdjustedCPoint of
-        (Right ( Just (B3 (Point _ _ _)))) -> F3
-        (Right ( Just (F3 (Point _ _ _)))) -> F3
-        otherwise -> F3
-    trailingConstructor' =
-      case trailingAdjustedCPoint of
-        (Right ( Just (B2 (Point _ _ _)))) -> F2
-        (Right ( Just (F2 (Point _ _ _)))) -> F2
-        otherwise -> F2
-  in
-   buildLeftRightLineFromGridAndLeadingTrailingCPointsBase'
-     leadingConstructor' trailingConstructor'
-     grid
-     leadingCPoints trailingCPoints
-     leadingAdjustedCPoint trailingAdjustedCPoint
-     ((leadingCPoint +++ trailingCPoint) : workingCPoints)
-
-buildLeftRightLineFromGridAndLeadingTrailingCPointsBase' _
-                                                     _
-                                                     []
-                                                     _
-                                                     _
-                                                     (Right (Just leadingCPoint))
-                                                     (Right (Just trailingCPoint))
-                                                     workingCPoints =
-   let
-     lines =  reverse $ (leadingCPoint +++ trailingCPoint) : workingCPoints
-   in
-     Right $ (head lines) +++> (tail lines)
-
--}
 --curry in the initial constructors to build [TopFace], which is the only 1 handled so far.
 --Only thing needed to do bottom faces, would be to add CornerPoints constructors B4, B1 (BackBottomLine) to case statement in recur fx
 --to go to F1, F4 (FrontBottomLine).
@@ -806,7 +606,7 @@ seeMaxYCpointOfTrailingRadialShapeAsTopFrontPointsTest = TestCase $ assertEqual
 generateYaxisListOfCubesToCreateTest = TestCase $ assertEqual
   "generateYaxisListOfCubesToCreate"
   ([-9.961946980917455,-9.0,-8.0,-7.0,-6.0,-5.0,-4.0,-3.0,-2.0,-1.0,0.0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0,9.84807753012208])
-  (createListOfYaxisValuesToMakeCubesOnFromRadialShapeAsTopFrontPoints radialShapeAsTopFrontPoints)
+  (createYaxisGrid radialShapeAsTopFrontPoints)
 
 
 -------------------------------------------------------------------------------------------------------------------------------
@@ -912,13 +712,22 @@ getTrailingCPointExistsTest7 = TestCase $ assertEqual
 
 
 -------------------------------------------------------- buildGridTopFaces tests ------------------------------------------
+
 buildGridTopFacesTest = TestCase $ assertEqual
   "buildGridTopFaces: build a good grid"
-  (Left "filler")
+  (Right $ TopFace
+   {
+     b2 = Point {x_axis = -1.7364817766693033, y_axis = 9.84807753012208, z_axis = 10.0},
+     f2 = Point {x_axis = -4.2714124329421095, y_axis = -9.0, z_axis = 10.0},
+     b3 = Point {x_axis = 1.7364817766693033, y_axis = -9.84807753012208, z_axis = 10.0},
+     f3 = Point {x_axis = 4.2714124329421095, y_axis = -9.0, z_axis = 10.0}})
   (let
-      grid = createListOfYaxisValuesToMakeCubesOnFromRadialShapeAsTopFrontPoints radialShapeAsTopFrontPoints
+      grid = createYaxisGrid radialShapeAsTopFrontPoints
+      leadingWithF3 = (toF3 $ head leadingRadialShapeAsTopFrontPoints) : tail leadingRadialShapeAsTopFrontPoints
    in
-    buildLeftRightLineFromGridAndLeadingTrailingCPointsBase grid leadingRadialShapeAsTopFrontPoints trailingRadialShapeAsTopFrontPoints
+     case buildLeftRightLineFromGridAndLeadingTrailingCPointsBase grid leadingRadialShapeAsTopFrontPoints trailingRadialShapeAsTopFrontPoints of
+       Right cpoints -> Right $ head cpoints
+       Left e -> Left e
   )
 
 {-leadingRadialShapeAsTopFrontPoints
@@ -965,8 +774,10 @@ leadingRatioFromCPoint    targetVal (F2 (Point _ yLeading _)) (F2 (Point _ yTrai
     leadingDiff  = targetVal - yLeading
     trailingDiff = yTrailing - targetVal
     totalDiff        = yTrailing - yLeading
-    
-    leadingRatio = (totalDiff - trailingDiff)/totalDiff
+    leadingRatio =
+      case totalDiff == 0 of
+        True -> 1
+        False -> (totalDiff - trailingDiff)/totalDiff
   in
     Right leadingRatio
 leadingRatioFromCPoint    targetVal (F2 (Point _ yLeading _)) (F3 (Point _ yTrailing _))  =
@@ -974,8 +785,11 @@ leadingRatioFromCPoint    targetVal (F2 (Point _ yLeading _)) (F3 (Point _ yTrai
     leadingDiff  = targetVal - yLeading
     trailingDiff = yTrailing - targetVal
     totalDiff        = yTrailing - yLeading
-    
-    leadingRatio = (totalDiff - trailingDiff)/totalDiff
+    leadingRatio =
+      case totalDiff == 0 of
+        True -> 1
+        False -> (totalDiff - trailingDiff)/totalDiff
+    --leadingRatio = (totalDiff - trailingDiff)/totalDiff
   in
     Right leadingRatio
 leadingRatioFromCPoint    targetVal (F3 (Point _ yLeading _)) (F2 (Point _ yTrailing _))  =
@@ -983,8 +797,11 @@ leadingRatioFromCPoint    targetVal (F3 (Point _ yLeading _)) (F2 (Point _ yTrai
     leadingDiff  = targetVal - yLeading
     trailingDiff = yTrailing - targetVal
     totalDiff        = yTrailing - yLeading
-    
-    leadingRatio = (totalDiff - trailingDiff)/totalDiff
+    leadingRatio =
+      case totalDiff == 0 of
+        True -> 1
+        False -> (totalDiff - trailingDiff)/totalDiff
+    --leadingRatio = (totalDiff - trailingDiff)/totalDiff
   in
     Right leadingRatio
 leadingRatioFromCPoint    targetVal (F3 (Point _ yLeading _)) (F3 (Point _ yTrailing _))  =
@@ -993,7 +810,10 @@ leadingRatioFromCPoint    targetVal (F3 (Point _ yLeading _)) (F3 (Point _ yTrai
     trailingDiff = yTrailing - targetVal
     totalDiff        = yTrailing - yLeading
     
-    leadingRatio = (totalDiff - trailingDiff)/totalDiff
+    leadingRatio =
+      case totalDiff == 0 of
+        True -> 1
+        False -> (totalDiff - trailingDiff)/totalDiff
   in
     Right leadingRatio
 
@@ -1039,7 +859,7 @@ adjustCornerPoint cPointsConstructor targetValue (Just (F2 (Point  leadingX lead
                                              (adjustAxis leadingRatio'' leadingX trailingX)
                                              (adjustAxis leadingRatio'' leadingY trailingY)
                                              (adjustAxis leadingRatio'' leadingZ trailingZ)
-      Left e -> Left $ "adjustCornerPoint: " ++ e
+      Left e -> Left $ "adjustCornerPoint1: " ++ e
   --needs testing 
 adjustCornerPoint cPointsConstructor targetValue (Just (F2 (Point  leadingX leadingY leadingZ))) Nothing =
   Right $ Just $ cPointsConstructor $ Point  leadingX leadingY leadingZ
@@ -1055,7 +875,7 @@ adjustCornerPoint cPointsConstructor targetValue (Just (F2 (Point  leadingX lead
                                               (adjustAxis leadingRatio' leadingX trailingX)
                                               (adjustAxis leadingRatio' leadingY trailingY)
                                               (adjustAxis leadingRatio' leadingZ trailingZ)
-      Left e -> Left $ "adjustCornerPoint: " ++ e
+      Left e -> Left $ "adjustCornerPoint2: " ++ e
 
 adjustCornerPoint cPointsConstructor targetValue (Just(F3 (Point  leadingX leadingY leadingZ))) (Just(F2 (Point trailingX trailingY trailingZ))) =
   let
@@ -1066,7 +886,7 @@ adjustCornerPoint cPointsConstructor targetValue (Just(F3 (Point  leadingX leadi
                                                                    (adjustAxis leadingRatio' leadingX trailingX)
                                                                    (adjustAxis leadingRatio' leadingY trailingY)
                                                                    (adjustAxis leadingRatio' leadingZ trailingZ)
-      Left e -> Left $ "adjustCornerPoint: " ++ e
+      Left e -> Left $ "adjustCornerPoint3: " ++ e
 
 adjustCornerPoint cPointsConstructor targetValue (Just (F3 (Point  leadingX leadingY leadingZ))) (Just (F3 (Point trailingX trailingY trailingZ))) =
   let
@@ -1078,10 +898,20 @@ adjustCornerPoint cPointsConstructor targetValue (Just (F3 (Point  leadingX lead
                                               (adjustAxis leadingRatio' leadingX trailingX)
                                               (adjustAxis leadingRatio' leadingY trailingY)
                                               (adjustAxis leadingRatio' leadingZ trailingZ)
-      Left e -> Left $ "adjustCornerPoint: " ++ e
+      Left e -> Left $ "adjustCornerPoint4: " ++ e
 
 adjustCornerPoint cPointsConstructor targetValue Nothing (Just (F2 (Point  trailingX trailingY trailingZ)))  =
   Right $ Just $ cPointsConstructor $ Point  trailingX trailingY trailingZ
+
+adjustCornerPoint cPointsConstructor targetValue Nothing (Just (F3 (Point  trailingX trailingY trailingZ)))  =
+  Right $ Just $ cPointsConstructor $ Point  trailingX trailingY trailingZ
+
+adjustCornerPoint cPointsConstructor targetValue Nothing (Just unhandled)  =
+  Left $ "adjustCornerPoint5: illegal or unhandled leadingCPoint: Nothing " ++ " and trailingCPoint: " ++ (cpointType unhandled)
+
+adjustCornerPoint cPointsConstructor targetValue (Just unhandled) Nothing   =
+  Left $ "adjustCornerPoint6: illegal or unhandled leadingCPoint: " ++ (cpointType unhandled) ++ " and trailingCPoint: Nothing" 
+
 
 adjustCornerPoint cPointsConstructor targetValue Nothing Nothing  =
   Right $ Nothing
@@ -1214,7 +1044,12 @@ adjustAxisTest4 = TestCase $ assertEqual
      adjustAxis ratio 0 10
   )
 
-
+adjustCornerPointsTest3 = TestCase $ assertEqual
+  "cornerPoints are == : adjustCornerPoint3"
+  (Right $ Just $ F2 $ Point 10 10 10)
+  (
+     adjustCornerPoint (F2) (10) (Just $ F2 $ Point (10) (10) (10)) (Just $ F2 $ Point (10) (10) (10))
+  )
 
 
 

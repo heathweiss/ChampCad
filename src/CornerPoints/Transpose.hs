@@ -1,11 +1,14 @@
+{-# LANGUAGE ParallelListComp #-}
+
 module CornerPoints.Transpose (
 transposeZ,
 transposeX,
-transposeY
+transposeY,
+transposeZWithList
 ) where
 import CornerPoints.CornerPoints
 import CornerPoints.Points(Point(..), transposeZ)
-import TypeClasses.Transposable(TransposePoint, transposeX, transposeY, transposeZ)
+import TypeClasses.Transposable(TransposePoint, transposeX, transposeY, transposeZ,)
 
 ------------------------------------- transposing cubes/points ----------------------------------------------
 {-
@@ -379,3 +382,10 @@ instance TransposePoint CornerPoints where
     B4 {b4=(transposeZ f b4)}
 
   transposeZ f CornerPointsNothing = CornerPointsNothing
+
+transposeZWithList :: [Double] -> [CornerPoints] -> [CornerPoints]
+transposeZWithList doubles cPoints =
+  [ transposeZ (+ double) cPoint 
+   | double <- doubles
+   | cPoint <- cPoints
+  ]

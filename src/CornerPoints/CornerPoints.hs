@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE ParallelListComp #-}
 module CornerPoints.CornerPoints(
 CornerPoints(..),
 (+++),
@@ -10,7 +11,8 @@ CornerPoints(..),
 (@+++#@),
 (&+++#@),
 (|@+++#@|),
-(#+++#),
+(##+++#),
+(+++#),
 scaleCornerPoints,
 scaleCornerPointsZ,
 CornerPointsBuilder(..),
@@ -30,6 +32,7 @@ import CornerPoints.Points (Point(..))
 import    Control.Applicative
 
 import Data.List(find)
+
 
 -- import Math.Distance(Distance(..),Distant, calculateDistance, DistanceA(..),DistantA, calculateDistanceA)
 
@@ -260,16 +263,7 @@ isCubePointsList cpoints =
   case find (isNotCubePoints) cpoints of
     Nothing -> True
     Just _  -> False
------------------------------------------------- Transposable---------------------------------------------------
-{-
-instance TransposePoint CornerPoints where
-  transposeZ f (CubePoints f1 f2 f3 f4 b1 b2 b3 b4) = CubePoints (transposeZ f f1) (transposeZ f f2) (transposeZ f f3) (transposeZ f f4)
-                                                                 (transposeZ f b1) (transposeZ f b2) (transposeZ f b3) (transposeZ f b4)
-  transposeY f (CubePoints f1 f2 f3 f4 b1 b2 b3 b4) = CubePoints (transposeY f f1) (transposeY f f2) (transposeY f f3) (transposeY f f4)
-                                                                 (transposeY f b1) (transposeY f b2) (transposeY f b3) (transposeY f b4)
-  transposeX f (CubePoints f1 f2 f3 f4 b1 b2 b3 b4) = CubePoints (transposeX f f1) (transposeX f f2) (transposeX f f3) (transposeX f f4)
-                                                                 (transposeX f b1) (transposeX f b2) (transposeX f b3) (transposeX f b4)
--}
+
 --------------------------------------------------- Equal-----------------------------------------------------------
 {- |
 Implement as part of Equal class.
@@ -929,11 +923,34 @@ getCornerPointsWithIndex errMsg cutterFaces index =
 cpointType :: CornerPoints -> String
 cpointType cpoint = showConstr . toConstr $ cpoint
 
-(#+++#) :: Either String CornerPoints -> Either String CornerPoints -> Either String CornerPoints
-(Right cPoint1) #+++# (Right cPoint2) =
+-- | Add together 2 Either CornerPoints and return a Left if a CornerPointsError, else return Right result.
+(##+++#) :: Either String CornerPoints -> Either String CornerPoints -> Either String CornerPoints
+(Right cPoint1) ##+++# (Right cPoint2) =
   let
     cPointAdded = cPoint1 +++ cPoint2
   in
   case cPointAdded of
     CornerPointsError msg -> Left msg
     otherwise -> Right cPointAdded
+
+(Left e) ##+++# (Right cpoint) =
+  Left $ "##+++# error: trailing: " ++ (show cpoint) ++ " and leading Left error: " ++ e
+
+(Right cpoint) ##+++# (Left e) =
+  Left $ "##+++# error: leading: " ++ (show cpoint) ++ " and trailing Left error: " ++ e
+
+(Left eLeading) ##+++# (Left eTrailing) =
+  Left $ "##+++# error: leading Left error: " ++ eLeading ++ " and trailing Left error: " ++ eTrailing
+
+
+-- | Add together 2 CornerPoints and return and Left if a CornerPointsError, else return Right result.
+(+++#) :: CornerPoints -> CornerPoints -> Either String CornerPoints
+cPoint1 +++# cPoint2 =
+  let
+    cPointAdded = cPoint1 +++ cPoint2
+  in
+  case cPointAdded of
+    CornerPointsError msg -> Left msg
+    otherwise -> Right cPointAdded
+
+

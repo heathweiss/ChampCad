@@ -10,7 +10,7 @@ Will use a rubber bootie for the bottom tread so it will be a match to the top t
 
 module Examples.ShoeLift.GeoxFlex.GeoxFlexBuilder() where
 
-import Joiners.RadialLines(getMinY, getMaxY, extractYaxis, createListOfYaxisValuesToMakeCubesOnFromRadialShapeAsTopFrontPoints)
+import Joiners.RadialLines(getMinY, getMaxY, extractYaxis, createYaxisGrid, splitOnXaxis, buildLeftRightLineFromGridAndLeadingTrailingCPointsBase)
 
 import Database.Persist
 import Database.Persist.Sqlite
@@ -38,7 +38,7 @@ import Control.Monad.Writer (WriterT, tell, execWriterT)
 import Control.Monad.Reader
 
 import CornerPoints.Points(Point(..))
-import CornerPoints.Transpose(transposeX, transposeY, transposeZ)
+import CornerPoints.Transpose(transposeX, transposeY, transposeZ, transposeZWithList)
 import CornerPoints.CornerPoints(CornerPoints(..), (+++),(+++>),(|+++|))
 import CornerPoints.MeshGeneration(autoGenerateEachCube, autoGenerateEachFace)
 import CornerPoints.Radius (Radius(..))
@@ -48,7 +48,7 @@ import CornerPoints.FaceConversions(toTopFace, toBackFace, toFrontFace, toFrontL
                                     toF2, toF3, toB2, toB3, toBackTopLine, toBackBottomLine, toBottomFrontLine)
 import CornerPoints.FaceExtraction(extractBackFace, extractBackTopLine, extractFrontTopLine, extractFrontFace, extractLeftFace, 
                                    extractFrontLeftLine, extractFrontRightLine, extractBackRightLine, extractBackLeftLine, extractBottomFace, extractBottomFrontLine,
-                                   extractTopFace, extractB4, extractB3, extractB2, extractB1, extractF4, extractF3, extractF2, extractF1)
+                                   extractTopFace, extractB4, extractB3, extractB2, extractB1, extractF4, extractF3, extractF2, extractF1, extractBottomFace)
 
 import Stl.StlBase(Triangle(..), newStlShape)
 import Stl.StlCornerPoints((|+++^|), Faces(..) )
@@ -61,9 +61,11 @@ import Control.Lens
 makeLenses ''AngleHeightRadius
 
 
-currentBuilder = topTreadBuilder 
+currentBuilder = btmTreadBuilderUsingRadialLinesGrid
+                 --btmTreadBuilderUsingRadialLinesGrid
+                 --topTreadBuilderUsingRadialLinesGrid
                  --testPrintTreadToCheckScanBuilder
-                 --topTreadBuilder
+                 --topTreadBuilderUsingLeftRightSidesButNoGrid
 
 showBuilderValue :: IO () 
 showBuilderValue = runSqlite "src/Examples/ShoeLift/GeoxFlex/lineScanner.db" $ do
@@ -82,6 +84,7 @@ showBuilderValue = runSqlite "src/Examples/ShoeLift/GeoxFlex/lineScanner.db" $ d
         (Left e) -> liftIO $ print $ e
         (Right a) -> do
           liftIO $ print $ show a
+          liftIO $ writeFile "src/Data/temp.txt" $ show a
 
 --make a riser to convert from pillars to german centers
 runBuilder :: IO () 
@@ -107,16 +110,247 @@ runBuilder = runSqlite "src/Examples/ShoeLift/GeoxFlex/lineScanner.db" $ do
           liftIO $ putStrLn "output from Builder was good"
           liftIO $ writeStlToFile $ newStlShape "geox flex tread" $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
           liftIO $ putStrLn "stl should have been output"
-          
 
+{-
+The full length tread that will glue into the rubber sole.
+Create a flat top on it for printing, will mate with the top printed sections/
+Will ratate it with slic3r for printing.
+
+Divide the scan in half along the y_axis.
+Recombine the 2 sides using the Joiners.RadialLines module.
+
+Extend the grid sections out so that a toothed section will occurr in the toe section where flex is required.
+
+-}
+btmTreadBuilderUsingRadialLinesGrid :: AnglesHeightsRadii -> Point -> ExceptStackCornerPointsBuilder
+btmTreadBuilderUsingRadialLinesGrid ahr origin = do
+
+  let
+    pre180Angles ang  = (ang < 180.0)
+    post180Angles ang = (ang > 181.0)
+    
+    ahrPre180  = filter (\(AngleHeightRadius ang _ _ _) -> pre180Angles ang) ahr
+    ahrPost180 = reverse $ filter (\(AngleHeightRadius ang _ _ _) -> post180Angles ang) ahr
+    
+    extractedPreRadii = extractRadii ahrPre180
+    extractedPreAngles = extractAngles ahrPre180
+    extractedPreHeights = extractHeights ahrPre180
+
+    extractedPostRadii = extractRadii ahrPost180
+    extractedPostAngles = extractAngles ahrPost180
+    extractedPostHeights = extractHeights ahrPost180
+
+  frontTopPointsNotYetSplitIntoLeadingTrailing
+    <- buildCubePointsListSingle "frontTopPointsNotYetSplitIntoLeadingTrailing"
+    (
+      let
+        topFaces =
+          createTopFacesVariableHeight
+          origin
+          (extractRadii ahr)
+          (extractAngles ahr)
+          (extractHeights ahr)
+        frontTopLines = map (extractFrontTopLine) topFaces
+      in
+        (extractF3 $ head frontTopLines) :  map (extractF2) frontTopLines
+    )
+
+  
+  
+  leadingTopFrontPoints
+    <- buildCubePointsListSingle "leadingTopFrontPoints"
+     (
+      let
+        topFaces =
+          createTopFacesVariableHeight
+          origin
+          extractedPreRadii
+          extractedPreAngles
+          extractedPreHeights
+        frontTopLines = map (extractFrontTopLine) topFaces
+      in
+        (extractF3 $ head frontTopLines) :  map (extractF2) frontTopLines
+     )
+
+  
+  trailingTopFrontPoints
+    <- buildCubePointsListSingle "trailingTopFrontPoints"
+      (
+      let
+        topFaces =
+          createTopFacesVariableHeight
+          origin
+          extractedPostRadii
+          extractedPostAngles
+          extractedPostHeights
+        frontTopLines = map (extractFrontTopLine) topFaces
+      in
+         map (extractF2) frontTopLines
+     )
+              
+  let
+    grid = createYaxisGrid frontTopPointsNotYetSplitIntoLeadingTrailing
+    
+  topGridFaces <- buildCubePointsListSingle "topGridFaces"
+    (case buildLeftRightLineFromGridAndLeadingTrailingCPointsBase grid leadingTopFrontPoints trailingTopFrontPoints of
+       (Right cpoints) -> cpoints
+       Left e          -> [CornerPointsError e]
+    )
+
+  btmGridFaces <- buildCubePointsListSingle "btmGridFaces"
+    (map toBottomFace topGridFaces)
+  
+  cubesLayer1 <- buildCubePointsListWithAdd "cubesLayer1"
+    (btmGridFaces)
+    (let
+        transposer z = 50
+     in
+     map
+     ( (transposeZ transposer) . toTopFace) btmGridFaces
+    )
+
+  cubesLayer2 <- buildCubePointsListWithAdd "cubesLayer2"
+    (let
+        btmFaces = map (extractBottomFace) cubesLayer1
+        fullDepth = -25
+        fullSpace = -2
+        transposeList = [fullDepth | _ <- [1..170]] ++
+                        (concat [[fullSpace - 10 ,fullDepth,fullDepth,fullDepth,fullDepth] | _ <- [1..2]]) ++
+                        (concat [[fullSpace - 5,fullDepth,fullDepth,fullDepth,fullDepth] | _ <- [1..2]]) ++
+                        (concat [[fullSpace,fullDepth,fullDepth,fullDepth,fullDepth] | _ <- [1..5]]) ++
+                        (concat [[fullSpace - 8 ,fullDepth,fullDepth,fullDepth,fullDepth] | _ <- [1..3]]) ++
+                        (concat [[fullSpace - 13,fullDepth,fullDepth,fullDepth,fullDepth] | _ <- [1..4]]) ++
+                        [fullDepth | _  <- [1..]]
+                        {-[fullDepth | _ <- [1..170]] ++
+                        (concat [[-15,fullDepth,fullDepth,fullDepth,fullDepth] | _ <- [1..2]]) ++
+                        (concat [[-10,fullDepth,fullDepth,fullDepth,fullDepth] | _ <- [1..2]]) ++
+                        (concat [[fullSpace,fullDepth,fullDepth,fullDepth,fullDepth] | _ <- [1..5]]) ++
+                        (concat [[-10,fullDepth,fullDepth,fullDepth,fullDepth] | _ <- [1..3]]) ++
+                        (concat [[-15,fullDepth,fullDepth,fullDepth,fullDepth] | _ <- [1..4]]) ++
+                        [fullDepth | _  <- [1..]]-}
+      in
+       transposeZWithList transposeList btmFaces
+    )
+    (map (toTopFace . extractBottomFace) cubesLayer1)
+  
+  return cubesLayer2
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+{-
+The full length tread that will glue onto the shoe.
+Create a flat bottom on it for printing.
+Divide the scan in half along the y_axis.
+Recombine the 2 sides using the Joiners.RadialLines module.
+
+-}
+topTreadBuilderUsingRadialLinesGrid :: AnglesHeightsRadii -> Point -> ExceptStackCornerPointsBuilder
+topTreadBuilderUsingRadialLinesGrid ahr origin = do
+
+  let
+    pre180Angles ang  = (ang < 180.0)
+    post180Angles ang = (ang > 181.0)
+    
+    ahrPre180  = filter (\(AngleHeightRadius ang _ _ _) -> pre180Angles ang) ahr
+    ahrPost180 = reverse $ filter (\(AngleHeightRadius ang _ _ _) -> post180Angles ang) ahr
+    
+    extractedPreRadii = extractRadii ahrPre180
+    extractedPreAngles = extractAngles ahrPre180
+    extractedPreHeights = extractHeights ahrPre180
+
+    extractedPostRadii = extractRadii ahrPost180
+    extractedPostAngles = extractAngles ahrPost180
+    extractedPostHeights = extractHeights ahrPost180
+
+  frontTopPointsNotYetSplitIntoLeadingTrailing
+    <- buildCubePointsListSingle "frontTopPointsNotYetSplitIntoLeadingTrailing"
+    (
+      let
+        topFaces =
+          createTopFacesVariableHeight
+          origin
+          (extractRadii ahr)
+          (extractAngles ahr)
+          (extractHeights ahr)
+        frontTopLines = map (extractFrontTopLine) topFaces
+      in
+        (extractF3 $ head frontTopLines) :  map (extractF2) frontTopLines
+    )
+
+  
+  
+  leadingTopFrontPoints
+    <- buildCubePointsListSingle "leadingTopFrontPoints"
+     (
+      let
+        topFaces =
+          createTopFacesVariableHeight
+          origin
+          extractedPreRadii
+          extractedPreAngles
+          extractedPreHeights
+        frontTopLines = map (extractFrontTopLine) topFaces
+      in
+        (extractF3 $ head frontTopLines) :  map (extractF2) frontTopLines
+     )
+
+  
+  trailingTopFrontPoints
+    <- buildCubePointsListSingle "trailingTopFrontPoints"
+      (
+      let
+        topFaces =
+          createTopFacesVariableHeight
+          origin
+          extractedPostRadii
+          extractedPostAngles
+          extractedPostHeights
+        frontTopLines = map (extractFrontTopLine) topFaces
+      in
+         map (extractF2) frontTopLines
+     )
+              
+  let
+    grid = createYaxisGrid frontTopPointsNotYetSplitIntoLeadingTrailing
+    
+  topGridFaces <- buildCubePointsListSingle "topGridFaces"
+    (case buildLeftRightLineFromGridAndLeadingTrailingCPointsBase grid leadingTopFrontPoints trailingTopFrontPoints of
+       (Right cpoints) -> cpoints
+       Left e          -> [CornerPointsError e]
+    )
+  
+  cubes <- buildCubePointsListWithAdd "cubes"
+    (topGridFaces)
+    (let
+        transposer z = 18
+     in
+     map
+     ( (transposeZ transposer) . toBottomFace) topGridFaces
+    )
+  
+  return trailingTopFrontPoints
 {-
 --top of this tread will fit the shoe. Bottom will be flat for printing.
 --Keep it thin so as not to mess with the flex.
 Build the cubes by building Top<Front/Back>Lines.
 This means processing each side of the scan (pre/post 180 degrees) into b3:[f3] and b2:[f2] which can then be joined with +++>
+This does not use the RadialLines grid system, but does divide the scan into leading trailing sides.
+Should delete it once I get the grid working.
 -}
-topTreadBuilder :: AnglesHeightsRadii -> Point -> ExceptStackCornerPointsBuilder
-topTreadBuilder ahr origin = do
+topTreadBuilderUsingLeftRightSidesButNoGrid :: AnglesHeightsRadii -> Point -> ExceptStackCornerPointsBuilder
+topTreadBuilderUsingLeftRightSidesButNoGrid ahr origin = do
 
   let
     pre180Angles ang  = (ang < 180.0)
@@ -214,7 +448,7 @@ topTreadBuilder ahr origin = do
             True -> preMaxY
             False -> postMaxY
        
-      grid = createListOfYaxisValuesToMakeCubesOnFromRadialShapeAsTopFrontPoints topFrontPointsEntireTread
+      grid = createYaxisGrid topFrontPointsEntireTread
 
   postTopLeftVertices <- buildCubePointsListSingle "preTopRightLines"
      ( let
@@ -260,7 +494,7 @@ topTreadBuilder ahr origin = do
 
 
 
---create with:createTopFacesVariableHeight
+--create with:createTopFacesVariableHeight. Does not yet use a grid.
 --did not print well as just used outer faces.
 testPrintTreadToCheckScanBuilder :: AnglesHeightsRadii -> Point -> ExceptStackCornerPointsBuilder
 testPrintTreadToCheckScanBuilder ahr origin = do
