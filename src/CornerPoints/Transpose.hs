@@ -4,7 +4,8 @@ module CornerPoints.Transpose (
 transposeZ,
 transposeX,
 transposeY,
-transposeZWithList
+transposeZWithList,
+transposeZWithList'
 ) where
 import CornerPoints.CornerPoints
 import CornerPoints.Points(Point(..), transposeZ)
@@ -387,5 +388,12 @@ transposeZWithList :: [Double] -> [CornerPoints] -> [CornerPoints]
 transposeZWithList doubles cPoints =
   [ transposeZ (+ double) cPoint 
    | double <- doubles
+   | cPoint <- cPoints
+  ]
+
+transposeZWithList' :: [(Double -> Double)] -> [CornerPoints] -> [CornerPoints]
+transposeZWithList' doublesFx cPoints =
+  [ transposeZ (doubleFx) cPoint 
+   | doubleFx <- doublesFx
    | cPoint <- cPoints
   ]
