@@ -61,7 +61,7 @@ import Control.Lens
 makeLenses ''AngleHeightRadius
 
 
-currentBuilder = btmFlexBuilder
+currentBuilder = heelFlexToeFlatTopAndBtmTreadBuilder
                  
 
 --The range of angles that define the heel/flex/toe sections. Reused > 1 fx.
@@ -222,14 +222,9 @@ topHeelFlexToeBuilder :: AnglesHeightsRadii -> Point -> ExceptStackCornerPointsB
 topHeelFlexToeBuilder ahr origin = do
 
   let
-    --Creat a series of angles that will define the <heel/flex/toe> sections, all of which can be printed from this fx.
-    --Set the <leading/trailing>Angles to the target <heel/flex/toe> angle sections to print target section.
-    leadingAngles ang  = flexLeadingAngles ang
-
-    trailingAngles ang = flexTrailingAngles ang
-    
-    ahrPre180  = filter (\(AngleHeightRadius ang _ _ _) -> leadingAngles ang) ahr
-    ahrPost180 = reverse $ filter (\(AngleHeightRadius ang _ _ _) -> trailingAngles ang) ahr
+       
+    ahrPre180  = filter (\(AngleHeightRadius ang _ _ _) -> flexLeadingAngles ang) ahr
+    ahrPost180 = reverse $ filter (\(AngleHeightRadius ang _ _ _) -> flexTrailingAngles ang) ahr
     
     extractedPreRadii = extractRadii ahrPre180
     extractedPreAngles = extractAngles ahrPre180
@@ -314,13 +309,13 @@ Divide the scan in half along the y_axis, create a grid using createYaxisGrid fr
 Recombine the 2 sides with zip. Should be the same length as they were made with createYaxisGrid.
 Will need to print each section separate as the flex section is done with Cheetah, while the heel-toe will be rigid.
 -}
-heelToeFlatTopAndBtmTreadBuilder :: AnglesHeightsRadii -> Point -> ExceptStackCornerPointsBuilder
-heelToeFlatTopAndBtmTreadBuilder ahr origin = do
+heelFlexToeFlatTopAndBtmTreadBuilder :: AnglesHeightsRadii -> Point -> ExceptStackCornerPointsBuilder
+heelFlexToeFlatTopAndBtmTreadBuilder ahr origin = do
 
   let
     --Use a series of angles that will define the <heel/toe> sections that are used to select/create the [AngleHeightRadius].
-    leadingAHR  = filter (\(AngleHeightRadius ang _ _ _) -> heelLeadingAngles ang) ahr
-    trailingAHR = reverse $ filter (\(AngleHeightRadius ang _ _ _) -> heelTrailingAngles ang) ahr
+    leadingAHR  = filter (\(AngleHeightRadius ang _ _ _) -> flexLeadingAngles ang) ahr
+    trailingAHR = reverse $ filter (\(AngleHeightRadius ang _ _ _) -> flexTrailingAngles ang) ahr
     
     leadingRadii = extractRadii leadingAHR
     leadingAngles = extractAngles leadingAHR
@@ -406,13 +401,14 @@ heelToeFlatTopAndBtmTreadBuilder ahr origin = do
 Build the heel/toe bottoms.
 Give them a flat top for printing, and for attaching to center riser sections.
 -}
-heelToeBtmBuilder :: AnglesHeightsRadii -> Point -> ExceptStackCornerPointsBuilder
-heelToeBtmBuilder ahr origin = do
+heelFlexToeBtmBuilder :: AnglesHeightsRadii -> Point -> ExceptStackCornerPointsBuilder
+heelFlexToeBtmBuilder ahr origin = do
 
   let
-    --Filter the AHR for leading/trailing sections of heel/toe
-    ahrPre180  = filter (\(AngleHeightRadius ang _ _ _) -> heelLeadingAngles ang) ahr
-    ahrPost180 = reverse $ filter (\(AngleHeightRadius ang _ _ _) -> heelTrailingAngles ang) ahr
+    --Filter the AHR for leading/trailing sections sides of target heel/flex/toe section
+    ahrPre180  = filter (\(AngleHeightRadius ang _ _ _) -> flexLeadingAngles ang) ahr
+    ahrPost180 = reverse $ filter (\(AngleHeightRadius ang _ _ _) -> flexTrailingAngles ang) ahr
+
     
     leadingRadii = extractRadii ahrPre180
     leadingAngles = extractAngles ahrPre180
