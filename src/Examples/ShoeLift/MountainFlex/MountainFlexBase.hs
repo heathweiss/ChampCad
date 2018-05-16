@@ -2,10 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ParallelListComp #-}
 {- |
-Build shoelift for Geox running shoes.
-Inside shoes with a 6cm lift that flexes at the toe.
-Will use a rubber bootie for the bottom tread so it will be a match to the top tread.
-
+Is this the mountain warehouse shoes that have the ankle brace that I scanned?
 -}
 
 module Examples.ShoeLift.MountainFlex.MountainFlexBase() where
