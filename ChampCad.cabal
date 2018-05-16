@@ -102,12 +102,16 @@ library
                        Examples.OpenBionicsOrg.FingerTubePlate
                        Examples.OpenBionicsOrg.FingerJoints
  
-                       Examples.ShoeLift.GermanHikers.GermanHikerBase                       
+                       Examples.ShoeLift.GermanHikers.GermanHikerBase    
+
+                       Examples.LineScanner.LineScanner                   
                        --Shapes
                        Primitives.Cylindrical.Walled, Primitives.Cubical
                        Primitives.Cylindrical.Solid
                        Primitives.DiamondCutter
                        Primitives.DiamondCutterDB
+
+   
                        
                        --Scanning
                        Scan.Filter,
