@@ -5,6 +5,7 @@
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE ParallelListComp           #-}
 
 module Persistable.Radial (Layer(..), AngleHeightRadius(..), AnglesHeightsRadii(..), nameUnique', angleHeightRadius', layerId',
                            angleHeightRadiusLayerId', extractAnglesHeightsRadiiFromEntity, ExtractedAngleHeightRadius(..),
@@ -20,7 +21,7 @@ import CornerPoints.CornerPoints(CornerPoints(..), (+++),(+++>),(|+++|))
 import CornerPoints.Radius (Radius(..))
 import Geometry.Angle(Angle(..))
 
---import Data.Text
+import qualified  Data.Text as T
 
 {- | -------------------------overview---------------------------------------------
 Create persist Datatypes that map [Radius] and [Angle] to a layer that has an associated origin.
@@ -157,17 +158,69 @@ extractAnglesHeightsRadiiFromEntity anglesHeightsRadii =
 -- A handy wrapper used for extracting the [Angle], [Height], [Radius] the Persist layers.
 -- Gets used to pass from the database extraction function to the Builder function
 data ExtractedAngleHeightRadius = ExtractedAngleHeightRadius
-                                   {angles :: [Angle],
-                                    heights :: [Height],
-                                    radii :: [Radius]
+                                   {_angleEAHR :: Angle,
+                                    _heightEAHR :: Height,
+                                    _radiusEAHR :: Radius
                                    }
                                    deriving (Show)
 
 --will fail if layerName is not valid.
 --Thought monad would protect from that.
-loadAndExtractedAngleHeightRadiusFromDB :: String -> IO (ExtractedAngleHeightRadius)
-loadAndExtractedAngleHeightRadiusFromDB  layerName = runSqlite databaseName $ do
-  layerId <- getBy $ nameUnique' layerName --top = geox. bottom = golf
+loadAndExtractedAngleHeightRadiusFromDB :: String -> String -> IO (Maybe [ExtractedAngleHeightRadius])
+loadAndExtractedAngleHeightRadiusFromDB  layerName dbName = runSqlite ( T.pack dbName) $ do
+  layerId <- getBy $ nameUnique' layerName 
+  
+
+  case layerId of
+    Nothing -> do
+      liftIO $ putStrLn "layer was not found"
+      return Nothing
+    (Just (Entity key layer1AHR)) -> do
+      liftIO $ putStrLn "layer was found"
+      angleHeightRadiusEntity <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId layerId)] []
+      let ahr = extractAnglesHeightsRadiiFromEntity angleHeightRadiusEntity
+          angles'  = extractAngles ahr
+          heights' = extractHeights ahr
+          radii'   = extractRadii ahr
+      return $ Just
+                 [ExtractedAngleHeightRadius a h r
+                   | a <-angles'
+                   | h <- heights'
+                   | r <- radii'
+                 ]
+      
+
+--
+
+{-
+loadAndExtractedAngleHeightRadiusFromDB :: String -> String -> IO (Maybe ExtractedAngleHeightRadius)
+loadAndExtractedAngleHeightRadiusFromDB  layerName dbName = runSqlite ( T.pack dbName) $ do
+  layerId <- getBy $ nameUnique' layerName 
+  
+
+  case layerId of
+    Nothing -> do
+      liftIO $ putStrLn "layer was not found"
+      return Nothing
+    (Just (Entity key layer1AHR)) -> do
+      liftIO $ putStrLn "layer was found"
+      angleHeightRadiusEntity <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId layerId)] []
+      let ahr = extractAnglesHeightsRadiiFromEntity angleHeightRadiusEntity
+          angles'  = extractAngles ahr
+          heights' = extractHeights ahr
+          radii'   = extractRadii ahr
+      
+      return $ Just $ ExtractedAngleHeightRadius angles' heights' radii'
+
+
+
+
+
+
+
+loadAndExtractedAngleHeightRadiusFromDB :: String -> String -> IO (ExtractedAngleHeightRadius)
+loadAndExtractedAngleHeightRadiusFromDB  layerName dbName = runSqlite dbName $ do
+  layerId <- getBy $ nameUnique' layerName 
   angleHeightRadiusEntity <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId layerId)] []
   
   let ahr = extractAnglesHeightsRadiiFromEntity angleHeightRadiusEntity
@@ -175,3 +228,5 @@ loadAndExtractedAngleHeightRadiusFromDB  layerName = runSqlite databaseName $ do
       heights' = extractHeights ahr
       radii'   = extractRadii ahr
   return $ ExtractedAngleHeightRadius angles' heights' radii'
+
+-}
