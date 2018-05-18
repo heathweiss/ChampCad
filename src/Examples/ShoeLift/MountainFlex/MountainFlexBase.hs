@@ -2,17 +2,21 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ParallelListComp #-}
 {- |
-Is this the mountain warehouse shoes that have the ankle brace that I scanned?
+The mountain warehouse shoes that have the ankle brace that I scanned.
+
+Has a flexible toe by splitting the toe and gluing separately.
+Was going to have a semiflex section but did not work out. That is why there are 3 sections instead of 2.
 -}
 
 module Examples.ShoeLift.MountainFlex.MountainFlexBase() where
 
 import Joiners.RadialLines(getMinY, getMaxY, extractYaxis, createYaxisGrid, splitOnXaxis, buildLeftRightLineFromGridAndLeadingTrailingCPointsBase)
 
-import Database.Persist
+import Database.Persist 
 import Database.Persist.Sqlite
 import Database.Persist.TH
 import Control.Monad.IO.Class (liftIO)
+
 
 import Persistable.Radial (Layer(..), AngleHeightRadius(..), AnglesHeightsRadii(..), nameUnique', angleHeightRadius', layerId',
                            angleHeightRadiusLayerId', extractAnglesHeightsRadiiFromEntity, ExtractedAngleHeightRadius(..),
@@ -47,16 +51,18 @@ import CornerPoints.FaceExtraction(extractBackFace, extractBackTopLine, extractF
                                    extractFrontLeftLine, extractFrontRightLine, extractBackRightLine, extractBackLeftLine, extractBottomFace, extractBottomFrontLine,
                                    extractTopFace, extractB4, extractB3, extractB2, extractB1, extractF4, extractF3, extractF2, extractF1, extractBottomFace)
 
+
 import Stl.StlBase(Triangle(..), newStlShape)
 import Stl.StlCornerPoints((|+++^|), Faces(..) )
 import Stl.StlFileWriter(writeStlToFile)
 
 import TypeClasses.Transposable(transpose)
 
-import Control.Lens
+--import qualified Control.Lens as L
+import Control.Lens 
 
 makeLenses ''AngleHeightRadius
-
+makeLenses ''ExtractedAngleHeightRadius
 
 currentBuilder = heelFlexToeFlatTopAndBtmTreadBuilder
                  
@@ -771,3 +777,176 @@ btmFlexBuilderNFG ahr origin = do
   
   return bottomToothedLayerWithVarBtmAndFlatTop
 
+------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------Ankle brace -----------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------
+--use a separate runner as will need to load multiple layers from the db.
+calculateYValuesForGrid :: IO () 
+calculateYValuesForGrid = runSqlite "src/Examples/ShoeLift/MountainFlex/ankleBrace.db" $ do
+  let
+    --filters to split the AHR into leading/trailing section split on 180 deg.
+    leadingAnglesFilter ang  = (ang < 180.0)
+    trailingAnglesFilter ang = (ang > 181.0)
+    
+    --Create the <leading/trailing>Layers as F3:[F2] and then extract the y-axis values.
+    --Used to examine the y_axis values to make sure they are all ascending for grid creation.
+    --Will also be able to find the min/max y_axis values for creating the grid.
+    getFrontYaxisValues ahr  =
+            let frontTopLines =
+                  map
+                    (extractFrontTopLine)
+                    $ createTopFacesVariableHeight
+                        (Point 0 0 0) --origin
+                        (extractRadii ahr)
+                        (extractAngles ahr)
+                        (extractHeights ahr)
+
+            in
+            --Get F3 from leading FrontTopLine, and all the F2's, then extract the y_axis values
+            map (extractYaxis) $ (extractF3 $ head frontTopLines) :  map (extractF2) frontTopLines
+              
+    
+  layer1Id <- getBy $ nameUnique' "layer1"
+  layer1AHREntity <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId layer1Id)] []
+  
+  
+  case layer1Id of
+    Nothing -> liftIO $ putStrLn "layer1 was not found"
+    (Just (Entity key layer1AHR)) -> do
+      liftIO $ putStrLn "layer1 was found"
+      
+      let layer1AHR = wrapZeroDegreeToEndAs360Degree $ (extractAnglesHeightsRadiiFromEntity layer1AHREntity)
+          
+          --get the AHR for leading (pre 180 degrees) and trailing AHR
+          leadingAHR  = filter (\(AngleHeightRadius ang _ _ _) -> leadingAnglesFilter ang) layer1AHR
+          trailingAHR = {-reverse $-} filter (\(AngleHeightRadius ang _ _ _) -> trailingAnglesFilter ang) layer1AHR
+
+      --liftIO $ putStrLn "Look at leading ahr"
+      --liftIO $ print $ show $ (extractAnglesHeightsRadiiFromEntity layer1AHREntity)
+      --liftIO $ print $ show $ layer1AHR
+          
+      liftIO $ putStrLn "leading layer1 y values"
+      liftIO $ print $ show $ getFrontYaxisValues leadingAHR
+
+      liftIO $ putStrLn "trailing layer1 y values"
+      liftIO $ print $ show $ getFrontYaxisValues trailingAHR
+                            
+      leftOff
+        {-Should be able to get rid of this section as I now have the [ExtractedAngleHeightRadius]
+          section below, which works, kind of.
+        -}
+      
+
+--add the 0 degree scan value to the end of the scan as 360 degrees as is required to build a closed horizontal face.
+--Otherwise the scan will end at the last scanned degree of arount 359.
+wrapZeroDegreeToEndAs360Degree :: [AngleHeightRadius] -> [AngleHeightRadius]
+wrapZeroDegreeToEndAs360Degree ((AngleHeightRadius a h r i):xs) =
+      xs ++ [AngleHeightRadius 360 h r i]
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+--use ExtractedAngleHeightRadius to avoid all the Persistent baggage.
+--Will need to change ExtractedAngleHeightRadius to contain  Angle Height Radius and then use as a list because:
+--can't filter the list as the three values have been separated.
+
+calculateYValuesForGrid' :: IO (Maybe [ExtractedAngleHeightRadius] )
+calculateYValuesForGrid' = do
+ 
+  maybeExtractedAngleHeightRadius <- loadAndExtractedAngleHeightRadiusFromDB "layer11111" "src/Examples/ShoeLift/MountainFlex/ankleBrace.db"
+  case maybeExtractedAngleHeightRadius of
+    Nothing -> 
+      putStrLn "layer1 not found"
+      --return Nothing
+    Just (extractedAngleHeightRadius) -> do 
+      let 
+          leadingEAHR' = leadingAHR extractedAngleHeightRadius
+          trailingEAHR' = trailingAHR extractedAngleHeightRadius
+          trailingEAHR'' = wrapZeroDegreeToEndAs360Degree' leadingEAHR' trailingEAHR'
+      
+      putStrLn "leading layer1"
+      print $ show $ getFrontYaxisValues  leadingEAHR'
+      putStrLn "trailing layer1"
+      print $ show $ reverse $ getFrontYaxisValues  trailingEAHR''
+   
+  maybeExtractedAngleHeightRadius2 <- loadAndExtractedAngleHeightRadiusFromDB "layer2" "src/Examples/ShoeLift/MountainFlex/ankleBrace.db"
+  case maybeExtractedAngleHeightRadius2 of
+    Nothing -> 
+      putStrLn "layer2 not found"
+      --return Nothing
+    Just (extractedAngleHeightRadius) -> do 
+      let 
+          leadingEAHR' = leadingAHR extractedAngleHeightRadius
+          trailingEAHR' = trailingAHR extractedAngleHeightRadius
+          trailingEAHR'' = wrapZeroDegreeToEndAs360Degree' leadingEAHR' trailingEAHR'
+      
+      putStrLn "leading layer2"
+      print $ show $ getFrontYaxisValues  leadingEAHR'
+      putStrLn "trailing layer2"
+      print $ show $ reverse $ getFrontYaxisValues  trailingEAHR''
+ 
+   
+      
+  putStrLn "finished"
+
+  
+  return maybeExtractedAngleHeightRadius
+
+--add the 0 degree scan value to the end of the scan as 360 degrees as is required to build a closed horizontal face.
+--Otherwise the scan will end at the last scanned degree of arount 359.
+
+wrapZeroDegreeToEndAs360Degree' :: [ExtractedAngleHeightRadius] -> [ExtractedAngleHeightRadius] -> [ExtractedAngleHeightRadius]
+wrapZeroDegreeToEndAs360Degree' ((ExtractedAngleHeightRadius _ h r):leading) trailing =
+  trailing ++ [(ExtractedAngleHeightRadius (Angle 360) h r) ]
+
+
+--Create the <leading/trailing>Layers as F3:[F2] and then extract the y-axis values.
+--Used to examine the y_axis values to make sure they are all ascending for grid creation.
+--Will also be able to find the min/max y_axis values for creating the grid.
+
+getFrontYaxisValues ahr  =
+        let frontTopLines =
+              map
+                (extractFrontTopLine)
+                $ createTopFacesVariableHeight
+                    (Point 0 0 0) --origin
+                    (map (_radiusEAHR) ahr)
+                    (map (_angleEAHR) ahr)
+                    (map (_heightEAHR) ahr)
+                    
+
+        in
+        --Get F3 from leading FrontTopLine, and all the F2's, then extract the y_axis values
+        map (extractYaxis) $ (extractF3 $ head frontTopLines) :  map (extractF2) frontTopLines
+
+
+
+leadingAnglesFilter (Angle ang)  = (ang < 180.0)
+trailingAnglesFilter (Angle ang) = (ang > 181.0)
+
+
+leadingAHR layerEAHR  = filter (\(ExtractedAngleHeightRadius ang _ _ ) -> leadingAnglesFilter ang) layerEAHR
+trailingAHR layerEAHR = {-reverse $-} filter (\(ExtractedAngleHeightRadius ang _ _ ) -> trailingAnglesFilter ang) layerEAHR
+
+leftOff
+        {-need to adjust Radius of layer1 angle 0 as it's yval is less than the next angle.
+          Should wait till I see all the values.
+
+         Should I create a fx to get the min/max y values or just look them over and pick them manually.
+         If I do want to get min/max values, will need to make this a Monad transformer so the Maybe part works
+         when a layer fails to load.
+         -}
