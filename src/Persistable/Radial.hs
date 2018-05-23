@@ -9,7 +9,8 @@
 
 module Persistable.Radial (Layer(..), AngleHeightRadius(..), AnglesHeightsRadii(..), nameUnique', angleHeightRadius', layerId',
                            angleHeightRadiusLayerId', extractAnglesHeightsRadiiFromEntity, ExtractedAngleHeightRadius(..),
-                           extractRadii, extractAngles, extractHeights, extractLayerId, extractOrigin, loadAndExtractedAngleHeightRadiusFromDB) where
+                           extractRadii, extractAngles, extractHeights, extractLayerId, extractOrigin,
+                           loadAndExtractedAngleHeightRadiusFromDB, loadAndExtractedAngleHeightRadiusFromDbT) where
 
 import Control.Monad.IO.Class  (liftIO)
 import Database.Persist
@@ -22,6 +23,17 @@ import CornerPoints.Radius (Radius(..))
 import Geometry.Angle(Angle(..))
 
 import qualified  Data.Text as T
+
+import Control.Monad.Trans.Except
+import Control.Monad.Trans.Maybe
+import Control.Monad
+import Control.Monad.Trans
+import Control.Monad.State.Lazy hiding (get)
+import qualified Control.Monad.State.Lazy as ST (get)
+import Control.Monad.State
+import Control.Monad.Except
+import Control.Monad.Writer (WriterT, tell, execWriterT)
+import Control.Monad.Reader
 
 {- | -------------------------overview---------------------------------------------
 Create persist Datatypes that map [Radius] and [Angle] to a layer that has an associated origin.
@@ -193,6 +205,7 @@ loadAndExtractedAngleHeightRadiusFromDB  layerName dbName = runSqlite ( T.pack d
 --
 
 {-
+
 loadAndExtractedAngleHeightRadiusFromDB :: String -> String -> IO (Maybe ExtractedAngleHeightRadius)
 loadAndExtractedAngleHeightRadiusFromDB  layerName dbName = runSqlite ( T.pack dbName) $ do
   layerId <- getBy $ nameUnique' layerName 
@@ -230,3 +243,50 @@ loadAndExtractedAngleHeightRadiusFromDB  layerName dbName = runSqlite dbName $ d
   return $ ExtractedAngleHeightRadius angles' heights' radii'
 
 -}
+
+
+
+{-
+----------------------------------------------NFG-----------------------------------------------------
+Will not compile unless I return a [] when layerId is Nothing.
+Need to return Nothing.
+
+Look at the monad-persist package which is is the Persistent mtl instance.
+Maybe use in conjunction with: "build a haskell web api example by: lettier.github.io
+-}
+loadAndExtractedAngleHeightRadiusFromDbT :: String -> String -> MaybeT IO [ExtractedAngleHeightRadius]
+loadAndExtractedAngleHeightRadiusFromDbT  layerName dbName = do
+  n <-
+   runSqlite ( T.pack dbName) $ do
+     layerId <- getBy $ nameUnique' layerName
+  
+  
+  
+     case layerId of
+       Nothing -> do
+         --liftIO $ putStrLn "layer was not found"
+         return [] -- works
+         --Nothing --not work
+         --return Nothing -- not work
+         
+       
+       
+       (Just (Entity key layer1AHR)) -> do
+         liftIO $ putStrLn "layer was found"
+         angleHeightRadiusEntity <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId layerId)] []
+         let ahr = extractAnglesHeightsRadiiFromEntity angleHeightRadiusEntity
+             angles'  = extractAngles ahr
+             heights' = extractHeights ahr
+             radii'   = extractRadii ahr
+         return $ 
+                    [ExtractedAngleHeightRadius a h r
+                      | a <-angles'
+                      | h <- heights'
+                      | r <- radii'
+                    ]
+ 
+
+  return n
+
+
+runner = runMaybeT $  loadAndExtractedAngleHeightRadiusFromDbT "layer1" "src/Examples/ShoeLift/MountainFlex/ankleBrace.db"
