@@ -10,7 +10,8 @@ Was going to have a semiflex section but did not work out. That is why there are
 
 module Examples.ShoeLift.MountainFlex.MountainFlexBase() where
 
-import Joiners.RadialLines(getMinY, getMaxY, extractYaxis, createYaxisGrid, splitOnXaxis, buildLeftRightLineFromGridAndLeadingTrailingCPointsBase)
+import Joiners.RadialLines(getMinY, getMaxY, extractYaxis, createYaxisGrid, splitOnXaxis,
+                           buildLeftRightLineFromGridAndLeadingTrailingCPointsBase)
 
 import Database.Persist 
 import Database.Persist.Sqlite
@@ -20,7 +21,8 @@ import Control.Monad.IO.Class (liftIO)
 
 import Persistable.Radial (Layer(..), AngleHeightRadius(..), AnglesHeightsRadii(..), nameUnique', angleHeightRadius', layerId',
                            angleHeightRadiusLayerId', extractAnglesHeightsRadiiFromEntity, ExtractedAngleHeightRadius(..),
-                           extractRadii, extractAngles, extractHeights, extractLayerId, extractOrigin, loadAndExtractedAngleHeightRadiusFromDB)
+                           extractRadii, extractAngles, extractHeights, extractLayerId, extractOrigin,
+                           loadAndExtractedAngleHeightRadiusFromDB, loadAndExtractedAngleHeightRadiusFromDbT)
 
 import Builder.Monad(BuilderError(..),
                      cornerPointsErrorHandler, buildCubePointsList, buildCubePointsListSingle,
@@ -788,69 +790,6 @@ btmFlexBuilderNFG ahr origin = do
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------------------------
---use a separate runner as will need to load multiple layers from the db.
-calculateYValuesForGrid :: IO () 
-calculateYValuesForGrid = runSqlite "src/Examples/ShoeLift/MountainFlex/ankleBrace.db" $ do
-  let
-    --filters to split the AHR into leading/trailing section split on 180 deg.
-    leadingAnglesFilter ang  = (ang < 180.0)
-    trailingAnglesFilter ang = (ang > 181.0)
-    
-    --Create the <leading/trailing>Layers as F3:[F2] and then extract the y-axis values.
-    --Used to examine the y_axis values to make sure they are all ascending for grid creation.
-    --Will also be able to find the min/max y_axis values for creating the grid.
-    getFrontYaxisValues ahr  =
-            let frontTopLines =
-                  map
-                    (extractFrontTopLine)
-                    $ createTopFacesVariableHeight
-                        (Point 0 0 0) --origin
-                        (extractRadii ahr)
-                        (extractAngles ahr)
-                        (extractHeights ahr)
-
-            in
-            --Get F3 from leading FrontTopLine, and all the F2's, then extract the y_axis values
-            map (extractYaxis) $ (extractF3 $ head frontTopLines) :  map (extractF2) frontTopLines
-              
-    
-  layer1Id <- getBy $ nameUnique' "layer1"
-  layer1AHREntity <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId layer1Id)] []
-  
-  
-  case layer1Id of
-    Nothing -> liftIO $ putStrLn "layer1 was not found"
-    (Just (Entity key layer1AHR)) -> do
-      liftIO $ putStrLn "layer1 was found"
-      
-      let layer1AHR = wrapZeroDegreeToEndAs360Degree $ (extractAnglesHeightsRadiiFromEntity layer1AHREntity)
-          
-          --get the AHR for leading (pre 180 degrees) and trailing AHR
-          leadingAHR  = filter (\(AngleHeightRadius ang _ _ _) -> leadingAnglesFilter ang) layer1AHR
-          trailingAHR = {-reverse $-} filter (\(AngleHeightRadius ang _ _ _) -> trailingAnglesFilter ang) layer1AHR
-
-      --liftIO $ putStrLn "Look at leading ahr"
-      --liftIO $ print $ show $ (extractAnglesHeightsRadiiFromEntity layer1AHREntity)
-      --liftIO $ print $ show $ layer1AHR
-          
-      liftIO $ putStrLn "leading layer1 y values"
-      liftIO $ print $ show $ getFrontYaxisValues leadingAHR
-
-      liftIO $ putStrLn "trailing layer1 y values"
-      liftIO $ print $ show $ getFrontYaxisValues trailingAHR
-                            
-      leftOff
-        {-Should be able to get rid of this section as I now have the [ExtractedAngleHeightRadius]
-          section below, which works, kind of.
-        -}
-      
-
---add the 0 degree scan value to the end of the scan as 360 degrees as is required to build a closed horizontal face.
---Otherwise the scan will end at the last scanned degree of arount 359.
-wrapZeroDegreeToEndAs360Degree :: [AngleHeightRadius] -> [AngleHeightRadius]
-wrapZeroDegreeToEndAs360Degree ((AngleHeightRadius a h r i):xs) =
-      xs ++ [AngleHeightRadius 360 h r i]
-
 --------------------------------------------------------------------------------------------------------------------------------------------------------
 --------------------------------------------------------------------------------------------------------------------------------------------------------
 --------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -861,64 +800,166 @@ wrapZeroDegreeToEndAs360Degree ((AngleHeightRadius a h r i):xs) =
 --------------------------------------------------------------------------------------------------------------------------------------------------------
 --------------------------------------------------------------------------------------------------------------------------------------------------------
 --use ExtractedAngleHeightRadius to avoid all the Persistent baggage.
---Will need to change ExtractedAngleHeightRadius to contain  Angle Height Radius and then use as a list because:
---can't filter the list as the three values have been separated.
+{-
+View all the ExtractedAngleHeightRadius to make sure the y_axis values all ascend
+for working with the radial grid. View manaully, as there is no auto system to ensure
+they all ascend.
 
-calculateYValuesForGrid' :: IO (Maybe [ExtractedAngleHeightRadius] )
-calculateYValuesForGrid' = do
- 
-  maybeExtractedAngleHeightRadius <- loadAndExtractedAngleHeightRadiusFromDB "layer11111" "src/Examples/ShoeLift/MountainFlex/ankleBrace.db"
-  case maybeExtractedAngleHeightRadius of
-    Nothing -> 
-      putStrLn "layer1 not found"
-      --return Nothing
-    Just (extractedAngleHeightRadius) -> do 
-      let 
-          leadingEAHR' = leadingAHR extractedAngleHeightRadius
-          trailingEAHR' = trailingAHR extractedAngleHeightRadius
-          trailingEAHR'' = wrapZeroDegreeToEndAs360Degree' leadingEAHR' trailingEAHR'
+Find the <min/max> y_axis value for setting up the radial grid
+
+--Problems:
+--Does not work as a Maybe.
+--Need to make a verion using MaybeT
+
+should look at the building web api example for how to do this using the same connection, or what about a connection pool?
+-}
+calculateYValuesForGrid :: IO (Maybe [ExtractedAngleHeightRadius] )
+calculateYValuesForGrid = do
+  let layer1Name = "layer1"
+      layer2Name = "layer2"
+      layer3Name = "layer3"
+      layer4Name = "layer4"
+      layer5Name = "layer5"
+      layer6Name = "layer6"
+      layer7Name = "layer7"
+      layer8Name = "layer8"
+      layer9Name = "layer9"
+      layer10Name = "layer10"
+      layer11Name = "layer11"
+      layer12Name = "layer12"
+      runMaybeExtractedAngleHeightRadius :: String ->  (Maybe [ExtractedAngleHeightRadius] ) -> IO ()
+      runMaybeExtractedAngleHeightRadius layerName eahr =
+        case eahr of
+          Nothing -> 
+            putStrLn $ layerName ++ " not found"
+            --return Nothing
+          Just (extractedAngleHeightRadius) -> do 
+            let 
+              leadingEAHR' = leadingEAHR extractedAngleHeightRadius
+              trailingEAHR' = trailingEAHR extractedAngleHeightRadius
+              trailingEAHR'' = wrapZeroDegreeToEndAs360Degree leadingEAHR' trailingEAHR'
       
-      putStrLn "leading layer1"
-      print $ show $ getFrontYaxisValues  leadingEAHR'
-      putStrLn "trailing layer1"
-      print $ show $ reverse $ getFrontYaxisValues  trailingEAHR''
-   
-  maybeExtractedAngleHeightRadius2 <- loadAndExtractedAngleHeightRadiusFromDB "layer2" "src/Examples/ShoeLift/MountainFlex/ankleBrace.db"
-  case maybeExtractedAngleHeightRadius2 of
-    Nothing -> 
-      putStrLn "layer2 not found"
-      --return Nothing
-    Just (extractedAngleHeightRadius) -> do 
-      let 
-          leadingEAHR' = leadingAHR extractedAngleHeightRadius
-          trailingEAHR' = trailingAHR extractedAngleHeightRadius
-          trailingEAHR'' = wrapZeroDegreeToEndAs360Degree' leadingEAHR' trailingEAHR'
+            putStrLn $  "leading " ++  layerName
+            print $ show $ extractY_axis  leadingEAHR'
+            putStrLn $ "trailing " ++ layerName
+            print $ show $ reverse $ extractY_axis  trailingEAHR''
+
       
-      putStrLn "leading layer2"
-      print $ show $ getFrontYaxisValues  leadingEAHR'
-      putStrLn "trailing layer2"
-      print $ show $ reverse $ getFrontYaxisValues  trailingEAHR''
- 
-   
-      
-  putStrLn "finished"
+      --get the minimum y_axis values for all the layers
+      --need to make a set of base fx's so that can also calc max by passing in minimum or maximum fx. 
+      minYaxis :: [Maybe [ExtractedAngleHeightRadius]] -> Double
+      minYaxis ((Just ex):exs) =
+        minYaxis' (minimum $ extractY_axis ex) exs
+      minYaxis' :: Double -> [Maybe [ExtractedAngleHeightRadius]] -> Double
+      minYaxis' currMin ((Just ex):exs)  =
+        let currMin' = minimum $ extractY_axis ex
+        in
+        case currMin' <= currMin of
+          True  -> minYaxis' currMin' exs 
+          False -> minYaxis' currMin exs
+      minYaxis' currMin []  = currMin
+      minYaxis' _ (Nothing:[])  =
+        999
+
+      maxYaxis :: [Maybe [ExtractedAngleHeightRadius]] -> Double
+      maxYaxis ((Just ex):exs) =
+        maxYaxis' (maximum $ extractY_axis ex) exs
+      maxYaxis' :: Double -> [Maybe [ExtractedAngleHeightRadius]] -> Double
+      maxYaxis' currMax ((Just ex):exs)  =
+        let currMax' = maximum $ extractY_axis ex
+        in
+        case currMax' >= currMax of
+          True  -> maxYaxis' currMax' exs 
+          False -> maxYaxis' currMax exs
+      maxYaxis' currMax []  = currMax
+      maxYaxis' _ (Nothing:[])  =
+        999
+        
+  maybeLayer1ExtractedAngleHeightRadius <- loadAndExtractedAngleHeightRadiusFromDB layer1Name "src/Examples/ShoeLift/MountainFlex/ankleBrace.db"
+  runMaybeExtractedAngleHeightRadius layer1Name maybeLayer1ExtractedAngleHeightRadius
+  --y_axis valus ascend good
+  --leading min y  -73.0078125
+  --trailing min y 
+
+  maybeLayer2ExtractedAngleHeightRadius <- loadAndExtractedAngleHeightRadiusFromDB layer2Name "src/Examples/ShoeLift/MountainFlex/ankleBrace.db"
+  runMaybeExtractedAngleHeightRadius layer2Name maybeLayer2ExtractedAngleHeightRadius
+  --y_axis valus ascend good
+
+  maybeLayer3ExtractedAngleHeightRadius <- loadAndExtractedAngleHeightRadiusFromDB layer3Name "src/Examples/ShoeLift/MountainFlex/ankleBrace.db"
+  runMaybeExtractedAngleHeightRadius layer3Name maybeLayer3ExtractedAngleHeightRadius
+  --y_axis valus ascend good
+
+  maybeLayer4ExtractedAngleHeightRadius <- loadAndExtractedAngleHeightRadiusFromDB layer4Name "src/Examples/ShoeLift/MountainFlex/ankleBrace.db"
+  runMaybeExtractedAngleHeightRadius layer4Name maybeLayer4ExtractedAngleHeightRadius
+
+  maybeLayer5ExtractedAngleHeightRadius <- loadAndExtractedAngleHeightRadiusFromDB layer5Name "src/Examples/ShoeLift/MountainFlex/ankleBrace.db"
+  runMaybeExtractedAngleHeightRadius layer5Name maybeLayer5ExtractedAngleHeightRadius
+
+  maybeLayer6ExtractedAngleHeightRadius <- loadAndExtractedAngleHeightRadiusFromDB layer6Name "src/Examples/ShoeLift/MountainFlex/ankleBrace.db"
+  runMaybeExtractedAngleHeightRadius layer6Name maybeLayer6ExtractedAngleHeightRadius
+
+  maybeLayer7ExtractedAngleHeightRadius <- loadAndExtractedAngleHeightRadiusFromDB layer7Name "src/Examples/ShoeLift/MountainFlex/ankleBrace.db"
+  runMaybeExtractedAngleHeightRadius layer7Name maybeLayer7ExtractedAngleHeightRadius
+
+  maybeLayer8ExtractedAngleHeightRadius <- loadAndExtractedAngleHeightRadiusFromDB layer8Name "src/Examples/ShoeLift/MountainFlex/ankleBrace.db"
+  runMaybeExtractedAngleHeightRadius layer8Name maybeLayer8ExtractedAngleHeightRadius
+
+  maybeLayer9ExtractedAngleHeightRadius <- loadAndExtractedAngleHeightRadiusFromDB layer9Name "src/Examples/ShoeLift/MountainFlex/ankleBrace.db"
+  runMaybeExtractedAngleHeightRadius layer9Name maybeLayer9ExtractedAngleHeightRadius
+
+  maybeLayer10ExtractedAngleHeightRadius <- loadAndExtractedAngleHeightRadiusFromDB layer10Name "src/Examples/ShoeLift/MountainFlex/ankleBrace.db"
+  runMaybeExtractedAngleHeightRadius layer10Name maybeLayer10ExtractedAngleHeightRadius
+
+  maybeLayer11ExtractedAngleHeightRadius <- loadAndExtractedAngleHeightRadiusFromDB layer11Name "src/Examples/ShoeLift/MountainFlex/ankleBrace.db"
+  runMaybeExtractedAngleHeightRadius layer11Name maybeLayer11ExtractedAngleHeightRadius
+
+  maybeLayer12ExtractedAngleHeightRadius <- loadAndExtractedAngleHeightRadiusFromDB layer12Name "src/Examples/ShoeLift/MountainFlex/ankleBrace.db"
+  runMaybeExtractedAngleHeightRadius layer12Name maybeLayer12ExtractedAngleHeightRadius
+
+  let
+    maybeLayerExtractedAngleHeightRadiusList =
+     [maybeLayer1ExtractedAngleHeightRadius,
+      maybeLayer2ExtractedAngleHeightRadius,
+      maybeLayer3ExtractedAngleHeightRadius,
+      maybeLayer4ExtractedAngleHeightRadius,
+      maybeLayer5ExtractedAngleHeightRadius,
+      maybeLayer6ExtractedAngleHeightRadius,
+      maybeLayer7ExtractedAngleHeightRadius,
+      maybeLayer8ExtractedAngleHeightRadius,
+      maybeLayer9ExtractedAngleHeightRadius,
+      maybeLayer10ExtractedAngleHeightRadius,
+      maybeLayer11ExtractedAngleHeightRadius,
+      maybeLayer12ExtractedAngleHeightRadius
+     ]
+  
+  putStrLn "min y_axis value"
+  print $ show $ minYaxis maybeLayerExtractedAngleHeightRadiusList
+  putStrLn "max y_axis value"
+  print $ show $ maxYaxis maybeLayerExtractedAngleHeightRadiusList
+  
+  
+  return maybeLayer11ExtractedAngleHeightRadius
+
+--run calculateYValuesForGrid without view a [ExtractedAngleHeightRadius]
+runCalculateYValuesForGrid' :: IO ()
+runCalculateYValuesForGrid' = do
+  t <- calculateYValuesForGrid
+  putStrLn "finished runCalculateYValuesForGrid'"
 
   
-  return maybeExtractedAngleHeightRadius
-
---add the 0 degree scan value to the end of the scan as 360 degrees as is required to build a closed horizontal face.
---Otherwise the scan will end at the last scanned degree of arount 359.
-
-wrapZeroDegreeToEndAs360Degree' :: [ExtractedAngleHeightRadius] -> [ExtractedAngleHeightRadius] -> [ExtractedAngleHeightRadius]
-wrapZeroDegreeToEndAs360Degree' ((ExtractedAngleHeightRadius _ h r):leading) trailing =
+--Add the 0 degree scan value to the end of the scan as 360 degrees as is required to build a closed horizontal face.
+--Otherwise the scan will end at the last scanned degree of around 359.
+wrapZeroDegreeToEndAs360Degree :: [ExtractedAngleHeightRadius] -> [ExtractedAngleHeightRadius] -> [ExtractedAngleHeightRadius]
+wrapZeroDegreeToEndAs360Degree ((ExtractedAngleHeightRadius _ h r):leading) trailing =
   trailing ++ [(ExtractedAngleHeightRadius (Angle 360) h r) ]
 
 
---Create the <leading/trailing>Layers as F3:[F2] and then extract the y-axis values.
---Used to examine the y_axis values to make sure they are all ascending for grid creation.
---Will also be able to find the min/max y_axis values for creating the grid.
-
-getFrontYaxisValues ahr  =
+--Use [ExtractedAngleHeightRadius] to create  F3:[F2] and then extract the y-axis values.
+--Known uses:
+---Examine the y_axis values to make sure they are all ascending for grid creation.
+---Find the min/max y_axis values for creating the radial grid.
+extractY_axis :: [ExtractedAngleHeightRadius] -> [Double]
+extractY_axis ahr  =
         let frontTopLines =
               map
                 (extractFrontTopLine)
@@ -934,15 +975,18 @@ getFrontYaxisValues ahr  =
         map (extractYaxis) $ (extractF3 $ head frontTopLines) :  map (extractF2) frontTopLines
 
 
-
+--Filter values to find pre/post 180 deg [ExtractedAngleHeightRadius] by filtering on Angle.
+--Used by <leading/trailing>AHR
 leadingAnglesFilter (Angle ang)  = (ang < 180.0)
 trailingAnglesFilter (Angle ang) = (ang > 181.0)
 
+--apply leadingAnglesFilter to find the pre/post 180 deg [ExtractedAngleHeightRadius]
+leadingEAHR :: [ExtractedAngleHeightRadius] -> [ExtractedAngleHeightRadius]
+leadingEAHR layerEAHR  = filter (\(ExtractedAngleHeightRadius ang _ _ ) -> leadingAnglesFilter ang) layerEAHR
+trailingEAHR :: [ExtractedAngleHeightRadius] -> [ExtractedAngleHeightRadius]
+trailingEAHR layerEAHR = {-reverse $-} filter (\(ExtractedAngleHeightRadius ang _ _ ) -> trailingAnglesFilter ang) layerEAHR
 
-leadingAHR layerEAHR  = filter (\(ExtractedAngleHeightRadius ang _ _ ) -> leadingAnglesFilter ang) layerEAHR
-trailingAHR layerEAHR = {-reverse $-} filter (\(ExtractedAngleHeightRadius ang _ _ ) -> trailingAnglesFilter ang) layerEAHR
-
-leftOff
+--leftOff
         {-need to adjust Radius of layer1 angle 0 as it's yval is less than the next angle.
           Should wait till I see all the values.
 
@@ -950,3 +994,6 @@ leftOff
          If I do want to get min/max values, will need to make this a Monad transformer so the Maybe part works
          when a layer fails to load.
          -}
+
+
+
