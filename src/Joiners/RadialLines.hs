@@ -13,7 +13,7 @@ Should extend off both ends of the shape.
 
 -}
 
-module Joiners.RadialLines(getMinY, getMaxY, extractYaxis, createYaxisGrid,
+module Joiners.RadialLines(getMinY, getMaxY, extractYaxis, createYaxisGridFromTopFrontPoints,
                            splitOnXaxis, buildLeftRightLineFromGridAndLeadingTrailingCPointsBase) where
 
 import Test.HUnit
@@ -30,67 +30,6 @@ import Data.List(find)
 
 import Helpers.Applicative(extractE, removeMaybe, appendE)
 
-radialLinesTestDo = do
-  putStrLn ""
-  putStrLn ""
-  putStrLn ""
-  putStrLn "RadialLinesTest"
-  --runTestTT seeRadialShapeAsTopFrontPointsTest
-  --runTestTT seeLeadingRadialShapeAsTopFrontPointsTest
-  runTestTT seeTrailingRadialShapeAsTopFrontPointsTest
-  runTestTT seeMinYCpointOfLeadingRadialShapeAsTopFrontPointsTest
-  runTestTT seeMinYCpointOfTrailingRadialShapeAsTopFrontPointsTest
-  runTestTT seeMaxYCpointOfLeadingRadialShapeAsTopFrontPointsTest
-  runTestTT seeMaxYCpointOfTrailingRadialShapeAsTopFrontPointsTest
-  runTestTT generateYaxisListOfCubesToCreateTest
-  --getLeadingCPoint
-  runTestTT getLeadingCPointExistsTest
-  runTestTT getLeadingCPointExistsTest2
-  runTestTT getLeadingCPointExistsTest3
-  runTestTT getLeadingCPointExistsTest4
-  runTestTT getLeadingCPointExistsTest5
-  runTestTT getLeadingCPointExistsTest6
-  runTestTT getLeadingCPointExistsTest7
-  --getTrailingCPoint
-  runTestTT getTrailingCPointExistsTest
-  runTestTT getTrailingCPointExistsTest2
-  runTestTT getTrailingCPointExistsTest3
-  runTestTT getTrailingCPointExistsTest4
-  runTestTT getTrailingCPointExistsTest5
-  runTestTT getTrailingCPointExistsTest6
-  runTestTT getTrailingCPointExistsTest7
-
-  --find the center point
-  
-  runTestTT leadingRatioFromDoubleTest
-  runTestTT leadingRatioFromDoubleTest2
-  runTestTT leadingRatioFromDoubleTest3
-  runTestTT leadingRatioFromCPointsTest
-  runTestTT leadingRatioFromCPointsTest2
-  runTestTT leadingRatioFromCPointsTest3
-  ---------------------------
-  runTestTT adjustAxisTest
-  runTestTT adjustAxisTest2
-  runTestTT adjustAxisTest3
-  runTestTT adjustAxisTest4
-  runTestTT adjustCornerPointsTest
-  runTestTT adjustCornerPointsTest2
-  runTestTT adjustCornerPointsTest3
-
-  -------------- create the final topFaces grid ------------------------------------
-  runTestTT buildGridTopFacesTest
-  ----------------------- removed items I should not need--------------------
-  --runTestTT containsYaxisValueNotTest
-  --runTestTT containsYaxisValueTrueTest
-  --runTestTT containsCpointWithYaxisValueLTTargetValFalseTest
-  --runTestTT containsCpointWithYaxisValueLTTargetValTrueTest
-  --runTestTT getLargestCpointWithLTEYvalExists
-  --runTestTT getLargestCpointWithLTEYvalNotExists
-  --runTestTT getLargestCpointWithLTEYvalExactlyExists
-  --runTestTT getMatchingCPointExistTest
-  --runTestTT getMatchingCPointNoExistTest
-  --runTestTT getMatchingCPointUnhandledTest
-  
 radialShapeAsTopFrontPoints =
   let
     circle = createTopFacesVariableHeight
@@ -101,21 +40,14 @@ radialShapeAsTopFrontPoints =
     frontTopLines = map (extractFrontTopLine) circle
   in (extractF3 $ head frontTopLines) :  map (extractF2) frontTopLines
 
---can go into RadialLines
+
 splitOnXaxis :: (Double -> Double -> Bool) -> Double -> CornerPoints -> Bool
 splitOnXaxis tester splitterVal (F2 (Point x _ _))  = 
   tester x splitterVal 
 splitOnXaxis tester splitterVal (F3 (Point x _ _))  = 
   tester x splitterVal 
 
-  
-leadingRadialShapeAsTopFrontPoints = filter (splitOnXaxis (>) 0) radialShapeAsTopFrontPoints
 
-trailingRadialShapeAsTopFrontPoints =
-  let list = filter (splitOnXaxis (<) 0) radialShapeAsTopFrontPoints
-  in
-    --(toF3 $ head list ) : (tail list)
-    list
 --can be moved to RadialLines, or somewhere
 getMinY :: [CornerPoints] -> CornerPoints
 getMinY ((F2 (Point x y z)):cpoints) =
@@ -165,9 +97,18 @@ get the min/max values to create the range of values.
 Start the [double] at minY
 -increment up to next event double and run list to max y
 -
+was: createYaxisGridFromCompleteTopRadialShapeSplitOnZeroOfXaxis
 -}
-createYaxisGrid :: [CornerPoints] -> [Double]
-createYaxisGrid radialShapeAsTopFrontPoints =
+createYaxisGridFromTopFrontPoints :: [CornerPoints] -> [Double]
+createYaxisGridFromTopFrontPoints radialShapeAsTopFrontPoints =
+    createYaxisGridFromMinMaxY
+      (extractYaxis $ getMinY radialShapeAsTopFrontPoints)
+      (extractYaxis $ getMaxY radialShapeAsTopFrontPoints)
+
+{-
+before getting rid of all the leading\trailing stuff
+createYaxisGridFromCompleteTopRadialShapeSplitOnZeroOfXaxis :: [CornerPoints] -> [Double]
+createYaxisGridFromCompleteTopRadialShapeSplitOnZeroOfXaxis radialShapeAsTopFrontPoints =
   let
     leadingFrontTopPoints  = filter (splitOnXaxis (>) 0) radialShapeAsTopFrontPoints
     trailingFrontTopPoints = filter (splitOnXaxis (<) 0) radialShapeAsTopFrontPoints
@@ -187,20 +128,37 @@ createYaxisGrid radialShapeAsTopFrontPoints =
 
     
   in
-    case minY == (fromIntegral $ floor minY) of
-      True ->
-        case maxY == (fromIntegral $ floor maxY) of
-          True -> [minY, (minY + 1)..maxY]
-          False -> [minY, (minY + 1)..(fromIntegral $ floor maxY)] ++ [maxY]
-      False ->
-        case maxY == (fromIntegral $ floor maxY) of
-          True -> minY : [(fromIntegral $ ceiling minY), ((fromIntegral $ ceiling minY) + 1)..maxY]
-          False -> minY : [(fromIntegral $ ceiling minY), ((fromIntegral $ ceiling minY) + 1)..(fromIntegral $ floor maxY)] ++ [maxY]
+  createYaxisGridFromMinMaxY minY maxY
+
+-}
+--Create a [Double] from min Yaxis to max Yaxis, spaced at 1mm except for the initial min/max positions, which may not start at even numbers.
+--If a minY value is not an even #, then start the grid at minY, then move up to the next even # before proceeding every 1 mm.
+--If a maxY value is not an even #, then end the grid 1mm values at the preceding even #, followed by the maxY 
+--Know uses:
+----createYaxisGridFromTopFrontPoints creates grid for a horizontal radial shape of F3:[F2]
+createYaxisGridFromMinMaxY :: Double -> Double -> [Double]
+createYaxisGridFromMinMaxY minY maxY =
+  let
+    --is <min/max>Y and even number?
+    isAnEvenNumber :: Double -> Bool
+    isAnEvenNumber yval = yval == (fromIntegral $ floor minY)
+    --build the grid based on combination of <min/max>Y being even/uneven. 
+    gridFromEvenMinMaxY = minY : [(fromIntegral $ ceiling minY), ((fromIntegral $ ceiling minY) + 1)..maxY]
+    gridFromEvenMinYUnevenMaxY = [minY, (minY + 1)..(fromIntegral $ floor maxY)] ++ [maxY]
+    gridFromUnevenMinYUnevenMaxY = minY : [(fromIntegral $ ceiling minY), ((fromIntegral $ ceiling minY) + 1)..(fromIntegral $ floor maxY)] ++ [maxY] 
+    gridFromUnevenMinYEvenMaxY = minY : [(fromIntegral $ ceiling minY), ((fromIntegral $ ceiling minY) + 1)..maxY]
   
-
-
-
-
+  in
+  case (isAnEvenNumber minY)  of
+      True ->
+        case (isAnEvenNumber maxY)  of
+          True -> gridFromEvenMinMaxY
+          False -> gridFromEvenMinYUnevenMaxY
+      False ->
+        case (isAnEvenNumber maxY)  of
+          True -> gridFromUnevenMinYEvenMaxY
+          False -> gridFromUnevenMinYUnevenMaxY
+          
 
 -----------------------------------------------------------------------------------------------------------------------------------------------
 ---------------------------------------------------get<Leading/Trailing>CPoint-----------------------------------------------------------------
@@ -552,205 +510,6 @@ combineLeftRightTrailingLeadingCPoints (Just leadingCPoints) (Just trailingCPoin
 combineLeftRightTrailingLeadingCPoints (Just leadingCPoints) Nothing =
   Just $ leadingCPoints +++ trailingCPoints
 -}
---------------------------------------------------------------------------------------------------------------------------------------
---------------------------------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------Tests----------------------------------------------------------------
---------------------------------------------------------------------------------------------------------------------------------------
---------------------------------------------------------------------------------------------------------------------------------------
---------------------------------------------------------------------------------------------------------------------------------------
-
-------------------------------------------- look at the [CornerPoints]----------------------------------------------------------------
-seeRadialShapeAsTopFrontPointsTest = TestCase $ assertEqual
-  "look at complete radial shape as front points"
-  ([])
-  (radialShapeAsTopFrontPoints)
-
-
-seeLeadingRadialShapeAsTopFrontPointsTest = TestCase $ assertEqual
-  "see the leading section of radial shape as front points"
-  ([])
-  (leadingRadialShapeAsTopFrontPoints)
-
-seeTrailingRadialShapeAsTopFrontPointsTest = TestCase $ assertEqual
-  "see the trailing section of radial shape as front points"
-  ([])
-  (trailingRadialShapeAsTopFrontPoints)
-
------------------------------------------------------see min/may y vals and generate grid [double]--------------------------------------
-seeMinYCpointOfLeadingRadialShapeAsTopFrontPointsTest = TestCase $ assertEqual
-  "get the cpoint with min y val of the leading radial shape"
-  (F3 {f3 = Point {x_axis = 1.7364817766693033, y_axis = -9.84807753012208, z_axis = 10.0}})
-  --(CornerPointsError "filler")
-  (getMinY leadingRadialShapeAsTopFrontPoints)
-
-seeMinYCpointOfTrailingRadialShapeAsTopFrontPointsTest = TestCase $ assertEqual
-  "get the cpoint with min y val of the trailiing radial shape"
-  (F2 {f2 = Point {x_axis = -0.8715574274765816, y_axis = -9.961946980917455, z_axis = 10.0}})
-  --(CornerPointsError "filler")
-  (getMinY trailingRadialShapeAsTopFrontPoints)
-
-
-seeMaxYCpointOfLeadingRadialShapeAsTopFrontPointsTest = TestCase $ assertEqual
-  "get the cpoint with max y val of the leading radial shape"
-  (F2 {f2 = Point {x_axis = 1.7364817766693033, y_axis = 9.84807753012208, z_axis = 10.0}})
-  --(CornerPointsError "filler")
-  (getMaxY leadingRadialShapeAsTopFrontPoints)
-
-
-seeMaxYCpointOfTrailingRadialShapeAsTopFrontPointsTest = TestCase $ assertEqual
-  "get the cpoint with max y val of the trailiing radial shape"
-  (F2 {f2 = Point {x_axis = -1.7364817766693033, y_axis = 9.84807753012208, z_axis = 10.0}})
-  --(CornerPointsError "filler")
-  (getMaxY trailingRadialShapeAsTopFrontPoints)
-
-generateYaxisListOfCubesToCreateTest = TestCase $ assertEqual
-  "generateYaxisListOfCubesToCreate"
-  ([-9.961946980917455,-9.0,-8.0,-7.0,-6.0,-5.0,-4.0,-3.0,-2.0,-1.0,0.0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0,9.84807753012208])
-  (createYaxisGrid radialShapeAsTopFrontPoints)
-
-
--------------------------------------------------------------------------------------------------------------------------------
-----------------------------------------------get<Leading/Trailing>CPoint -----------------------------------------------------
-
-
-------------------------------------------------get leadingCPoint--------------------------------------------------------------
-getLeadingCPointExistsTest = TestCase $ assertEqual
-  "exists: getLeadingCPoint"
-  (Right $ Just $ F2 {f2 = Point {x_axis = 9.84807753012208, y_axis = 1.7364817766693041, z_axis = 10.0}})
-  (getLeadingCPoint 2 leadingRadialShapeAsTopFrontPoints)
-
-getLeadingCPointExistsTest2 = TestCase $ assertEqual
-  "not exists due to too small of target value: getLeadingCPoint"
-  (Right Nothing)
-  (getLeadingCPoint (-100) leadingRadialShapeAsTopFrontPoints)
-
-getLeadingCPointExistsTest3 = TestCase $ assertEqual
-  "error due to empty list: getLeadingCPoint"
-  (Left "getLeadingCPoint: empty [CornerPoints] passed in")
-  (getLeadingCPoint 5 [])
-
-getLeadingCPointExistsTest4 = TestCase $ assertEqual
-  "gets 1 and only valid cpoint: getLeadingCPoint"
-  (Right (Just (F2 {f2 = Point {x_axis = 3.420201433256687, y_axis = 9.396926207859085, z_axis = 10.0}})))
-  (getLeadingCPoint 5 [F2 {f2 = Point {x_axis = 3.420201433256687, y_axis = 9.396926207859085, z_axis = 10.0}}])
-
-getLeadingCPointExistsTest5 = TestCase $ assertEqual
-  "gets 2nd of 2 cpoints: getLeadingCPoint"
-  (Right (Just (F2 {f2 = Point {x_axis = 9.84807753012208, y_axis = 4.736481776669304, z_axis = 10.0}})))
-  (getLeadingCPoint 5 [F2 {f2 = Point {x_axis = 3.420201433256687, y_axis = 1.396926207859085, z_axis = 10.0}},
-                       F2 {f2 = Point {x_axis = 9.84807753012208, y_axis = 4.7364817766693041, z_axis = 10.0}}
-                      ])
-
-getLeadingCPointExistsTest6 = TestCase $ assertEqual
-  "gets the last of many cpoints: getLeadingCPoint"
-  (Right (Just (F2 {f2 = Point {x_axis = 1.7364817766693033, y_axis = 9.84807753012208, z_axis = 10.0}})))
-  (getLeadingCPoint 50 leadingRadialShapeAsTopFrontPoints)
-
-getLeadingCPointExistsTest7 = TestCase $ assertEqual
-  "exact match will result in leading == trailing: get<Leading/Trailing>CPoint"
-  (Right (Just (F2 {f2 = Point {x_axis = 7.66044443118978, y_axis = -6.427876096865393, z_axis = 10.0}})),
-   Right (Just (F2 {f2 = Point {x_axis = 7.66044443118978, y_axis = -6.427876096865393, z_axis = 10.0}}))
-  )
-  (let
-      testList =
-         [F2 {f2 = Point {x_axis = 6.4278760968653925, y_axis = -7.66044443118978, z_axis = 10.0}},
-          F2 {f2 = Point {x_axis = 7.66044443118978, y_axis = -6.427876096865393, z_axis = 10.0}},
-          F2 {f2 = Point {x_axis = 8.660254037844386, y_axis = -5.000000000000001, z_axis = 10.0}}
-         ]
-      leadingPoint = 
-        getLeadingCPoint
-          (-6.427876096865393)
-          testList
-      trailingPoint = 
-        getTrailingCPoint
-          (-6.427876096865393)
-          testList
-   in
-     (leadingPoint,trailingPoint)
-  )
-
-------------------------------------------------get trailingCPoint--------------------------------------------------------------
-getTrailingCPointExistsTest = TestCase $ assertEqual
-  "exists: getTrailingCPoint"
-  (Right (Just (F2 {f2 = Point {x_axis = 9.396926207859083, y_axis = 3.4202014332566884, z_axis = 10.0}})))
-  (getTrailingCPoint 2 leadingRadialShapeAsTopFrontPoints)
-
-getTrailingCPointExistsTest2 = TestCase $ assertEqual
-  "not exists due to too big of target value: getTrailingCPoint"
-  (Right Nothing)
-  (getTrailingCPoint (100) leadingRadialShapeAsTopFrontPoints)
-
-getTrailingCPointExistsTest3 = TestCase $ assertEqual
-  "error due to empty list: getTrailingCPoint"
-  (Left "getTrailingCPoint: empty [CornerPoints] passed in")
-  (getTrailingCPoint 5 [])
-
-
-getTrailingCPointExistsTest4 = TestCase $ assertEqual
-  "gets 1 and only valid cpoint: getTrailingCPoint"
-  (Right (Just (F2 {f2 = Point {x_axis = 3.420201433256687, y_axis = 9.396926207859085, z_axis = 10.0}})))
-  (getTrailingCPoint 5 [F2 {f2 = Point {x_axis = 3.420201433256687, y_axis = 9.396926207859085, z_axis = 10.0}}])
-
-getTrailingCPointExistsTest5 = TestCase $ assertEqual
-  "gets 2nd of 2 cpoints: getTrailingCPoint"
-  (Right (Just (F2 {f2 = Point {x_axis = 9.84807753012208, y_axis = 4.736481776669304, z_axis = 10.0}})))
-  (getTrailingCPoint 4 [F2 {f2 = Point {x_axis = 3.420201433256687, y_axis = 1.396926207859085, z_axis = 10.0}},
-                       F2 {f2 = Point {x_axis = 9.84807753012208, y_axis = 4.7364817766693041, z_axis = 10.0}}
-                      ])
-
-getTrailingCPointExistsTest6 = TestCase $ assertEqual
-  "gets 1st of 2 cpoints: getTrailingCPoint"
-  (Right (Just (F2 {f2 = Point {x_axis = 3.420201433256687, y_axis = 1.396926207859085, z_axis = 10.0}})))
-  (getTrailingCPoint 1 [F2 {f2 = Point {x_axis = 3.420201433256687, y_axis = 1.396926207859085, z_axis = 10.0}},
-                       F2 {f2 = Point {x_axis = 9.84807753012208, y_axis = 4.7364817766693041, z_axis = 10.0}}
-                      ])
-
-getTrailingCPointExistsTest7 = TestCase $ assertEqual
-  "gets the last of many cpoints: getLeadingCPoint"
-  (Right (Just (F2 {f2 = Point {x_axis = 1.7364817766693033, y_axis = 9.84807753012208, z_axis = 10.0}})))
-  (getTrailingCPoint 9.4 leadingRadialShapeAsTopFrontPoints)
-
-
--------------------------------------------------------- buildGridTopFaces tests ------------------------------------------
-
-buildGridTopFacesTest = TestCase $ assertEqual
-  "buildGridTopFaces: build a good grid"
-  (Right $ TopFace
-   {
-     b2 = Point {x_axis = -1.7364817766693033, y_axis = 9.84807753012208, z_axis = 10.0},
-     f2 = Point {x_axis = -4.2714124329421095, y_axis = -9.0, z_axis = 10.0},
-     b3 = Point {x_axis = 1.7364817766693033, y_axis = -9.84807753012208, z_axis = 10.0},
-     f3 = Point {x_axis = 4.2714124329421095, y_axis = -9.0, z_axis = 10.0}})
-  (let
-      grid = createYaxisGrid radialShapeAsTopFrontPoints
-      leadingWithF3 = (toF3 $ head leadingRadialShapeAsTopFrontPoints) : tail leadingRadialShapeAsTopFrontPoints
-   in
-     case buildLeftRightLineFromGridAndLeadingTrailingCPointsBase grid leadingRadialShapeAsTopFrontPoints trailingRadialShapeAsTopFrontPoints of
-       Right cpoints -> Right $ head cpoints
-       Left e -> Left e
-  )
-
-{-leadingRadialShapeAsTopFrontPoints
-[
-F3 {f3 = Point {x_axis = 1.7364817766693033, y_axis = -9.84807753012208, z_axis = 10.0}},
-F2 {f2 = Point {x_axis = 3.420201433256687, y_axis = -9.396926207859085, z_axis = 10.0}},
-F2 {f2 = Point {x_axis = 4.999999999999999, y_axis = -8.660254037844387, z_axis = 10.0}},
-F2 {f2 = Point {x_axis = 6.4278760968653925, y_axis = -7.66044443118978, z_axis = 10.0}},
-F2 {f2 = Point {x_axis = 7.66044443118978, y_axis = -6.427876096865393, z_axis = 10.0}},
-F2 {f2 = Point {x_axis = 8.660254037844386, y_axis = -5.000000000000001, z_axis = 10.0}},
-F2 {f2 = Point {x_axis = 9.396926207859083, y_axis = -3.4202014332566884, z_axis = 10.0}},
-F2 {f2 = Point {x_axis = 9.84807753012208, y_axis = -1.7364817766693041, z_axis = 10.0}},
-F2 {f2 = Point {x_axis = 10.0, y_axis = -6.123233995736766e-16, z_axis = 10.0}},
-F2 {f2 = Point {x_axis = 9.84807753012208, y_axis = 1.7364817766693041, z_axis = 10.0}},
-F2 {f2 = Point {x_axis = 9.396926207859083, y_axis = 3.4202014332566884, z_axis = 10.0}}
-,F2 {f2 = Point {x_axis = 8.660254037844386, y_axis = 5.000000000000001, z_axis = 10.0}},
-F2 {f2 = Point {x_axis = 7.66044443118978, y_axis = 6.427876096865393, z_axis = 10.0}},
-F2 {f2 = Point {x_axis = 6.4278760968653925, y_axis = 7.66044443118978, z_axis = 10.0}},
-F2 {f2 = Point {x_axis = 4.999999999999999, y_axis = 8.660254037844387, z_axis = 10.0}},
-F2 {f2 = Point {x_axis = 3.420201433256687, y_axis = 9.396926207859085, z_axis = 10.0}},
-F2 {f2 = Point {x_axis = 1.7364817766693033, y_axis = 9.84807753012208, z_axis = 10.0}}]
--}
-
 
 --------------------------------------------------------------------------------------------------------------------------------------
 --------------------------------------------------------------------------------------------------------------------------------------
@@ -919,289 +678,4 @@ adjustCornerPoint cPointsConstructor targetValue Nothing Nothing  =
 adjustCornerPoint _ _ (Just leadingCPoint) (Just trailingCPoint) =
   Left $ "adjustCornerPoint: illegal or unhandled leadingCPoint: " ++ (cpointType leadingCPoint) ++ " and trailingCPoint: " ++ (cpointType trailingCPoint)
 
------------------------------------------------------------------------------------------------------------------------------------------------------------------
----------------------calculate the point from <leading/trailing>CPoint and the target y_axis value---------------------------------------------------------------
-------------------------------------------------------------tests------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-leadingRatioFromDoubleTest = TestCase $ assertEqual
-  "get the ratio: leadingRatioFromDoubleTest"
-  (0.5)
-  (leadingRatio 5 0 10)
-
-leadingRatioFromCPointsTest = TestCase $ assertEqual
-  "get the ratio: leadingRatioFromCPointsTest"
-  (Right 0.5)
-  (leadingRatioFromCPoint
-     5
-     (F2 $ Point 10 0 100)
-     (F2 $ Point 0 10 100)
-  )
-
-leadingRatioFromDoubleTest2 = TestCase $ assertEqual
-  "get the ratio: leadingRatioFromDoubleTest"
-  (0.2)
-  (leadingRatio 2 0 10)
-
-leadingRatioFromCPointsTest2 = TestCase $ assertEqual
-  "get the ratio: leadingRatioFromCPointsTest"
-  (Right 0.2)
-  (leadingRatioFromCPoint
-     2
-     (F2 $ Point 10 0 100)
-     (F3 $ Point 0 10 100)
-  )
-
-leadingRatioFromDoubleTest3 = TestCase $ assertEqual
-  "get the ratio: leadingRatioFromDoubleTest"
-  (0.2)
-  (leadingRatio (-8) (-10) 0)
-
-leadingRatioFromCPointsTest3 = TestCase $ assertEqual
-  "get the ratio: leadingRatioFromCPointsTest"
-  (Right 0.2)
-  (leadingRatioFromCPoint
-     (-8)
-     (F2 $ Point 10 (-10) 100)
-     (F2 $ Point 0 0 100)
-  )
-
-------------------------------------------------------------------------------------------
-adjustAxisTest = TestCase $ assertEqual
-  "positive z change: adjustAxis"
-  (2)
-  (let
-      ratio = (leadingRatio 2 0 10)
-   in
-     adjustAxis ratio 0 10
-  )
-
-adjustCornerPointsTest = TestCase $ assertEqual
-  "positive ratio and axis change: adjustCornerPoint"
-  (Right $ Just $ F2 $ Point 2 2 2)
-  (let
-      ratio = (leadingRatio 2 0 10)
-   in
-     --now uses target value instead of already calc'd ratio
-     adjustCornerPoint (F2) 2 (Just $ F2 $ Point 0 0 0) (Just $ F2 $ Point 10 10 10)
-  )
-{- 
-adjustCornerPointsTest = TestCase $ assertEqual
-  "positive ratio and axis change: adjustCornerPoint"
-  (Right $ F2 $ Point 2 2 2)
-  (let
-      ratio = (leadingRatio 2 0 10)
-   in
-     --now uses target value instead of already calc'd ratio
-     adjustCornerPoint (F2) 2 (F2 $ Point 0 0 0) (F2 $ Point 10 10 10)
-  )
--}
-adjustAxisTest2 = TestCase $ assertEqual
-  "neg z change: adjustAxis"
-  (-2)
-  (let
-      ratio = (leadingRatio 2 0 10)
-   in
-     adjustAxis ratio 0 (-10)
-  )
-
-adjustCornerPointsTest2 = TestCase $ assertEqual
-  "positive ratio and axis change: adjustCornerPoint2"
-  (Right $ Just $ F3 $ Point (-2) (-2) (-2))
-  (let
-      ratio = leadingRatio (-2) 0 (-10)
-   in
-     --now uses target value instead of already calc'd ratio
-     adjustCornerPoint (F3) (-2) (Just $ F2 $ Point 0 0 0) (Just $ F2 $ Point (-10) (-10) (-10))
-  )
-{-
-adjustCornerPointsTest2 = TestCase $ assertEqual
-  "positive ratio and axis change: adjustCornerPoint2"
-  (Right $ F3 $ Point (-2) (-2) (-2))
-  (let
-      ratio = (leadingRatio 2 0 10)
-   in
-     adjustCornerPoint (F3) ratio (F2 $ Point 0 0 0) (F2 $ Point (-10) (-10) (-10))
-  )
--}
-
-adjustAxisTest3 = TestCase $ assertEqual
-  "another neg z change: adjustAxis"
-  (-12)
-  (let
-      ratio = (leadingRatio 2 0 10)
-   in
-     adjustAxis ratio (-10) (-20)
-  )
-
-adjustAxisTest4 = TestCase $ assertEqual
-  "neg ratio pos z change: adjustAxis"
-  (2)
-  (let
-      ratio = leadingRatio  (-18) (-20) (-10)
-   in
-     adjustAxis ratio 0 10
-  )
-
-adjustCornerPointsTest3 = TestCase $ assertEqual
-  "cornerPoints are == : adjustCornerPoint3"
-  (Right $ Just $ F2 $ Point 10 10 10)
-  (
-     adjustCornerPoint (F2) (10) (Just $ F2 $ Point (10) (10) (10)) (Just $ F2 $ Point (10) (10) (10))
-  )
-
-
-
-
-
-
-
-
-
------------------------------------------------------------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------------------------------------------------------------
-------------------------------------------------------junk I problably can get rid of ---------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-
---boolean to see if a cornerpoint contains a y value.
---Used to filter a list, looking for y val.
---Was used for Data.List(any), which will not be used any more.
-containsYaxisValue :: Double -> CornerPoints -> Bool
-containsYaxisValue targetYval (F2 (Point _ y _)) =
-  targetYval == y
-containsYaxisValue targetYval (F3 (Point _ y _)) =
-  targetYval == y
-
-
-
---get the cpoint with greatest y-axis val that is <= target val
---I want to get only the LT, EQ, or GT values. Not <= or >=
-getLargestCpointWithLTEYval :: Double -> [CornerPoints] -> Maybe CornerPoints
-getLargestCpointWithLTEYval targetVal cpoints =
-  let foundCpointWithTargetYval = find (containsYaxisValue targetVal) cpoints
-  in
-  case foundCpointWithTargetYval of
-    Just cpoint -> Just cpoint
-    Nothing ->
-      case (any (cPointHasYaxisLTTargetVal targetVal) cpoints) of
-        False -> Nothing
-        True ->
-          Just $ last $ takeWhile (cPointHasYaxisLTTargetVal targetVal) cpoints
-
-containsYaxisValueNotTest = TestCase $ assertEqual
-  "containsYaxisValueTest"
-  False
-  (
-   any (containsYaxisValue 100) leadingRadialShapeAsTopFrontPoints
-  )
-
-containsYaxisValueTrueTest = TestCase $ assertEqual
-  "containsYaxisValueTrueTest"
-  True
-  (
-   any (containsYaxisValue  9.84807753012208) leadingRadialShapeAsTopFrontPoints
-  )
-
-
---does it contain any values with y_axis LT target val
-cPointHasYaxisLTTargetVal :: Double -> CornerPoints -> Bool
-cPointHasYaxisLTTargetVal targetYval (F2 (Point _ y _)) =
-  y < targetYval
-cPointHasYaxisLTTargetVal targetYval (F3 (Point _ y _)) =
-  y < targetYval
-
-
-containsCpointWithYaxisValueLTTargetValFalseTest = TestCase $ assertEqual
-  "False: contains a cpoint with a y-axis val < target val"
-  False
-  (
-   any (cPointHasYaxisLTTargetVal  (-100)) leadingRadialShapeAsTopFrontPoints
-  )
-
-containsCpointWithYaxisValueLTTargetValTrueTest = TestCase $ assertEqual
-  "True: contains a cpoint with a y-axis val < target val"
-  True
-  (
-   any (cPointHasYaxisLTTargetVal  (100)) leadingRadialShapeAsTopFrontPoints
-  )
-
-getLargestCpointWithLTEYvalExists = TestCase $ assertEqual
-  "exists as smaller y val: getLargestCpointWithLTEYval"
-  (Just (F2 {f2 = Point {x_axis = 9.84807753012208, y_axis = 1.7364817766693041, z_axis = 10.0}}))
-  (getLargestCpointWithLTEYval 2 leadingRadialShapeAsTopFrontPoints)
-
-getLargestCpointWithLTEYvalNotExists = TestCase $ assertEqual
-  "not exists: getLargestCpointWithLTEYval"
-  (Nothing)
-  (getLargestCpointWithLTEYval (-20) leadingRadialShapeAsTopFrontPoints)
-
-
-getLargestCpointWithLTEYvalExactlyExists = TestCase $ assertEqual
-  "exists as exact value: getLargestCpointWithLTEYval"
-  (Just (F2 {f2 = Point {x_axis = 4.999999999999999, y_axis = -8.660254037844387, z_axis = 10.0}}))
-  (getLargestCpointWithLTEYval (-8.660254037844387) leadingRadialShapeAsTopFrontPoints)
-
-{-can i get rid of this
-cPointHasYaxisLTTargetValE :: Double -> CornerPoints -> Either String Bool
-cPointHasYaxisLTTargetValE targetYval (F2 (Point _ y _)) =
-  case y < targetYval of
-    True -> Right True
-    False -> Right False
-cPointHasYaxisLTTargetVal targetYval (F3 (Point _ y _)) =
-  case y < targetYval of
-    True -> Right True
-    False -> Right False
-cPointHasYaxisLTTargetVal _ unhandledCPoint = Left $ "cPointHasYaxisLTTargetVal: illegal or unhandled CornerPoints for: " ++ (show unhandledCPoint)
--}
-
-
---get the first CPoint that has the targetValue yaxis. Nothing if not found.
---Left if CornerPoints not handled or illegal
--- <x/y/z>_axis should have a ADT, so that the can be a part of eq, the way Points are. That would allow comparing to 2 decimal places.
-getMatchingCPoint :: Double -> [CornerPoints] -> Either String (Maybe CornerPoints)
-getMatchingCPoint targetVal ((F2 (Point x y z)) : cpoints) =
-  case y == targetVal of
-    True -> Right $ Just $ F2 (Point x y z)
-    False -> getMatchingCPoint targetVal cpoints
-getMatchingCPoint targetVal ((F3 (Point x y z)) : cpoints) =
-  case y == targetVal of
-    True -> Right $ Just $ F2 (Point x y z)
-    False -> getMatchingCPoint targetVal cpoints
-getMatchingCPoint _ [] = Right Nothing
-getMatchingCPoint _ (unhandledCPoint : cpoints) =
-  Left $ "getMatchingCPoint: illegal or unhandled CornerPoint: " ++ (show unhandledCPoint)
-
-getMatchingCPointExistTest = TestCase $ assertEqual
-  "exists: getMatchingCPoint"
-  (Right $ Just $ F2 {f2 = Point {x_axis = 7.66044443118978, y_axis = -6.427876096865393, z_axis = 10.0}})
-  (getMatchingCPoint (-6.427876096865393) leadingRadialShapeAsTopFrontPoints)
-
-getMatchingCPointNoExistTest = TestCase $ assertEqual
-  "no exists: getMatchingCPoint"
-  (Right Nothing)
-  (getMatchingCPoint 200 leadingRadialShapeAsTopFrontPoints)
-
-getMatchingCPointUnhandledTest = TestCase $ assertEqual
-  "unhandled CPoint constructor: getMatchingCPoint"
-  (Left "getMatchingCPoint: illegal or unhandled CornerPoint: B2 {b2 = Point {x_axis = 7.66044443118978, y_axis = -6.427876096865393, z_axis = 10.0}}")
-  (getMatchingCPoint 200 [B2 {b2 = Point {x_axis = 7.66044443118978, y_axis = -6.427876096865393, z_axis = 10.0}}])
 

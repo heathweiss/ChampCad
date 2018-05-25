@@ -10,7 +10,7 @@ Was going to have a semiflex section but did not work out. That is why there are
 
 module Examples.ShoeLift.MountainFlex.MountainFlexBase() where
 
-import Joiners.RadialLines(getMinY, getMaxY, extractYaxis, createYaxisGrid, splitOnXaxis,
+import Joiners.RadialLines(getMinY, getMaxY, extractYaxis, createYaxisGridFromTopFrontPoints, splitOnXaxis,
                            buildLeftRightLineFromGridAndLeadingTrailingCPointsBase)
 
 import Database.Persist 
@@ -28,6 +28,10 @@ import Builder.Monad(BuilderError(..),
                      cornerPointsErrorHandler, buildCubePointsList, buildCubePointsListSingle,
                      buildCubePointsListWithIOCpointsListBase, buildCubePointsListWithAdd,
                      CpointsStack, CpointsList, ExceptStackCornerPointsBuilder)
+import qualified Builder.ExceptStateIO as BIO (BuilderError(..),
+                      cornerPointsErrorHandler, buildCubePointsList, buildCubePointsListWithAdd,
+                      buildCubePointsListSingle, buildCubePointsListSingleNoPush,
+                      CpointsStack, CpointsList, ExceptStateIOCornerPointsBuilder) 
 
 import Control.Monad.Trans.Except
 import Control.Monad.Trans.Maybe
@@ -66,7 +70,7 @@ import Control.Lens
 makeLenses ''AngleHeightRadius
 makeLenses ''ExtractedAngleHeightRadius
 
-currentBuilder = heelFlexToeFlatTopAndBtmTreadBuilder
+currentBuilder = entireTopTreadBuilderUsingRadialLinesGridForTestFit
                  
 
 --The range of angles that define the heel/flex/toe sections. Reused > 1 fx.
@@ -127,8 +131,8 @@ runBuilder = runSqlite "src/Examples/ShoeLift/MountainFlex/lineScanner.db" $ do
 The full length tread that will glue onto the shoe.
 Create a flat bottom on it for printing.
 Divide the scan in half along the y_axis.
-Create a grid using createYaxisGrid from the Joiners.RadialLines module.
-Recombine the 2 sides with zip. Should be the same length as they were made with createYaxisGrid.
+Create a grid using createYaxisGridFromTopFrontPoints from the Joiners.RadialLines module.
+Recombine the 2 sides with zip. Should be the same length as they were made with createYaxisGridFromTopFrontPoints.
 
 -}
 entireTopTreadBuilderUsingRadialLinesGridForTestFit :: AnglesHeightsRadii -> Point -> ExceptStackCornerPointsBuilder
@@ -198,7 +202,7 @@ entireTopTreadBuilderUsingRadialLinesGridForTestFit ahr origin = do
      )
               
   let
-    grid = createYaxisGrid frontTopPointsNotYetSplitIntoLeadingTrailing
+    grid = createYaxisGridFromTopFrontPoints frontTopPointsNotYetSplitIntoLeadingTrailing
     
   topGridFaces <- buildCubePointsListSingle "topGridFaces"
     (case buildLeftRightLineFromGridAndLeadingTrailingCPointsBase grid leadingTopFrontPoints trailingTopFrontPoints of
@@ -288,7 +292,7 @@ topHeelFlexToeBuilder ahr origin = do
      )
               
   let
-    grid = createYaxisGrid frontTopPointsNotYetSplitIntoLeadingTrailing
+    grid = createYaxisGridFromTopFrontPoints frontTopPointsNotYetSplitIntoLeadingTrailing
     
   topGridFaces <- buildCubePointsListSingle "topGridFaces"
     (case buildLeftRightLineFromGridAndLeadingTrailingCPointsBase grid leadingTopFrontPoints trailingTopFrontPoints of
@@ -310,8 +314,8 @@ topHeelFlexToeBuilder ahr origin = do
 {-
 The heel-toe center tread sections that will have flat top and bottom. Best to be flat so that if such large prints fail, can still utilized the section that did print.
 All are made from this fx by adjusting the angles.
-Divide the scan in half along the y_axis, create a grid using createYaxisGrid from the Joiners.RadialLines module.
-Recombine the 2 sides with zip. Should be the same length as they were made with createYaxisGrid.
+Divide the scan in half along the y_axis, create a grid using createYaxisGridFromTopFrontPoints from the Joiners.RadialLines module.
+Recombine the 2 sides with zip. Should be the same length as they were made with createYaxisGridFromTopFrontPoints.
 Will need to print each section separate as the flex section is done with Cheetah, while the heel-toe will be rigid.
 -}
 heelFlexToeFlatTopAndBtmTreadBuilder :: AnglesHeightsRadii -> Point -> ExceptStackCornerPointsBuilder
@@ -345,7 +349,7 @@ heelFlexToeFlatTopAndBtmTreadBuilder ahr origin = do
         (extractF3 $ head frontTopLines) :  map (extractF2) frontTopLines
     )
   let
-    grid = createYaxisGrid frontTopPointsForCreatingGrid
+    grid = createYaxisGridFromTopFrontPoints frontTopPointsForCreatingGrid
   
   leadingTopFrontPointsUseToBuildTopGridFaces
     <- buildCubePointsListSingle "leadingTopFrontPointsUseToBuildTopGridFaces"
@@ -438,7 +442,7 @@ heelFlexToeBtmBuilder ahr origin = do
         (extractF3 $ head frontTopLines) :  map (extractF2) frontTopLines
     )
   let
-    grid = createYaxisGrid frontTopPointsUsedToBuildGrid
+    grid = createYaxisGridFromTopFrontPoints frontTopPointsUsedToBuildGrid
   
   
   leadingTopFrontPoints
@@ -535,7 +539,7 @@ btmFlexBuilder ahr origin = do
         (extractF3 $ head frontTopLines) :  map (extractF2) frontTopLines
     )
   let
-    grid = createYaxisGrid frontTopPointsForBuildingGrid
+    grid = createYaxisGridFromTopFrontPoints frontTopPointsForBuildingGrid
   
   
   leadingTopFrontPoints
@@ -685,7 +689,7 @@ btmFlexBuilderNFG ahr origin = do
         (extractF3 $ head frontTopLines) :  map (extractF2) frontTopLines
     )
   let
-    grid = createYaxisGrid frontTopPointsForBuildingGrid
+    grid = createYaxisGridFromTopFrontPoints frontTopPointsForBuildingGrid
   
   
   leadingTopFrontPoints
@@ -986,14 +990,65 @@ leadingEAHR layerEAHR  = filter (\(ExtractedAngleHeightRadius ang _ _ ) -> leadi
 trailingEAHR :: [ExtractedAngleHeightRadius] -> [ExtractedAngleHeightRadius]
 trailingEAHR layerEAHR = {-reverse $-} filter (\(ExtractedAngleHeightRadius ang _ _ ) -> trailingAnglesFilter ang) layerEAHR
 
---leftOff
-        {-need to adjust Radius of layer1 angle 0 as it's yval is less than the next angle.
-          Should wait till I see all the values.
-
-         Should I create a fx to get the min/max y values or just look them over and pick them manually.
-         If I do want to get min/max values, will need to make this a Monad transformer so the Maybe part works
-         when a layer fails to load.
-         -}
 
 
 
+
+
+{-----------------------------------------------------NFG------------------------------------------------------
+Failed attempt at using the ExtractedAngleHeightRadius
+ankleBraceBuilder :: BIO.ExceptStateIOCornerPointsBuilder
+ankleBraceBuilder = do
+  let
+    dbFilePath = "src/Examples/ShoeLift/MountainFlex/ankleBrace.db"
+    maybeLayer1EAHR = loadAndExtractedAngleHeightRadiusFromDB "layer1" dbFilePath
+
+    runMaybeExtractedAngleHeightRadius :: IO (Maybe [ExtractedAngleHeightRadius]) -> IO (BIO.CpointsList)
+    runMaybeExtractedAngleHeightRadius eahr' = do
+        eahr <- eahr'
+        case eahr of
+          Nothing -> 
+            --putStrLn $ layerName ++ " not found"
+            --return Nothing
+            return  [CornerPointsError "layer1 not found"]
+          Just (extractedAngleHeightRadius) -> 
+            let 
+              leadingEAHR' = leadingEAHR extractedAngleHeightRadius
+              trailingEAHR' = trailingEAHR extractedAngleHeightRadius
+              trailingEAHR'' = wrapZeroDegreeToEndAs360Degree leadingEAHR' trailingEAHR'
+                
+              topFaces =
+                createTopFacesVariableHeight
+                  (Point 0 0 0) --origin
+                  --(extractRadii ahr)
+                  (map (_radiusEAHR) leadingEAHR')
+                  
+                  --(extractAngles ahr)
+                  (map (_angleEAHR) leadingEAHR')
+                  
+                  --(extractHeights ahr)
+                  (map (_heightEAHR) leadingEAHR')
+              frontTopLines = map (extractFrontTopLine) topFaces
+            in
+            return $ (extractF3 $ head frontTopLines) : ( map (extractF2) frontTopLines)
+            --return topFaces
+  tempIO <- (liftIO $ runMaybeExtractedAngleHeightRadius maybeLayer1EAHR)
+  
+  temp <- BIO.buildCubePointsListSingle "bottomOfTopLayer" 
+          tempIO
+  return temp
+
+--runIOBuilder :: IO ()
+runIOBuilder = do
+  
+   --t <- ((evalState $ runExceptT ankleBraceBuilder) [])  
+   --print $ show t
+   --return t
+   print $ show $ ((evalState $ runExceptT ankleBraceBuilder) [])  
+   
+-}
+
+ankleBraceBuilder :: AnglesHeightsRadii ->  ExceptStackCornerPointsBuilder
+ankleBraceBuilder layer1  = do
+  temp <- buildCubePointsListSingle "make it compile" []
+  return temp

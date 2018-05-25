@@ -200,9 +200,9 @@ loadAndExtractedAngleHeightRadiusFromDB  layerName dbName = runSqlite ( T.pack d
                    | h <- heights'
                    | r <- radii'
                  ]
-      
 
---
+
+
 
 {-
 

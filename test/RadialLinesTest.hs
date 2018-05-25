@@ -1,7 +1,6 @@
 module RadialLinesTest(radialLinesTestDo) where
 
 import Test.HUnit
-
 import CornerPoints.CornerPoints(CornerPoints(..))
 import CornerPoints.HorizontalFaces(createTopFacesVariableHeight, createBottomFacesVariableHeight)
 import CornerPoints.Radius (Radius(..))
@@ -16,9 +15,6 @@ radialLinesTestDo = do
   putStrLn ""
   putStrLn ""
   putStrLn "RadialLinesTest"
-  --runTestTT seeRadialShapeAsTopFrontPointsTest
-  --runTestTT seeLeadingRadialShapeAsTopFrontPointsTest
-  --runTestTT seeTrailingRadialShapeAsTopFrontPointsTest
   runTestTT seeMinYCpointOfLeadingRadialShapeAsTopFrontPointsTest
   runTestTT seeMinYCpointOfTrailingRadialShapeAsTopFrontPointsTest
   runTestTT seeMaxYCpointOfLeadingRadialShapeAsTopFrontPointsTest
@@ -37,14 +33,14 @@ radialLinesTestDo = do
   runTestTT getTrailingCPointExistsTest3
   runTestTT getTrailingCPointExistsTest4
   ----------------------- removed items I should not need--------------------
-  --runTestTT containsYaxisValueNotTest
-  --runTestTT containsYaxisValueTrueTest
-  --runTestTT containsCpointWithYaxisValueLTTargetValFalseTest
+  runTestTT containsYaxisValueNotTest
+  runTestTT containsYaxisValueTrueTest
+  runTestTT containsCpointWithYaxisValueLTTargetValFalseTest
   --runTestTT containsCpointWithYaxisValueLTTargetValTrueTest
   --runTestTT getLargestCpointWithLTEYvalExists
   --runTestTT getLargestCpointWithLTEYvalNotExists
   --runTestTT getLargestCpointWithLTEYvalExactlyExists
-  --runTestTT getMatchingCPointExistTest
+  runTestTT getMatchingCPointExistTest
   --runTestTT getMatchingCPointNoExistTest
   --runTestTT getMatchingCPointUnhandledTest
   
@@ -66,10 +62,6 @@ splitOnXaxis tester splitterVal (F3 (Point x _ _))  =
   tester x splitterVal 
 
   
-leadingRadialShapeAsTopFrontPoints = filter (splitOnXaxis (>) 0) radialShapeAsTopFrontPoints
-
-trailingRadialShapeAsTopFrontPoints = filter (splitOnXaxis (<) 0) radialShapeAsTopFrontPoints
-
 --can be moved to RadialLines, or somewhere
 getMinY :: [CornerPoints] -> CornerPoints
 getMinY ((F2 (Point x y z)):cpoints) =
@@ -154,7 +146,14 @@ createListOfYaxisValuesToMakeCubesOnFromRadialShapeAsTopFrontPoints radialShapeA
 
 
 
+--used only for testing. Should move it over to test unit.
+leadingRadialShapeAsTopFrontPoints = filter (splitOnXaxis (>) 0) radialShapeAsTopFrontPoints
 
+trailingRadialShapeAsTopFrontPoints =
+  let list = filter (splitOnXaxis (<) 0) radialShapeAsTopFrontPoints
+  in
+    --(toF3 $ head list ) : (tail list)
+    list
 
 -----------------------------------------------------------------------------------------------------------------------------------------------
 ---------------------------------------------------get<Leading/Trailing>CPoint-----------------------------------------------------------------
@@ -363,21 +362,7 @@ getTrailingCPoint' targetVal Nothing  ((F3 (Point current_x current_y current_z)
 --------------------------------------------------------------------------------------------------------------------------------------
 
 ------------------------------------------- look at the [CornerPoints]----------------------------------------------------------------
-seeRadialShapeAsTopFrontPointsTest = TestCase $ assertEqual
-  "look at complete radial shape as front points"
-  ([])
-  (radialShapeAsTopFrontPoints)
 
-
-seeLeadingRadialShapeAsTopFrontPointsTest = TestCase $ assertEqual
-  "see the leading section of radial shape as front points"
-  ([])
-  (leadingRadialShapeAsTopFrontPoints)
-
-seeTrailingRadialShapeAsTopFrontPointsTest = TestCase $ assertEqual
-  "see the trailing section of radial shape as front points"
-  ([])
-  (trailingRadialShapeAsTopFrontPoints)
 
 -----------------------------------------------------see min/may y vals and generate grid [double]--------------------------------------
 seeMinYCpointOfLeadingRadialShapeAsTopFrontPointsTest = TestCase $ assertEqual

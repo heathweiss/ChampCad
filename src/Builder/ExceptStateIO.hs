@@ -32,7 +32,7 @@ type CpointsStack = [CornerPoints]
 type CpointsList = [CornerPoints]
 
 
-type ExceptStateIOCornerPointsBuilder = ExceptT BuilderError (StateT CpointsStack (IO) ) CpointsList
+type ExceptStateIOCornerPointsBuilder  = ExceptT BuilderError (StateT CpointsStack (IO) ) CpointsList
 
 {- |
 Handles a CornerPoints error in ExceptT catchError calls.

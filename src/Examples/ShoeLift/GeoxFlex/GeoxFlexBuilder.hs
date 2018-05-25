@@ -10,7 +10,7 @@ Will use a rubber bootie for the bottom tread so it will be a match to the top t
 
 module Examples.ShoeLift.GeoxFlex.GeoxFlexBuilder() where
 
-import Joiners.RadialLines(getMinY, getMaxY, extractYaxis, createYaxisGrid, splitOnXaxis, buildLeftRightLineFromGridAndLeadingTrailingCPointsBase)
+import Joiners.RadialLines(getMinY, getMaxY, extractYaxis, createYaxisGridFromTopFrontPoints, splitOnXaxis, buildLeftRightLineFromGridAndLeadingTrailingCPointsBase)
 
 import Database.Persist
 import Database.Persist.Sqlite
@@ -189,7 +189,7 @@ btmTreadBuilderUsingRadialLinesGrid ahr origin = do
      )
               
   let
-    grid = createYaxisGrid frontTopPointsNotYetSplitIntoLeadingTrailing
+    grid = createYaxisGridFromTopFrontPoints frontTopPointsNotYetSplitIntoLeadingTrailing
     
   topGridFaces <- buildCubePointsListSingle "topGridFaces"
     (case buildLeftRightLineFromGridAndLeadingTrailingCPointsBase grid leadingTopFrontPoints trailingTopFrontPoints of
@@ -323,7 +323,7 @@ topTreadBuilderUsingRadialLinesGrid ahr origin = do
      )
               
   let
-    grid = createYaxisGrid frontTopPointsNotYetSplitIntoLeadingTrailing
+    grid = createYaxisGridFromTopFrontPoints frontTopPointsNotYetSplitIntoLeadingTrailing
     
   topGridFaces <- buildCubePointsListSingle "topGridFaces"
     (case buildLeftRightLineFromGridAndLeadingTrailingCPointsBase grid leadingTopFrontPoints trailingTopFrontPoints of
@@ -448,7 +448,7 @@ topTreadBuilderUsingLeftRightSidesButNoGrid ahr origin = do
             True -> preMaxY
             False -> postMaxY
        
-      grid = createYaxisGrid topFrontPointsEntireTread
+      grid = createYaxisGridFromTopFrontPoints topFrontPointsEntireTread
 
   postTopLeftVertices <- buildCubePointsListSingle "preTopRightLines"
      ( let
