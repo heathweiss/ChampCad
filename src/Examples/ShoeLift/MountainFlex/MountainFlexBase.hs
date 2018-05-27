@@ -11,7 +11,7 @@ Was going to have a semiflex section but did not work out. That is why there are
 module Examples.ShoeLift.MountainFlex.MountainFlexBase() where
 
 import Joiners.RadialLines(getMinY, getMaxY, extractYaxis, createYaxisGridFromTopFrontPoints, splitOnXaxis,
-                           buildLeftRightLineFromGridAndLeadingTrailingCPointsBase)
+                           buildLeftRightLineFromGridAndLeadingTrailingCPointsBase, createYaxisGridFromMinMaxY)
 
 import Database.Persist 
 import Database.Persist.Sqlite
@@ -22,7 +22,8 @@ import Control.Monad.IO.Class (liftIO)
 import Persistable.Radial (Layer(..), AngleHeightRadius(..), AnglesHeightsRadii(..), nameUnique', angleHeightRadius', layerId',
                            angleHeightRadiusLayerId', extractAnglesHeightsRadiiFromEntity, ExtractedAngleHeightRadius(..),
                            extractRadii, extractAngles, extractHeights, extractLayerId, extractOrigin,
-                           loadAndExtractedAngleHeightRadiusFromDB, loadAndExtractedAngleHeightRadiusFromDbT)
+                           loadAndExtractedAngleHeightRadiusFromDB, loadAndExtractedAngleHeightRadiusFromDbT,
+                           anglesHeightsRadiiToExtractedAnglesHeightsRadii, filterAngleHeightRadiusOnAngle)
 
 import Builder.Monad(BuilderError(..),
                      cornerPointsErrorHandler, buildCubePointsList, buildCubePointsListSingle,
@@ -63,6 +64,8 @@ import Stl.StlCornerPoints((|+++^|), Faces(..) )
 import Stl.StlFileWriter(writeStlToFile)
 
 import TypeClasses.Transposable(transpose)
+
+import Helpers.Applicative(extractE)
 
 --import qualified Control.Lens as L
 import Control.Lens 
@@ -995,60 +998,361 @@ trailingEAHR layerEAHR = {-reverse $-} filter (\(ExtractedAngleHeightRadius ang 
 
 
 
-{-----------------------------------------------------NFG------------------------------------------------------
-Failed attempt at using the ExtractedAngleHeightRadius
-ankleBraceBuilder :: BIO.ExceptStateIOCornerPointsBuilder
-ankleBraceBuilder = do
-  let
-    dbFilePath = "src/Examples/ShoeLift/MountainFlex/ankleBrace.db"
-    maybeLayer1EAHR = loadAndExtractedAngleHeightRadiusFromDB "layer1" dbFilePath
 
-    runMaybeExtractedAngleHeightRadius :: IO (Maybe [ExtractedAngleHeightRadius]) -> IO (BIO.CpointsList)
-    runMaybeExtractedAngleHeightRadius eahr' = do
-        eahr <- eahr'
-        case eahr of
-          Nothing -> 
-            --putStrLn $ layerName ++ " not found"
-            --return Nothing
-            return  [CornerPointsError "layer1 not found"]
-          Just (extractedAngleHeightRadius) -> 
-            let 
-              leadingEAHR' = leadingEAHR extractedAngleHeightRadius
-              trailingEAHR' = trailingEAHR extractedAngleHeightRadius
-              trailingEAHR'' = wrapZeroDegreeToEndAs360Degree leadingEAHR' trailingEAHR'
-                
-              topFaces =
-                createTopFacesVariableHeight
-                  (Point 0 0 0) --origin
-                  --(extractRadii ahr)
-                  (map (_radiusEAHR) leadingEAHR')
-                  
-                  --(extractAngles ahr)
-                  (map (_angleEAHR) leadingEAHR')
-                  
-                  --(extractHeights ahr)
-                  (map (_heightEAHR) leadingEAHR')
-              frontTopLines = map (extractFrontTopLine) topFaces
-            in
-            return $ (extractF3 $ head frontTopLines) : ( map (extractF2) frontTopLines)
-            --return topFaces
-  tempIO <- (liftIO $ runMaybeExtractedAngleHeightRadius maybeLayer1EAHR)
-  
-  temp <- BIO.buildCubePointsListSingle "bottomOfTopLayer" 
-          tempIO
-  return temp
+{-
+Given:
+layer<1/2...12> :: AnglesHeightsRadii
+  each layer of the scan from the db.
 
---runIOBuilder :: IO ()
-runIOBuilder = do
+Task:
+Split each layer along the 0 180 degree axis so that each side can be build separately as leading/trailing sections.
+Transpose the radius of each layer section of AnglesHeightsRadii to give the wall thickness.
+
+Once each individual layer/section is build as F3:[F2], combine them all to calculate <min/max>Y_axis values
+in order to build the grid as used by Radial and RadialLines modules.
+
+Now build each layer/section with the radial grid system.
+The layer1 leading/trailing sections are Bottom Faces while are the following layers
+are created as TopFaces and added to the layer below.
+-}
+ankleBraceBuilder :: AnglesHeightsRadii ->
+                     AnglesHeightsRadii ->  ExceptStackCornerPointsBuilder
+ankleBraceBuilder layer1 layer2 = do
+  let --filter to select leading (pre 180 degree) and trailing sections of scan.
+      leadingSelector = (\ang -> ang <= 180)
+      trailingSelector = (\ang -> ang > 180)
+      
+  layer1LeadingInner <- buildCubePointsListSingle "layer1LeadingInner"
+    (buildLeadingTopFrontLinesFromAHR layer1 leadingSelector)
+
+  --Transpose the Radius to give a perimeter wall of 1 mm.
+  --Could be thicker at bottom then taper off as it rises.
+  layer1LeadingOuter <- buildCubePointsListSingle "layer1LeadingOuter"
+    (buildLeadingTopFrontLinesFromAHR (map (transpose (+2)) layer1) leadingSelector )
+
+  layer2LeadingInner <- buildCubePointsListSingle "layer2LeadingInner"
+    (buildLeadingTopFrontLinesFromAHR layer2 leadingSelector)
+
+  --Transpose the Radius to give a perimeter wall of 1 mm.
+  --Could be thicker at bottom then taper off as it rises.
+  layer2LeadingOuter <- buildCubePointsListSingle "layer2LeadingOuter"
+    (buildLeadingTopFrontLinesFromAHR (map (transpose (+2)) layer2) leadingSelector)
+    
+  --have to build the maxYaxis values first
+  let grid =
+        let allLayers = layer1LeadingInner ++ layer1LeadingOuter ++ layer2LeadingInner ++ layer2LeadingOuter
+            minY = minYaxis allLayers
+            maxY = maxYaxis allLayers
+        in
+          createYaxisGridFromMinMaxY <$> minY <*> maxY
+
+  layer1LeadingBtmFaces <- buildCubePointsListSingle "layer1LeadingBtmFaces"
+    (case grid of
+       Left e -> [CornerPointsError $ "grid error: " ++ e]
+       Right grid' ->
+        case
+         buildLeftRightLineFromGridAndLeadingTrailingCPointsBase
+           grid'
+           layer1LeadingOuter
+           layer1LeadingInner of
+          Right val -> map toBottomFace val
+          Left e -> [CornerPointsError e]
+    )
+
+  layer2LeadingTopFaces <- buildCubePointsListSingle "layerLeadingTopFaces"
+    (case grid of
+       Left e -> [CornerPointsError $ "grid error: " ++ e]
+       Right grid' ->
+        case
+         buildLeftRightLineFromGridAndLeadingTrailingCPointsBase
+           grid'
+           layer2LeadingOuter
+           layer2LeadingInner of
+          Right val -> val
+          Left e -> [CornerPointsError e]
+    )
+
+  layer1_2LeadingCubes <- buildCubePointsListWithAdd "layer1_2Cubes"
+    layer1LeadingBtmFaces layer2LeadingTopFaces
+  {-Do this later, once I get layer<1/2> leading to work.
+  layer1TrailingInitial <- buildCubePointsListSingle "layer1trailing"
+    (buildTrailingFrontTopLinesFromAHR layer1 (\ang -> ang > 180)
+    )
+  -}
+  --figure out min/max y
+  --let minY = minimum $ map minYaxis [layer1LeadingInitial, layer1Outer]
+
+  {-
+(let
+       leadingTopPoints = buildLeadingTopFrontLinesFromAHR layer1 (\ang -> ang <= 180)
+       trailingTopPoints = buildTrailingFrontTopLinesFromAHR (map (transpose (+ 1))  layer1) (\ang -> ang <= 180)
+       grid = createYaxisGridFromTopFrontPoints $ leadingTopPoints ++ trailingTopPoints
+       lines = buildLeftRightLineFromGridAndLeadingTrailingCPointsBase grid leadingTopPoints  trailingTopPoints
+     in
+     (case lines of
+       (Right cpoints) -> cpoints
+       Left e          -> [CornerPointsError e]
+     )
+    )
+
+-}
   
-   --t <- ((evalState $ runExceptT ankleBraceBuilder) [])  
-   --print $ show t
-   --return t
-   print $ show $ ((evalState $ runExceptT ankleBraceBuilder) [])  
+  --temp <- buildCubePointsListSingle "make it compile" []
+  return layer1_2LeadingCubes
+
+{-
+Given: List of CornerPoints
+Task:
+  Find the value of the smallest y_axis of all the points in the [CornerPoints]
+  See extractMinYaxisFromCpoint for rules on CornerPoints with > 1 Point.
+  If CornerPoint such as FrontTopLine has > 1 points, work through the
+  points to get the smallest.
+Return: The smallest y_axis value
+-}
+minYaxis :: [CornerPoints] -> Either String Double
+minYaxis (c:cs) =
+  case extractMinYaxisFromCpoint c of
+    Left e -> Left e
+    Right currMin -> minYaxis' currMin cs
+minYaxis' :: Double -> [CornerPoints] -> Either String Double
+minYaxis' prevMin (c:cs)  =
+        case extractMinYaxisFromCpoint c of
+          Left e -> Left e
+          Right currMin' -> 
+            case currMin' <= prevMin of
+              True  -> minYaxis' currMin' cs 
+              False -> minYaxis' prevMin cs
+minYaxis' currMin []  = Right currMin
+
+
+
+{-
+Given: CornerPoints
+Task:
+  Value of the smallest y_axis.
+  If CornerPoint such as FrontTopLine has > 1 Point, work through the
+  points to get the smallest.
+Return: Double which is the smallest y_axis value
+-}
+extractMinYaxisFromCpoint :: CornerPoints -> Either String Double
+extractMinYaxisFromCpoint (F2 (Point _ y _))  = Right y
+extractMinYaxisFromCpoint (F3 (Point _ y _))  = Right y
+extractMinYaxisFromCpoint (B3 (Point _ y _))  = Right y
+extractMinYaxisFromCpoint (B2 (Point _ y _))  = Right y
+extractMinYaxisFromCpoint unHandledCPoint = Left $ "extractMinYaxisFromCpoint: unhandled CornerPoints: " ++ (show unHandledCPoint)
+
+
+{-
+Given: List of CornerPoints
+Task:
+  Find the value of the largest y_axis of all the points in the [CornerPoints]
+  See extractMaxYaxisFromCpoint for rules on CornerPoints with > 1 Point.
+  If CornerPoint such as FrontTopLine has > 1 points, work through the
+  points to get the largest.
+Return: The largest y_axis value
+-}
+maxYaxis :: [CornerPoints] -> Either String Double
+maxYaxis (c:cs) =
+  case extractMaxYaxisFromCpoint c of
+    Left e -> Left e
+    Right currMax -> maxYaxis' currMax cs
+maxYaxis' :: Double -> [CornerPoints] -> Either String Double
+maxYaxis' prevMax (c:cs)  =
+        case extractMaxYaxisFromCpoint c of
+          Left e -> Left e
+          Right currMax' -> 
+            case currMax' >= prevMax of
+              True  -> maxYaxis' currMax' cs 
+              False -> maxYaxis' prevMax cs
+maxYaxis' currMax []  = Right currMax
+
+{-
+Given: CornerPoints
+Task:
+  Value of the largest y_axis.
+  If CornerPoint such as FrontTopLine has > 1 Point, work through the
+  points to get the largest.
+Return: Double which is the largest y_axis value
+-}
+extractMaxYaxisFromCpoint :: CornerPoints -> Either String Double
+extractMaxYaxisFromCpoint (F2 (Point _ y _))  = Right y
+extractMaxYaxisFromCpoint (F3 (Point _ y _))  = Right y
+extractMaxYaxisFromCpoint (B3 (Point _ y _))  = Right y
+extractMaxYaxisFromCpoint (B2 (Point _ y _))  = Right y
+extractMaxYaxisFromCpoint unHandledCPoint = Left $ "extractMaxYaxisFromCpoint: unhandled CornerPoints: " ++ (show unHandledCPoint)
    
+
+
+{-
+topVariableHeightFacesForBuildingBtmFaces <- buildCubePointsListSingle "topVariableHeightFacesForBuildingBtmFaces"
+    
 -}
 
-ankleBraceBuilder :: AnglesHeightsRadii ->  ExceptStackCornerPointsBuilder
-ankleBraceBuilder layer1  = do
-  temp <- buildCubePointsListSingle "make it compile" []
-  return temp
+{-
+Given:
+  ahr:: AnglesHeightsRadii as loaded from the database by Persistent, but removed from Entity
+  splitter :: (Double -> Bool). Used to select a section of the ahr.
+Task:
+  Select a section of the ahr, and create TopFrontLine, which are then extracted as (F3:[F2]).
+  
+Return:
+  The created F3:[F2]
+Known uses:
+  To split a scan along the not quite symmetrical halves, to build them using the Joiners.RadialLines grid system.
+  So should this be in the Joiners.RadialLines module?
+-}
+buildLeadingTopFrontLinesFromAHR :: AnglesHeightsRadii -> (Double -> Bool) -> [CornerPoints]
+buildLeadingTopFrontLinesFromAHR ahr splitter =
+  let
+    origin = Point 0 0 0
+    filteredAHR  = filterAngleHeightRadiusOnAngle splitter ahr
+    
+    topFaces =
+          createTopFacesVariableHeight
+          origin
+          (extractRadii filteredAHR)
+          (extractAngles filteredAHR)
+          (extractHeights filteredAHR)
+    frontTopLines = map (extractFrontTopLine) topFaces
+  in
+  (extractF3 $ head frontTopLines) :  map (extractF2) frontTopLines
+
+buildTrailingFrontTopLinesFromAHR :: AnglesHeightsRadii -> (Double -> Bool) -> [CornerPoints]
+buildTrailingFrontTopLinesFromAHR ahr splitter =
+  let
+    temp = buildLeadingTopFrontLinesFromAHR ahr splitter
+  in
+  (toF2 $ head temp) : (tail temp)
+
+showAnkleBraceBuilderValue :: IO () 
+showAnkleBraceBuilderValue = runSqlite "src/Examples/ShoeLift/MountainFlex/ankleBrace.db" $ do
+  layer1Id <- getBy $ nameUnique' "layer1"
+  ahrEntity1 <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId layer1Id)] []
+
+  layer2Id <- getBy $ nameUnique' "layer2"
+  ahrEntity2 <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId layer2Id)] []
+  
+  case layer1Id of
+    Nothing -> liftIO $ putStrLn "tread scan layer1 was not found"
+    
+    (Just (Entity key layerVal)) -> do
+      liftIO $ putStrLn "tread scan layer was found"
+      let builder = ankleBraceBuilder ( extractAnglesHeightsRadiiFromEntity ahrEntity1)
+                                      ( extractAnglesHeightsRadiiFromEntity ahrEntity2) 
+          valCpoints = ((evalState $ runExceptT builder) [])
+          cpoints = ((execState $ runExceptT builder) [])
+      case valCpoints of
+        (Left e) -> liftIO $ print $ e
+        (Right a) -> do
+          liftIO $ print $ show a
+          liftIO $ writeFile "src/Data/temp.txt" $ show a
+
+
+runAnkleBraceBuilder :: IO () 
+runAnkleBraceBuilder = runSqlite "src/Examples/ShoeLift/MountainFlex/ankleBrace.db" $ do
+  layer1Id <- getBy $ nameUnique' "layer1"
+  ahrEntity1 <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId layer1Id)] []
+
+  layer2Id <- getBy $ nameUnique' "layer2"
+  ahrEntity2 <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId layer2Id)] []
+  
+  case layer1Id of
+    Nothing -> liftIO $ putStrLn "tread scan layer1 was not found"
+    
+    (Just (Entity key layerVal)) -> do
+      liftIO $ putStrLn "tread scan layer was found"
+      let builder = ankleBraceBuilder ( extractAnglesHeightsRadiiFromEntity ahrEntity1)
+                                      ( extractAnglesHeightsRadiiFromEntity ahrEntity2) 
+          valCpoints = ((evalState $ runExceptT builder) [])
+          cpoints = ((execState $ runExceptT builder) [])
+      case valCpoints of
+        (Left e) -> liftIO $ print $ e
+        (Right a) -> do
+          --liftIO $ print $ show a
+          --liftIO $ writeFile "src/Data/temp.txt" $ show a
+          liftIO $ putStrLn "output from Builder was good"
+          liftIO $ writeStlToFile $ newStlShape "mountain ankle brace" $ [FacesAll | x <- [1..]] |+++^| (autoGenerateEachCube [] cpoints)
+          liftIO $ putStrLn "stl should have been output"
+
+
+--use the grid, but only layer1.
+--Same error
+ankleBraceBuilderLayer1Only :: AnglesHeightsRadii ->
+                               AnglesHeightsRadii ->  ExceptStackCornerPointsBuilder
+ankleBraceBuilderLayer1Only layer1 layer2 = do
+  
+  layer1LeadingInner <- buildCubePointsListSingle "layer1LeadingInner"
+    (
+        buildLeadingTopFrontLinesFromAHR layer1 (\ang -> ang <= 180)
+        
+    )
+
+  --Transpose the Radius to give a perimeter wall of 1 mm.
+  --Could be thicker at bottom then taper off as it rises.
+  layer1LeadingOuter <- buildCubePointsListSingle "layer1LeadingOuter"
+    (
+        buildLeadingTopFrontLinesFromAHR (map (transpose (+10)) layer1) (\ang -> ang <= 180)
+        
+    )
+
+  --have to build the maxYaxis values first
+  let grid =
+        let allLayers = layer1LeadingInner ++ layer1LeadingOuter 
+            minY = minYaxis allLayers
+            maxY = maxYaxis allLayers
+        in
+          createYaxisGridFromMinMaxY <$> minY <*> maxY
+
+  layer1LeadingTopFaces <- buildCubePointsListSingle "layer1LeadingBtmFaces"
+    (case grid of
+       Left e -> [CornerPointsError $ "grid error: " ++ e]
+       Right grid' ->
+        case
+         buildLeftRightLineFromGridAndLeadingTrailingCPointsBase
+           grid'
+           layer1LeadingOuter
+           layer1LeadingInner of
+          Right val ->  val
+          Left e -> [CornerPointsError e]
+    )
+
+--map toBottomFace
+  layer1LeadingBtmFaces <- buildCubePointsListSingle "layer1LeadingBtmFaces"
+    (map ( (transposeZ (+ (-10)) ) . toBottomFace  ) layer1LeadingTopFaces)
+  
+  
+  layer1Cubes <- buildCubePointsListWithAdd "layer1_2Cubes"
+    layer1LeadingTopFaces layer1LeadingBtmFaces
+  return layer1Cubes
+
+
+--use the grid, but only layer1.
+--Same error
+ankleBraceBuilderLayer1OnlyNoGrid :: AnglesHeightsRadii ->
+                               AnglesHeightsRadii ->  ExceptStackCornerPointsBuilder
+ankleBraceBuilderLayer1OnlyNoGrid layer1 layer2 = do
+  --F3:[F2]
+  layer1LeadingInnerTop <- buildCubePointsListSingle "layer1LeadingInnerTop"
+    (let
+        t = buildLeadingTopFrontLinesFromAHR layer1 (\ang -> ang <= 180)
+     in
+     (head t) +++> (tail t)
+    )
+
+  --Transpose the Radius to give a perimeter wall of 1 mm.
+  ----F3:[F2]
+  layer1LeadingOuterTop <- buildCubePointsListSingle "layer1LeadingOuterTop"
+    (let
+        t = buildLeadingTopFrontLinesFromAHR (map (transpose (+10)) layer1) (\ang -> ang <= 180)
+     in
+     (toB3 $ head t) +++> (map toB2 $ tail t)
+    )
+
+  layer1TopFaces <- buildCubePointsListWithAdd "layer1TopFaces"
+    layer1LeadingInnerTop layer1LeadingOuterTop
+
+  layer1Cubes <- buildCubePointsListWithAdd "layer1Cubes"
+    (layer1TopFaces)
+    (map (toBottomFace . (transposeZ (+ (-10)))) layer1TopFaces)
+  
+  return layer1Cubes

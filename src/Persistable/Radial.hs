@@ -10,7 +10,8 @@
 module Persistable.Radial (Layer(..), AngleHeightRadius(..), AnglesHeightsRadii(..), nameUnique', angleHeightRadius', layerId',
                            angleHeightRadiusLayerId', extractAnglesHeightsRadiiFromEntity, ExtractedAngleHeightRadius(..),
                            extractRadii, extractAngles, extractHeights, extractLayerId, extractOrigin,
-                           loadAndExtractedAngleHeightRadiusFromDB, loadAndExtractedAngleHeightRadiusFromDbT) where
+                           loadAndExtractedAngleHeightRadiusFromDB, loadAndExtractedAngleHeightRadiusFromDbT,
+                           anglesHeightsRadiiToExtractedAnglesHeightsRadii, filterAngleHeightRadiusOnAngle) where
 
 import Control.Monad.IO.Class  (liftIO)
 import Database.Persist
@@ -34,6 +35,8 @@ import Control.Monad.State
 import Control.Monad.Except
 import Control.Monad.Writer (WriterT, tell, execWriterT)
 import Control.Monad.Reader
+
+import TypeClasses.Transposable(TransposeLength, transpose)
 
 {- | -------------------------overview---------------------------------------------
 Create persist Datatypes that map [Radius] and [Angle] to a layer that has an associated origin.
@@ -166,6 +169,18 @@ extractAnglesHeightsRadiiFromEntity anglesHeightsRadii =
   in
   map (extract) anglesHeightsRadii
 
+-- |
+-- Given:
+--  filterFx :: (Double -> Bool) Fx to select a range of Doubles which represent the Angles.
+--    Eg: <= 180 Eg: >= 90 & <= 270
+--  ahr :: AnglesHeightsRadii. The AnglesHeightsRadii as loaded from the database.
+-- Task:
+--   Filter the AnglesHeightsRadii based on the angle.
+-- Return:
+--   The AnglesHeightsRadii as selected byt the 
+filterAngleHeightRadiusOnAngle :: (Double -> Bool) ->  AnglesHeightsRadii -> AnglesHeightsRadii
+filterAngleHeightRadiusOnAngle filterFx ahr =
+  filter (\(AngleHeightRadius ang _ _ _) -> filterFx ang) ahr
 
 -- A handy wrapper used for extracting the [Angle], [Height], [Radius] the Persist layers.
 -- Gets used to pass from the database extraction function to the Builder function
@@ -190,7 +205,9 @@ loadAndExtractedAngleHeightRadiusFromDB  layerName dbName = runSqlite ( T.pack d
     (Just (Entity key layer1AHR)) -> do
       liftIO $ putStrLn "layer was found"
       angleHeightRadiusEntity <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId layerId)] []
+      
       let ahr = extractAnglesHeightsRadiiFromEntity angleHeightRadiusEntity
+      {-
           angles'  = extractAngles ahr
           heights' = extractHeights ahr
           radii'   = extractRadii ahr
@@ -199,14 +216,10 @@ loadAndExtractedAngleHeightRadiusFromDB  layerName dbName = runSqlite ( T.pack d
                    | a <-angles'
                    | h <- heights'
                    | r <- radii'
-                 ]
-
-
-
-
+                 ]-}
+      return $ Just $ anglesHeightsRadiiToExtractedAnglesHeightsRadii ahr
 {-
-
-loadAndExtractedAngleHeightRadiusFromDB :: String -> String -> IO (Maybe ExtractedAngleHeightRadius)
+loadAndExtractedAngleHeightRadiusFromDB :: String -> String -> IO (Maybe [ExtractedAngleHeightRadius])
 loadAndExtractedAngleHeightRadiusFromDB  layerName dbName = runSqlite ( T.pack dbName) $ do
   layerId <- getBy $ nameUnique' layerName 
   
@@ -222,27 +235,30 @@ loadAndExtractedAngleHeightRadiusFromDB  layerName dbName = runSqlite ( T.pack d
           angles'  = extractAngles ahr
           heights' = extractHeights ahr
           radii'   = extractRadii ahr
-      
-      return $ Just $ ExtractedAngleHeightRadius angles' heights' radii'
-
-
-
-
-
-
-
-loadAndExtractedAngleHeightRadiusFromDB :: String -> String -> IO (ExtractedAngleHeightRadius)
-loadAndExtractedAngleHeightRadiusFromDB  layerName dbName = runSqlite dbName $ do
-  layerId <- getBy $ nameUnique' layerName 
-  angleHeightRadiusEntity <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId layerId)] []
-  
-  let ahr = extractAnglesHeightsRadiiFromEntity angleHeightRadiusEntity
-      angles'  = extractAngles ahr
-      heights' = extractHeights ahr
-      radii'   = extractRadii ahr
-  return $ ExtractedAngleHeightRadius angles' heights' radii'
-
+      return $ Just
+                 [ExtractedAngleHeightRadius a h r
+                   | a <-angles'
+                   | h <- heights'
+                   | r <- radii'
+                 ]
 -}
+-- |
+-- Given: ahr :: AnglesHeightsRadii, which is the Persistent datatype using Doubles to store Angles, Heights and Radii.  Has already been removed from the Persistent Entity
+-- Task: Converts all the Doubles used by Persistent into the corresponding Angle and Radius. Height is left as a Double
+-- Return: [ExtractedAngleHeightRadius] which is the same as the AnglesHeightsRadii but with Angle and Radius data types, as well as the Height::Double
+anglesHeightsRadiiToExtractedAnglesHeightsRadii :: AnglesHeightsRadii -> [ExtractedAngleHeightRadius]
+anglesHeightsRadiiToExtractedAnglesHeightsRadii ahr =
+  let
+    angles'  = extractAngles ahr
+    heights' = extractHeights ahr
+    radii'   = extractRadii ahr
+  in
+  [ExtractedAngleHeightRadius a h r
+    | a <-angles'
+    | h <- heights'
+    | r <- radii'
+  ]
+ 
 
 
 
@@ -290,3 +306,7 @@ loadAndExtractedAngleHeightRadiusFromDbT  layerName dbName = do
 
 
 runner = runMaybeT $  loadAndExtractedAngleHeightRadiusFromDbT "layer1" "src/Examples/ShoeLift/MountainFlex/ankleBrace.db"
+
+instance TransposeLength AngleHeightRadius where
+  transpose fx (AngleHeightRadius a h r i) =
+    AngleHeightRadius a h (fx r) i

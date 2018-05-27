@@ -13,7 +13,8 @@ Should extend off both ends of the shape.
 
 -}
 
-module Joiners.RadialLines(getMinY, getMaxY, extractYaxis, createYaxisGridFromTopFrontPoints,
+module Joiners.RadialLines(getMinY, getMaxY, extractYaxis,
+                           createYaxisGridFromTopFrontPoints, createYaxisGridFromMinMaxY,
                            splitOnXaxis, buildLeftRightLineFromGridAndLeadingTrailingCPointsBase) where
 
 import Test.HUnit
@@ -400,7 +401,18 @@ buildLeftRightLineFromGridAndLeadingTrailingCPointsBase
       (B3 $ Point leadingX leadingY leadingZ) +++# (B2 $ Point trailingX trailingY trailingZ) `appendE` []
       
       
-
+buildLeftRightLineFromGridAndLeadingTrailingCPointsBase 
+                                                        (g:grid)
+                                                        ((F3 (Point leadingX leadingY leadingZ) : leadingCPoints))
+                                                        ((F3 (Point trailingX trailingY trailingZ) : trailingCPoints))
+                                                     =
+    extractE $
+    buildLeftRightLineFromGridAndLeadingTrailingCPointsBase'
+      (F3) (F2) grid
+      ((F3 (Point leadingX leadingY leadingZ) : leadingCPoints))
+      ((F3 (Point trailingX trailingY trailingZ) : trailingCPoints)) <$>
+      --(Right $ B3 $ Point leadingX leadingY leadingZ) ##+++# (Right $ B2 $ Point trailingX trailingY trailingZ) `appendE` []
+      (B3 $ Point leadingX leadingY leadingZ) +++# (B2 $ Point trailingX trailingY trailingZ) `appendE` []
 {-
 Child recur function:
 Given:
