@@ -131,6 +131,7 @@ of the shape.
 --ToDo: Do not comply with rules. Used in MTLDiff example.
 toB3 :: CornerPoints -> CornerPoints
 toB3 (F3 f3) = B3 f3
+toB3 (F2 f2) = B3 f2
 
 toB2 :: CornerPoints -> CornerPoints
 toB2 (F2 f2) = B2 f2
