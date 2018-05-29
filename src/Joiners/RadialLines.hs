@@ -382,6 +382,9 @@ Return:
 Either String [CornerPoints]
 The [CornerPoints] as CubePoints which have been build along the grid lines.
 -}
+--rename to: buildOuterToInnerWallWithGrid
+--and make a new: buildInnerToOuterWallWithGrid
+--both will be F3:[F2]. The diff will be how they make up the wall.
 buildLeftRightLineFromGridAndLeadingTrailingCPointsBase :: 
                                                        [Double] ->
                                                        [CornerPoints] -> --leading CPoints
@@ -413,6 +416,10 @@ buildLeftRightLineFromGridAndLeadingTrailingCPointsBase
       ((F3 (Point trailingX trailingY trailingZ) : trailingCPoints)) <$>
       --(Right $ B3 $ Point leadingX leadingY leadingZ) ##+++# (Right $ B2 $ Point trailingX trailingY trailingZ) `appendE` []
       (B3 $ Point leadingX leadingY leadingZ) +++# (B2 $ Point trailingX trailingY trailingZ) `appendE` []
+
+buildLeftRightLineFromGridAndLeadingTrailingCPointsBase _ (leadingCPoint:leadingCPoints) (trailingCPoint:trailingCPoints) =
+  Left $ "buildLeftRightLineFromGridAndLeadingTrailingCPointsBase: " ++ "missing or illegal pattern match for leading: " ++ (cpointType leadingCPoint)
+                                                                     ++ " and trailing : " ++ (cpointType trailingCPoint)
 {-
 Child recur function:
 Given:
