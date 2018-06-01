@@ -155,6 +155,11 @@ FrontFace f1 f2 f3 f4 >==< FrontFace f1' f2' f3' f4' =
    f3 == f2' &&
    f4 == f1'
   )
+
+BackFace b1 b2 b3 b4 >==< BackFace b1' b2' b3' b4'
+ | (b1 == b1') && (b2 == b2') && (b3 == b3') && (b4 == b4') = True
+ | (b1 == b4') && (b2 == b3') && (b3 == b2') && (b4 == b1') = True
+ | otherwise = False
 {-
 --ToDo: All of these need to be checked for being opposites.
 Eg: Why can't a BackFace and LeftFace be opposing.
