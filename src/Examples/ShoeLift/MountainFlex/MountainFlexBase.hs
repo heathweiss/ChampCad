@@ -821,6 +821,17 @@ Find the <min/max> y_axis value for setting up the radial grid
 --Need to make a verion using MaybeT
 
 should look at the building web api example for how to do this using the same connection, or what about a connection pool?
+
+ToDo:
+Create a version of this for AngleHeightsRadius, as using ExtractedAngleHeightRadius is a poor design choice.
+In addition to having a version like this that show the y_axis values, have a fx that returns a Bool, or an Either
+to say it all y_axis values are ascending in the list.
+
+If an Either was used in conjuction with an error msg, then applicative could be used to see which layer is
+not ascending. That layer could then be independently viewed to decide on what correction are required
+to ensure ascending y_axis values
+
+extractY_axis: need a AngleHeightsRadius version as well.
 -}
 calculateYValuesForGrid :: IO (Maybe [ExtractedAngleHeightRadius] )
 calculateYValuesForGrid = do
@@ -974,6 +985,11 @@ wrapZeroDegreeToEndAs360Degree ((ExtractedAngleHeightRadius _ h r):leading) trai
 --Known uses:
 ---Examine the y_axis values to make sure they are all ascending for grid creation.
 ---Find the min/max y_axis values for creating the radial grid.
+
+--ToDo:
+--Make a version for AngleHeightsRadius as ExtractedAngleHeightRadius is NFG design decision.
+
+
 extractY_axis :: [ExtractedAngleHeightRadius] -> [Double]
 extractY_axis ahr  =
         let frontTopLines =
@@ -1121,6 +1137,9 @@ buildLeadingFrontTopLinesFromAHR ahr splitter =
   in
   (extractF3 $ head frontTopLines) :  map (extractF2) frontTopLines
 
+
+--load all 12 layers of the scan.
+--show the current val of 1 of the 3 ankle brace builders
 showAnkleBraceBuilderValue :: IO () 
 showAnkleBraceBuilderValue = runSqlite "src/Examples/ShoeLift/MountainFlex/ankleBrace.db" $ do
   layer1Id <- getBy $ nameUnique' "layer1"
@@ -1146,14 +1165,26 @@ showAnkleBraceBuilderValue = runSqlite "src/Examples/ShoeLift/MountainFlex/ankle
 
   layer8Id <- getBy $ nameUnique' "layer8"
   ahrEntity8 <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId layer8Id)] []
+
+  layer9Id <- getBy $ nameUnique' "layer9"
+  ahrEntity9 <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId layer9Id)] []
+
+  layer10Id <- getBy $ nameUnique' "layer10"
+  ahrEntity10 <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId layer10Id)] []
+
+  layer11Id <- getBy $ nameUnique' "layer11"
+  ahrEntity11 <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId layer11Id)] []
+
+  layer12Id <- getBy $ nameUnique' "layer12"
+  ahrEntity12 <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId layer12Id)] []
+  
   
   case layer1Id of
     Nothing -> liftIO $ putStrLn "tread scan layer1 was not found"
     
     (Just (Entity key layerVal)) -> do
       liftIO $ putStrLn "tread scan layer was found"
-      --ankleBraceLeadingBuilder ankleBraceTrailingBuilder
-      let builder = ankleBraceTrailingBuilder
+      let builder = ankleBraceBuilder
                                       ( extractAnglesHeightsRadiiFromEntity ahrEntity1)
                                       ( extractAnglesHeightsRadiiFromEntity ahrEntity2)
                                       ( extractAnglesHeightsRadiiFromEntity ahrEntity3)
@@ -1162,6 +1193,10 @@ showAnkleBraceBuilderValue = runSqlite "src/Examples/ShoeLift/MountainFlex/ankle
                                       ( extractAnglesHeightsRadiiFromEntity ahrEntity6)
                                       ( extractAnglesHeightsRadiiFromEntity ahrEntity7)
                                       ( extractAnglesHeightsRadiiFromEntity ahrEntity8)
+                                      ( extractAnglesHeightsRadiiFromEntity ahrEntity9)
+                                      ( extractAnglesHeightsRadiiFromEntity ahrEntity10)
+                                      ( extractAnglesHeightsRadiiFromEntity ahrEntity11)
+                                      ( extractAnglesHeightsRadiiFromEntity ahrEntity12)
           valCpoints = ((evalState $ runExceptT builder) [])
           cpoints = ((execState $ runExceptT builder) [])
       case valCpoints of
@@ -1170,7 +1205,8 @@ showAnkleBraceBuilderValue = runSqlite "src/Examples/ShoeLift/MountainFlex/ankle
           liftIO $ print $ show a
           liftIO $ writeFile "src/Data/temp.txt" $ show a
 
-
+--load all 12 layers of the scan from db.
+--call 1 of 3 ankle brace builders.
 runAnkleBraceBuilder :: IO () 
 runAnkleBraceBuilder = runSqlite "src/Examples/ShoeLift/MountainFlex/ankleBrace.db" $ do
   
@@ -1197,6 +1233,18 @@ runAnkleBraceBuilder = runSqlite "src/Examples/ShoeLift/MountainFlex/ankleBrace.
 
   layer8Id <- getBy $ nameUnique' "layer8"
   ahrEntity8 <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId layer8Id)] []
+
+  layer9Id <- getBy $ nameUnique' "layer9"
+  ahrEntity9 <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId layer9Id)] []
+
+  layer10Id <- getBy $ nameUnique' "layer10"
+  ahrEntity10 <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId layer10Id)] []
+
+  layer11Id <- getBy $ nameUnique' "layer11"
+  ahrEntity11 <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId layer11Id)] []
+
+  layer12Id <- getBy $ nameUnique' "layer12"
+  ahrEntity12 <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId layer12Id)] []
   
   
   case layer1Id of
@@ -1204,8 +1252,7 @@ runAnkleBraceBuilder = runSqlite "src/Examples/ShoeLift/MountainFlex/ankleBrace.
     
     (Just (Entity key layerVal)) -> do
       liftIO $ putStrLn "tread scan layer was found"
-      --ankleBraceLeadingBuilder ankleBraceTrailingBuilder
-      let builder = ankleBraceTrailingBuilder
+      let builder = ankleBraceBuilder
                                       ( extractAnglesHeightsRadiiFromEntity ahrEntity1)
                                       ( extractAnglesHeightsRadiiFromEntity ahrEntity2)
                                       ( extractAnglesHeightsRadiiFromEntity ahrEntity3)
@@ -1214,6 +1261,10 @@ runAnkleBraceBuilder = runSqlite "src/Examples/ShoeLift/MountainFlex/ankleBrace.
                                       ( extractAnglesHeightsRadiiFromEntity ahrEntity6)
                                       ( extractAnglesHeightsRadiiFromEntity ahrEntity7)
                                       ( extractAnglesHeightsRadiiFromEntity ahrEntity8)
+                                      ( extractAnglesHeightsRadiiFromEntity ahrEntity9)
+                                      ( extractAnglesHeightsRadiiFromEntity ahrEntity10)
+                                      ( extractAnglesHeightsRadiiFromEntity ahrEntity11)
+                                      ( extractAnglesHeightsRadiiFromEntity ahrEntity12)
           valCpoints = ((evalState $ runExceptT builder) [])
           cpoints = ((execState $ runExceptT builder) [])
       case valCpoints of
@@ -1232,7 +1283,7 @@ layer<1,2...12> :: AnglesHeightsRadii
   each layer of the scan from the db.
 
 Task:
-Read each scan layer for angles < 180 degree angle to build the leading section.
+Read each scan layer and split into leading/trailing angles to build the leading/trailing sections.
 Transpose the radius of each layer section of AnglesHeightsRadii to give the wall thickness.
 
 Once each individual layer/section is build as F3:[F2], combine them all to calculate <min/max>Y_axis values
@@ -1242,7 +1293,12 @@ Now build each layer/section with the radial grid system.
 The layer1 leading/trailing sections are Bottom Faces while are the following layers
 are created as TopFaces and added to the layer below.
 -}
-ankleBraceLeadingBuilder ::
+
+ankleBraceBuilder ::
+                     AnglesHeightsRadii ->
+                     AnglesHeightsRadii ->
+                     AnglesHeightsRadii ->
+                     AnglesHeightsRadii ->
                      AnglesHeightsRadii ->
                      AnglesHeightsRadii ->
                      AnglesHeightsRadii ->
@@ -1251,309 +1307,430 @@ ankleBraceLeadingBuilder ::
                      AnglesHeightsRadii ->
                      AnglesHeightsRadii ->
                      AnglesHeightsRadii ->  ExceptStackCornerPointsBuilder
-ankleBraceLeadingBuilder layer1 layer2 layer3 layer4 layer5 layer6 layer7 layer8 = do
-  let --filter to select leading (pre 180 degree) and trailing sections of scan.
+ankleBraceBuilder layer1 layer2 layer3 layer4 layer5 layer6 layer7 layer8 layer9 layer10 layer11 layer12 = do
+  let --filter each layer to select leading (pre 180 degree) section of scan.
       leadingSelector = (\ang -> ang <= 180)
       
-      
-  layer1Inner <- buildCubePointsListSingle "layer1Inner"
+  --leadingLayer<1..12>Inner: the leadling F2:[F3] Cpoints created from scan. Make up the inner wall of brace
+  --leadingLayer<1..12>OUter: Transpose the Radius of the inner wall to create the outer wall of brace.   
+  leadingLayer1Inner <- buildCubePointsListSingle "leadingLayer1Inner"
     (buildLeadingFrontTopLinesFromAHR layer1 leadingSelector)
   
-  layer1Outer <- buildCubePointsListSingle "layer1Outer"
+  leadingLayer1Outer <- buildCubePointsListSingle "leadingLayer1Outer"
     (buildLeadingFrontTopLinesFromAHR (map (transpose (+2)) layer1) leadingSelector )
   
-  layer2Inner <- buildCubePointsListSingle "layer2Inner"
+  leadingLayer2Inner <- buildCubePointsListSingle "leadingLayer2Inner"
     (buildLeadingFrontTopLinesFromAHR layer2 leadingSelector)
 
-  layer2Outer <- buildCubePointsListSingle "layer2Outer"
+  leadingLayer2Outer <- buildCubePointsListSingle "leadingLayer2Outer"
     (buildLeadingFrontTopLinesFromAHR (map (transpose (+2)) layer2) leadingSelector)
 
-  layer3Inner <- buildCubePointsListSingle "layer3Inner"
+  leadingLayer3Inner <- buildCubePointsListSingle "leadingLayer3Inner"
     (buildLeadingFrontTopLinesFromAHR layer3 leadingSelector)
 
-  layer3Outer <- buildCubePointsListSingle "layer3Outer"
+  leadingLayer3Outer <- buildCubePointsListSingle "leadingLayer3Outer"
     (buildLeadingFrontTopLinesFromAHR (map (transpose (+2)) layer3) leadingSelector)
 
-  layer4Inner <- buildCubePointsListSingle "layer4Inner"
+  leadingLayer4Inner <- buildCubePointsListSingle "leadingLayer4Inner"
     (buildLeadingFrontTopLinesFromAHR layer4 leadingSelector)
 
-  layer4Outer <- buildCubePointsListSingle "layer4Outer"
+  leadingLayer4Outer <- buildCubePointsListSingle "leadingLayer4Outer"
     (buildLeadingFrontTopLinesFromAHR (map (transpose (+2)) layer4) leadingSelector)
 
-  layer5Inner <- buildCubePointsListSingle "layer5Inner"
+  leadingLayer5Inner <- buildCubePointsListSingle "leadingLayer5Inner"
     (buildLeadingFrontTopLinesFromAHR layer5 leadingSelector)
 
-  layer5Outer <- buildCubePointsListSingle "layer5Outer"
+  leadingLayer5Outer <- buildCubePointsListSingle "leadingLayer5Outer"
     (buildLeadingFrontTopLinesFromAHR (map (transpose (+2)) layer5) leadingSelector)
 
-  layer6Inner <- buildCubePointsListSingle "layer6Inner"
+  leadingLayer6Inner <- buildCubePointsListSingle "leadingLayer6Inner"
     (buildLeadingFrontTopLinesFromAHR layer6 leadingSelector)
 
-  layer6Outer <- buildCubePointsListSingle "layer6Outer"
+  leadingLayer6Outer <- buildCubePointsListSingle "leadingLayer6Outer"
     (buildLeadingFrontTopLinesFromAHR (map (transpose (+2)) layer6) leadingSelector)
 
-  layer7Inner <- buildCubePointsListSingle "layer7Inner"
+  leadingLayer7Inner <- buildCubePointsListSingle "leadingLayer7Inner"
     (buildLeadingFrontTopLinesFromAHR layer7 leadingSelector)
 
-  layer7Outer <- buildCubePointsListSingle "layer7Outer"
+  leadingLayer7Outer <- buildCubePointsListSingle "leadingLayer7Outer"
     (buildLeadingFrontTopLinesFromAHR (map (transpose (+2)) layer7) leadingSelector)
 
-  layer8Inner <- buildCubePointsListSingle "layer8Inner"
+  leadingLayer8Inner <- buildCubePointsListSingle "leadingLayer8Inner"
     (buildLeadingFrontTopLinesFromAHR layer8 leadingSelector)
 
-  layer8Outer <- buildCubePointsListSingle "layer8Outer"
+  leadingLayer8Outer <- buildCubePointsListSingle "leadingLayer8Outer"
     (buildLeadingFrontTopLinesFromAHR (map (transpose (+2)) layer8) leadingSelector)
+
+  leadingLayer9Inner <- buildCubePointsListSingle "leadingLayer9Inner"
+    (buildLeadingFrontTopLinesFromAHR layer9 leadingSelector)
+
+  leadingLayer9Outer <- buildCubePointsListSingle "leadingLayer9Outer"
+    (buildLeadingFrontTopLinesFromAHR (map (transpose (+2)) layer9) leadingSelector)
+
+  leadingLayer10Inner <- buildCubePointsListSingle "leadingLayer10Inner"
+    (buildLeadingFrontTopLinesFromAHR layer10 leadingSelector)
+
+  leadingLayer10Outer <- buildCubePointsListSingle "leadingLayer10Outer"
+    (buildLeadingFrontTopLinesFromAHR (map (transpose (+2)) layer10) leadingSelector)
+
+  leadingLayer11Inner <- buildCubePointsListSingle "leadingLayer11Inner"
+    (buildLeadingFrontTopLinesFromAHR layer11 leadingSelector)
+
+  leadingLayer11Outer <- buildCubePointsListSingle "leadingLayer11Outer"
+    (buildLeadingFrontTopLinesFromAHR (map (transpose (+2)) layer11) leadingSelector)
+
+  leadingLayer12Inner <- buildCubePointsListSingle "leadingLayer12Inner"
+    (buildLeadingFrontTopLinesFromAHR layer12 leadingSelector)
+
+  leadingLayer12Outer <- buildCubePointsListSingle "leadingLayer12Outer"
+    (buildLeadingFrontTopLinesFromAHR (map (transpose (+2)) layer12) leadingSelector)
+
   
-  let grid =
-        let allLayers = layer1Inner ++ layer1Outer ++ layer2Inner ++ layer2Outer
-                        ++ layer3Inner ++ layer3Outer
-                        ++ layer4Inner ++ layer4Outer
-                        ++ layer5Inner ++ layer5Outer
-                        ++ layer6Inner ++ layer6Outer
-                        ++ layer7Inner ++ layer7Outer
-                        ++ layer8Inner ++ layer8Outer 
+  --RadialLines grid for leading wall
+  let leadingGrid =
+        let allLayers = leadingLayer1Inner ++ leadingLayer1Outer ++ leadingLayer2Inner ++ leadingLayer2Outer
+                        ++ leadingLayer3Inner ++ leadingLayer3Outer
+                        ++ leadingLayer4Inner ++ leadingLayer4Outer
+                        ++ leadingLayer5Inner ++ leadingLayer5Outer
+                        ++ leadingLayer6Inner ++ leadingLayer6Outer
+                        ++ leadingLayer7Inner ++ leadingLayer7Outer
+                        ++ leadingLayer8Inner ++ leadingLayer8Outer
+                        ++ leadingLayer9Inner ++ leadingLayer9Outer
+                        ++ leadingLayer10Inner ++ leadingLayer10Outer
+                        ++ leadingLayer11Inner ++ leadingLayer11Outer
+                        ++ leadingLayer12Inner ++ leadingLayer12Outer 
                         
             minY = minYaxis allLayers
             maxY = maxYaxis allLayers
         in
           createYaxisGridFromMinMaxY <$> minY <*> maxY
 
-  layer1BtmFaces <- buildCubePointsListSingle "layer1BtmFaces"
-    (case grid of
-       Left e -> [CornerPointsError $ "grid error: " ++ e]
+  --create layer 1 as [BottomFace] to start off the leading wall.
+  leadingLayer1BtmFaces <- buildCubePointsListSingle "leadingLayer1BtmFaces"
+    (case leadingGrid of
+       Left e -> [CornerPointsError $ "leadingGrid error: " ++ e]
        Right grid' ->
         case
          buildLeftRightLineFromGridAndLeadingTrailingCPointsBase
            grid'
-           layer1Outer
-           layer1Inner of
+           leadingLayer1Outer
+           leadingLayer1Inner of
           Right val -> map toBottomFace val
           Left e -> [CornerPointsError e]
     )
+  --leadingLayer<2..12>TopFaces: All subsequent layers are created as [TopFace] which will later be added to the preceding [CornerPoints].
+  --to create the current [CubePoints]
+  leadingLayer2TopFaces <- buildCubePointsListSingle "leadingLayer2TopFaces"
+    (case leadingGrid of
+       Left e -> [CornerPointsError $ "leadingGrid error: " ++ e]
+       Right grid' ->
+        case
+         buildLeftRightLineFromGridAndLeadingTrailingCPointsBase
+           grid'
+           leadingLayer2Outer
+           leadingLayer2Inner of
+          Right val -> val
+          Left e -> [CornerPointsError e]
+    )
+
+  leadingLayer3TopFaces <- buildCubePointsListSingle "leadingLayer3TopFaces"
+    (case leadingGrid of
+       Left e -> [CornerPointsError $ "grid error: " ++ e]
+       Right grid' ->
+        case
+         buildLeftRightLineFromGridAndLeadingTrailingCPointsBase
+           grid'
+           leadingLayer3Outer
+           leadingLayer3Inner of
+          Right val -> val
+          Left e -> [CornerPointsError e]
+    )
+
+  leadingLayer4TopFaces <- buildCubePointsListSingle "leadingLayer4TopFaces"
+    (case leadingGrid of
+       Left e -> [CornerPointsError $ "grid error: " ++ e]
+       Right grid' ->
+        case
+         buildLeftRightLineFromGridAndLeadingTrailingCPointsBase
+           grid'
+           leadingLayer4Outer
+           leadingLayer4Inner of
+          Right val -> val
+          Left e -> [CornerPointsError e]
+    )
+
+  leadingLayer5TopFaces <- buildCubePointsListSingle "leadingLayer5TopFaces"
+    (case leadingGrid of
+       Left e -> [CornerPointsError $ "grid error: " ++ e]
+       Right grid' ->
+        case
+         buildLeftRightLineFromGridAndLeadingTrailingCPointsBase
+           grid'
+           leadingLayer5Outer
+           leadingLayer5Inner of
+          Right val -> val
+          Left e -> [CornerPointsError e]
+    )
+
+  leadingLayer6TopFaces <- buildCubePointsListSingle "leadingLayer6TopFaces"
+    (case leadingGrid of
+       Left e -> [CornerPointsError $ "grid error: " ++ e]
+       Right grid' ->
+        case
+         buildLeftRightLineFromGridAndLeadingTrailingCPointsBase
+           grid'
+           leadingLayer6Outer
+           leadingLayer6Inner of
+          Right val -> val
+          Left e -> [CornerPointsError e]
+    )
+
+  leadingLayer7TopFaces <- buildCubePointsListSingle "leadingLayer7TopFaces"
+    (case leadingGrid of
+       Left e -> [CornerPointsError $ "grid error: " ++ e]
+       Right grid' ->
+        case
+         buildLeftRightLineFromGridAndLeadingTrailingCPointsBase
+           grid'
+           leadingLayer7Outer
+           leadingLayer7Inner of
+          Right val -> val
+          Left e -> [CornerPointsError e]
+    )
+
+  leadingLayer8TopFaces <- buildCubePointsListSingle "leadingLayer8TopFaces"
+    (case leadingGrid of
+       Left e -> [CornerPointsError $ "grid error: " ++ e]
+       Right grid' ->
+        case
+         buildLeftRightLineFromGridAndLeadingTrailingCPointsBase
+           grid'
+           leadingLayer8Outer
+           leadingLayer8Inner of
+          Right val -> val
+          Left e -> [CornerPointsError e]
+    )
+
+  leadingLayer9TopFaces <- buildCubePointsListSingle "leadingLayer9TopFaces"
+    (case leadingGrid of
+       Left e -> [CornerPointsError $ "grid error: " ++ e]
+       Right grid' ->
+        case
+         buildLeftRightLineFromGridAndLeadingTrailingCPointsBase
+           grid'
+           leadingLayer9Outer
+           leadingLayer9Inner of
+          Right val -> val
+          Left e -> [CornerPointsError e]
+    )
+
+  leadingLayer10TopFaces <- buildCubePointsListSingle "leadingLayer10TopFaces"
+    (case leadingGrid of
+       Left e -> [CornerPointsError $ "grid error: " ++ e]
+       Right grid' ->
+        case
+         buildLeftRightLineFromGridAndLeadingTrailingCPointsBase
+           grid'
+           leadingLayer10Outer
+           leadingLayer10Inner of
+          Right val -> val
+          Left e -> [CornerPointsError e]
+    )
+
+  leadingLayer11TopFaces <- buildCubePointsListSingle "leadingLayer11TopFaces"
+    (case leadingGrid of
+       Left e -> [CornerPointsError $ "grid error: " ++ e]
+       Right grid' ->
+        case
+         buildLeftRightLineFromGridAndLeadingTrailingCPointsBase
+           grid'
+           leadingLayer11Outer
+           leadingLayer11Inner of
+          Right val -> val
+          Left e -> [CornerPointsError e]
+    )
+
+  leadingLayer12TopFaces <- buildCubePointsListSingle "leadingLayer12TopFaces"
+    (case leadingGrid of
+       Left e -> [CornerPointsError $ "grid error: " ++ e]
+       Right grid' ->
+        case
+         buildLeftRightLineFromGridAndLeadingTrailingCPointsBase
+           grid'
+           leadingLayer12Outer
+           leadingLayer12Inner of
+          Right val -> val
+          Left e -> [CornerPointsError e]
+    )
   
-  layer2TopFaces <- buildCubePointsListSingle "layer2TopFaces"
-    (case grid of
-       Left e -> [CornerPointsError $ "grid error: " ++ e]
-       Right grid' ->
-        case
-         buildLeftRightLineFromGridAndLeadingTrailingCPointsBase
-           grid'
-           layer2Outer
-           layer2Inner of
-          Right val -> val
-          Left e -> [CornerPointsError e]
-    )
+  --leadingLayer<..>Cubes: Now add up all the layers of <Bottom/Top> to create CubePoints.
+  leadingLayer1_2Cubes <- buildCubePointsListWithAdd "leadingLayer1_2Cubes"
+    leadingLayer1BtmFaces leadingLayer2TopFaces
 
-  layer3TopFaces <- buildCubePointsListSingle "layer3TopFaces"
-    (case grid of
-       Left e -> [CornerPointsError $ "grid error: " ++ e]
-       Right grid' ->
-        case
-         buildLeftRightLineFromGridAndLeadingTrailingCPointsBase
-           grid'
-           layer3Outer
-           layer3Inner of
-          Right val -> val
-          Left e -> [CornerPointsError e]
-    )
+  leadingLayer2_3Cubes <- buildCubePointsListWithAdd "leadingLayer2_3Cubes"
+    leadingLayer3TopFaces leadingLayer1_2Cubes
 
-  layer4TopFaces <- buildCubePointsListSingle "layer4TopFaces"
-    (case grid of
-       Left e -> [CornerPointsError $ "grid error: " ++ e]
-       Right grid' ->
-        case
-         buildLeftRightLineFromGridAndLeadingTrailingCPointsBase
-           grid'
-           layer4Outer
-           layer4Inner of
-          Right val -> val
-          Left e -> [CornerPointsError e]
-    )
+  leadingLayer3_4Cubes <- buildCubePointsListWithAdd "leadingLayer3_4Cubes"
+    leadingLayer4TopFaces leadingLayer2_3Cubes
 
-  layer5TopFaces <- buildCubePointsListSingle "layer5TopFaces"
-    (case grid of
-       Left e -> [CornerPointsError $ "grid error: " ++ e]
-       Right grid' ->
-        case
-         buildLeftRightLineFromGridAndLeadingTrailingCPointsBase
-           grid'
-           layer5Outer
-           layer5Inner of
-          Right val -> val
-          Left e -> [CornerPointsError e]
-    )
+  leadingLayer4_5Cubes <- buildCubePointsListWithAdd "leadingLayer4_5Cubes"
+    leadingLayer5TopFaces leadingLayer3_4Cubes
 
-  layer6TopFaces <- buildCubePointsListSingle "layer6TopFaces"
-    (case grid of
-       Left e -> [CornerPointsError $ "grid error: " ++ e]
-       Right grid' ->
-        case
-         buildLeftRightLineFromGridAndLeadingTrailingCPointsBase
-           grid'
-           layer6Outer
-           layer6Inner of
-          Right val -> val
-          Left e -> [CornerPointsError e]
-    )
+  leadingLayer5_6Cubes <- buildCubePointsListWithAdd "leadingLayer5_6Cubes"
+    leadingLayer6TopFaces leadingLayer4_5Cubes
 
-  layer7TopFaces <- buildCubePointsListSingle "layer7TopFaces"
-    (case grid of
-       Left e -> [CornerPointsError $ "grid error: " ++ e]
-       Right grid' ->
-        case
-         buildLeftRightLineFromGridAndLeadingTrailingCPointsBase
-           grid'
-           layer7Outer
-           layer7Inner of
-          Right val -> val
-          Left e -> [CornerPointsError e]
-    )
+  leadingLayer6_7Cubes <- buildCubePointsListWithAdd "leadingLayer6_7Cubes"
+    leadingLayer7TopFaces leadingLayer5_6Cubes
 
-  layer8TopFaces <- buildCubePointsListSingle "layer8TopFaces"
-    (case grid of
-       Left e -> [CornerPointsError $ "grid error: " ++ e]
-       Right grid' ->
-        case
-         buildLeftRightLineFromGridAndLeadingTrailingCPointsBase
-           grid'
-           layer8Outer
-           layer8Inner of
-          Right val -> val
-          Left e -> [CornerPointsError e]
-    )
+  leadingLayer7_8Cubes <- buildCubePointsListWithAdd "leadingLayer7_8Cubes"
+    leadingLayer8TopFaces leadingLayer6_7Cubes
 
+  leadingLayer8_9Cubes <- buildCubePointsListWithAdd "leadingLayer8_9Cubes"
+    leadingLayer9TopFaces leadingLayer7_8Cubes
+
+  leadingLayer9_10Cubes <- buildCubePointsListWithAdd "leadingLayer9_10Cubes"
+    leadingLayer10TopFaces leadingLayer8_9Cubes
+
+  leadingLayer10_11Cubes <- buildCubePointsListWithAdd "leadingLayer10_11Cubes"
+    leadingLayer11TopFaces leadingLayer9_10Cubes
   
+  leadingLayer11_12Cubes <- buildCubePointsListWithAdd "leadingLayer11_12Cubes"
+    leadingLayer12TopFaces leadingLayer10_11Cubes
+
+  --------------------------------------------- trailing (0 and > 180 degrees) faces ----------------------------------------------------------
+  ---------------------------------------------------------------------------------------------------------------------------------------------
+  let
+      --include the 0 degree angle in order to bring the leading/trailing sides of scan
+      --together at the 0/360 angle. Select all trailing angles.
+      selectZeroAndTrailingAngles = (\ang -> (ang > 180) || (ang == 0))
+
+      --need to reverse the trailing lists in order to avoid AppendE error.
+      --Not sure what the error is about, but easier just to reverse the list,
+      --as it is more logical to build in ascending y_axis direction like the leading list.
+      --Each 1 is used twice, so do it here for efficiency.
+      layer1ReversedToAvoidAppendEerror = reverse layer1
+
+      layer2ReversedToAvoidAppendEerror = reverse layer2
+
+      layer3ReversedToAvoidAppendEerror = reverse layer3
+
+      layer4ReversedToAvoidAppendEerror = reverse layer4
+
+      layer5ReversedToAvoidAppendEerror = reverse layer5
+
+      layer6ReversedToAvoidAppendEerror = reverse layer6
+
+      layer7ReversedToAvoidAppendEerror = reverse layer7
+
+      layer8ReversedToAvoidAppendEerror = reverse layer8
+
+      layer9ReversedToAvoidAppendEerror = reverse layer9
+
+      layer10ReversedToAvoidAppendEerror = reverse layer10
+
+      layer11ReversedToAvoidAppendEerror = reverse layer11
+
+      layer12ReversedToAvoidAppendEerror = reverse layer12 
   
-  layer1_2Cubes <- buildCubePointsListWithAdd "layer1_2Cubes"
-    layer1BtmFaces layer2TopFaces
 
-  layer2_3Cubes <- buildCubePointsListWithAdd "layer2_3Cubes"
-    layer3TopFaces layer1_2Cubes
-
-  layer3_4Cubes <- buildCubePointsListWithAdd "layer3_4Cubes"
-    layer4TopFaces layer2_3Cubes
-
-  layer4_5Cubes <- buildCubePointsListWithAdd "layer4_5Cubes"
-    layer5TopFaces layer3_4Cubes
-
-  layer5_6Cubes <- buildCubePointsListWithAdd "layer5_6Cubes"
-    layer6TopFaces layer4_5Cubes
-
-  layer6_7Cubes <- buildCubePointsListWithAdd "layer6_7Cubes"
-    layer7TopFaces layer5_6Cubes
-
-  layer7_8Cubes <- buildCubePointsListWithAdd "layer7_8Cubes"
-    layer8TopFaces layer6_7Cubes
-  
-  return layer1_2Cubes
-
-
-
-ankleBraceTrailingBuilder ::
-                     AnglesHeightsRadii ->
-                     AnglesHeightsRadii ->
-                     AnglesHeightsRadii ->
-                     AnglesHeightsRadii ->
-                     AnglesHeightsRadii ->
-                     AnglesHeightsRadii ->
-                     AnglesHeightsRadii ->
-                     AnglesHeightsRadii ->  ExceptStackCornerPointsBuilder
-ankleBraceTrailingBuilder layer1 layer2 layer3 layer4 layer5 layer6 layer7 layer8 = do
-  let 
-      selector = (\ang -> ang > 180)
-
-      appendZeroAndReverse :: AnglesHeightsRadii -> AnglesHeightsRadii
-      appendZeroAndReverse layer = reverse $ addZeroDegreeToEndAs360Degree
-                                              (head $ filterAngleHeightRadiusOnAngle (\ang -> ang == 0) layer)
-                                              layer
-      layer1With360AngleAppended = reverse $ addZeroDegreeToEndAs360Degree
-                                              (head $ filterAngleHeightRadiusOnAngle (\ang -> ang == 0) layer1)
-                                              layer1
-      layer2With360AngleAppended = reverse $ addZeroDegreeToEndAs360Degree
-                                               (head $ filterAngleHeightRadiusOnAngle (\ang -> ang == 0) layer2)
-                                               layer2
-      layer3With360AngleAppended = reverse $ addZeroDegreeToEndAs360Degree
-                                               (head $ filterAngleHeightRadiusOnAngle (\ang -> ang == 0) layer3)
-                                               layer3
-
-      layer4With360AngleAppended = appendZeroAndReverse layer4
-
-      layer5With360AngleAppended = appendZeroAndReverse layer5
-
-      layer6With360AngleAppended = appendZeroAndReverse layer6
-
-      layer7With360AngleAppended = appendZeroAndReverse layer7
-
-      layer8With360AngleAppended = appendZeroAndReverse layer8 
-      
+  --layer<1..12>Inner: the trailing F2:[F3] Cpoints created from scan. Make up the inner wall of brace
+  --layer<1..12>OUter: Transpose the Radius of the inner wall to create the outer wall of brace.
   layer1Inner <- buildCubePointsListSingle "layer1Inner"
-    (buildLeadingFrontTopLinesFromAHR layer1With360AngleAppended selector)
+    (buildLeadingFrontTopLinesFromAHR layer1ReversedToAvoidAppendEerror selectZeroAndTrailingAngles)
   
   
   layer1Outer <- buildCubePointsListSingle "layer1Outer"
-    (buildLeadingFrontTopLinesFromAHR (map (transpose (+2)) layer1With360AngleAppended) selector )
+    (buildLeadingFrontTopLinesFromAHR (map (transpose (+2)) layer1ReversedToAvoidAppendEerror) selectZeroAndTrailingAngles )
 
   
   layer2Inner <- buildCubePointsListSingle "layer2Inner"
-    (buildLeadingFrontTopLinesFromAHR layer2With360AngleAppended selector)
+    (buildLeadingFrontTopLinesFromAHR layer2ReversedToAvoidAppendEerror selectZeroAndTrailingAngles)
 
   layer2Outer <- buildCubePointsListSingle "layer2Outer"
-    (buildLeadingFrontTopLinesFromAHR (map (transpose (+2)) layer2With360AngleAppended) selector)
+    (buildLeadingFrontTopLinesFromAHR (map (transpose (+2)) layer2ReversedToAvoidAppendEerror) selectZeroAndTrailingAngles)
 
   layer3Inner <- buildCubePointsListSingle "layer3Inner"
-    (buildLeadingFrontTopLinesFromAHR layer3With360AngleAppended selector)
+    (buildLeadingFrontTopLinesFromAHR layer3ReversedToAvoidAppendEerror selectZeroAndTrailingAngles)
 
   layer3Outer <- buildCubePointsListSingle "layer3Outer"
-    (buildLeadingFrontTopLinesFromAHR (map (transpose (+2)) layer3With360AngleAppended) selector)
+    (buildLeadingFrontTopLinesFromAHR (map (transpose (+2)) layer3ReversedToAvoidAppendEerror) selectZeroAndTrailingAngles)
 
   layer4Inner <- buildCubePointsListSingle "layer4Inner"
-    (buildLeadingFrontTopLinesFromAHR layer4With360AngleAppended selector)
+    (buildLeadingFrontTopLinesFromAHR layer4ReversedToAvoidAppendEerror selectZeroAndTrailingAngles)
 
   layer4Outer <- buildCubePointsListSingle "layer4Outer"
-    (buildLeadingFrontTopLinesFromAHR (map (transpose (+2)) layer4With360AngleAppended) selector)
+    (buildLeadingFrontTopLinesFromAHR (map (transpose (+2)) layer4ReversedToAvoidAppendEerror) selectZeroAndTrailingAngles)
 
   layer5Inner <- buildCubePointsListSingle "layer5Inner"
-    (buildLeadingFrontTopLinesFromAHR layer5With360AngleAppended selector)
+    (buildLeadingFrontTopLinesFromAHR layer5ReversedToAvoidAppendEerror selectZeroAndTrailingAngles)
 
   layer5Outer <- buildCubePointsListSingle "layer5Outer"
-    (buildLeadingFrontTopLinesFromAHR (map (transpose (+2)) layer5With360AngleAppended) selector)
+    (buildLeadingFrontTopLinesFromAHR (map (transpose (+2)) layer5ReversedToAvoidAppendEerror) selectZeroAndTrailingAngles)
 
   layer6Inner <- buildCubePointsListSingle "layer6Inner"
-    (buildLeadingFrontTopLinesFromAHR layer6With360AngleAppended selector)
+    (buildLeadingFrontTopLinesFromAHR layer6ReversedToAvoidAppendEerror selectZeroAndTrailingAngles)
 
   layer6Outer <- buildCubePointsListSingle "layer6Outer"
-    (buildLeadingFrontTopLinesFromAHR (map (transpose (+2)) layer6With360AngleAppended) selector)
+    (buildLeadingFrontTopLinesFromAHR (map (transpose (+2)) layer6ReversedToAvoidAppendEerror) selectZeroAndTrailingAngles)
 
   layer7Inner <- buildCubePointsListSingle "layer7Inner"
-    (buildLeadingFrontTopLinesFromAHR layer7With360AngleAppended selector)
+    (buildLeadingFrontTopLinesFromAHR layer7ReversedToAvoidAppendEerror selectZeroAndTrailingAngles)
 
   layer7Outer <- buildCubePointsListSingle "layer7Outer"
-    (buildLeadingFrontTopLinesFromAHR (map (transpose (+2)) layer7With360AngleAppended) selector)
+    (buildLeadingFrontTopLinesFromAHR (map (transpose (+2)) layer7ReversedToAvoidAppendEerror) selectZeroAndTrailingAngles)
 
   layer8Inner <- buildCubePointsListSingle "layer8Inner"
-    (buildLeadingFrontTopLinesFromAHR layer8With360AngleAppended selector)
+    (buildLeadingFrontTopLinesFromAHR layer8ReversedToAvoidAppendEerror selectZeroAndTrailingAngles)
 
   layer8Outer <- buildCubePointsListSingle "layer8Outer"
-    (buildLeadingFrontTopLinesFromAHR (map (transpose (+2)) layer8With360AngleAppended) selector)
+    (buildLeadingFrontTopLinesFromAHR (map (transpose (+2)) layer8ReversedToAvoidAppendEerror) selectZeroAndTrailingAngles)
+
+  layer9Inner <- buildCubePointsListSingle "layer9Inner"
+    (buildLeadingFrontTopLinesFromAHR layer9ReversedToAvoidAppendEerror selectZeroAndTrailingAngles)
+
+  layer9Outer <- buildCubePointsListSingle "layer9Outer"
+    (buildLeadingFrontTopLinesFromAHR (map (transpose (+2)) layer9ReversedToAvoidAppendEerror) selectZeroAndTrailingAngles)
+
+  layer10Inner <- buildCubePointsListSingle "layer10Inner"
+    (buildLeadingFrontTopLinesFromAHR layer10ReversedToAvoidAppendEerror selectZeroAndTrailingAngles)
+
+  layer10Outer <- buildCubePointsListSingle "layer10Outer"
+    (buildLeadingFrontTopLinesFromAHR (map (transpose (+2)) layer10ReversedToAvoidAppendEerror) selectZeroAndTrailingAngles)
+
+  layer11Inner <- buildCubePointsListSingle "layer11Inner"
+    (buildLeadingFrontTopLinesFromAHR layer11ReversedToAvoidAppendEerror selectZeroAndTrailingAngles)
+
+  layer11Outer <- buildCubePointsListSingle "layer11Outer"
+    (buildLeadingFrontTopLinesFromAHR (map (transpose (+2)) layer11ReversedToAvoidAppendEerror) selectZeroAndTrailingAngles)
+
+  layer12Inner <- buildCubePointsListSingle "layer12Inner"
+    (buildLeadingFrontTopLinesFromAHR layer12ReversedToAvoidAppendEerror selectZeroAndTrailingAngles)
+
+  layer12Outer <- buildCubePointsListSingle "layer12Outer"
+    (buildLeadingFrontTopLinesFromAHR (map (transpose (+2)) layer12ReversedToAvoidAppendEerror) selectZeroAndTrailingAngles)
 
   
-    
-  let grid =
+  --RadialLines grid for trailing wall
+  let trailingGrid =
         let allLayers = layer1Inner ++ layer1Outer ++ layer2Inner ++ layer2Outer
                         ++ layer3Inner ++ layer3Outer
                         ++ layer4Inner ++ layer4Outer
                         ++ layer5Inner ++ layer5Outer
                         ++ layer6Inner ++ layer6Outer
                         ++ layer7Inner ++ layer7Outer
-                        ++ layer8Inner ++ layer8Outer 
+                        ++ layer8Inner ++ layer8Outer
+                        ++ layer9Inner ++ layer9Outer
+                        ++ layer10Inner ++ layer10Outer
+                        ++ layer11Inner ++ layer11Outer
+                        ++ layer12Inner ++ layer12Outer 
                         
             minY = minYaxis allLayers
             maxY = maxYaxis allLayers
         in
           createYaxisGridFromMinMaxY <$> minY <*> maxY
-
+  --create layer 1 as [BottomFace] to start off the trailing wall.
   layer1BtmFaces <- buildCubePointsListSingle "layer1BtmFaces"
-    (case grid of
+    (case trailingGrid of
        Left e -> [CornerPointsError $ "grid error: " ++ e]
        Right grid' ->
         case
@@ -1564,9 +1741,10 @@ ankleBraceTrailingBuilder layer1 layer2 layer3 layer4 layer5 layer6 layer7 layer
           Right val -> map toBottomFace val
           Left e -> [CornerPointsError e]
     )
-  
+  --layer<2..12>TopFaces: All subsequent layers are created as [TopFace] and added to the preceding [CornerPoints]
+  --to create the current [CubePoints]
   layer2TopFaces <- buildCubePointsListSingle "layer2TopFaces"
-    (case grid of
+    (case trailingGrid of
        Left e -> [CornerPointsError $ "grid error: " ++ e]
        Right grid' ->
         case
@@ -1579,7 +1757,7 @@ ankleBraceTrailingBuilder layer1 layer2 layer3 layer4 layer5 layer6 layer7 layer
     )
 
   layer3TopFaces <- buildCubePointsListSingle "layer3TopFaces"
-    (case grid of
+    (case trailingGrid of
        Left e -> [CornerPointsError $ "grid error: " ++ e]
        Right grid' ->
         case
@@ -1592,7 +1770,7 @@ ankleBraceTrailingBuilder layer1 layer2 layer3 layer4 layer5 layer6 layer7 layer
     )
 
   layer4TopFaces <- buildCubePointsListSingle "layer4TopFaces"
-    (case grid of
+    (case trailingGrid of
        Left e -> [CornerPointsError $ "grid error: " ++ e]
        Right grid' ->
         case
@@ -1605,7 +1783,7 @@ ankleBraceTrailingBuilder layer1 layer2 layer3 layer4 layer5 layer6 layer7 layer
     )
 
   layer5TopFaces <- buildCubePointsListSingle "layer5TopFaces"
-    (case grid of
+    (case trailingGrid of
        Left e -> [CornerPointsError $ "grid error: " ++ e]
        Right grid' ->
         case
@@ -1618,7 +1796,7 @@ ankleBraceTrailingBuilder layer1 layer2 layer3 layer4 layer5 layer6 layer7 layer
     )
 
   layer6TopFaces <- buildCubePointsListSingle "layer6TopFaces"
-    (case grid of
+    (case trailingGrid of
        Left e -> [CornerPointsError $ "grid error: " ++ e]
        Right grid' ->
         case
@@ -1631,7 +1809,7 @@ ankleBraceTrailingBuilder layer1 layer2 layer3 layer4 layer5 layer6 layer7 layer
     )
 
   layer7TopFaces <- buildCubePointsListSingle "layer7TopFaces"
-    (case grid of
+    (case trailingGrid of
        Left e -> [CornerPointsError $ "grid error: " ++ e]
        Right grid' ->
         case
@@ -1644,7 +1822,7 @@ ankleBraceTrailingBuilder layer1 layer2 layer3 layer4 layer5 layer6 layer7 layer
     )
 
   layer8TopFaces <- buildCubePointsListSingle "layer8TopFaces"
-    (case grid of
+    (case trailingGrid of
        Left e -> [CornerPointsError $ "grid error: " ++ e]
        Right grid' ->
         case
@@ -1656,7 +1834,59 @@ ankleBraceTrailingBuilder layer1 layer2 layer3 layer4 layer5 layer6 layer7 layer
           Left e -> [CornerPointsError e]
     )
 
-  
+  layer9TopFaces <- buildCubePointsListSingle "layer9TopFaces"
+    (case trailingGrid of
+       Left e -> [CornerPointsError $ "grid error: " ++ e]
+       Right grid' ->
+        case
+         buildLeftRightLineFromGridAndLeadingTrailingCPointsBase
+           grid'
+           layer9Inner
+           layer9Outer of
+          Right val -> val
+          Left e -> [CornerPointsError e]
+    )
+
+  layer10TopFaces <- buildCubePointsListSingle "layer10TopFaces"
+    (case trailingGrid of
+       Left e -> [CornerPointsError $ "grid error: " ++ e]
+       Right grid' ->
+        case
+         buildLeftRightLineFromGridAndLeadingTrailingCPointsBase
+           grid'
+           layer10Inner
+           layer10Outer of
+          Right val -> val
+          Left e -> [CornerPointsError e]
+    )
+
+  layer11TopFaces <- buildCubePointsListSingle "layer11TopFaces"
+    (case trailingGrid of
+       Left e -> [CornerPointsError $ "grid error: " ++ e]
+       Right grid' ->
+        case
+         buildLeftRightLineFromGridAndLeadingTrailingCPointsBase
+           grid'
+           layer11Inner
+           layer11Outer of
+          Right val -> val
+          Left e -> [CornerPointsError e]
+    )
+
+  layer12TopFaces <- buildCubePointsListSingle "layer12TopFaces"
+    (case trailingGrid of
+       Left e -> [CornerPointsError $ "grid error: " ++ e]
+       Right grid' ->
+        case
+         buildLeftRightLineFromGridAndLeadingTrailingCPointsBase
+           grid'
+           layer12Inner
+           layer12Outer of
+          Right val -> val
+          Left e -> [CornerPointsError e]
+    )
+
+  --now combine all the layers of <Bottom/Top>Face to create the CubePoints.
   layer1_2Cubes <- buildCubePointsListWithAdd "layer1_2Cubes"
     layer1BtmFaces layer2TopFaces
 
@@ -1678,4 +1908,17 @@ ankleBraceTrailingBuilder layer1 layer2 layer3 layer4 layer5 layer6 layer7 layer
   layer7_8Cubes <- buildCubePointsListWithAdd "layer7_8Cubes"
     layer6_7Cubes layer8TopFaces
 
+  layer8_9Cubes <- buildCubePointsListWithAdd "layer8_9Cubes"
+    layer7_8Cubes layer9TopFaces
+
+  layer9_10Cubes <- buildCubePointsListWithAdd "layer9_10Cubes"
+    layer8_9Cubes layer10TopFaces
+
+  layer10_11Cubes <- buildCubePointsListWithAdd "layer10_11Cubes"
+    layer9_10Cubes layer12TopFaces
+
+  layer11_12Cubes <- buildCubePointsListWithAdd "layer11_12Cubes"
+    layer10_11Cubes layer12TopFaces
+  
   return layer1_2Cubes
+
