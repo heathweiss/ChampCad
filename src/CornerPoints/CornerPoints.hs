@@ -477,7 +477,7 @@ BackLeftLine b1 b2 === BackLeftLine b1' b2'
     ------------------------------- faces ---------------------------
 FrontFace f1 f2 f3 f4 === FrontFace f1a f2a f3a f4a
       | (f1 == f1a) && (f2 == f2a) && (f3 == f3a) && (f4 == f4a) = Right True
-      | otherwise = Right False
+      | otherwise = Left "frontface temp error" -- Right False
     
 BottomFace b1 f1 b4 f4 === BottomFace b1a f1a b4a f4a
       | (b1 == b1a) && (f1 == f1a) && (b4 == b4a) && (f4 == f4a) = Right True
