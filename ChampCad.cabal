@@ -63,7 +63,7 @@ library
                        Examples.ShoeLift.Pillars.FlatScan
                        Examples.ShoeLift.Pillars.Pillars
                        Examples.ShoeLift.GeoxFlex.GeoxFlexBuilder
-                       Examples.ShoeLift.MountainFlex.MountainFlexBase
+                       Examples.ShoeLift.MountainFlex.MountainFlexBase, Examples.ShoeLift.MountainFlex.MountainFlexCurved
 
                        Examples.Persist.SingleLineTable,
                        Examples.Persist.MappedToCornerPoints,
