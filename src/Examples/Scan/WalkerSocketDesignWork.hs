@@ -1,5 +1,6 @@
 {-# LANGUAGE ParallelListComp #-}
-module Examples.Scan.WalkerSocketDesignWork(loadMDRAndPassToProcessor, socketWithRiserStlGenerator) where
+module Examples.Scan.WalkerSocketDesignWork(loadMDRAndPassToProcessor, socketWithRiserStlGenerator, pixelsPerMM,
+                                            RowReductionFactor(..), PixelsPerMillimeter(..), removeDefectiveTopRow') where
 {------------------------------ ToDo------------------------------------
 Use the autogenerate stl in all functions.
 -}
@@ -120,7 +121,9 @@ loadMDRAndPassToProcessor  = do
 
             ------------------------------------- for the socket with the quick-release mounted on the side
             --need to adjust transposefactor, as +3 was a loose fit for his walker. Try +2
-            innerSleeveMDRForSideMount = transpose (+2) $ reduceScan rowReductionFactor $ removeDefectiveTopRow (MultiDegreeRadii name' degrees')
+            --adjustments:
+              -- +7: was hugely oversized
+            innerSleeveMDRForSideMount = transpose (+4) $ reduceScan rowReductionFactor $ removeDefectiveTopRow (MultiDegreeRadii name' degrees')
         in  ------------------------------------choose the shape to process---------------------------------------------.
             ---------socket attached to walker
             --Moved to it's own processor, loadMDRAndCallSocketWithRiserStlGenerator, and probably will no longer compile this way.
@@ -133,7 +136,7 @@ loadMDRAndPassToProcessor  = do
             --showHosePlateError plateRadius power lengthenYFactor []
 
             ---------socket with sidemount quick release------------
-            --generateSideMountQuickReleaseSocketStl (degrees innerSleeveMDRForSideMount) rowReductionFactor pixelsPerMM []
+            generateSideMountQuickReleaseSocketStl (degrees innerSleeveMDRForSideMount) rowReductionFactor pixelsPerMM []
 
             ----------------- swim fin---------------------
             --swimFinSocketOnlyInsideFin (degrees innerSleeveMDRForSideMount) rowReductionFactor pixelsPerMM
@@ -142,7 +145,7 @@ loadMDRAndPassToProcessor  = do
 
             ------------------ hammerhead shark swim fin -----------------------------------
             --generateHammerHeadSharkHeadSectionStl (degrees innerSleeveMDRForSideMount) rowReductionFactor pixelsPerMM []
-            generateHammerHeadSharkBodySectionStl (degrees innerSleeveMDRForSideMount) rowReductionFactor pixelsPerMM []
+            --generateHammerHeadSharkBodySectionStl (degrees innerSleeveMDRForSideMount) rowReductionFactor pixelsPerMM []
             
       Nothing                                ->
         putStrLn "File not decoded"
@@ -509,9 +512,56 @@ showSwimFinCumulativeCornerPoints     originalSDR            rowReductionFactor 
 
 
 {-=========================================================== side mounted quick-release socket ============================================
+-----given:
+pixelsPerMillimeter: conversion factor from the scan data.
+-----task:
 Generate the socket with a thicker section of wall, into which a hole can be drilled for a quick coupler.
 -}
+--leftOff: --make the growth resizing factors params
+--The radius can be adusted to the passed in mainSocketInnerSDR'::[SingleDegreeRadii]
+sideMountQuickReleaseSocket :: [SingleDegreeRadii] ->  RowReductionFactor -> PixelsPerMillimeter -> ExceptT BuilderError (State CpointsStack ) CpointsList
+sideMountQuickReleaseSocket    mainSocketInnerSDR           rowReductionFactor    pixelsPerMillimeter  = do
+  let
+    mainWallThickness = 3
+    quickReleaseWallThickness = 10
+    origin = (Point{x_axis=0, y_axis=0, z_axis=50})
+    transposeFactors = [0,heightPerPixel.. ]
 
+    --change the pixelsPerMillimeter to lengthen the socket for growth
+    lengthFactor = 2
+    --heightPerPixel = 1/pixelsPerMM * (fromIntegral rowReductionFactor)
+    heightPerPixel = 1/(pixelsPerMillimeter - lengthFactor) * (fromIntegral rowReductionFactor)
+    --subtract 5 from pixelsPerMillimeter to lengthen the socket for growth
+
+    --remove top layers to shorten
+    cutOffTopFactor = 4
+    
+    
+    --mainSocketInnerSDR =  map (transpose (+ 5)) mainSocketInnerSDR'
+    --transpose the radii for growth
+    sdrMap = singleDegreeRadiiListToMap mainSocketInnerSDR
+    
+    {-Transpose mainSocketInnerMDR to get thickness of walls, as well as protusion for quick-release attachment.-}
+    mainSocketOuterSDR = 
+          --0-220 degrees
+          transformRangeOfSDR [(+3) | y <- [1..]] [0,10..220] mainSocketInnerSDR 
+          --230 degrees
+          Flw.|> (\sdrSeq -> sdrSeq S.|> (transformMaybeSDR ([(+7) | y <- [1..12]] ++ [(+3) | y <- [1..7]]) (sdrMap^.at 230.0)))
+          --240-270 degrees
+          Flw.|> (\sdrSeq -> sdrSeq S.>< (transformRangeOfSDR ([(+15) | y <- [1..12]] ++ [(+3) | y <- [1..7]]) [240,250..270] mainSocketInnerSDR))
+          --280 degrees
+          Flw.|> (\sdrSeq -> sdrSeq S.|> (transformMaybeSDR ([(+9) | y <- [1..12]] ++ [(+3) | y <- [1..7]]) (sdrMap^.at 280.0)))
+          --290-360
+          Flw.|> (\sdrSeq -> sdrSeq S.>< (transformRangeOfSDR [(+3) | y <- [1..]] [290,300..360] mainSocketInnerSDR))
+          --convert sdrSeq back into a list
+          Flw.|> (\sdrSeq -> F.toList sdrSeq)
+      
+  buildCubePointsList' "create socket walls" 
+      --(concat $ drop 6  (createVerticalWalls  mainSocketInnerSDR mainSocketOuterSDR origin transposeFactors))
+      (concat $ drop cutOffTopFactor  (createVerticalWalls  mainSocketInnerSDR mainSocketOuterSDR origin transposeFactors))
+      [CornerPointsId | x <-[1..]]
+   
+{-orig before resizing
 sideMountQuickReleaseSocket :: [SingleDegreeRadii] ->  RowReductionFactor -> PixelsPerMillimeter -> ExceptT BuilderError (State CpointsStack ) CpointsList
 sideMountQuickReleaseSocket    mainSocketInnerSDR           rowReductionFactor    pixelsPerMillimeter  = do
   let
@@ -541,7 +591,7 @@ sideMountQuickReleaseSocket    mainSocketInnerSDR           rowReductionFactor  
       (concat $ drop 6  (createVerticalWalls  mainSocketInnerSDR mainSocketOuterSDR origin transposeFactors))
       [CornerPointsId | x <-[1..]]
    
-  
+-}  
 
 
 --output the stl

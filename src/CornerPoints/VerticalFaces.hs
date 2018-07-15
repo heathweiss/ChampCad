@@ -204,4 +204,3 @@ createVerticalWalls     innerSDR    outerSDR origin    transposeFactors =
 -- Amount used to transpose a point
 type TransposeFactor = Double
 
-

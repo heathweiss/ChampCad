@@ -74,6 +74,8 @@ library
                        -- scanned shapes
                        Examples.Scan.WalkerSocketProcessScan
                        Examples.Scan.WalkerSocketDesignWork
+                       Examples.Scan.SideMountSocket
+                       Examples.Scan.SocketBase
                        --openHand
                        Examples.OpenHand.Wrist
                        Examples.OpenHand.MotorMount
@@ -91,8 +93,6 @@ library
                        Examples.Primitives.Cube
                        Examples.Primitives.Cylinders
                        Examples.Primitives.Squared
-                       --adaptors
-                       Examples.Adaptors.HockeyStick
                        --try out removing a cylinder from a cylinder
                        Examples.Diffs.MTLDiff
                        --cubical

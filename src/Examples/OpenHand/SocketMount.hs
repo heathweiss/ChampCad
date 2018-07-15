@@ -20,7 +20,7 @@ The ninja-flex will fit inside of it, and be attached to give it support and all
 
 -}
 
-module Examples.OpenHand.SocketMount({-socketMountStlGenerator,-} {-socketMountShowCubes,-} socketMountTestsDo,
+module Examples.OpenHand.SocketMount(removeDefectiveTopRow', socketMountTestsDo,
                                      initializeDatabase, insertMount, {-viewMountByName,-} setCurrentMount,
                                      {-generateSocketMountStlUsingDbValues,-} showFaceDimensions, {-showSocketMountCubesUsingDbValues,-}
                                      generateSocketMountWithDegreesStlUsingDbValues) where

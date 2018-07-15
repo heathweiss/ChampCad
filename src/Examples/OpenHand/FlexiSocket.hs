@@ -1,5 +1,3 @@
-{-# LANGUAGE ParallelListComp #-}
---for persist
 {-# LANGUAGE EmptyDataDecls             #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GADTs                      #-}
@@ -533,6 +531,7 @@ flexSocketDiamondBuilder cube =
            bottomDiamondHorizontalOffsets = centerOffset,
            bottomDiamondVerticalOffsets = edgeOffset, 
            leftDiamondHorizontalOffsets = edgeOffset, 
+
            leftDiamondVerticalOffsets  = centerOffset
         }
               
