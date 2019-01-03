@@ -81,7 +81,7 @@ socketMountWithDegreesStlGenerator innerSocketTranspose wallThickness   = do
       Nothing                                ->
         putStrLn "File not decoded"
 
-leftOff --add the mountStartDegree mountEndDegree and top layer cutoff, to runSocketMountWithDegreesStlGenerator so all adjustable params are in 1 spot.
+-- leftOff --add the mountStartDegree mountEndDegree and top layer cutoff, to runSocketMountWithDegreesStlGenerator so all adjustable params are in 1 spot.
 runSocketMountWithDegreesStlGenerator =
   socketMountWithDegreesStlGenerator 3 3
 
