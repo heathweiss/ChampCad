@@ -132,6 +132,7 @@ of the shape.
 toB3 :: CornerPoints -> CornerPoints
 toB3 (F3 f3) = B3 f3
 toB3 (F2 f2) = B3 f2
+toB3 (B2 b2) = B3 b2
 
 toB2 :: CornerPoints -> CornerPoints
 toB2 (F2 f2) = B2 f2
@@ -218,6 +219,7 @@ toFrontTopLine (F1 f1) = FrontTopLine f1 f1
 toFrontTopLine (F2 f2) = FrontTopLine f2 f2
 toFrontTopLine (FrontLeftLine f1 f2) = FrontTopLine f1 f2
 toFrontTopLine (FrontTopLine f2 f3)  = FrontTopLine f2 f3
+toFrontTopLine (BackTopLine b2 b3) = FrontTopLine b2 b3
 
 
 --before rules
