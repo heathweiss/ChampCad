@@ -54,6 +54,7 @@ extractBackTopLine (BackFace b1 b2 b3 b4) = BackTopLine b2 b3
 
 extractBackBottomLine (CubePoints f1 f2 f3 f4 b1 b2 b3 b4) = BackBottomLine b1 b4
 extractBackBottomLine (BottomFace b1 f1 b4 f4) = BackBottomLine b1 b4
+extractBackBottomLine (BackFace b1 b2 b3 b4) = BackBottomLine b1 b4
 
 extractBackLeftLine (BackFace b1 b2 b3 b4) = BackLeftLine b1 b2
 extractBackLeftLine (CubePoints f1 f2 f3 f4 b1 b2 b3 b4) = BackLeftLine b1 b2

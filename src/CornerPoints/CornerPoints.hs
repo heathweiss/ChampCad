@@ -4,6 +4,7 @@ module CornerPoints.CornerPoints(
 CornerPoints(..),
 (+++),
 (===),
+(|===|),
 (++++),
 (+++-),
 (|+++|),
@@ -470,10 +471,17 @@ FrontLeftLine f1 f2 === FrontLeftLine f1' f2'
       | (f1 == f1') && (f2 == f2') = Right True
       | otherwise = Right False
 
+FrontRightLine f3 f4 === FrontRightLine f3' f4'
+      | (f3 == f3') && (f4 == f4') = Right True
+      | otherwise = Right False
+      
 BackLeftLine b1 b2 === BackLeftLine b1' b2'
-  | (b1 == b1') && (b2 == b2') = Right True
-  | otherwise = Right False
-
+      | (b1 == b1') && (b2 == b2') = Right True
+      | otherwise = Right False
+      
+BackRightLine b2 b3 === BackRightLine b2' b3'
+      | (b2 == b2') && (b3 == b3') = Right True
+      | otherwise = Right False
     ------------------------------- faces ---------------------------
 FrontFace f1 f2 f3 f4 === FrontFace f1a f2a f3a f4a
       | (f1 == f1a) && (f2 == f2a) && (f3 == f3a) && (f4 == f4a) = Right True
@@ -513,7 +521,18 @@ CornerPointsError errMessage' === CornerPointsError errMessage'' =
 (===) anyThingElse isFalseOrNeedsAPatterMatch = Left $ "CornerPoints.CornerPoints === has missing or illegal pattern match for: " ++
                                                          (cpointType anyThingElse) ++ " and " ++ (cpointType isFalseOrNeedsAPatterMatch)
 
-    
+
+------------------------------------- now on a list-----------------------------------------------------------------
+(|===|) :: [CornerPoints] -> [CornerPoints] -> Either String Bool
+[] |===| [] = Right True
+(x:xs) |===| [] = Right False
+[] |===| (y:ys) = Right False
+(x:xs) |===| (y:ys) =
+  case (x === y) of
+    Right False -> Right False
+    Left e      -> Left e
+    Right True  ->
+      (xs) |===| (ys)
 --------------------------------------------------- add cubes +++ ---------------------------------------------------
 ----------------------------------------------------------------------------------------------------------------------
 -- || between to lines means done to a list
