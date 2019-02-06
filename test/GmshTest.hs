@@ -3,11 +3,15 @@ module GmshTest(gmshTestDo) where
 import qualified GMSH.Hashable.Points as GP --(insert, Changes(..))
 import qualified GMSH.Lines as GL --(toLines)
 import qualified GMSH.Common as GC
+import qualified GMSH.Builder as GB
 
 import Test.HUnit
 import qualified Data.HashMap.Strict as HM
 import qualified Data.Hashable as H
 import GHC.Generics (Generic)
+
+import qualified Control.Monad.State.Lazy as SL
+import qualified Control.Monad.Except as E
 
 import CornerPoints.Points(Point(..))
 import CornerPoints.CornerPoints(CornerPoints(..), (===), (|===|))
@@ -16,8 +20,11 @@ import CornerPoints.CornerPoints(CornerPoints(..), (===), (|===|))
 gmshTestDo = do
   putStrLn "" 
   putStrLn "gmsh tests"
-  runLinesTests
+
+  runBuildWithMonadTests
+  runBuilderTests
   runHashPointTests
+  runLinesTests
 
 ------------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------
@@ -129,7 +136,9 @@ linesTestFrontFace = TestCase $ assertEqual
 
 
 -----------------------------------------------------------------------------------------
---insert CornerPoints into a hash map
+{-
+Insert CornerPoints into a hash map, without using the builder monad.
+-}
 -----------------------------------------------------------------------------------------
 insertBackTopLineIntoEmptyMap  = TestCase $ assertEqual
   "insert a BackTopLine into an empty map."
@@ -170,6 +179,176 @@ insertUnhandledCPointIntoEmptyMap  = TestCase $ assertEqual
    in
      GL.insert topFace 1 HM.empty
   )
+
+------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------- GMSH.Builder ------- ---------------------------------------------------------
+{-
+Extract values from the GMSH.Builder  using <exec/eval/run>State.
+The State can't actually be built within the Builder monad, so manually create the BuilderData.
+Could change this once it can be built.
+-}
+runBuilderTests = do
+  runTestTT builderTest
+  runTestTT builderTest2
+  runTestTT builderTest3
+  
+builderTest = TestCase $ assertEqual
+  "Use execState to extract the current state."
+  (GB.BuilderData (HM.fromList [(2050866026447763449,1)]) [])
+  (let
+      pointToInsert = BackTopLine (Point 1 1 1) (Point 11 11 11)
+
+      --insert the B1 into a Lines hashmap
+      hashMapWithPointInserted = GL.insert pointToInsert 1 HM.empty
+      --and extract it from the Either Changed datatypes created by GL.insert, so it can be put into a BuilderData
+      extractFromEitherChanged (Right(GC.Changed hashMapWithPointInserted)) = hashMapWithPointInserted
+      extractFromEitherChanged (Right(GC.UnChanged hashMapWithPointInserted)) = hashMapWithPointInserted
+      extractFromEitherChanged (Left e) = HM.empty
+
+      builder :: GB.ExceptStackCornerPointsBuilder
+      builder = do
+        --code not yet ready to insert the B1 inside the Builder so just return the B1 manually.
+        return [pointToInsert]
+      
+   in
+   ((SL.execState $ E.runExceptT builder ) (GB.BuilderData (extractFromEitherChanged hashMapWithPointInserted) []))
+                                           --Pass in the BuilderData with point already hashed and inserted as
+                                           --this is not a test of doing the insert with the Builder.
+   
+  )
+
+builderTest2 = TestCase $ assertEqual
+  "Use evalState to extract the current value from state."
+  (Right [B1 $ Point 1 1 1])
+  (let
+      pointToInsert = B1 $ Point 1 1 1
+
+      --insert the B1 into a Lines hashmap
+      hashMapWithPointInserted = GL.insert pointToInsert 1 HM.empty
+      --and extract it from the Either Changed datatypes created by GL.insert, so it can be put into a BuilderData
+      extractFromEitherChanged (Right(GC.Changed hashMapWithPointInserted)) = hashMapWithPointInserted
+
+      builder :: GB.ExceptStackCornerPointsBuilder
+      builder = do
+        return [pointToInsert]
+      
+   in
+   ((SL.evalState $ E.runExceptT builder ) (GB.BuilderData (extractFromEitherChanged hashMapWithPointInserted) []))
+                                           --Pass in the BuilderData with point already hashed and inserted as
+                                           --this is not a test of doing the insert with the Builder.
+  )
+
+builderTest3 = TestCase $ assertEqual
+  "Use runState to extract the current value/state from state."
+  ((Right $ [BackTopLine (Point 1 1 1) (Point 11 11 11)], (GB.BuilderData (HM.fromList [(2050866026447763449,1)]) [])))
+  (let
+      pointToInsert = BackTopLine (Point 1 1 1) (Point 11 11 11)
+
+      --insert the B1 into a Lines hashmap
+      hashMapWithPointInserted = GL.insert pointToInsert 1 HM.empty
+      --and extract it from the Either Changed datatypes created by GL.insert, so it can be put into a BuilderData
+      extractFromEitherChanged (Right(GC.Changed hashMapWithPointInserted)) = hashMapWithPointInserted
+      extractFromEitherChanged (Right(GC.UnChanged hashMapWithPointInserted)) = hashMapWithPointInserted
+      extractFromEitherChanged (Left e) = HM.empty
+
+      builder :: GB.ExceptStackCornerPointsBuilder
+      builder = do
+        return [pointToInsert]
+      
+   in
+   ((SL.runState $ E.runExceptT builder ) (GB.BuilderData (extractFromEitherChanged hashMapWithPointInserted) []))
+                                           --Pass in the BuilderData with point already hashed and inserted as
+                                           --this is not a test of doing the insert with the Builder.
+  )
+
+----------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------- GMSH.Builder-----------------------------------------------------------------
+--build CornerPoints and insert into the state hashmap, getting id's from the state lineIds
+{-
+Build CornerPoints and insert into the lines hash map, using the builder monad.
+-can be valid lines  : BackTopLine
+-can be invalid lines: B1
+-can be CornerPointsError:
+-can be a combination of the above
+todo:
+Alter GMSH.Builder to:
+-handle a [CornerPoints] as right now it only does the head of list.
+-}
+runBuildWithMonadTests = do
+  runTestTT buildWithMonadTest
+  runTestTT buildWithMonadTest2
+  runTestTT buildWithMonadTest3
+  
+--insert valid CornerPoints line into the state that has no pre-existing lines.
+--cx the Lines map to see it was inserted
+buildWithMonadTest = TestCase $ assertEqual
+  "Use execState to extract the current state."
+  (GB.BuilderData (HM.fromList [(2050866026447763449,1)]) [])
+  (let
+      validPointToInsert = BackTopLine (Point 1 1 1) (Point 11 11 11)
+
+      builder :: GB.ExceptStackCornerPointsBuilder
+      builder = do
+        --code not yet ready to insert the B1 inside the Builder so just return the B1 manually.
+        inserted <- GB.buildCubePointsListSingle "testing" [validPointToInsert]
+        return inserted
+      
+   in
+   ((SL.execState $ E.runExceptT builder ) (GB.BuilderData (HM.fromList []) [1..]))
+                                           
+   
+  )
+
+--try to insert CornerPointsError into the state that has no pre-existing lines.
+--cx the Lines map to see it was not inserted
+buildWithMonadTest2 = TestCase $ assertEqual
+  "Use execState to extract the current state."
+  (GB.BuilderData (HM.fromList []) [])
+  (let
+      invalidPointToInsert = CornerPointsError "error"
+
+      builder :: GB.ExceptStackCornerPointsBuilder
+      builder = do
+        inserted <- GB.buildCubePointsListSingle "testing" [invalidPointToInsert]
+        return inserted
+      
+   in
+   ((SL.execState $ E.runExceptT builder ) (GB.BuilderData (HM.fromList []) [1..]))
+  )
+
+{-
+Insert [valid CPts line, valid CPts line] into the state that has no pre-existing lines.
+-they are different BackTopLine's, so both should be inserted.
+
+It also has sequential gmsh line ID's starting at 1, which is req'd to pass test.
+-}
+buildWithMonadTest3 = TestCase $ assertEqual
+  "Use execState to extract the current state."
+  (GB.BuilderData (HM.fromList [(2050866026447763449,1),(-4228383307129817095,2)]) [])
+  (let
+      validPointsToInsert = [BackTopLine (Point 1 1 1) (Point 11 11 11), BackTopLine (Point 21 21 21) (Point 211 211 211)]
+
+      builder :: GB.ExceptStackCornerPointsBuilder
+      builder = do
+        inserted <- GB.buildCubePointsListSingle "testing" validPointsToInsert
+        return inserted
+      
+   in
+   ((SL.execState $ E.runExceptT builder ) (GB.BuilderData (HM.fromList []) [1..]))
+  )
+--next
+--pass in a B1 as 2nd cpnt, to see that it does not get inserted.
+--pass in a B1 as 1st cpnt, to see that it does not get inserted, but 2nd one does.
+-----------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------

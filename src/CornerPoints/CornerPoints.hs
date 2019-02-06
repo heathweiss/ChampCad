@@ -236,9 +236,7 @@ cornerPointsError :: CornerPoints -> Bool
 cornerPointsError (CornerPointsError _) = True
 cornerPointsError _                     = False
 
-{-
-Use it with Data.List(find) to search a [CornerPoints] for a CornerPointsError.
--}
+-- | Use it with Data.List(find) to search a [CornerPoints] for a CornerPointsError.
 findCornerPointsError :: [CornerPoints] -> Maybe CornerPoints
 findCornerPointsError cornerPoints = find cornerPointsError cornerPoints
 
