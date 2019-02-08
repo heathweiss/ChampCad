@@ -283,10 +283,17 @@ todo:
 Alter GMSH.Builder to:
 -handle a [CornerPoints] as right now it only does the head of list.
 -}
+
+-----------------------------------------------------------
+--work with a single [CornerPoints]
+-----------------------------------------------------------
 runBuildWithMonadTests = do
   runTestTT buildWithMonadTest
   runTestTT buildWithMonadTest2
   runTestTT buildWithMonadTest3
+  runTestTT buildWithMonadTest4
+  runTestTT buildWithMonadTest5
+  runTestTT buildWithMonadTest6
   
 --insert valid CornerPoints line into the state that has no pre-existing lines.
 --cx the Lines map to see it was inserted
@@ -345,6 +352,74 @@ buildWithMonadTest3 = TestCase $ assertEqual
    in
    ((SL.execState $ E.runExceptT builder ) (GB.BuilderData (HM.fromList []) [1..]))
   )
+
+{-
+Insert [BackTopLine, identical BackTopLine].
+Only one gets inserted.
+-}
+buildWithMonadTest4 = TestCase $ assertEqual
+  "Identical BackTopLine's. Only one gets inserted."
+  (GB.BuilderData (HM.fromList [(2050866026447763449,1)]) [])
+  (let
+      backTopLine = BackTopLine (Point 1 1 1) (Point 11 11 11)
+      
+      builder :: GB.ExceptStackCornerPointsBuilder
+      builder = do
+        inserted <- GB.buildCubePointsListSingle "testing" [backTopLine,backTopLine]
+        return inserted
+      
+   in
+   ((SL.execState $ E.runExceptT builder ) (GB.BuilderData (HM.fromList []) [1..]))
+  )
+
+{-
+Insert [B1, BackTopLine, B1].
+Only one BackTopLine gets inserted into map, as B1 is not a line
+-}
+buildWithMonadTest5 = TestCase $ assertEqual
+  "BackTopLine and a B1 Only BackTopLine gets inserted."
+  (GB.BuilderData (HM.fromList [(2050866026447763449,1)]) [])
+  (let
+      backTopLine = BackTopLine (Point 1 1 1) (Point 11 11 11)
+      b1 = (B1 (Point 1 1 1))
+      b2 = (B1 (Point 21 21 21))
+      
+      builder :: GB.ExceptStackCornerPointsBuilder
+      builder = do
+        inserted <- GB.buildCubePointsListSingle "testing" [b1,backTopLine,b2]
+        return inserted
+      
+   in
+   ((SL.execState $ E.runExceptT builder ) (GB.BuilderData (HM.fromList []) [1..]))
+  )
+
+{-
+Insert [B1, BackTopLine, B1].
+Only the BackTopLine gets inserted inserted into the map as B1 is not a line,
+however all the CornerPoints are put into 'a' of the (a,s)
+-}
+buildWithMonadTest6 = TestCase $ assertEqual
+  "BackTopLine and a B1 Only BackTopLine gets inserted."
+  (Right
+   [B1 {b1 = Point {x_axis = 1.0, y_axis = 1.0, z_axis = 1.0}},
+    BackTopLine {b2 = Point {x_axis = 1.0, y_axis = 1.0, z_axis = 1.0},
+                 b3 = Point {x_axis = 11.0, y_axis = 11.0, z_axis = 11.0}},
+    B1 {b1 = Point {x_axis = 21.0, y_axis = 21.0, z_axis = 21.0}}]
+  )
+  (let
+      backTopLine = BackTopLine (Point 1 1 1) (Point 11 11 11)
+      b1 = (B1 (Point 1 1 1))
+      b2 = (B1 (Point 21 21 21))
+      
+      builder :: GB.ExceptStackCornerPointsBuilder
+      builder = do
+        inserted <- GB.buildCubePointsListSingle "testing" [b1,backTopLine,b2]
+        return inserted
+      
+   in
+   ((SL.evalState $ E.runExceptT builder ) (GB.BuilderData (HM.fromList []) [1..]))
+  )
+
 --next
 --pass in a B1 as 2nd cpnt, to see that it does not get inserted.
 --pass in a B1 as 1st cpnt, to see that it does not get inserted, but 2nd one does.

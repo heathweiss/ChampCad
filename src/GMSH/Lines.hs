@@ -104,8 +104,21 @@ insert (BackTopLine b2 b3) value map =
     True ->  Right $ GC.UnChanged map
     False -> Right $ GC.Changed $ HM.insert hashedCPoint value map
 
+next
+{-
+insert should return Either String (HM.HashMap Int Int, [Int])
+so that FrontFace can be broken down into 2 lines and both inserted.
+This requires that 2 id's be taken from the [Int] and thus using GC.Changes does not work,
+as that only allows for a single id to be taken off at the calling fx.
+Thus
+todo:
+Get rid of the GC.UnChanged system.
+Change insert to: CornerPoints -> [Int] -> HM.HashMap Int Int -> Either String (HM.HashMap Int Int, [Int])
+-}
 insert (FrontFace _ _ _ _) _ _ =
   Left "GMSH.Lines.insert: FrontFace cannot be inserted."
+
+insert (B1 b1) _ map = Right $ GC.UnChanged map
 
 --Catch unhandled pattern matches.
 insert unhandled _ map =
