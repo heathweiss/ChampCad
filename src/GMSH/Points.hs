@@ -1,4 +1,4 @@
-module GMSH.Hashable.Points({- H.hash, H.hashWithSalt,-} insert) where
+module GMSH.Points({- H.hash, H.hashWithSalt,-} insert) where
 
 {- |
 Hash CornerPoints.Point so they can be stored in a hash map.
@@ -11,6 +11,8 @@ import GHC.Generics (Generic)
 import CornerPoints.Points(Point(..))
 import CornerPoints.CornerPoints(CornerPoints(..))
 import qualified GMSH.Common as GC
+
+type ID = Int
 
 
 -- | Make CornerPoints.Point an instance of Hashable so it can be  used with Data.HashMap.Strict
@@ -47,6 +49,17 @@ Return:
  If point already exists in map:
  The original map, unchaged. Wrapped in 'UnChanged' constructor.
 -}
+insert ::  Point -> [ID] -> HM.HashMap Int Int -> (HM.HashMap Int Int,[ID])
+insert  point (id:ids) map   = 
+  let
+    hashedPoint = H.hash point
+  in
+  case HM.member hashedPoint map of
+    True ->  (map,(id:ids))
+    False -> (HM.insert hashedPoint id map,ids)
+
+
+{-
 insert ::  Point -> Int -> HM.HashMap Int Int -> GC.Changes (HM.HashMap Int Int )
 insert  point value map   = 
   let
@@ -56,6 +69,5 @@ insert  point value map   =
     True ->  GC.UnChanged map
     False -> GC.Changed $ HM.insert hashedPoint value map
 
-
-
+-}
 

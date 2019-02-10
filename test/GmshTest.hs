@@ -1,6 +1,6 @@
 module GmshTest(gmshTestDo) where
 
-import qualified GMSH.Hashable.Points as GP --(insert, Changes(..))
+import qualified GMSH.Points as GP --(insert, Changes(..))
 import qualified GMSH.Lines as GL --(toLines)
 import qualified GMSH.Common as GC
 import qualified GMSH.Builder as GB
@@ -219,7 +219,7 @@ runBuilderTests = do
   
 builderTest = TestCase $ assertEqual
   "Use execState to extract the current state."
-  (GB.BuilderData (HM.fromList [(2050866026447763449,1)]) [])
+  (GB.BuilderData (HM.fromList [(2050866026447763449,1)]) [] [])
   (let
       builder :: GB.ExceptStackCornerPointsBuilder
       builder = do
@@ -246,7 +246,7 @@ builderTest2 = TestCase $ assertEqual
 
 builderTest3 = TestCase $ assertEqual
   "Use runState to extract the current value/state from state."
-  ((Right $ [BackTopLine (Point 1 1 1) (Point 11 11 11)], (GB.BuilderData (HM.fromList [(2050866026447763449,1)]) [])))
+  ((Right $ [BackTopLine (Point 1 1 1) (Point 11 11 11)], (GB.BuilderData (HM.fromList [(2050866026447763449,1)]) [] [])))
   (let
       builder :: GB.ExceptStackCornerPointsBuilder
       builder = do
@@ -292,7 +292,7 @@ runBuildWithMonadTests = do
 --cx the Lines map to see it was inserted
 buildWithMonadTest = TestCase $ assertEqual
   "Use execState to extract the current state."
-  (GB.BuilderData (HM.fromList [(2050866026447763449,1)]) [])
+  (GB.BuilderData (HM.fromList [(2050866026447763449,1)]) [] [])
   (let
       validPointToInsert = BackTopLine (Point 1 1 1) (Point 11 11 11)
 
@@ -312,7 +312,7 @@ buildWithMonadTest = TestCase $ assertEqual
 --cx the Lines map to see it was not inserted
 buildWithMonadTest2 = TestCase $ assertEqual
   "Use execState to extract the current state when inserting CornerPointsError"
-  (GB.BuilderData (HM.fromList []) [])
+  (GB.BuilderData (HM.fromList []) [] [])
   (let
       invalidPointToInsert = CornerPointsError "error"
 
@@ -333,7 +333,7 @@ It also has sequential gmsh line ID's starting at 1, which is req'd to pass test
 -}
 buildWithMonadTest3 = TestCase $ assertEqual
   "Use execState to extract the current state."
-  (GB.BuilderData (HM.fromList [(2050866026447763449,1),(-4228383307129817095,2)]) [])
+  (GB.BuilderData (HM.fromList [(2050866026447763449,1),(-4228383307129817095,2)]) [] [])
   (let
       validPointsToInsert = [BackTopLine (Point 1 1 1) (Point 11 11 11), BackTopLine (Point 21 21 21) (Point 211 211 211)]
 
@@ -352,7 +352,7 @@ Only one gets inserted.
 -}
 buildWithMonadTest4 = TestCase $ assertEqual
   "Identical BackTopLine's. Only one gets inserted."
-  (GB.BuilderData (HM.fromList [(2050866026447763449,1)]) [])
+  (GB.BuilderData (HM.fromList [(2050866026447763449,1)]) [] [])
   (let
       backTopLine = BackTopLine (Point 1 1 1) (Point 11 11 11)
       
@@ -371,7 +371,7 @@ Only one BackTopLine gets inserted into map, as B1 is not a line
 -}
 buildWithMonadTest5 = TestCase $ assertEqual
   "BackTopLine and a B1 Only BackTopLine gets inserted."
-  (GB.BuilderData (HM.fromList [(2050866026447763449,1)]) [])
+  (GB.BuilderData (HM.fromList [(2050866026447763449,1)]) [] [])
   (let
       backTopLine = BackTopLine (Point 1 1 1) (Point 11 11 11)
       b1 = (B1 (Point 1 1 1))
@@ -448,18 +448,23 @@ hashPointTest = TestCase $ assertEqual
 ----------------------------------------------------------------------
 --Shows how to do use GMSH.Hashable.Points insert
 ----------------------------------------------------------------------
+removeIDS_noEither :: (HM.HashMap Int Int,[Int]) -> (HM.HashMap Int Int)
+removeIDS_noEither (hashmap, _) =  hashmap
+
 --insert a hashed point, and dummy value into an emtpy map.
 --As it is empty, it will be hashed and inserted.
 insertPointTest = TestCase $ assertEqual
   "insert a Point into an empty map"
-  (GC.Changed $ HM.fromList [(2171024669747360587,1)])
-  (GP.insert  (Point 1 2 3) 1 HM.empty)
+  --(GC.Changed $ HM.fromList [(2171024669747360587,1)])
+  (HM.fromList [(2171024669747360587,1)])
+  (removeIDS_noEither $ GP.insert  (Point 1 2 3) [1..] HM.empty)
 
 --Insert a Point into a map that already contains the point.
 --As it is already in the map, map will not be modified, as indicated by the GP.UnChanged constructor.
 insertPointTest2 = TestCase $ assertEqual
   "insert a Point into a map that already contains the point"
-  (GC.UnChanged $ HM.fromList [(2171024669747360587,1)])
+  --(GC.UnChanged $ HM.fromList [(2171024669747360587,1)])
+  (HM.fromList [(2171024669747360587,1)])
   ( let
       pointAllreadyInMap = Point 1 2 3
       dummyVal1 = 1
@@ -467,7 +472,8 @@ insertPointTest2 = TestCase $ assertEqual
       mapWithThePointAlreadyInserted = HM.insert (H.hash pointAllreadyInMap) dummyVal1 HM.empty
       
     in
-      GP.insert pointAllreadyInMap dummyVal2 mapWithThePointAlreadyInserted
+      --removeIDS_noEither $ GP.insert pointAllreadyInMap dummyVal2 mapWithThePointAlreadyInserted
+      removeIDS_noEither $ GP.insert pointAllreadyInMap [2..] mapWithThePointAlreadyInserted
   )
 
 --Insert a Point into a hash map that already contains a different point.
@@ -475,7 +481,8 @@ insertPointTest2 = TestCase $ assertEqual
 --The hashmap will be modified, as indicated by the GP.Changed constructor.
 insertPointTest3 = TestCase $ assertEqual
   "insert a Point into a map that already contains a diff. point"
-  (GC.Changed $ HM.fromList [(2171024669747360587,1),(2177780069188416331,2)])
+  --(GC.Changed $ HM.fromList [(2171024669747360587,1),(2177780069188416331,2)])
+  (HM.fromList [(2171024669747360587,1),(2177780069188416331,2)])
   ( let
       preExistentPoint = Point 1 2 3
       nonExistentPoint = Point 1 2 4
@@ -484,5 +491,5 @@ insertPointTest3 = TestCase $ assertEqual
       mapWithADiffPointAlreadyInserted = HM.insert  (H.hash preExistentPoint) dummyVal1 HM.empty
       
     in
-      GP.insert nonExistentPoint dummyVal2 mapWithADiffPointAlreadyInserted
+      removeIDS_noEither $ GP.insert nonExistentPoint [2..] mapWithADiffPointAlreadyInserted
   )

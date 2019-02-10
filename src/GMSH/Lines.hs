@@ -6,7 +6,7 @@ module GMSH.Lines(toLines, toPoints, insert) where
 import CornerPoints.CornerPoints(CornerPoints(..), cpointType)
 import qualified CornerPoints.FaceExtraction as FE
 import CornerPoints.Points (Point(..))
-import qualified GMSH.Hashable.Points as GP
+import qualified GMSH.Points as GP
 import qualified GMSH.Common as GC
 
 import qualified Data.HashMap.Strict as HM
