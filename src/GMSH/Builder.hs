@@ -1,4 +1,4 @@
-module GMSH.Builder(buildCubePointsList, BuilderData(..),ExceptStackCornerPointsBuilder, buildCubePointsListSingle) where
+module GMSH.Builder(buildCubePointsList, BuilderData(..),ExceptStackCornerPointsBuilder, buildCubePointsListSingle, newBuilderData) where
 {- |
 Build up a shape from [CornerPoints]. But instead of saving the CornerPoints,
 save the gmsh points, lines, etc along with an ID, within hash maps.
@@ -33,10 +33,8 @@ instance Show BuilderData where
 instance Eq BuilderData where
   (BuilderData linesMap _) == (BuilderData linesMap' _) = linesMap == linesMap'
 
-
-extractor :: GC.Changes BuilderData -> BuilderData
-extractor (GC.Changed builderData) = builderData
-extractor (GC.UnChanged builderData) = builderData
+newBuilderData :: BuilderData
+newBuilderData = BuilderData (HM.fromList []) [1..]
 
 -- | The ExceptT State Builder for building up shapes, and convertering to gmsh Lines and points.
 type ExceptStackCornerPointsBuilder =  ExceptT String (State BuilderData ) [CPts.CornerPoints]
@@ -95,6 +93,74 @@ buildCubePointsListOrFail _ _ [] =  lift $ state $ \builderData -> ([], builderD
 
 buildCubePointsListOrFail extraMsg cPoints cPoints' = do
   state' <- get
+  
+  
+  let
+    cubeList = cPoints |+++| cPoints'
+  case CPts.findCornerPointsError cubeList of
+        Nothing -> --has no CornerPointsError
+          let
+            builderData =  buildCubePointsListOrFail' cubeList state'
+          in
+          case builderData of
+            Right builderData' ->
+              let
+                builder = \builderData -> (cubeList, builderData')
+              in
+              lift $ state $ builder
+              --lift $ return cubeList
+            Left e -> TE.throwE $ extraMsg ++ ": " ++ e
+        Just (CPts.CornerPointsError err) -> --has a CornerPointsError
+          TE.throwE $ extraMsg ++ ": " ++ (err)
+
+{-
+buildCubePointsListOrFail extraMsg cPoints cPoints' = do
+  state' <- get
+  
+  
+  let
+    cubeList = cPoints |+++| cPoints'
+  case CPts.findCornerPointsError cubeList of
+        Nothing -> --has no CornerPointsError
+          let
+            builderData =  buildCubePointsListOrFail' cubeList state'
+          in
+          case builderData of
+            Right builderData' ->
+              let
+                builder = \builderData -> (cubeList, builderData')
+              in
+              lift $ state $ builder
+              --lift $ return cubeList
+            Left e -> TE.throwE $ extraMsg ++ ": " ++ e
+        Just (CPts.CornerPointsError err) -> --has a CornerPointsError
+          TE.throwE $ extraMsg ++ ": " ++ (err)
+-}
+
+    
+--The recursive handling of [CornerPoints] for buildCubePointsListOrFail.
+buildCubePointsListOrFail' :: [CPts.CornerPoints] -> BuilderData -> Either String BuilderData
+--end of the list. Return whatever has been built up in the BuilderData.
+buildCubePointsListOrFail' [] builderData = Right builderData
+buildCubePointsListOrFail' (cube:cubeList) builderData =
+  let
+    newLinesHashmap = GL.insert cube (linesId builderData) $ linesMap builderData
+  in
+  case newLinesHashmap of
+    (Right (changedMap,ids)) ->
+      buildCubePointsListOrFail' cubeList $ BuilderData { linesId = ids, linesMap = changedMap }
+    Left e -> Left e
+          
+  
+{-
+buildCubePointsListOrFail :: String -> [CPts.CornerPoints] -> [CPts.CornerPoints] ->
+                             ExceptStackCornerPointsBuilder
+--if an [] is passed in, nothing to do.
+buildCubePointsListOrFail _ [] _ =  lift $ state $ \builderData -> ([], builderData)
+buildCubePointsListOrFail _ _ [] =  lift $ state $ \builderData -> ([], builderData)
+
+buildCubePointsListOrFail extraMsg cPoints cPoints' = do
+  state' <- get
   let
     cubeList = cPoints |+++| cPoints'
   case CPts.findCornerPointsError cubeList of
@@ -118,49 +184,14 @@ buildCubePointsListOrFail' :: [CPts.CornerPoints] -> BuilderData -> Either Strin
 buildCubePointsListOrFail' [] builderData = Right builderData
 buildCubePointsListOrFail' (cube:cubeList) builderData =
   let
-    newLinesHashmap = GL.insert cube (head $ linesId builderData) $ linesMap builderData
+    newLinesHashmap = GL.insert cube (linesId builderData) $ linesMap builderData
   in
   case newLinesHashmap of
-    (Right (GC.Changed changedMap)) ->
-      buildCubePointsListOrFail' cubeList $ builderData { linesId = tail $ linesId builderData, linesMap = changedMap }
-    (Right (GC.UnChanged unChangedMap)) ->
-      buildCubePointsListOrFail' cubeList $ builderData { linesMap = unChangedMap }
+    (Right (GC.Changed changedMap,ids)) ->
+      buildCubePointsListOrFail' cubeList $ builderData { linesId = ids, linesMap = changedMap }
+    (Right (GC.UnChanged unChangedMap,ids)) ->
+      buildCubePointsListOrFail' cubeList $ builderData { linesId = ids, linesMap = unChangedMap }
     Left e -> Left e
-          
-  
-{-
-buildCubePointsListOrFail :: String -> [CPts.CornerPoints] -> [CPts.CornerPoints] ->
-                             ExceptStackCornerPointsBuilder
---if an [] is passed in, nothing to do.
-buildCubePointsListOrFail _ [] _ =  lift $ state $ \builderData -> ([], builderData)
-buildCubePointsListOrFail _ _ [] =  lift $ state $ \builderData -> ([], builderData)
 
-buildCubePointsListOrFail extraMsg cPoints cPoints' =
-  let  cubeList = cPoints |+++| cPoints'
-  in
-    case CPts.findCornerPointsError cubeList of
-      Nothing -> --has no CornerPointsError
-        lift $ state $ \builderData ->
-          (cubeList, buildCubePointsListOrFail' cubeList builderData)
-      Just (CPts.CornerPointsError err) -> --has a CornerPointsError
-        TE.throwE $ extraMsg ++ ": " ++ (err)
-    
---The recursive handling of [CornerPoints] for buildCubePointsListOrFail.
-buildCubePointsListOrFail' :: [CPts.CornerPoints] -> BuilderData -> BuilderData
---end of the list. Return whatever has been built up in the BuilderData.
-buildCubePointsListOrFail' [] builderData = builderData
-buildCubePointsListOrFail' (cube:cubeList) builderData =
-  let
-    newLinesHashmap = GL.insert cube (head $ linesId builderData) $ linesMap builderData
-    builderData' = 
-      case newLinesHashmap of
-        (Right (GC.Changed changedMap)) ->
-          buildCubePointsListOrFail' cubeList $ builderData { linesId = tail $ linesId builderData, linesMap = changedMap }
-        (Right (GC.UnChanged unChangedMap)) ->
-          buildCubePointsListOrFail' cubeList $ builderData { linesMap = unChangedMap }
-        --  next
-        --need to handle the case where line is already in the hashmap. Write a test 1st.
-  in
-  builderData'
 -}
 

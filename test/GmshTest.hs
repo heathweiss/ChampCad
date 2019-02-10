@@ -22,7 +22,7 @@ gmshTestDo = do
   putStrLn "gmsh tests"
 
   runBuildWithMonadTests
-  runBuilderTests
+  runBuilderTests 
   runHashPointTests
   runLinesTests
 
@@ -33,6 +33,7 @@ gmshTestDo = do
 ----------------------------------------------- GMSH.Lines ---------------------------------------------------------
 {- Run all the test for hashing and inserting points into a hash map.-}
 runLinesTests = do
+  
   runTestTT linesTestB1
   runTestTT linesTestB2
   runTestTT linesTestB3
@@ -41,11 +42,12 @@ runLinesTests = do
   runTestTT linesTestF2
   runTestTT linesTestF3
   runTestTT linesTestF4
-
+  
   runTestTT linesTestBackFace
   runTestTT linesTestFrontFace
-
+  
   runTestTT insertBackTopLineIntoEmptyMap
+  runTestTT insertBackTopLineIntoEmptyMapAndLookAtRemainingIds
   runTestTT insertBackTopLineIntoMap
   runTestTT insertFrontFaceIntoEmptyMap
   runTestTT insertUnhandledCPointIntoEmptyMap
@@ -140,34 +142,52 @@ linesTestFrontFace = TestCase $ assertEqual
 Insert CornerPoints into a hash map, without using the builder monad.
 -}
 -----------------------------------------------------------------------------------------
+--GL.insert return a (hashmap,[infinite Int]). [Int] must be removed as HUnit gets stuck.
+removeIDS :: Either String (HM.HashMap Int Int,[Int]) -> Either String (HM.HashMap Int Int)
+removeIDS (Right (hashmap, _)) = Right hashmap
+removeIDS (Left e) = Left e
+
 insertBackTopLineIntoEmptyMap  = TestCase $ assertEqual
   "insert a BackTopLine into an empty map."
-  (Right $ GC.Changed $ HM.fromList [(1497486222234613753,1)])
+  (Right $ HM.fromList [(1497486222234613753,1)])
   (
    let
      backTopLine = BackTopLine (Point 1 1 1) (Point 2 2 2)
+     inserted = removeIDS $ GL.insert backTopLine [1..] HM.empty
    in
-     GL.insert backTopLine 1 HM.empty
+     inserted
+  )
+
+insertBackTopLineIntoEmptyMapAndLookAtRemainingIds  = TestCase $ assertEqual
+  "insert a BackTopLine into an empty map and see that the [id] has been reduced by 1."
+  (2)
+  (
+   let
+     backTopLine = BackTopLine (Point 1 1 1) (Point 2 2 2)
+     inserted  = GL.insert backTopLine [1..] HM.empty
+   in
+     case inserted of
+       Right (_,(id:ids)) -> id
   )
 
 insertBackTopLineIntoMap  = TestCase $ assertEqual
   "insert a BackTopLine into a map that already contains it."
-  (Right $ GC.UnChanged $ HM.fromList [(1497486222234613753,1)])
+  (Right $ HM.fromList [(1497486222234613753,1)])
   (
    let
      backTopLine = BackTopLine (Point 1 1 1) (Point 2 2 2)
    in
-     GL.insert backTopLine 1 $ HM.fromList [(1497486222234613753,1)]
+     removeIDS $ GL.insert backTopLine [2..] $ HM.fromList [(1497486222234613753,1)]
   )
 
 insertFrontFaceIntoEmptyMap  = TestCase $ assertEqual
-  "insert a FrontFace into an empty map. FrontFace cannot be inserted, only Lines."
-  (Left "GMSH.Lines.insert: FrontFace cannot be inserted.")
+  "insert a FrontFace into an empty map."
+  (Right (HM.fromList [(-405284620329420807,2),(6588805600976959481,4),(-7473684235487414279,3),(1497486222234613753,1)]))
   (
    let
      frontFace = FrontFace (Point 1 1 1) (Point 2 2 2) (Point 3 3 3) (Point 3 3 3)
    in
-     GL.insert frontFace 1 HM.empty
+     removeIDS $ GL.insert frontFace [1..] HM.empty
   )
 
 insertUnhandledCPointIntoEmptyMap  = TestCase $ assertEqual
@@ -177,7 +197,7 @@ insertUnhandledCPointIntoEmptyMap  = TestCase $ assertEqual
    let
      topFace = TopFace (Point 1 1 1) (Point 2 2 2) (Point 3 3 3) (Point 3 3 3)
    in
-     GL.insert topFace 1 HM.empty
+     removeIDS $ GL.insert topFace [1..] HM.empty
   )
 
 ------------------------------------------------------------------------------------------------------------------------------
@@ -189,6 +209,8 @@ insertUnhandledCPointIntoEmptyMap  = TestCase $ assertEqual
 Extract values from the GMSH.Builder  using <exec/eval/run>State.
 The State can't actually be built within the Builder monad, so manually create the BuilderData.
 Could change this once it can be built.
+
+------------------------go back to this once GC.Changes is deleted to simplify.
 -}
 runBuilderTests = do
   runTestTT builderTest
@@ -199,24 +221,13 @@ builderTest = TestCase $ assertEqual
   "Use execState to extract the current state."
   (GB.BuilderData (HM.fromList [(2050866026447763449,1)]) [])
   (let
-      pointToInsert = BackTopLine (Point 1 1 1) (Point 11 11 11)
-
-      --insert the B1 into a Lines hashmap
-      hashMapWithPointInserted = GL.insert pointToInsert 1 HM.empty
-      --and extract it from the Either Changed datatypes created by GL.insert, so it can be put into a BuilderData
-      extractFromEitherChanged (Right(GC.Changed hashMapWithPointInserted)) = hashMapWithPointInserted
-      extractFromEitherChanged (Right(GC.UnChanged hashMapWithPointInserted)) = hashMapWithPointInserted
-      extractFromEitherChanged (Left e) = HM.empty
-
       builder :: GB.ExceptStackCornerPointsBuilder
       builder = do
-        --code not yet ready to insert the B1 inside the Builder so just return the B1 manually.
-        return [pointToInsert]
-      
+        inserted <- GB.buildCubePointsListSingle "builderTest: " [BackTopLine (Point 1 1 1) (Point 11 11 11)]
+        return inserted
    in
-   ((SL.execState $ E.runExceptT builder ) (GB.BuilderData (extractFromEitherChanged hashMapWithPointInserted) []))
-                                           --Pass in the BuilderData with point already hashed and inserted as
-                                           --this is not a test of doing the insert with the Builder.
+   ((SL.execState $ E.runExceptT builder ) GB.newBuilderData)
+                                           
    
   )
 
@@ -224,44 +235,26 @@ builderTest2 = TestCase $ assertEqual
   "Use evalState to extract the current value from state."
   (Right [B1 $ Point 1 1 1])
   (let
-      pointToInsert = B1 $ Point 1 1 1
-
-      --insert the B1 into a Lines hashmap
-      hashMapWithPointInserted = GL.insert pointToInsert 1 HM.empty
-      --and extract it from the Either Changed datatypes created by GL.insert, so it can be put into a BuilderData
-      extractFromEitherChanged (Right(GC.Changed hashMapWithPointInserted)) = hashMapWithPointInserted
-
       builder :: GB.ExceptStackCornerPointsBuilder
       builder = do
-        return [pointToInsert]
+        inserted <- GB.buildCubePointsListSingle "builderTest2" [B1 $ Point 1 1 1]
+        return inserted
       
    in
-   ((SL.evalState $ E.runExceptT builder ) (GB.BuilderData (extractFromEitherChanged hashMapWithPointInserted) []))
-                                           --Pass in the BuilderData with point already hashed and inserted as
-                                           --this is not a test of doing the insert with the Builder.
-  )
+   ((SL.evalState $ E.runExceptT builder ) GB.newBuilderData)
+   )
 
 builderTest3 = TestCase $ assertEqual
   "Use runState to extract the current value/state from state."
   ((Right $ [BackTopLine (Point 1 1 1) (Point 11 11 11)], (GB.BuilderData (HM.fromList [(2050866026447763449,1)]) [])))
   (let
-      pointToInsert = BackTopLine (Point 1 1 1) (Point 11 11 11)
-
-      --insert the B1 into a Lines hashmap
-      hashMapWithPointInserted = GL.insert pointToInsert 1 HM.empty
-      --and extract it from the Either Changed datatypes created by GL.insert, so it can be put into a BuilderData
-      extractFromEitherChanged (Right(GC.Changed hashMapWithPointInserted)) = hashMapWithPointInserted
-      extractFromEitherChanged (Right(GC.UnChanged hashMapWithPointInserted)) = hashMapWithPointInserted
-      extractFromEitherChanged (Left e) = HM.empty
-
       builder :: GB.ExceptStackCornerPointsBuilder
       builder = do
-        return [pointToInsert]
+        inserted <- GB.buildCubePointsListSingle "builderTest3" [BackTopLine (Point 1 1 1) (Point 11 11 11)]
+        return inserted
       
    in
-   ((SL.runState $ E.runExceptT builder ) (GB.BuilderData (extractFromEitherChanged hashMapWithPointInserted) []))
-                                           --Pass in the BuilderData with point already hashed and inserted as
-                                           --this is not a test of doing the insert with the Builder.
+   ((SL.runState $ E.runExceptT builder ) GB.newBuilderData)
   )
 
 ----------------------------------------------------------------------------------------------------------------------------
@@ -310,7 +303,7 @@ buildWithMonadTest = TestCase $ assertEqual
         return inserted
       
    in
-   ((SL.execState $ E.runExceptT builder ) (GB.BuilderData (HM.fromList []) [1..]))
+   ((SL.execState $ E.runExceptT builder ) GB.newBuilderData)
                                            
    
   )
@@ -318,7 +311,7 @@ buildWithMonadTest = TestCase $ assertEqual
 --try to insert CornerPointsError into the state that has no pre-existing lines.
 --cx the Lines map to see it was not inserted
 buildWithMonadTest2 = TestCase $ assertEqual
-  "Use execState to extract the current state."
+  "Use execState to extract the current state when inserting CornerPointsError"
   (GB.BuilderData (HM.fromList []) [])
   (let
       invalidPointToInsert = CornerPointsError "error"
@@ -329,7 +322,7 @@ buildWithMonadTest2 = TestCase $ assertEqual
         return inserted
       
    in
-   ((SL.execState $ E.runExceptT builder ) (GB.BuilderData (HM.fromList []) [1..]))
+   ((SL.execState $ E.runExceptT builder ) GB.newBuilderData)
   )
 
 {-
@@ -350,7 +343,7 @@ buildWithMonadTest3 = TestCase $ assertEqual
         return inserted
       
    in
-   ((SL.execState $ E.runExceptT builder ) (GB.BuilderData (HM.fromList []) [1..]))
+   ((SL.execState $ E.runExceptT builder ) GB.newBuilderData)
   )
 
 {-
@@ -369,7 +362,7 @@ buildWithMonadTest4 = TestCase $ assertEqual
         return inserted
       
    in
-   ((SL.execState $ E.runExceptT builder ) (GB.BuilderData (HM.fromList []) [1..]))
+   ((SL.execState $ E.runExceptT builder ) GB.newBuilderData)
   )
 
 {-
@@ -390,7 +383,7 @@ buildWithMonadTest5 = TestCase $ assertEqual
         return inserted
       
    in
-   ((SL.execState $ E.runExceptT builder ) (GB.BuilderData (HM.fromList []) [1..]))
+   ((SL.execState $ E.runExceptT builder ) GB.newBuilderData)
   )
 
 {-
@@ -417,7 +410,7 @@ buildWithMonadTest6 = TestCase $ assertEqual
         return inserted
       
    in
-   ((SL.evalState $ E.runExceptT builder ) (GB.BuilderData (HM.fromList []) [1..]))
+   ((SL.evalState $ E.runExceptT builder ) GB.newBuilderData)
   )
 
 --next
