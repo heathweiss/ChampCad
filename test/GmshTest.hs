@@ -4,6 +4,7 @@ import qualified GMSH.Points as GP --(insert, Changes(..))
 import qualified GMSH.Lines as GL --(toLines)
 import qualified GMSH.Common as GC
 import qualified GMSH.Builder as GB
+import qualified  GMSH.Writer as GW
 
 import Test.HUnit
 import qualified Data.HashMap.Strict as HM
@@ -25,6 +26,23 @@ gmshTestDo = do
   runBuilderTests 
   runHashPointTests
   runLinesTests
+  runWriterTests
+
+------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------- GMSH.Writer ---------------------------------------------------------
+{- Run all the test for writing points/lines. Does not test writing to console/file. -}
+runWriterTests = do
+  
+  runTestTT writePointsTest
+
+
+writePointsTest = TestCase $ assertEqual
+  "writePointsTest"
+  ("Point(1) = {1.0,1.0,1.0};")
+  (GW.gmshPointString (Point 1 1 1) 1)
 
 ------------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------

@@ -54,6 +54,7 @@ library
                        GMSH.Lines
                        GMSH.Common
                        GMSH.Builder
+                       GMSH.Writer
                        --Examples
                        Examples.ShoeLift.SnowBoardBoot
                        Examples.ShoeLift.GeoxShoe,
