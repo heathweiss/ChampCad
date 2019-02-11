@@ -49,6 +49,22 @@ Return:
  If point already exists in map:
  The original map, unchaged. Wrapped in 'UnChanged' constructor.
 -}
+insert ::  [Point] -> [ID] -> HM.HashMap Int Int -> (HM.HashMap Int Int,[ID])
+leftOff
+--replace all but [Point] with BuilderData
+insert [] ids hashmap = (hashmap, ids)
+insert  (p:points) (id:ids) map   = 
+  let
+    hashedPoint = H.hash p
+  in
+  case HM.member hashedPoint map of
+    True ->  --(map,(id:ids))
+      insert points (id:ids) map
+    False -> --(HM.insert hashedPoint id map,ids)
+      insert points ids (HM.insert hashedPoint id map)
+
+
+{-
 insert ::  Point -> [ID] -> HM.HashMap Int Int -> (HM.HashMap Int Int,[ID])
 insert  point (id:ids) map   = 
   let
@@ -58,16 +74,6 @@ insert  point (id:ids) map   =
     True ->  (map,(id:ids))
     False -> (HM.insert hashedPoint id map,ids)
 
-
-{-
-insert ::  Point -> Int -> HM.HashMap Int Int -> GC.Changes (HM.HashMap Int Int )
-insert  point value map   = 
-  let
-    hashedPoint = H.hash point
-  in
-  case HM.member hashedPoint map of
-    True ->  GC.UnChanged map
-    False -> GC.Changed $ HM.insert hashedPoint value map
 
 -}
 

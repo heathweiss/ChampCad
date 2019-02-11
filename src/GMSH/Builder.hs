@@ -1,5 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
-module GMSH.Builder(buildCubePointsList, BuilderData(..),ExceptStackCornerPointsBuilder, buildCubePointsListSingle, newBuilderData) where
+module GMSH.Builder(buildCubePointsList, GC.BuilderData(..),ExceptStackCornerPointsBuilder, buildCubePointsListSingle, GC.newBuilderData) where
 {- |
 Build up a shape from [CornerPoints]. But instead of saving the CornerPoints,
 save the gmsh points, lines, etc along with an ID, within hash maps.
@@ -14,6 +14,7 @@ import CornerPoints.CornerPoints((|+++|), (+++), (+++>))
 import qualified GMSH.Lines as GL
 import qualified GMSH.Common as GC
 
+
 import qualified Data.HashMap.Strict as HM
 import qualified Data.Hashable as H
 import GHC.Generics (Generic)
@@ -23,7 +24,33 @@ import Control.Monad.State.Lazy
 import Control.Monad.Except
 
 import Control.Lens
+{-
+data BuilderData = BuilderData
+                     {
+                       _linesMap::HM.HashMap Int Int,
+                       _pointsMap::HM.HashMap Int Int,
+                       _linesId :: [Int],
+                       _pointsId :: [Int]
+                     }
 
+makeLenses ''BuilderData
+
+--needed for testing
+instance Show BuilderData where
+  --show (BuilderData linesMap _) = show linesMap
+  show builderData = show $ (builderData ^. linesMap,builderData ^. pointsMap)
+  
+--only needed for testing
+instance Eq BuilderData where
+  --(BuilderData linesMap _) == (BuilderData linesMap' _) = linesMap == linesMap'
+  builderData == builderData' = ((builderData ^. linesMap) == (builderData' ^. linesMap))
+                                &&
+                                ((builderData ^. pointsMap) == (builderData' ^. pointsMap))
+-}
+makeLenses ''GC.BuilderData
+
+
+{-
 data BuilderData = BuilderData
                      {
                        _linesMap::HM.HashMap Int Int,
@@ -37,7 +64,7 @@ makeLenses ''BuilderData
 instance Show BuilderData where
   --show (BuilderData linesMap _) = show linesMap
   show builderData = show $ builderData ^. linesMap
-
+  
 --only needed for testing
 instance Eq BuilderData where
   --(BuilderData linesMap _) == (BuilderData linesMap' _) = linesMap == linesMap'
@@ -46,8 +73,10 @@ instance Eq BuilderData where
 newBuilderData :: BuilderData
 newBuilderData = BuilderData (HM.fromList []) [1..] [1..]
 
+-}
+
 -- | The ExceptT State Builder for building up shapes, and convertering to gmsh Lines and points.
-type ExceptStackCornerPointsBuilder =  ExceptT String (State BuilderData ) [CPts.CornerPoints]
+type ExceptStackCornerPointsBuilder =  ExceptT String (State GC.BuilderData ) [CPts.CornerPoints]
 
 {- |
 Handles a CornerPoints error in ExceptT catchError calls.
@@ -149,19 +178,34 @@ buildCubePointsListOrFail extraMsg cPoints cPoints' = do
 
     
 --The recursive handling of [CornerPoints] for buildCubePointsListOrFail.
+buildCubePointsListOrFail' :: [CPts.CornerPoints] -> GC.BuilderData -> Either String GC.BuilderData
+--end of the list. Return whatever has been built up in the BuilderData.
+buildCubePointsListOrFail' [] builderData = Right builderData
+buildCubePointsListOrFail' (cube:cubeList) builderData =
+  let
+    --newLinesHashmap = GL.insert cube (linesId builderData) $ linesMap builderData
+    newLinesHashmap = GL.insert cube (builderData ^. linesId) ( builderData ^. pointsId) ( builderData ^. linesMap) 
+  in
+  case newLinesHashmap of
+    Right builderData' ->
+      buildCubePointsListOrFail' cubeList $ builderData 
+    Left e -> Left e
+          
+  
+{-
+--The recursive handling of [CornerPoints] for buildCubePointsListOrFail.
 buildCubePointsListOrFail' :: [CPts.CornerPoints] -> BuilderData -> Either String BuilderData
 --end of the list. Return whatever has been built up in the BuilderData.
 buildCubePointsListOrFail' [] builderData = Right builderData
 buildCubePointsListOrFail' (cube:cubeList) builderData =
   let
     --newLinesHashmap = GL.insert cube (linesId builderData) $ linesMap builderData
-    newLinesHashmap = GL.insert cube (builderData ^. linesId) $ ( builderData ^. linesMap)
+    newLinesHashmap = GL.insert cube (builderData ^. linesId) ( builderData ^. pointsId) ( builderData ^. linesMap) 
   in
   case newLinesHashmap of
-    (Right (changedMap,ids)) ->
-      buildCubePointsListOrFail' cubeList $ BuilderData { _linesId = ids, _linesMap = changedMap }
+    (Right (changedMap, lineIds, pointIds)) ->
+      buildCubePointsListOrFail' cubeList $ BuilderData { _linesId = lineIds, _pointsId = pointIds,  _linesMap = changedMap }
     Left e -> Left e
-          
-  
 
+-}
 

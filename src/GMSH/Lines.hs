@@ -14,7 +14,8 @@ import qualified Data.Hashable as H
 import GHC.Generics (Generic)
 
 -- | Id's for gmsh script objects. eg: Points, Lines
-type ID = Int
+type LineID = Int
+type PointID = Int
 
 {-
 Given:
@@ -119,50 +120,53 @@ Is Line and not already inserted: Hash and insert it and return map as Right Cha
 Is Line and already inserted: return map unchanged as  Right UnChanged
 Is anything but a line: return Left e
 -}
-insert ::  CornerPoints -> [ID] -> HM.HashMap Int Int ->  Either String (HM.HashMap Int Int,[ID])
+insert ::  CornerPoints -> [LineID] -> [PointID] -> HM.HashMap Int Int ->  Either String (HM.HashMap Int Int,[LineID], [PointID])
+--insert ::  CornerPoints -> [LineID] -> [PointID] -> HM.HashMap Int Int ->  Either String (HM.HashMap Int Int,[LineID], [PointID])
+leftOff
+--replace all but CornerPoints params with BuilderData.
 
-insert (CornerPointsError _) ids hashmap  = Right (hashmap,ids)
+insert (CornerPointsError _) lineIds pointsIds hashmap  = Right (hashmap, lineIds, pointsIds)
 
-insert (BottomFrontLine f1 f4) (id:ids) map =
+insert (BottomFrontLine f1 f4) (lineId:lineIds) pointsIds map =
   let hashedCPoint = H.hash (BottomFrontLine f1 f4)
   in
   case HM.member hashedCPoint map of
-    True ->  Right $ (map,(id:ids))
-    False -> Right $ (HM.insert hashedCPoint id map, ids)
+    True ->  Right $ (map,(lineId:lineIds), pointsIds)
+    False -> Right $ ((HM.insert hashedCPoint lineId map), lineIds, pointsIds)
 
 
-insert (FrontLeftLine f1 f2) (id:ids) map =
+insert (FrontLeftLine f1 f2) (lineId:lineIds) pointsIds map =
   let hashedCPoint = H.hash (FrontLeftLine f1 f2)
   in
   case HM.member hashedCPoint map of
-    True ->  Right $ (map,(id:ids))
-    False -> Right $ (HM.insert hashedCPoint id map, ids)
+    True ->  Right $ (map,(lineId:lineIds),pointsIds)
+    False -> Right $ (HM.insert hashedCPoint lineId map, lineIds, pointsIds)
 
-insert (FrontRightLine f3 f4) (id:ids) map =
+insert (FrontRightLine f3 f4) (lineId:lineIds) pointsIds map =
   let hashedCPoint = H.hash (FrontRightLine f3 f4)
   in
   case HM.member hashedCPoint map of
-    True ->  Right $ (map,(id:ids))
-    False -> Right $ (HM.insert hashedCPoint id map, ids)
+    True ->  Right $ (map,(lineId:lineIds),pointsIds)
+    False -> Right $ (HM.insert hashedCPoint lineId map, lineIds, pointsIds)
 
 
-insert (FrontTopLine f2 f3) (id:ids) map =
+insert (FrontTopLine f2 f3) (lineId:lineIds) pointsIds map =
   let hashedCPoint = H.hash (FrontTopLine f2 f3)
   in
   case HM.member hashedCPoint map of
-    True ->  Right $ (map,(id:ids))
-    False -> Right $ (HM.insert hashedCPoint id map, ids)
+    True ->  Right $ (map,(lineId:lineIds),pointsIds)
+    False -> Right $ (HM.insert hashedCPoint lineId map, lineIds, pointsIds)
 
 
-insert (BackTopLine b2 b3) (id:ids) map =
+insert (BackTopLine b2 b3) (lineId:lineIds) pointsIds map =
   let hashedCPoint = H.hash (BackTopLine b2 b3)
   in
   case HM.member hashedCPoint map of
-    True ->  Right $ (map,(id:ids))
-    False -> Right $ (HM.insert hashedCPoint id map, ids)
+    True ->  Right $ (map,(lineId:lineIds), pointsIds)
+    False -> Right $ (HM.insert hashedCPoint lineId map, lineIds, pointsIds)
 
 
-insert (FrontFace f1 f2 f3 f4) ids hashmap =
+insert (FrontFace f1 f2 f3 f4) lineIds pointsIds hashmap =
   --break into lines
   let
     frontFace = FrontFace f1 f2 f3 f4
@@ -176,7 +180,7 @@ insert (FrontFace f1 f2 f3 f4) ids hashmap =
   in
   --Left "GMSH.Lines.insert: FrontFace missing pattern match."
   case frontLines of
-    Right frontLines' -> insert' frontLines' ids hashmap
+    Right frontLines' -> insert' frontLines' lineIds pointsIds hashmap
     Left e -> Left e
 
   
@@ -184,24 +188,114 @@ insert (FrontFace f1 f2 f3 f4) ids hashmap =
 insert (FrontFace _ _ _ _) _ _ =
   Left "GMSH.Lines.insert: FrontFace missing pattern match."
 -}
-insert (B1 b1) ids map = Right $ (map,ids)
+insert (B1 b1) lineIds pointsIds map = Right $ (map, lineIds, pointsIds)
 
 --Catch unhandled pattern matches.
-insert unhandled _ map =
+insert unhandled _ _ map =
   --GC.UnChanged map
   Left $ "GMSH.Lines.insert: missing pattern match for " ++ (cpointType unhandled)
 
 
-insert' :: [CornerPoints] -> [ID] -> HM.HashMap Int Int ->  Either String (HM.HashMap Int Int,[ID])
-insert' [] ids hashmap = Right (hashmap,ids)
-insert' (cpt:cpts) ids hashmap =
+insert' :: [CornerPoints] -> [LineID] -> [PointID] -> HM.HashMap Int Int ->  Either String (HM.HashMap Int Int, [LineID], [PointID])
+insert' [] lineIds pointsIds hashmap = Right (hashmap, lineIds, pointsIds)
+insert' (cpt:cpts) lineIds pointsIds hashmap =
   let
-    inserted = insert cpt ids hashmap
+    inserted = insert cpt lineIds pointsIds hashmap
   in
   case inserted of
-    Right (hashmap',ids') -> insert' cpts ids' hashmap'
+    Right (hashmap', lineIds', pointsIds') -> insert' cpts lineIds' pointsIds' hashmap'
     Left e -> Left e
 {-
+insert ::  CornerPoints -> [LineID] -> [PointID] -> HM.HashMap Int Int ->  Either String (HM.HashMap Int Int,[LineID], [PointID])
+
+insert (CornerPointsError _) lineIds pointsIds hashmap  = Right (hashmap, lineIds, pointsIds)
+
+insert (BottomFrontLine f1 f4) (lineId:lineIds) pointsIds map =
+  let hashedCPoint = H.hash (BottomFrontLine f1 f4)
+  in
+  case HM.member hashedCPoint map of
+    True ->  Right $ (map,(lineId:lineIds), pointsIds)
+    False -> Right $ ((HM.insert hashedCPoint lineId map), lineIds, pointsIds)
+
+
+insert (FrontLeftLine f1 f2) (lineId:lineIds) pointsIds map =
+  let hashedCPoint = H.hash (FrontLeftLine f1 f2)
+  in
+  case HM.member hashedCPoint map of
+    True ->  Right $ (map,(lineId:lineIds),pointsIds)
+    False -> Right $ (HM.insert hashedCPoint lineId map, lineIds, pointsIds)
+
+insert (FrontRightLine f3 f4) (lineId:lineIds) pointsIds map =
+  let hashedCPoint = H.hash (FrontRightLine f3 f4)
+  in
+  case HM.member hashedCPoint map of
+    True ->  Right $ (map,(lineId:lineIds),pointsIds)
+    False -> Right $ (HM.insert hashedCPoint lineId map, lineIds, pointsIds)
+
+
+insert (FrontTopLine f2 f3) (lineId:lineIds) pointsIds map =
+  let hashedCPoint = H.hash (FrontTopLine f2 f3)
+  in
+  case HM.member hashedCPoint map of
+    True ->  Right $ (map,(lineId:lineIds),pointsIds)
+    False -> Right $ (HM.insert hashedCPoint lineId map, lineIds, pointsIds)
+
+
+insert (BackTopLine b2 b3) (lineId:lineIds) pointsIds map =
+  let hashedCPoint = H.hash (BackTopLine b2 b3)
+  in
+  case HM.member hashedCPoint map of
+    True ->  Right $ (map,(lineId:lineIds), pointsIds)
+    False -> Right $ (HM.insert hashedCPoint lineId map, lineIds, pointsIds)
+
+
+insert (FrontFace f1 f2 f3 f4) lineIds pointsIds hashmap =
+  --break into lines
+  let
+    frontFace = FrontFace f1 f2 f3 f4
+    frontLines = toLines frontFace
+    {-maybe better to do with recursion
+    frontLeftLine   = FE.extractFrontLeftLine frontFace
+    frontTopLine    = FE.extractFrontTopLine frontFace
+    frontRightLine  = FE.extractFrontRightLine frontFace
+    bottomFrontLine = FE.extractBottomFrontLine frontFace
+-}
+  in
+  --Left "GMSH.Lines.insert: FrontFace missing pattern match."
+  case frontLines of
+    Right frontLines' -> insert' frontLines' lineIds pointsIds hashmap
+    Left e -> Left e
+
+  
+{-
+insert (FrontFace _ _ _ _) _ _ =
+  Left "GMSH.Lines.insert: FrontFace missing pattern match."
+-}
+insert (B1 b1) lineIds pointsIds map = Right $ (map, lineIds, pointsIds)
+
+--Catch unhandled pattern matches.
+insert unhandled _ _ map =
+  --GC.UnChanged map
+  Left $ "GMSH.Lines.insert: missing pattern match for " ++ (cpointType unhandled)
+
+
+insert' :: [CornerPoints] -> [LineID] -> [PointID] -> HM.HashMap Int Int ->  Either String (HM.HashMap Int Int, [LineID], [PointID])
+insert' [] lineIds pointsIds hashmap = Right (hashmap, lineIds, pointsIds)
+insert' (cpt:cpts) lineIds pointsIds hashmap =
+  let
+    inserted = insert cpt lineIds pointsIds hashmap
+  in
+  case inserted of
+    Right (hashmap', lineIds', pointsIds') -> insert' cpts lineIds' pointsIds' hashmap'
+    Left e -> Left e
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------
+
 insert ::  CornerPoints -> Int -> HM.HashMap Int Int -> Either String (GC.Changes (HM.HashMap Int Int ))
 insert (BackTopLine b2 b3) value map =
   let hashedCPoint = H.hash (BackTopLine b2 b3)
