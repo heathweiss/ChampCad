@@ -124,6 +124,7 @@ insert ::  CornerPoints -> [LineID] -> [PointID] -> HM.HashMap Int Int ->  Eithe
 --insert ::  CornerPoints -> [LineID] -> [PointID] -> HM.HashMap Int Int ->  Either String (HM.HashMap Int Int,[LineID], [PointID])
 leftOff
 --replace all but CornerPoints params with BuilderData.
+--already did this for Points on git branch g_c_builderData. Should commit that branch and start another for lines: g_c_b_lines
 
 insert (CornerPointsError _) lineIds pointsIds hashmap  = Right (hashmap, lineIds, pointsIds)
 

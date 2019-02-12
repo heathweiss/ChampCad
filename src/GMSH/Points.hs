@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 module GMSH.Points({- H.hash, H.hashWithSalt,-} insert) where
 
 {- |
@@ -8,9 +9,14 @@ import qualified Data.HashMap.Strict as HM
 import qualified Data.Hashable as H
 import GHC.Generics (Generic)
 
+import Control.Lens
+
 import CornerPoints.Points(Point(..))
 import CornerPoints.CornerPoints(CornerPoints(..))
 import qualified GMSH.Common as GC
+--import qualified GMSH.Builder as GB
+
+makeLenses ''GC.BuilderData
 
 type ID = Int
 
@@ -49,31 +55,21 @@ Return:
  If point already exists in map:
  The original map, unchaged. Wrapped in 'UnChanged' constructor.
 -}
-insert ::  [Point] -> [ID] -> HM.HashMap Int Int -> (HM.HashMap Int Int,[ID])
-leftOff
---replace all but [Point] with BuilderData
-insert [] ids hashmap = (hashmap, ids)
-insert  (p:points) (id:ids) map   = 
+--insert ::  [Point] -> [ID] -> HM.HashMap Int Int -> (HM.HashMap Int Int,[ID])
+insert ::  [Point] -> GC.BuilderData -> GC.BuilderData
+insert [] builderData = builderData
+insert  (p:points) builderData   = 
   let
     hashedPoint = H.hash p
   in
-  case HM.member hashedPoint map of
-    True ->  --(map,(id:ids))
-      insert points (id:ids) map
-    False -> --(HM.insert hashedPoint id map,ids)
-      insert points ids (HM.insert hashedPoint id map)
+  case HM.member hashedPoint (builderData ^. linesMap) of
+    True ->  
+      insert points builderData
+    False -> 
+      insert points (builderData
+                     {GC._pointsId = (tail $ (builderData ^. pointsId)),
+                      GC._pointsMap = (HM.insert hashedPoint (head $ builderData ^. pointsId) (builderData ^. pointsMap))
+                     }
+                    ) 
 
-
-{-
-insert ::  Point -> [ID] -> HM.HashMap Int Int -> (HM.HashMap Int Int,[ID])
-insert  point (id:ids) map   = 
-  let
-    hashedPoint = H.hash point
-  in
-  case HM.member hashedPoint map of
-    True ->  (map,(id:ids))
-    False -> (HM.insert hashedPoint id map,ids)
-
-
--}
 
