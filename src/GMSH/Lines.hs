@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 module GMSH.Lines(toLines, toPoints, insert) where
 {- |
 
@@ -12,6 +13,9 @@ import qualified GMSH.Common as GC
 import qualified Data.HashMap.Strict as HM
 import qualified Data.Hashable as H
 import GHC.Generics (Generic)
+
+import Control.Lens
+makeLenses ''GC.BuilderData
 
 -- | Id's for gmsh script objects. eg: Points, Lines
 type LineID = Int
@@ -120,14 +124,26 @@ Is Line and not already inserted: Hash and insert it and return map as Right Cha
 Is Line and already inserted: return map unchanged as  Right UnChanged
 Is anything but a line: return Left e
 -}
-insert ::  CornerPoints -> [LineID] -> [PointID] -> HM.HashMap Int Int ->  Either String (HM.HashMap Int Int,[LineID], [PointID])
+{-
+Change params to take/return a BuilderData to simpify the params. Maybe this is where all the failing tests are coming from.
+-}
+insert ::  CornerPoints -> GC.BuilderData ->  Either String GC.BuilderData
 --insert ::  CornerPoints -> [LineID] -> [PointID] -> HM.HashMap Int Int ->  Either String (HM.HashMap Int Int,[LineID], [PointID])
-leftOff
---replace all but CornerPoints params with BuilderData.
---already did this for Points on git branch g_c_builderData. Should commit that branch and start another for lines: g_c_b_lines
 
-insert (CornerPointsError _) lineIds pointsIds hashmap  = Right (hashmap, lineIds, pointsIds)
+--insert (CornerPointsError _) lineIds pointsIds hashmap  = Right (hashmap, lineIds, pointsIds)
+insert (CornerPointsError _) builderData  = Right builderData
 
+insert (BottomFrontLine f1 f4) builderData =
+  let hashedCPoint = H.hash (BottomFrontLine f1 f4)
+  in
+  case HM.member hashedCPoint (builderData ^. linesMap) of
+    True ->  Right $ builderData --(map,(lineId:lineIds), pointsIds)
+    --False -> Right $ ((HM.insert hashedCPoint lineId map), lineIds, pointsIds)
+    False -> Right $ builderData
+                       {GC._linesMap = HM.insert hashedCPoint (head $ builderData ^. linesId) (builderData ^. linesMap),
+                        GC._linesId = tail $ builderData ^. linesId
+                       }
+{-
 insert (BottomFrontLine f1 f4) (lineId:lineIds) pointsIds map =
   let hashedCPoint = H.hash (BottomFrontLine f1 f4)
   in
@@ -135,22 +151,54 @@ insert (BottomFrontLine f1 f4) (lineId:lineIds) pointsIds map =
     True ->  Right $ (map,(lineId:lineIds), pointsIds)
     False -> Right $ ((HM.insert hashedCPoint lineId map), lineIds, pointsIds)
 
+-}
 
+insert (FrontLeftLine f1 f2) builderData =
+  let hashedCPoint = H.hash (FrontLeftLine f1 f2)
+  in
+  case HM.member hashedCPoint (builderData ^.linesMap ) of
+    --True ->  Right $ (map,(lineId:lineIds),pointsIds)
+    True ->  Right builderData
+    --False -> Right $ (HM.insert hashedCPoint lineId map, lineIds, pointsIds)
+    False -> Right $ builderData {GC._linesMap = HM.insert hashedCPoint (head $ builderData ^. linesId) (builderData ^. linesMap),
+                                  GC._linesId = tail $ builderData ^. linesId
+                                 }
+
+{-
 insert (FrontLeftLine f1 f2) (lineId:lineIds) pointsIds map =
   let hashedCPoint = H.hash (FrontLeftLine f1 f2)
   in
   case HM.member hashedCPoint map of
     True ->  Right $ (map,(lineId:lineIds),pointsIds)
     False -> Right $ (HM.insert hashedCPoint lineId map, lineIds, pointsIds)
+-}
 
+insert (FrontRightLine f3 f4) builderData =
+  let hashedCPoint = H.hash (FrontRightLine f3 f4)
+  in
+  case HM.member hashedCPoint (builderData ^.linesMap ) of
+    True ->  Right builderData
+    False -> Right $ builderData {GC._linesMap = HM.insert hashedCPoint (head $ builderData ^. linesId) (builderData ^. linesMap),
+                                  GC._linesId = tail $ builderData ^. linesId
+                                 }
+{-
 insert (FrontRightLine f3 f4) (lineId:lineIds) pointsIds map =
   let hashedCPoint = H.hash (FrontRightLine f3 f4)
   in
   case HM.member hashedCPoint map of
     True ->  Right $ (map,(lineId:lineIds),pointsIds)
     False -> Right $ (HM.insert hashedCPoint lineId map, lineIds, pointsIds)
+-}
 
-
+insert (FrontTopLine f2 f3) builderData =
+  let hashedCPoint = H.hash (FrontTopLine f2 f3)
+  in
+  case HM.member hashedCPoint (builderData ^.linesMap ) of
+    True ->  Right builderData
+    False -> Right $ builderData {GC._linesMap = HM.insert hashedCPoint (head $ builderData ^. linesId) (builderData ^. linesMap),
+                                  GC._linesId = tail $ builderData ^. linesId
+                                 }
+{-
 insert (FrontTopLine f2 f3) (lineId:lineIds) pointsIds map =
   let hashedCPoint = H.hash (FrontTopLine f2 f3)
   in
@@ -158,15 +206,55 @@ insert (FrontTopLine f2 f3) (lineId:lineIds) pointsIds map =
     True ->  Right $ (map,(lineId:lineIds),pointsIds)
     False -> Right $ (HM.insert hashedCPoint lineId map, lineIds, pointsIds)
 
+-}
 
+insert (BackTopLine b2 b3) builderData =
+  let hashedCPoint = H.hash (BackTopLine b2 b3)
+      map = (builderData ^. linesMap )
+  in
+  case HM.member hashedCPoint map of
+    True ->  Right builderData
+    False ->
+      let
+        map = HM.insert hashedCPoint (head $ builderData ^. linesId) (builderData ^. linesMap)
+        ids = tail $ builderData ^. linesId
+      in
+      Right $ builderData {GC._linesMap = map, GC._linesId = ids}
+
+{-uses BuilderData param, but gives back (fromList [],fromList [])
+insert (BackTopLine b2 b3) builderData =
+  let hashedCPoint = H.hash (BackTopLine b2 b3)
+  in
+  case HM.member hashedCPoint (builderData ^. linesMap ) of
+    True ->  Right builderData
+    False ->
+      let
+        map = HM.insert hashedCPoint (head $ builderData ^. linesId)
+        ids = tail $ builderData ^. linesId
+      in
+      Right $ builderData {GC._linesMap = HM.insert hashedCPoint (head $ builderData ^. linesId) (builderData ^. linesMap),
+                                  GC._linesId = tail $ builderData ^. linesId
+                                 }
+
+-}
+{-prior to using builderData param
 insert (BackTopLine b2 b3) (lineId:lineIds) pointsIds map =
   let hashedCPoint = H.hash (BackTopLine b2 b3)
   in
   case HM.member hashedCPoint map of
     True ->  Right $ (map,(lineId:lineIds), pointsIds)
     False -> Right $ (HM.insert hashedCPoint lineId map, lineIds, pointsIds)
-
-
+-}
+insert (FrontFace f1 f2 f3 f4) builderData =
+  --break into lines
+  let
+    frontFace = FrontFace f1 f2 f3 f4
+    frontLines = toLines frontFace
+  in
+  case frontLines of
+    Right frontLines' -> insert' frontLines' builderData
+    Left e -> Left e
+{-
 insert (FrontFace f1 f2 f3 f4) lineIds pointsIds hashmap =
   --break into lines
   let
@@ -183,20 +271,30 @@ insert (FrontFace f1 f2 f3 f4) lineIds pointsIds hashmap =
   case frontLines of
     Right frontLines' -> insert' frontLines' lineIds pointsIds hashmap
     Left e -> Left e
-
-  
-{-
-insert (FrontFace _ _ _ _) _ _ =
-  Left "GMSH.Lines.insert: FrontFace missing pattern match."
 -}
-insert (B1 b1) lineIds pointsIds map = Right $ (map, lineIds, pointsIds)
 
---Catch unhandled pattern matches.
+insert (B1 b1) builderData = Right builderData
+--insert (B1 b1) lineIds pointsIds map = Right $ (map, lineIds, pointsIds)
+
+insert unhandled _  =
+  Left $ "GMSH.Lines.insert: missing pattern match for " ++ (cpointType unhandled)
+{-
 insert unhandled _ _ map =
   --GC.UnChanged map
   Left $ "GMSH.Lines.insert: missing pattern match for " ++ (cpointType unhandled)
+-}
+insert' :: [CornerPoints] -> GC.BuilderData ->  Either String GC.BuilderData
+insert' [] builderData = Right builderData
+insert' (cpt:cpts) builderData =
+  let
+    inserted = insert cpt builderData
+  in
+  case inserted of
+    Right builderData -> insert' cpts builderData
+    Left e -> Left e
 
-
+    
+{-
 insert' :: [CornerPoints] -> [LineID] -> [PointID] -> HM.HashMap Int Int ->  Either String (HM.HashMap Int Int, [LineID], [PointID])
 insert' [] lineIds pointsIds hashmap = Right (hashmap, lineIds, pointsIds)
 insert' (cpt:cpts) lineIds pointsIds hashmap =
@@ -206,7 +304,30 @@ insert' (cpt:cpts) lineIds pointsIds hashmap =
   case inserted of
     Right (hashmap', lineIds', pointsIds') -> insert' cpts lineIds' pointsIds' hashmap'
     Left e -> Left e
+-}
 {-
+
+
+  
+
+
+
+--Catch unhandled pattern matches.
+
+
+
+
+-}
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------
+{-
+This version seems to have the same failing tests. Is it just a copy I made prior to changing to a BuilerData params.
+
 insert ::  CornerPoints -> [LineID] -> [PointID] -> HM.HashMap Int Int ->  Either String (HM.HashMap Int Int,[LineID], [PointID])
 
 insert (CornerPointsError _) lineIds pointsIds hashmap  = Right (hashmap, lineIds, pointsIds)
@@ -260,7 +381,7 @@ insert (FrontFace f1 f2 f3 f4) lineIds pointsIds hashmap =
     frontTopLine    = FE.extractFrontTopLine frontFace
     frontRightLine  = FE.extractFrontRightLine frontFace
     bottomFrontLine = FE.extractBottomFrontLine frontFace
--}
+    -}
   in
   --Left "GMSH.Lines.insert: FrontFace missing pattern match."
   case frontLines of
@@ -289,14 +410,14 @@ insert' (cpt:cpts) lineIds pointsIds hashmap =
   case inserted of
     Right (hashmap', lineIds', pointsIds') -> insert' cpts lineIds' pointsIds' hashmap'
     Left e -> Left e
+-}
 
-
 --------------------------------------------------------------------------------------------------------------------------------------------------
 --------------------------------------------------------------------------------------------------------------------------------------------------
 --------------------------------------------------------------------------------------------------------------------------------------------------
 --------------------------------------------------------------------------------------------------------------------------------------------------
 --------------------------------------------------------------------------------------------------------------------------------------------------
-
+{-
 insert ::  CornerPoints -> Int -> HM.HashMap Int Int -> Either String (GC.Changes (HM.HashMap Int Int ))
 insert (BackTopLine b2 b3) value map =
   let hashedCPoint = H.hash (BackTopLine b2 b3)

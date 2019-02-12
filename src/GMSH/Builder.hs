@@ -3,7 +3,7 @@ module GMSH.Builder(buildCubePointsList, GC.BuilderData(..),ExceptStackCornerPoi
 {- |
 Build up a shape from [CornerPoints]. But instead of saving the CornerPoints,
 save the gmsh points, lines, etc along with an ID, within hash maps.
-
+0
 
 Tests and example are in Tests.GmshTest
 -}
@@ -183,18 +183,32 @@ buildCubePointsListOrFail' :: [CPts.CornerPoints] -> GC.BuilderData -> Either St
 buildCubePointsListOrFail' [] builderData = Right builderData
 buildCubePointsListOrFail' (cube:cubeList) builderData =
   let
-    --newLinesHashmap = GL.insert cube (linesId builderData) $ linesMap builderData
-    newLinesHashmap = GL.insert cube (builderData ^. linesId) ( builderData ^. pointsId) ( builderData ^. linesMap) 
+    --newLinesHashmap = GL.insert cube (builderData ^. linesId) ( builderData ^. pointsId) ( builderData ^. linesMap)
+    newLinesHashmap = GL.insert cube builderData 
+  in
+  case newLinesHashmap of
+    Right builderData' ->
+      buildCubePointsListOrFail' cubeList $ builderData' 
+    Left e -> Left e
+          
+{-version with BuilderData param, but gives wrong answer
+buildCubePointsListOrFail' :: [CPts.CornerPoints] -> GC.BuilderData -> Either String GC.BuilderData
+--end of the list. Return whatever has been built up in the BuilderData.
+buildCubePointsListOrFail' [] builderData = Right builderData
+buildCubePointsListOrFail' (cube:cubeList) builderData =
+  let
+    --newLinesHashmap = GL.insert cube (builderData ^. linesId) ( builderData ^. pointsId) ( builderData ^. linesMap)
+    newLinesHashmap = GL.insert cube builderData 
   in
   case newLinesHashmap of
     Right builderData' ->
       buildCubePointsListOrFail' cubeList $ builderData 
     Left e -> Left e
-          
-  
+
+-}  
 {-
---The recursive handling of [CornerPoints] for buildCubePointsListOrFail.
-buildCubePointsListOrFail' :: [CPts.CornerPoints] -> BuilderData -> Either String BuilderData
+Version prior to going to BuilderData param for Lines.insert
+buildCubePointsListOrFail' :: [CPts.CornerPoints] -> GC.BuilderData -> Either String GC.BuilderData
 --end of the list. Return whatever has been built up in the BuilderData.
 buildCubePointsListOrFail' [] builderData = Right builderData
 buildCubePointsListOrFail' (cube:cubeList) builderData =
@@ -203,9 +217,10 @@ buildCubePointsListOrFail' (cube:cubeList) builderData =
     newLinesHashmap = GL.insert cube (builderData ^. linesId) ( builderData ^. pointsId) ( builderData ^. linesMap) 
   in
   case newLinesHashmap of
-    (Right (changedMap, lineIds, pointIds)) ->
-      buildCubePointsListOrFail' cubeList $ BuilderData { _linesId = lineIds, _pointsId = pointIds,  _linesMap = changedMap }
+    Right builderData' ->
+      buildCubePointsListOrFail' cubeList $ builderData 
     Left e -> Left e
+          
 
 -}
 
