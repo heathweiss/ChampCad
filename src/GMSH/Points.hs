@@ -62,6 +62,25 @@ insert  (p:points) builderData   =
   let
     hashedPoint = H.hash p
   in
+  case HM.member hashedPoint (builderData ^. pointsMap) of
+    True ->  
+      insert points builderData
+    False ->
+      let
+        mapWithCurrentPointInserted = (HM.insert hashedPoint (head $ builderData ^. pointsId) (builderData ^. pointsMap))
+      in
+      insert points (builderData
+                     {GC._pointsId = (tail $ (builderData ^. pointsId)),
+                      GC._pointsMap = mapWithCurrentPointInserted
+                     }
+                    ) 
+
+
+{-
+insert  (p:points) builderData   = 
+  let
+    hashedPoint = H.hash p
+  in
   case HM.member hashedPoint (builderData ^. linesMap) of
     True ->  
       insert points builderData
@@ -73,3 +92,4 @@ insert  (p:points) builderData   =
                     ) 
 
 
+-}
