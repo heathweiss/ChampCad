@@ -169,10 +169,19 @@ Insert CornerPoints into a hash map, without using the builder monad.
 -----------------------------------------------------------------------------------------
 insertBackTopLineIntoEmptyMap  = TestCase $ assertEqual
   "insert a BackTopLine into an empty map."
-  --(Right $ HM.fromList [(1497486222234613753,1)])
+  (Right $ GC.newBuilderData
+   {GC._pointsMap =
+      HM.fromList [(-4271374597206133941,GC.PointsBuilderData 2 (Point 2 2 2)),
+                   (3308183575658410827,GC.PointsBuilderData 1 (Point 1 1 1))],
+    GC._linesMap = HM.fromList [(1497486222234613753,1)]
+   }
+  )
+  {-
   (Right $ GC.newBuilderData {GC._pointsMap =  HM.fromList [(-4271374597206133941,2),(3308183575658410827,1)],
                               GC._linesMap = HM.fromList [(1497486222234613753,1)]
-                             })
+                             }
+  )
+-}
   (
    let
      backTopLine = BackTopLine (Point 1 1 1) (Point 2 2 2)
@@ -204,9 +213,12 @@ insertBackTopLineIntoMap  = TestCase $ assertEqual
 
 insertBottomFrontLineIntoMap  = TestCase $ assertEqual
   "insert a BackTopLine into a map that already contains it."
-  (Right $ GC.newBuilderData {GC._linesMap = HM.fromList [(1497486222234613753,1)],
-                              GC._pointsMap = HM.fromList [(-4271374597206133941,2),(3308183575658410827,1)]
-                             })
+  (Right $ GC.newBuilderData
+             {GC._linesMap = HM.fromList [(1497486222234613753,1)],
+              GC._pointsMap = HM.fromList [(-4271374597206133941,GC.PointsBuilderData 2 (Point 2 2 2)),
+                                           (3308183575658410827,GC.PointsBuilderData 1 (Point 1 1 1))]
+             }
+  )
   (
    let
      bottomFrontLine = BottomFrontLine (Point 1 1 1) (Point 2 2 2)
@@ -216,13 +228,17 @@ insertBottomFrontLineIntoMap  = TestCase $ assertEqual
 
 insertFrontFaceIntoEmptyMap  = TestCase $ assertEqual
   "insert a FrontFace into an empty map."
-  --(Right $ GC.newBuilderData {GC._linesMap =  (HM.fromList [(-405284620329420807,2),(6588805600976959481,4),(-7473684235487414279,3),(1497486222234613753,1)])})
   (Right $ GC.newBuilderData
    {GC._linesMap =  (HM.fromList [(-6980540076290344967,3),(-405284620329420807,2),(-8685152535250077703,4),(1497486222234613753,1)]),
-    GC._pointsMap = (HM.fromList [(819944781536211787,3),(5911264160278557515,4),(-4271374597206133941,2),(3308183575658410827,1)])
+    GC._pointsMap =
+      (HM.fromList [(819944781536211787,GC.PointsBuilderData 3 (Point 3 3 3)),
+                    (5911264160278557515,GC.PointsBuilderData 4 (Point 4 4 4)),
+                    (-4271374597206133941,GC.PointsBuilderData 2 (Point 2 2 2)),
+                    (3308183575658410827,GC.PointsBuilderData 1 (Point 1 1 1))
+                   ]
+      )
    }
   )
-  
   (
    let
      frontFace = FrontFace (Point 1 1 1) (Point 2 2 2) (Point 3 3 3) (Point 4 4 4)
@@ -234,7 +250,9 @@ insertFrontLeftLineIntoEmptyMap  = TestCase $ assertEqual
   "insert a FrontLeftLine into an empty map."
   (Right $ GC.newBuilderData
    {GC._linesMap =  (HM.fromList [(1497486222234613753,1)]),
-    GC._pointsMap = (HM.fromList [(-4271374597206133941,2),(3308183575658410827,1)]) --all 4 point hashes correct, but id's are wrong.
+    GC._pointsMap =
+      (HM.fromList [(-4271374597206133941,GC.PointsBuilderData 2 (Point 2 2 2)),
+                    (3308183575658410827, GC.PointsBuilderData 1 (Point 1 1 1))]) 
    }
   )
   (
@@ -248,7 +266,11 @@ insertFrontTopLineIntoEmptyMap  = TestCase $ assertEqual
   "insert a FrontLeftLine into an empty map."
   (Right $ GC.newBuilderData
    {GC._linesMap =  (HM.fromList [(-405284620329420807,1)]),
-    GC._pointsMap = (HM.fromList [(819944781536211787,2),(-4271374597206133941,1)]) --all 4 point hashes correct, but id's are wrong.
+    GC._pointsMap =
+      (HM.fromList [(819944781536211787,GC.PointsBuilderData 2 (Point 3 3 3)),
+                    (-4271374597206133941,GC.PointsBuilderData 1 (Point 2 2 2))
+                   ]
+      )
    }
   )
   (
@@ -262,7 +284,11 @@ insertFrontTopLineAndFrontLeftLineIntoEmptyMap  = TestCase $ assertEqual
   "insert a FrontLeftLine and FrontLeftLine into an empty map."
   (Right $ GC.newBuilderData
    {GC._linesMap =  (HM.fromList [(-405284620329420807,2),(1497486222234613753,1)]),
-    GC._pointsMap = (HM.fromList [(819944781536211787,3),(-4271374597206133941,2),(3308183575658410827,1)]) 
+    GC._pointsMap = (HM.fromList [(819944781536211787,GC.PointsBuilderData 3 (Point 3 3 3)),
+                                  (-4271374597206133941,GC.PointsBuilderData 2 (Point 2 2 2)),
+                                  (3308183575658410827,GC.PointsBuilderData 1 (Point 1 1 1))
+                                 ]
+                    )
    }
   )
   (
@@ -307,7 +333,11 @@ runBuilderTests = do
   
 builderTest = TestCase $ assertEqual
   "Use execState to extract the current state."
-  (GB.BuilderData (HM.fromList [(2050866026447763449,1)]) (HM.fromList [(-6488834463732681909,2),(3308183575658410827,1)]) [] [])
+  (GB.BuilderData (HM.fromList [(2050866026447763449,1)])
+                  (HM.fromList [(-6488834463732681909,GC.PointsBuilderData 2 (Point 11 11 11)),
+                                (3308183575658410827,GC.PointsBuilderData 1 (Point 1 1 1))])
+    [] []
+  )
   (let
       builder :: GB.ExceptStackCornerPointsBuilder
       builder = do
@@ -315,8 +345,6 @@ builderTest = TestCase $ assertEqual
         return inserted
    in
    ((SL.execState $ E.runExceptT builder ) GB.newBuilderData)
-                                           
-   
   )
 
 builderTest2 = TestCase $ assertEqual
@@ -334,8 +362,15 @@ builderTest2 = TestCase $ assertEqual
 
 builderTest3 = TestCase $ assertEqual
   "Use runState to extract the current value/state from state."
-  ((Right $ [BackTopLine (Point 1 1 1) (Point 11 11 11)],
-            (GB.BuilderData (HM.fromList [(2050866026447763449,1)]) (HM.fromList [(-6488834463732681909,2),(3308183575658410827,1)]) [] [])))
+  (Right $ [BackTopLine (Point 1 1 1) (Point 11 11 11)],
+            (GB.BuilderData (HM.fromList [(2050866026447763449,1)])
+                            (HM.fromList [(-6488834463732681909, GC.PointsBuilderData 2 (Point 11 11 11)),
+                                          (3308183575658410827, GC.PointsBuilderData 1 (Point 1 1 1))]
+                            )
+              [] []
+            )
+   )
+  
   (let
       builder :: GB.ExceptStackCornerPointsBuilder
       builder = do
@@ -350,7 +385,10 @@ builderTest4 = TestCase $ assertEqual
   "Use execState to extract the current state."
   (GC.newBuilderData
    {GC._linesMap =  (HM.fromList [(-6980540076290344967,3),(-405284620329420807,2),(-8685152535250077703,4),(1497486222234613753,1)]),
-    GC._pointsMap = (HM.fromList [(819944781536211787,3),(5911264160278557515,4),(-4271374597206133941,2),(3308183575658410827,1)])
+    GC._pointsMap = (HM.fromList [(819944781536211787,GC.PointsBuilderData 3 (Point 3 3 3)),
+                                  (5911264160278557515,GC.PointsBuilderData 4 (Point 4 4 4)),
+                                  (-4271374597206133941,GC.PointsBuilderData 2 (Point 2 2 2)),
+                                  (3308183575658410827,GC.PointsBuilderData 1 (Point 1 1 1))])
    }
   )
   (let
@@ -381,7 +419,10 @@ runBuildWithMonadTests = do
 --cx the Lines map to see it was inserted
 buildWithMonadTest = TestCase $ assertEqual
   "Use execState to extract the current state."
-  (GB.BuilderData (HM.fromList [(2050866026447763449,1)]) (HM.fromList [(-6488834463732681909,2),(3308183575658410827,1)]) [] [])
+  (GB.BuilderData (HM.fromList [(2050866026447763449,1)])
+                  (HM.fromList [(-6488834463732681909,GC.PointsBuilderData 2 (Point 11 11 11)),(3308183575658410827,GC.PointsBuilderData 1 (Point 1 1 1))])
+                  [] []
+  )
   (let
       validPointToInsert = BackTopLine (Point 1 1 1) (Point 11 11 11)
 
@@ -397,7 +438,11 @@ buildWithMonadTest = TestCase $ assertEqual
 
 buildWithMonadTestWithoutBuilder = TestCase $ assertEqual
   "Use execState to extract the current state. Dont use Builder to see if that is where my error lies."
-  (Right $ GB.BuilderData (HM.fromList [(2050866026447763449,1)]) (HM.fromList [(-6488834463732681909,2),(3308183575658410827,1)]) [] [])
+  (Right $ GB.BuilderData (HM.fromList [(2050866026447763449,1)])
+                          (HM.fromList [(-6488834463732681909,GC.PointsBuilderData 2 (Point 11 11 11)),
+                                        (3308183575658410827,GC.PointsBuilderData 1 (Point 1 1 1))])
+                          [] []
+  )
   (let
       validPointToInsert = BackTopLine (Point 1 1 1) (Point 11 11 11)
 
@@ -438,7 +483,10 @@ buildWithMonadTest3 = TestCase $ assertEqual
   "Use execState to extract the current state."
   (GB.BuilderData
    (HM.fromList [(2050866026447763449,1),(-4228383307129817095,2)])
-   (HM.fromList [(6408630444126286667,3),(-6488834463732681909,2),(3308183575658410827,1),(-3101670147112914101,4)])
+   (HM.fromList [(6408630444126286667,GC.PointsBuilderData 3 (Point 21 21 21)),
+                 (-6488834463732681909,GC.PointsBuilderData 2 (Point 11 11 11)),
+                 (3308183575658410827,GC.PointsBuilderData 1 (Point 1 1 1)),
+                 (-3101670147112914101,GC.PointsBuilderData 4 (Point 211 211 211))])
    [] []
   )
   (let
@@ -453,13 +501,11 @@ buildWithMonadTest3 = TestCase $ assertEqual
    ((SL.execState $ E.runExceptT builder ) GB.newBuilderData)
   )
 
-{-
-Insert [BackTopLine, identical BackTopLine].
-Only one gets inserted.
--}
 buildWithMonadTest4 = TestCase $ assertEqual
   "Identical BackTopLine's. Only one gets inserted."
-  (GB.BuilderData (HM.fromList [(2050866026447763449,1)]) (HM.fromList [(-6488834463732681909,2),(3308183575658410827,1)]) [] [])
+  (GB.BuilderData (HM.fromList [(2050866026447763449,1)])
+                  (HM.fromList [(-6488834463732681909,GC.PointsBuilderData 2 (Point 11 11 11)),
+                                (3308183575658410827,GC.PointsBuilderData 1 (Point 1 1 1))]) [] [])
   (let
       backTopLine = BackTopLine (Point 1 1 1) (Point 11 11 11)
       
@@ -478,7 +524,11 @@ Only one BackTopLine gets inserted into map, as B1 is not a line
 -}
 buildWithMonadTest5 = TestCase $ assertEqual
   "BackTopLine and a B1 Only BackTopLine gets inserted."
-  (GB.BuilderData (HM.fromList [(2050866026447763449,1)]) (HM.fromList [(-6488834463732681909,2),(3308183575658410827,1)]) [] [])
+  (GB.BuilderData (HM.fromList [(2050866026447763449,1)])
+                  (HM.fromList [(-6488834463732681909,GC.PointsBuilderData 2 (Point 11 11 11)),
+                                (3308183575658410827,GC.PointsBuilderData 1 (Point 1 1 1))])
+                  [] []
+  )
   (let
       backTopLine = BackTopLine (Point 1 1 1) (Point 11 11 11)
       b1 = (B1 (Point 1 1 1))
@@ -520,10 +570,6 @@ buildWithMonadTest6 = TestCase $ assertEqual
    ((SL.evalState $ E.runExceptT builder ) GB.newBuilderData)
   )
 
---next
---pass in a B1 as 2nd cpnt, to see that it does not get inserted.
---pass in a B1 as 1st cpnt, to see that it does not get inserted, but 2nd one does.
------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------
@@ -563,40 +609,40 @@ hashPointTest = TestCase $ assertEqual
 --As it is empty, it will be hashed and inserted.
 insertPointTest = TestCase $ assertEqual
   "insert a Point into an empty map"
-  (GC.BuilderData HM.empty ( HM.fromList [(2171024669747360587,1)]) [1..] [1..])
-  (GP.insert  [Point 1 2 3] $ GC.BuilderData HM.empty HM.empty [1..] [1..]) -- [1..] HM.empty)
+  (GC.BuilderData HM.empty ( HM.fromList [(2171024669747360587,GC.PointsBuilderData 1 (Point 1 2 3))]) [1..] [1..])
+  (GP.insert  [Point 1 2 3] $ GC.BuilderData HM.empty HM.empty [1..] [1..])
 
 insertPointTestToMatchLinesTest = TestCase $ assertEqual
   "insert the Points from insertFrontFaceIntoEmptyMap test, into an empty map"
-  (GC.BuilderData HM.empty ( HM.fromList [(819944781536211787,3),(5911264160278557515,4),(-4271374597206133941,2),(3308183575658410827,1)]) [1..] [1..])
+  (GC.BuilderData HM.empty
+                ( HM.fromList [(819944781536211787,GC.PointsBuilderData 3 $ Point 3 3 3),
+                               (5911264160278557515,GC.PointsBuilderData 4 $ Point 4 4 4),
+                               (-4271374597206133941,GC.PointsBuilderData 2 $ Point 2 2 2),
+                               (3308183575658410827,GC.PointsBuilderData 1 $ Point 1 1 1)])
+                  [1..] [1..]
+  )
   (GP.insert  [Point 1 1 1, Point 2 2 2, Point 3 3 3, Point 4 4 4] $ GC.BuilderData HM.empty HM.empty [1..] [1..]) -- [1..] HM.empty)
-
-  
-
 
 --Insert a Point into a map that already contains the point.
 --As it is already in the map, map will not be modified, as indicated by the GP.UnChanged constructor.
 insertPointTest2 = TestCase $ assertEqual
   "insert a Point into a map that already contains the point"
-  (GC.BuilderData HM.empty (HM.fromList [(2171024669747360587,1)]) [1..] [1..])
+  (GC.BuilderData HM.empty (HM.fromList [(2171024669747360587,GC.PointsBuilderData 1 $ Point 1 2 3)]) [1..] [1..])
   ( let
-      pointAllreadyInMap = Point 1 2 3
-      dummyVal1 = 1
-      dummyVal2 = 2
-      mapWithThePointAlreadyInserted = HM.insert (H.hash pointAllreadyInMap) dummyVal1 HM.empty
+      mapWithThePointAlreadyInserted = HM.insert (H.hash $ Point 1 2 3) (GC.PointsBuilderData 1 $ Point 1 2 3) HM.empty
       
     in
-      GP.insert [pointAllreadyInMap] $ GC.BuilderData HM.empty mapWithThePointAlreadyInserted [1..] [1..]  --[2..] mapWithThePointAlreadyInserted
+      GP.insert [Point 1 2 3] $ GC.BuilderData HM.empty mapWithThePointAlreadyInserted [1..] [1..]  
   )
-
 --Insert a Point into a hash map that already contains a different point.
 --The point will be inserted, as it does not already exist.
 --The hashmap will be modified, as indicated by the GP.Changed constructor.
 insertPointTest3 = TestCase $ assertEqual
   "insert a Point into a map that already contains a diff. point"
-  (GC.BuilderData HM.empty (HM.fromList [(2171024669747360587,1),(-8294074226866474165,2)]) [1..] [1..] )
+  (GC.BuilderData HM.empty (HM.fromList [(2171024669747360587,GC.PointsBuilderData 1 $ Point 1 2 3),
+                                         (-8294074226866474165,GC.PointsBuilderData 2 $ Point 11 22 33)]) [1..] [1..] )
   ( let
-      mapWithADiffPointAlreadyInserted = HM.insert  (H.hash $ Point 1 2 3) 1 HM.empty
+      mapWithADiffPointAlreadyInserted = HM.insert  (H.hash $ Point 1 2 3) (GC.PointsBuilderData 1 (Point 1 2 3)) HM.empty
       
     in
       GP.insert [Point 11 22 33] $ GC.BuilderData HM.empty mapWithADiffPointAlreadyInserted [1..] [2..] 

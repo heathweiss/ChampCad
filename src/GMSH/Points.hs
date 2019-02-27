@@ -58,6 +58,27 @@ Return:
 --insert ::  [Point] -> [ID] -> HM.HashMap Int Int -> (HM.HashMap Int Int,[ID])
 insert ::  [Point] -> GC.BuilderData -> GC.BuilderData
 insert [] builderData = builderData
+insert  (point:points) builderData   = 
+  let
+    hashedPoint = H.hash point
+  in
+  case HM.member hashedPoint (builderData ^. pointsMap) of
+    True ->  
+      insert points builderData
+    False ->
+      let
+        mapWithCurrentPointInserted = (HM.insert hashedPoint  (GC.PointsBuilderData (head $ builderData ^. pointsIdSupply) point) (builderData ^. pointsMap))
+      in
+      insert points (builderData
+                     {GC._pointsIdSupply = (tail $ (builderData ^. pointsIdSupply)),
+                      GC._pointsMap = mapWithCurrentPointInserted
+                     }
+                    ) 
+
+
+{-before adding PointBuilderData
+insert ::  [Point] -> GC.BuilderData -> GC.BuilderData
+insert [] builderData = builderData
 insert  (p:points) builderData   = 
   let
     hashedPoint = H.hash p
@@ -67,29 +88,11 @@ insert  (p:points) builderData   =
       insert points builderData
     False ->
       let
-        mapWithCurrentPointInserted = (HM.insert hashedPoint (head $ builderData ^. pointsId) (builderData ^. pointsMap))
+        mapWithCurrentPointInserted = (HM.insert hashedPoint (head $ builderData ^. pointsIdSupply) (builderData ^. pointsMap))
       in
       insert points (builderData
-                     {GC._pointsId = (tail $ (builderData ^. pointsId)),
+                     {GC._pointsIdSupply = (tail $ (builderData ^. pointsIdSupply)),
                       GC._pointsMap = mapWithCurrentPointInserted
                      }
                     ) 
-
-
-{-
-insert  (p:points) builderData   = 
-  let
-    hashedPoint = H.hash p
-  in
-  case HM.member hashedPoint (builderData ^. linesMap) of
-    True ->  
-      insert points builderData
-    False -> 
-      insert points (builderData
-                     {GC._pointsId = (tail $ (builderData ^. pointsId)),
-                      GC._pointsMap = (HM.insert hashedPoint (head $ builderData ^. pointsId) (builderData ^. pointsMap))
-                     }
-                    ) 
-
-
 -}

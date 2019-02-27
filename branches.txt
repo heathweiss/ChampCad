@@ -1,38 +1,10 @@
-B: master
-   -have a delaunayBaseNM which replaces delaunayBase. Still has some issues.
-     -Got rid of Applicative and went to Monad. Much better/cleaner.
-     -Keep delaunayBase till these are worked out. May want to start printing shoes.
-   -Intercept has new ExceptT Maybe type which has cleaned up the code immensely.
-     -lineIntercept from Rosetta code does not work with negative cood's. Need better system.
-        -Will try a branch that uses polar coods.
-   -Geometry.Intercept.lineIntersection does not work with neg cood's. Fix it perhaps with polar cood's.
-      -added PolarIntercept module for this, but that has not worked out.
-      -added <line/segment>Intersection fx's from Gloss pkg, int Intercept module, and they are working.
-     
-     created AdvanceComposable module
-     -get rid of all types and stick to CornerPoints: done
-     -make them composable.:done
-     -can create the DelaunayView bottom points with naive fx's to the closest CPoint. 
-      -Will need to do missing pattern matches for doing it with legal intersections, then perhaps can do it to closest advCPoint.
+master: has gmsh merged up to storing Points x y z values.
 
-  B: germanHiker
-     -create shoelift for made in germany hiking boots.
-     -cant use legal intersections do to error.
-     B: cleanIntercept:
-        -get rid of unused junk, and rename to clear up module
+gmsh:
+Save the x y z value in points map.
+-will need a data type for point map to save both the id, and the Point
+ -have made it. All GMSH test have been fixed and passed.
 
-Should be able to get rid of PolarIntercept.
--keep the ExceptT Error Maybe Point somewhere as I have that worked out.
-  -Maybe I should use it in Advancer' 
- Maybe it can be used in the Intercept module, though the new Gloss fx's should eliminate that.
+next:
+  create a g_print branch to print the points.
 
-Make legalIntersection fx's use the gloss fx's
-Get rid of nearly everything else in Intercept module. 
-Do some better testing on what is left.
-
-
-Next:
-In AdvanceComposable. 
--Hugely cleaned up pattern matches in advCPointFromClosestInnerOuterUsedCPoint but sitll need to fix pattern matches in advanceRecur.
-In GermanHikerBase:
--Got rid of missing pattern match for advCPointFromClosestInnerOuterUsedCPoint, but now have illegal TopLeftLine +++ TopLeftLine.

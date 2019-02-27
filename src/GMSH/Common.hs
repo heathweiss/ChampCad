@@ -1,11 +1,16 @@
 {-# LANGUAGE TemplateHaskell #-}
-module GMSH.Common(BuilderData(..), newBuilderData) where
+module GMSH.Common(BuilderData(..), newBuilderData, PointsBuilderData(..)) where
+{- |
+Contains common datatypes, functions, etc. that are required by multiple modules, which otherwise would cause circular references.
+-}
 
 import qualified Data.HashMap.Strict as HM
 import qualified Data.Hashable as H
 import GHC.Generics (Generic)
 
 import Control.Lens
+
+import CornerPoints.Points(Point(..))
 
 {- |
 Wrap 'a' to show if it has been changed form its original state.
@@ -21,7 +26,20 @@ data Changes a =
   UnChanged a
   deriving (Eq, Show)
 
+data PointsBuilderData = PointsBuilderData
+  {_pointsId :: Int,
+   _point :: Point
+  }
+  deriving (Show, Eq)
 
+data BuilderData = BuilderData
+                     {
+                       _linesMap::HM.HashMap Int Int,
+                       _pointsMap::HM.HashMap Int PointsBuilderData,
+                       _linesId :: [Int],
+                       _pointsIdSupply :: [Int]
+                     }
+{-
 data BuilderData = BuilderData
                      {
                        _linesMap::HM.HashMap Int Int,
@@ -29,6 +47,8 @@ data BuilderData = BuilderData
                        _linesId :: [Int],
                        _pointsId :: [Int]
                      }
+
+-}
 
 makeLenses ''BuilderData
 
@@ -46,3 +66,7 @@ instance Eq BuilderData where
 
 newBuilderData :: BuilderData
 newBuilderData = BuilderData (HM.fromList []) (HM.fromList []) [1..] [1..]
+
+
+
+
