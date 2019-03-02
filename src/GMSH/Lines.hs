@@ -1,7 +1,22 @@
 {-# LANGUAGE TemplateHaskell #-}
 module GMSH.Lines(toLines, toPoints, insert) where
 {- |
+Hash and insert Lines into the GMSH.Common.BuilderData datatype.
+Gets a unique ID for each line inserted.
 
+When writing out the script, will it get the Point Id's from the point hashmap or should it store them itself.
+Will have to either store them, or store the Points so they can be hashed to retrieve the Point Id.
+
+Lines are only inserted once. How do I ensure this?
+I hash the 2 Points and check the hashmap. But what about swapping the order of the points?
+And will it matter if they are put in with opposite Point ordering?
+
+CornerPoints such as B1/F4 don't get inserted. Must be at least a line such as FrontTopLine.
+CubePoints and Faces get broken down into their constituent Lines.
+
+
+
+Tests: GmshLinesTest
 -}
 
 import CornerPoints.CornerPoints(CornerPoints(..), cpointType)
@@ -250,16 +265,6 @@ insert' (cpt:cpts) builderData =
     Right builderData' -> insert' cpts builderData'
     Left e -> Left e
 
-{-
-insert' (cpt:cpts) builderData =
-  let
-    inserted = insert cpt builderData
-  in
-  case inserted of
-    Right builderData' -> insert' cpts builderData'
-    Left e -> Left e
-
--}    
 
 
 

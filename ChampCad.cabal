@@ -212,7 +212,8 @@ test-suite ChampCad-test
                        PolarInterceptTest
                        AdvanceToHeadOfPerimetersTest
                        RadialLinesTest
-                       GmshTest
+                       GmshLinesTest
+                       GmshPointsTest
  
   build-depends:       base
                      , ChampCad

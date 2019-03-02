@@ -3,6 +3,8 @@ module GMSH.Points({- H.hash, H.hashWithSalt,-} insert) where
 
 {- |
 Hash CornerPoints.Point so they can be stored in a hash map.
+
+Insert Points into a GC.BuilderData, for use with the GMSH.Builder Builder monad stack.
 -}
 
 import qualified Data.HashMap.Strict as HM
@@ -45,15 +47,15 @@ Given:
 
 Task:
  Hash the point and see if it already exists in the map.
- If not insert it, else return the map unchanged.
- Indicate if the point was inserted by wrapping it in the Changes datatype.
+ If not already in map insert it.
+ 
 
 Return:
  If point did not already exist in map:
- The map with the hashed point and value inserted, wrapped in 'Changed' constructor.
+ The map with the hashed point as key,  and id and point inserted as a GMSH.Common.PointsBuilderData
 
  If point already exists in map:
- The original map, unchaged. Wrapped in 'UnChanged' constructor.
+ The original map, unchanged.
 -}
 --insert ::  [Point] -> [ID] -> HM.HashMap Int Int -> (HM.HashMap Int Int,[ID])
 insert ::  [Point] -> GC.BuilderData -> GC.BuilderData
@@ -76,23 +78,3 @@ insert  (point:points) builderData   =
                     ) 
 
 
-{-before adding PointBuilderData
-insert ::  [Point] -> GC.BuilderData -> GC.BuilderData
-insert [] builderData = builderData
-insert  (p:points) builderData   = 
-  let
-    hashedPoint = H.hash p
-  in
-  case HM.member hashedPoint (builderData ^. pointsMap) of
-    True ->  
-      insert points builderData
-    False ->
-      let
-        mapWithCurrentPointInserted = (HM.insert hashedPoint (head $ builderData ^. pointsIdSupply) (builderData ^. pointsMap))
-      in
-      insert points (builderData
-                     {GC._pointsIdSupply = (tail $ (builderData ^. pointsIdSupply)),
-                      GC._pointsMap = mapWithCurrentPointInserted
-                     }
-                    ) 
--}

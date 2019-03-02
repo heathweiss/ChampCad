@@ -1,9 +1,9 @@
 master: has gmsh merged up to storing Points x y z values.
 
 gmsh:
-Save the x y z value in points map.
--will need a data type for point map to save both the id, and the Point
- -have made it. All GMSH test have been fixed and passed.
+Break up the gmshTest file into: gmshPointsTest/gmshLineTests.
+Should the Builder be separate, or build into both the above?
+
 
 next:
   create a g_print branch to print the points.
