@@ -22,61 +22,21 @@ import GHC.Generics (Generic)
 import qualified Control.Monad.Trans.Except as TE
 import Control.Monad.State.Lazy
 import Control.Monad.Except
+import Control.Monad.Writer (Writer, tell, execWriter)
 
 import Control.Lens
-{-
-data BuilderData = BuilderData
-                     {
-                       _linesMap::HM.HashMap Int Int,
-                       _pointsMap::HM.HashMap Int Int,
-                       _linesId :: [Int],
-                       _pointsId :: [Int]
-                     }
 
-makeLenses ''BuilderData
-
---needed for testing
-instance Show BuilderData where
-  --show (BuilderData linesMap _) = show linesMap
-  show builderData = show $ (builderData ^. linesMap,builderData ^. pointsMap)
-  
---only needed for testing
-instance Eq BuilderData where
-  --(BuilderData linesMap _) == (BuilderData linesMap' _) = linesMap == linesMap'
-  builderData == builderData' = ((builderData ^. linesMap) == (builderData' ^. linesMap))
-                                &&
-                                ((builderData ^. pointsMap) == (builderData' ^. pointsMap))
--}
 makeLenses ''GC.BuilderData
 
 
-{-
-data BuilderData = BuilderData
-                     {
-                       _linesMap::HM.HashMap Int Int,
-                       _linesId :: [Int],
-                       _pointsId :: [Int]
-                     }
-
-makeLenses ''BuilderData
-
---needed for testing
-instance Show BuilderData where
-  --show (BuilderData linesMap _) = show linesMap
-  show builderData = show $ builderData ^. linesMap
-  
---only needed for testing
-instance Eq BuilderData where
-  --(BuilderData linesMap _) == (BuilderData linesMap' _) = linesMap == linesMap'
-  builderData == builderData' = (builderData ^. linesMap) == (builderData' ^. linesMap)
-
-newBuilderData :: BuilderData
-newBuilderData = BuilderData (HM.fromList []) [1..] [1..]
-
--}
 
 -- | The ExceptT State Builder for building up shapes, and convertering to gmsh Lines and points.
+--the original before using IO or writer
 type ExceptStackCornerPointsBuilder =  ExceptT String (State GC.BuilderData ) [CPts.CornerPoints]
+--Including IO makes it hard to test.
+--type ExceptStackCornerPointsBuilder =  ExceptT String (StateT GC.BuilderData (IO)) [CPts.CornerPoints]
+--try it with Writer monad at bottom. Causes several errors in this module. Not worth figuring out the solution.
+--type ExceptStackCornerPointsBuilder =  ExceptT String (StateT GC.BuilderData (Writer String)) [CPts.CornerPoints]
 
 {- |
 Handles a CornerPoints error in ExceptT catchError calls.
@@ -106,24 +66,12 @@ buildCubePointsListSingle :: String -> [CPts.CornerPoints] -> ExceptStackCornerP
                        
 buildCubePointsListSingle extraMsg cPoints =
   buildCubePointsList extraMsg [CPts.CornerPointsId | x <- [1..]] cPoints
-{-
-buildCubePointsListSingle extraMsg cPoints =
-  buildCubePointsList (++) extraMsg [CPts.CornerPointsId | x <- [1..]] cPoints
--}
-{- temp version of |+++|
-buildLinesAndPushToStack :: [CPts.CornerPoints] -> BuilderData -> BuilderData
-buildLinesAndPushToStack cpoints builderData =
-  builderData
--}
 
 {- |
 Task:
 Add CornerPoints Lines to the lines map if none of the elements are CornerPointsError.
 If any of the [CornerPoints] that are CornerPointsError, then an error is thrown so the ExceptT short circuits.
-
-
 -}
-
 buildCubePointsListOrFail :: String -> [CPts.CornerPoints] -> [CPts.CornerPoints] ->
                              ExceptStackCornerPointsBuilder
 --if an [] is passed in, nothing to do.
@@ -152,30 +100,6 @@ buildCubePointsListOrFail extraMsg cPoints cPoints' = do
         Just (CPts.CornerPointsError err) -> --has a CornerPointsError
           TE.throwE $ extraMsg ++ ": " ++ (err)
 
-{-
-buildCubePointsListOrFail extraMsg cPoints cPoints' = do
-  state' <- get
-  
-  
-  let
-    cubeList = cPoints |+++| cPoints'
-  case CPts.findCornerPointsError cubeList of
-        Nothing -> --has no CornerPointsError
-          let
-            builderData =  buildCubePointsListOrFail' cubeList state'
-          in
-          case builderData of
-            Right builderData' ->
-              let
-                builder = \builderData -> (cubeList, builderData')
-              in
-              lift $ state $ builder
-              --lift $ return cubeList
-            Left e -> TE.throwE $ extraMsg ++ ": " ++ e
-        Just (CPts.CornerPointsError err) -> --has a CornerPointsError
-          TE.throwE $ extraMsg ++ ": " ++ (err)
--}
-
     
 --The recursive handling of [CornerPoints] for buildCubePointsListOrFail.
 buildCubePointsListOrFail' :: [CPts.CornerPoints] -> GC.BuilderData -> Either String GC.BuilderData
@@ -191,36 +115,4 @@ buildCubePointsListOrFail' (cube:cubeList) builderData =
       buildCubePointsListOrFail' cubeList $ builderData' 
     Left e -> Left e
           
-{-version with BuilderData param, but gives wrong answer
-buildCubePointsListOrFail' :: [CPts.CornerPoints] -> GC.BuilderData -> Either String GC.BuilderData
---end of the list. Return whatever has been built up in the BuilderData.
-buildCubePointsListOrFail' [] builderData = Right builderData
-buildCubePointsListOrFail' (cube:cubeList) builderData =
-  let
-    --newLinesHashmap = GL.insert cube (builderData ^. linesId) ( builderData ^. pointsId) ( builderData ^. linesMap)
-    newLinesHashmap = GL.insert cube builderData 
-  in
-  case newLinesHashmap of
-    Right builderData' ->
-      buildCubePointsListOrFail' cubeList $ builderData 
-    Left e -> Left e
-
--}  
-{-
-Version prior to going to BuilderData param for Lines.insert
-buildCubePointsListOrFail' :: [CPts.CornerPoints] -> GC.BuilderData -> Either String GC.BuilderData
---end of the list. Return whatever has been built up in the BuilderData.
-buildCubePointsListOrFail' [] builderData = Right builderData
-buildCubePointsListOrFail' (cube:cubeList) builderData =
-  let
-    --newLinesHashmap = GL.insert cube (linesId builderData) $ linesMap builderData
-    newLinesHashmap = GL.insert cube (builderData ^. linesId) ( builderData ^. pointsId) ( builderData ^. linesMap) 
-  in
-  case newLinesHashmap of
-    Right builderData' ->
-      buildCubePointsListOrFail' cubeList $ builderData 
-    Left e -> Left e
-          
-
--}
 
