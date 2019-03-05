@@ -88,19 +88,19 @@ insertPointTest4 = TestCase $ assertEqual
 ------------------------------------------------------------------------------------------------------------------------------
 --------------------------------------------- generate GMSH script strings----------------------------------------------------
 scriptWriterTestsDo = do
-  runTestTT singlePointsBuilderDataGmshStringTest
+  --runTestTT singlePointsBuilderDataGmshStringTest
   runTestTT pointsInBuilderDataToGmshStringTest
-
+{-
 singlePointsBuilderDataGmshStringTest = TestCase $ assertEqual
   "create a single PointsBuilderData and write the Gmsh script for it."
   ("Point(1) = {1.0,2.0,3.0};")
   (GW.pntsBldrDataScriptStr $ GC.PointsBuilderData 1 $ Point 1 2 3)
-
+-}
 
 pointsInBuilderDataToGmshStringTest = TestCase $ assertEqual
   "create a PointsBuilderData hashmap with 2 points in a GC.BuilderData and write the Gmsh scripts for them."
   ("\nPoint(2) = {2.0,2.0,2.0};\nPoint(1) = {1.0,1.0,1.0};")
-  ( GW.pntsBldrDataScriptFromBlderData $
+  ( GW.toGmshPoints $
       GP.insert  [Point 1 1 1, Point 2 2 2] $ GC.BuilderData HM.empty HM.empty [1..] [1..]
   )
 ------------------------------------------------------------------------------------------------------------------------------

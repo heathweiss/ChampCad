@@ -36,7 +36,7 @@ runGenerateFrontFace = do
     builderData = ((SL.execState $ E.runExceptT generateFrontFace ) GB.newBuilderData)
     builderDataWithOpeningValues = "//created by ChampCad Examples.Gmsh.FirstTest" ++
              "\nSetFactory(\"OpenCASCADE\");" ++
-             GW.pntsBldrDataScriptFromBlderData builderData
+             GW.toGmshPoints builderData
 
   --output the Points to stdout just to look at it for testing.
   putStrLn builderDataWithOpeningValues

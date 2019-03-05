@@ -1,5 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
-module GMSH.Lines(toLines, toPoints, insert) where
+module GMSH.Lines(toLines, {-toPoints,-} insert) where
 {- |
 Hash and insert Lines into the GMSH.Common.BuilderData datatype.
 Gets a unique ID for each line inserted.
@@ -84,6 +84,7 @@ Extract the [Point] that make up a CornerPoints
 
 Known uses:
 Extract the Points, so they can be converted into gmsh points.
+A grep search shows no actual calls, so could it be deleted. Tests also run without it being exported.
 -}
 toPoints :: CornerPoints -> Either String [Point]
 toPoints (BackFace b1 b2 b3 b4) = Right [b1, b2, b3, b4]

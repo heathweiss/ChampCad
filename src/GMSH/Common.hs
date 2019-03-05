@@ -12,19 +12,6 @@ import Control.Lens
 
 import CornerPoints.Points(Point(..))
 
-{- |
-Wrap 'a' to show if it has been changed form its original state.
-toDo:
-Extract this to a higher level module, as it probably will be used by 'Lines' and other Gmsh modules.
-
-Known uses:
-No longer used. Get rid of it when gmsh modules are done, if never used.
--}
-data Changes a =
-  Changed a
-  |
-  UnChanged a
-  deriving (Eq, Show)
 
 data PointsBuilderData = PointsBuilderData
   {_pointsId :: Int,
@@ -59,4 +46,17 @@ newBuilderData = BuilderData (HM.fromList []) (HM.fromList []) [1..] [1..]
 
 
 
+{- 
+Wrap 'a' to show if it has been changed form its original state.
+toDo:
+Extract this to a higher level module, as it probably will be used by 'Lines' and other Gmsh modules.
 
+Known uses:
+No longer used. Get rid of it when gmsh modules are done, if never used.
+
+data Changes a =
+  Changed a
+  |
+  UnChanged a
+  deriving (Eq, Show)
+-}
