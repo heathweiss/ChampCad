@@ -39,16 +39,6 @@ data BuilderData = BuilderData
                        _linesId :: [Int],
                        _pointsIdSupply :: [Int]
                      }
-{-
-data BuilderData = BuilderData
-                     {
-                       _linesMap::HM.HashMap Int Int,
-                       _pointsMap::HM.HashMap Int Int,
-                       _linesId :: [Int],
-                       _pointsId :: [Int]
-                     }
-
--}
 
 makeLenses ''BuilderData
 

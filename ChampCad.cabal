@@ -113,7 +113,8 @@ library
 
                        Examples.LineScanner.LineScanner
 
-                       Examples.Gmsh.Gate              
+                       Examples.Gmsh.Gate
+                       Examples.Gmsh.FirstTest            
                        --Shapes
                        Primitives.Cylindrical.Walled, Primitives.Cubical
                        Primitives.Cylindrical.Solid

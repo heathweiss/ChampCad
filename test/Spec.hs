@@ -33,7 +33,7 @@ import PolarInterceptTest(polarInterceptTestDo)
 import AdvanceToHeadOfPerimetersTest(advanceToHeadOfPerimetersTestDo)
 import RadialLinesTest(radialLinesTestDo)
 import GmshLinesTest(gmshLinesTestDo)
-import GmshPointsTest(gmshPointsTestDo)
+import GmshPointsTest(gmshPointsMasterTestDo)
 
 --main :: IO ()
 main = do
@@ -71,4 +71,4 @@ main = do
   delaunayTestDo
   radialLinesTestDo -}
   gmshLinesTestDo
-  gmshPointsTestDo
+  gmshPointsMasterTestDo

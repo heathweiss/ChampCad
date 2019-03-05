@@ -14,6 +14,7 @@ import GHC.Generics (Generic)
 
 import qualified Control.Monad.State.Lazy as SL
 import qualified Control.Monad.Except as E
+import qualified Control.Monad.Writer as W
 
 import CornerPoints.Points(Point(..))
 import CornerPoints.CornerPoints(CornerPoints(..), (===), (|===|))
@@ -311,6 +312,7 @@ insertUnhandledCPointIntoEmptyMap  = TestCase $ assertEqual
 ------------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------
 ----------------------------------------------- GMSH.Builder ------- ---------------------------------------------------------
+--These tests have been removed till I as I added IO to the stack, and how do I test that?
 {-
 Extract values from the GMSH.Builder  using <exec/eval/run>State.
 The State can't actually be built within the Builder monad, so manually create the BuilderData.
@@ -324,6 +326,7 @@ runBuilderTests = do
   runTestTT builderTest3
   runTestTT builderTest4
   
+
 builderTest = TestCase $ assertEqual
   "Use execState to extract the current state."
   (GB.BuilderData (HM.fromList [(2050866026447763449,1)])
@@ -339,6 +342,7 @@ builderTest = TestCase $ assertEqual
    in
    ((SL.execState $ E.runExceptT builder ) GB.newBuilderData)
   )
+  
 
 builderTest2 = TestCase $ assertEqual
   "Use evalState to extract the current value from state."
@@ -399,6 +403,7 @@ builderTest4 = TestCase $ assertEqual
 -----------------------------------------------------------
 --work with a single [CornerPoints]
 -----------------------------------------------------------
+
 runBuildWithMonadTests = do
   runTestTT buildWithMonadTest
   runTestTT buildWithMonadTestWithoutBuilder

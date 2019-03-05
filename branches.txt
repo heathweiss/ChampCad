@@ -1,10 +1,10 @@
-master: has gmsh merged up to storing Points x y z values.
+master: has gmsh merged up to and including break up of tests.
 
 gmsh:
-Break up the gmshTest file into: gmshPointsTest/gmshLineTests.
-Should the Builder be separate, or build into both the above?
+Now prints out gmsh Points script.
+Next:
+Print out the gmsh Lines script:
+Save the Point at each end of the line,
+which can then be used to retrieve the Point id's.
 
-
-next:
-  create a g_print branch to print the points.
 

@@ -1,5 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
-module GmshPointsTest(gmshPointsTestDo) where
+module GmshPointsTest(gmshPointsMasterTestDo) where
 {-
 Test the GMSH.Points module.
 -}
@@ -9,15 +9,25 @@ import CornerPoints.Points(Point(..))
 import Test.HUnit
 
 import qualified GMSH.Points as GP
+import qualified GMSH.Lines as GL 
 import qualified GMSH.Common as GC
 import qualified GMSH.Builder as GB
+import qualified GMSH.Writer as GW
 import qualified Data.HashMap.Strict as HM
 import qualified Data.Hashable as H
 import GHC.Generics (Generic)
+import Control.Lens
+
+makeLenses ''GC.PointsBuilderData
+
+gmshPointsMasterTestDo = do
+  putStrLn("\n\nGmshPointsTest:")
+  gmshPointsTestDo
+  scriptWriterTestsDo
 
 gmshPointsTestDo = do
   --insert points without the Builder stack
-  putStrLn("\n\nGmshPointsTest:")
+  
   runTestTT insertPointTest
   runTestTT insertPointTest2
   runTestTT insertPointTest3
@@ -68,9 +78,31 @@ insertPointTest4 = TestCase $ assertEqual
                                (3308183575658410827,GC.PointsBuilderData 1 $ Point 1 1 1)])
                   [1..] [1..]
   )
-  (GP.insert  [Point 1 1 1, Point 2 2 2, Point 3 3 3, Point 4 4 4] $ GC.BuilderData HM.empty HM.empty [1..] [1..]) -- [1..] HM.empty)
+  (GP.insert  [Point 1 1 1, Point 2 2 2, Point 3 3 3, Point 4 4 4] $ GC.BuilderData HM.empty HM.empty [1..] [1..])
+
+------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------- generate GMSH script strings----------------------------------------------------
+scriptWriterTestsDo = do
+  runTestTT singlePointsBuilderDataGmshStringTest
+  runTestTT pointsInBuilderDataToGmshStringTest
+
+singlePointsBuilderDataGmshStringTest = TestCase $ assertEqual
+  "create a single PointsBuilderData and write the Gmsh script for it."
+  ("Point(1) = {1.0,2.0,3.0};")
+  (GW.pntsBldrDataScriptStr $ GC.PointsBuilderData 1 $ Point 1 2 3)
 
 
+pointsInBuilderDataToGmshStringTest = TestCase $ assertEqual
+  "create a PointsBuilderData hashmap with 2 points in a GC.BuilderData and write the Gmsh scripts for them."
+  ("\nPoint(2) = {2.0,2.0,2.0};\nPoint(1) = {1.0,1.0,1.0};")
+  ( GW.pntsBldrDataScriptFromBlderData $
+      GP.insert  [Point 1 1 1, Point 2 2 2] $ GC.BuilderData HM.empty HM.empty [1..] [1..]
+  )
 ------------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------
