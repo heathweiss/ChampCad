@@ -1,10 +1,13 @@
 master: has gmsh merged up to and including break up of tests.
 
-gmsh:
+master/gmsh:
 Now prints out gmsh Points script.
 Next:
 Print out the gmsh Lines script:
 Save the Point at each end of the line,
 which can then be used to retrieve the Point id's.
+
+master/gmsh2:
+try to print out the points to a file (using Text?), as they are created.
 
 
