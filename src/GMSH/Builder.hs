@@ -1,5 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
-module GMSH.Builder(buildCubePointsList, GC.BuilderData(..),ExceptStackCornerPointsBuilder, buildCubePointsListSingle, GC.newBuilderData) where
+module GMSH.Builder(buildCubePointsList, GC.BuilderStateData(..),ExceptStackCornerPointsBuilder, buildCubePointsListSingle, GC.newBuilderData) where
 {- |
 Build up a shape from [CornerPoints]. But instead of saving the CornerPoints,
 save the gmsh points, lines, etc along with an ID, within hash maps.
@@ -11,8 +11,10 @@ Tests and example are in Tests.GmshTest
 import qualified CornerPoints.CornerPoints as CPts  --((|@+++#@|), (|+++|), CornerPoints(..), (+++), (+++>), cornerPointsError, findCornerPointsError, isCubePointsList)
 import CornerPoints.CornerPoints((|+++|), (+++), (+++>))
 
+
 import qualified GMSH.Lines as GL
 import qualified GMSH.Common as GC
+import qualified GMSH.Points as GP
 
 
 import qualified Data.HashMap.Strict as HM
@@ -26,17 +28,18 @@ import Control.Monad.Writer (Writer, tell, execWriter)
 
 import Control.Lens
 
-makeLenses ''GC.BuilderData
+makeLenses ''GC.BuilderStateData
 
 
 
 -- | The ExceptT State Builder for building up shapes, and convertering to gmsh Lines and points.
 --the original before using IO or writer
 --type ExceptStackCornerPointsBuilder =  ExceptT String (State GC.BuilderData ) [CPts.CornerPoints]
---Including IO makes it hard to test.
-type ExceptStackCornerPointsBuilder =  ExceptT String (StateT GC.BuilderData (IO)) [CPts.CornerPoints]
---try it with Writer monad at bottom. Causes several errors in this module. Not worth figuring out the solution.
---type ExceptStackCornerPointsBuilder =  ExceptT String (StateT GC.BuilderData (Writer String)) [CPts.CornerPoints]
+--Including IO makes it hard to test, but that is the way it is.
+--This is before replacing [CPts.CornerPoints]
+--type ExceptStackCornerPointsBuilder =  ExceptT String (StateT GC.BuilderData (IO)) [CPts.CornerPoints]
+type ExceptStackCornerPointsBuilder =  ExceptT String (StateT GC.BuilderStateData (IO)) [CPts.CornerPoints]
+
 
 {- |
 Handles a CornerPoints error in ExceptT catchError calls.
@@ -102,9 +105,21 @@ buildCubePointsListOrFail extraMsg cPoints cPoints' = do
 
     
 --The recursive handling of [CornerPoints] for buildCubePointsListOrFail.
-buildCubePointsListOrFail' :: [CPts.CornerPoints] -> GC.BuilderData -> Either String GC.BuilderData
+buildCubePointsListOrFail' :: [CPts.CornerPoints] -> GC.BuilderStateData -> Either String GC.BuilderStateData
 --end of the list. Return whatever has been built up in the BuilderData.
 buildCubePointsListOrFail' [] builderData = Right builderData
+buildCubePointsListOrFail' (cube:cubeList) builderData =
+  let
+    --newLinesHashmap = GL.insert cube (builderData ^. linesId) ( builderData ^. pointsId) ( builderData ^. linesMap)
+    --newLinesHashmap = GL.insert cube builderData
+    points = CPts.toPointsFromList (cube:cubeList)
+  in
+  case points of
+    Right points' ->
+      Right $ GP.insert points' builderData
+    Left e -> Left e
+          
+{-
 buildCubePointsListOrFail' (cube:cubeList) builderData =
   let
     --newLinesHashmap = GL.insert cube (builderData ^. linesId) ( builderData ^. pointsId) ( builderData ^. linesMap)
@@ -115,4 +130,4 @@ buildCubePointsListOrFail' (cube:cubeList) builderData =
       buildCubePointsListOrFail' cubeList $ builderData' 
     Left e -> Left e
           
-
+-}

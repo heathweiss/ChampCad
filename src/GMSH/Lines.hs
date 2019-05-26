@@ -1,5 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
-module GMSH.Lines(toLines, {-toPoints,-} insert) where
+module GMSH.Lines(toLines, {-toPoints,-}{- insert-}) where
 {- |
 Hash and insert Lines into the GMSH.Common.BuilderData datatype.
 Gets a unique ID for each line inserted.
@@ -30,7 +30,7 @@ import qualified Data.Hashable as H
 import GHC.Generics (Generic)
 
 import Control.Lens
-makeLenses ''GC.BuilderData
+makeLenses ''GC.BuilderStateData
 
 -- | Id's for gmsh script objects. eg: Points, Lines
 type LineID = Int
@@ -103,6 +103,7 @@ Need to ensure it is a Line, and not a Point(B1,F1...),Face, or Cube. But how?
 Known uses:
 -- Associate CornerPoints Lines with an Id::Int for generating GMSH script lines.
 -}
+{- try to get rid of all this, as lines will not need to be stored in state, as are being printed out during creation
 instance H.Hashable CornerPoints where
     hashWithSalt s (BackTopLine b2 b3) =
         s `H.hashWithSalt`
@@ -268,5 +269,5 @@ insert' (cpt:cpts) builderData =
 
 
 
-
+-}
 

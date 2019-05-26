@@ -1,5 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
-module GMSH.Common(BuilderData(..), newBuilderData, PointsBuilderData(..)) where
+module GMSH.Common(BuilderStateData(..), newBuilderData, PointsBuilderData(..)) where
 {- |
 Contains common datatypes, functions, etc. that are required by multiple modules, which otherwise would cause circular references.
 -}
@@ -19,7 +19,7 @@ data PointsBuilderData = PointsBuilderData
   }
   deriving (Show, Eq)
 
-data BuilderData = BuilderData
+data BuilderStateData = BuilderStateData
                      {
                        _linesMap::HM.HashMap Int Int,
                        _pointsMap::HM.HashMap Int PointsBuilderData,
@@ -27,22 +27,22 @@ data BuilderData = BuilderData
                        _pointsIdSupply :: [Int]
                      }
 
-makeLenses ''BuilderData
+makeLenses ''BuilderStateData
 
 --needed for testing
-instance Show BuilderData where
+instance Show BuilderStateData where
   --show (BuilderData linesMap _) = show linesMap
   show builderData = show $ (builderData ^. linesMap,builderData ^. pointsMap)
   
 --only needed for testing
-instance Eq BuilderData where
+instance Eq BuilderStateData where
   --(BuilderData linesMap _) == (BuilderData linesMap' _) = linesMap == linesMap'
   builderData == builderData' = ((builderData ^. linesMap) == (builderData' ^. linesMap))
                                 &&
                                 ((builderData ^. pointsMap) == (builderData' ^. pointsMap))
 
-newBuilderData :: BuilderData
-newBuilderData = BuilderData (HM.fromList []) (HM.fromList []) [1..] [1..]
+newBuilderData :: BuilderStateData
+newBuilderData = BuilderStateData (HM.fromList []) (HM.fromList []) [1..] [1..]
 
 
 

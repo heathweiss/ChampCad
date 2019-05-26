@@ -15,10 +15,11 @@ import Control.Lens
 
 import CornerPoints.Points(Point(..))
 import CornerPoints.CornerPoints(CornerPoints(..))
+import qualified CornerPoints.CornerPoints as CPts
 import qualified GMSH.Common as GC
 --import qualified GMSH.Builder as GB
 
-makeLenses ''GC.BuilderData
+makeLenses ''GC.BuilderStateData
 
 type ID = Int
 
@@ -58,7 +59,7 @@ Return:
  The original map, unchanged.
 -}
 --insert ::  [Point] -> [ID] -> HM.HashMap Int Int -> (HM.HashMap Int Int,[ID])
-insert ::  [Point] -> GC.BuilderData -> GC.BuilderData
+insert ::  [Point] -> GC.BuilderStateData -> GC.BuilderStateData
 insert [] builderData = builderData
 insert  (point:points) builderData   = 
   let

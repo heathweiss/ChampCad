@@ -9,9 +9,16 @@ which can then be used to retrieve the Point id's.
 
 master/gmsh2:
 Added IO to the GB.ExceptStackCornerPointsBuilder and now can print gmsh script to a file as the monad is run.
-next:
--create master/gmsh2/changeExceptStackCornerPointsBuilder
- to have a datatype that contains not just the cornerpoints, but also and script info that needs to be printed.
+
+
+master/gmsh2/g2_changeData
+GB.ExceptStackCornerPointsBuilder:
+-renamed GC.BuilderData to GC.BuilderStateData
+-commented out GL.insert as there will no longer be a need to insert that data in the BuilderStateData
+ However, will still need to make the lines, and their id and points, so they can be printed out as gmsh script.
+
+-Need to replace the GB.ExceptStackCornerPointsBuilder [CornerPoints] with a datatype that contains not just the cornerpoints, but also and script info that needs to be printed.
+ This data includes the line.
 
 
 

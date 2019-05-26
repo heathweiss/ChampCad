@@ -44,7 +44,10 @@ Used by runGenerateFrontFace.
 generateFrontFace :: GB.ExceptStackCornerPointsBuilder
 generateFrontFace = do
   h <- E.liftIO $ SIO.openFile  "src/Data/test.txt" SIO.WriteMode
-  frontFace <- GB.buildCubePointsListSingle "FrontFace" [FrontFace (Point 1 1 1) (Point 2 2 2) (Point 3 3 3) (Point 4 4 4)]
+  frontFace <- GB.buildCubePointsListSingle "FrontFace"
+                 [FrontFace (Point 1 1 1) (Point 2 2 2) (Point 3 3 3) (Point 4 4 4),
+                  FrontFace (Point 11 11 11) (Point 12 12 12) (Point 13 13 13) (Point 14 14 14)
+                 ]
   
   E.liftIO $ writeFileUtf8_str h $ show frontFace
   
@@ -61,6 +64,9 @@ runGenerateFrontFace :: IO()
 runGenerateFrontFace = do
   --((SL.execStateT $ E.runExceptT generateFrontFace ) GB.newBuilderData)
   io <- ((SL.execStateT $ E.runExceptT generateFrontFace ) GB.newBuilderData)
+
+  --Look at the 'return frontFace'
+  --print $ show $ io
   
   putStrLn "done"
 

@@ -13,7 +13,7 @@ import Control.Lens
 import qualified Data.HashMap.Strict as HM
 
 makeLenses ''GC.PointsBuilderData
-makeLenses ''GC.BuilderData
+makeLenses ''GC.BuilderStateData
 
 
 {- |
@@ -28,7 +28,7 @@ A single String with each GC.PointsBuilderData output as a gmsh script. eg: \nPo
 Known uses:
 Once a GMESH Builder is run, extract the GC.BuilderData from State, and write gmsh Points string to a .geo file.
 -}
-toGmshPoints :: GC.BuilderData -> String
+toGmshPoints :: GC.BuilderStateData -> String
 toGmshPoints builderData =
   --Needs to traverse the hashmap, creating a string containing all GC.PointsBuilderData values as gmesh Points.
   --All Points are preceded with a \n to make it more readable in the gmsh .geo file.

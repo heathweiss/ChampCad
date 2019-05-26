@@ -20,7 +20,8 @@ CornerPointsBuilder(..),
 cornerPointsError, findCornerPointsError,
 isCubePoints, isCubePointsList,
 getCornerPointsWithIndex,
-cpointType
+cpointType,
+toPoints, toPointsFromList
 ) where
 
 import Control.Lens
@@ -980,3 +981,27 @@ cPoint1 +++# cPoint2 =
     otherwise -> Right cPointAdded
 
 
+{-
+not tested.
+Break a CornerPoints into [Points]
+Return an Either list in case of missing pattern match.
+Also do the same for a [Cpts]
+Known uses:
+Break CPts down into points when working with gmsh scripts.
+-}
+toPoints :: CornerPoints -> Either String [Point]
+toPoints (FrontFace f1 f2 f3 f4) = Right [f1,f2,f3,f4]
+toPoints cpt = Left $ "CornerPoints.toPoints: unhandled or illegal patter match for: " ++ (cpointType cpt )
+  
+toPointsFromList :: [CornerPoints] -> Either String [Point]
+toPointsFromList [] = Right []
+toPointsFromList cpts  = toPointsFromList' cpts (Right [])
+toPointsFromList' :: [CornerPoints] -> (Either String [Point]) -> Either String [Point]
+toPointsFromList' (cpt:[]) (Right pointsSoFar) =
+  case (toPoints cpt) of
+    Right points -> Right $ points ++ pointsSoFar
+    Left e -> Left e
+toPointsFromList' (cpt:cpts) (Right pointsSoFar) =
+  case (toPoints cpt) of
+    Right points -> toPointsFromList' cpts $ Right $ points ++ pointsSoFar
+    Left e -> Left e
