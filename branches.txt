@@ -8,6 +8,11 @@ Save the Point at each end of the line,
 which can then be used to retrieve the Point id's.
 
 master/gmsh2:
-try to print out the points to a file (using Text?), as they are created.
+Added IO to the GB.ExceptStackCornerPointsBuilder and now can print gmsh script to a file as the monad is run.
+next:
+-create master/gmsh2/changeExceptStackCornerPointsBuilder
+ to have a datatype that contains not just the cornerpoints, but also and script info that needs to be printed.
+
+
 
 

@@ -32,9 +32,9 @@ makeLenses ''GC.BuilderData
 
 -- | The ExceptT State Builder for building up shapes, and convertering to gmsh Lines and points.
 --the original before using IO or writer
-type ExceptStackCornerPointsBuilder =  ExceptT String (State GC.BuilderData ) [CPts.CornerPoints]
+--type ExceptStackCornerPointsBuilder =  ExceptT String (State GC.BuilderData ) [CPts.CornerPoints]
 --Including IO makes it hard to test.
---type ExceptStackCornerPointsBuilder =  ExceptT String (StateT GC.BuilderData (IO)) [CPts.CornerPoints]
+type ExceptStackCornerPointsBuilder =  ExceptT String (StateT GC.BuilderData (IO)) [CPts.CornerPoints]
 --try it with Writer monad at bottom. Causes several errors in this module. Not worth figuring out the solution.
 --type ExceptStackCornerPointsBuilder =  ExceptT String (StateT GC.BuilderData (Writer String)) [CPts.CornerPoints]
 
