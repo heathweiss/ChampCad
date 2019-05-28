@@ -11,6 +11,7 @@ import GHC.Generics (Generic)
 import Control.Lens
 
 import CornerPoints.Points(Point(..))
+import qualified CornerPoints.CornerPoints as CPts 
 
 
 data PointsBuilderData = PointsBuilderData
@@ -28,6 +29,20 @@ data BuilderStateData = BuilderStateData
                      }
 
 makeLenses ''BuilderStateData
+
+{- |
+The datatype that the GB.ExceptStackCornerPointsBuilder monad stack returns.
+This will replace the [CPts] that is currently uses, as will need to track gmsh: points, lines, planes, etc, for printing.
+All will be Maybe values, as all of them may not be needed for each step of the monad.
+Will still need the [CPts], for using the existing systems that I have developed and used before going to gmsh.
+-}
+leftOff
+--should first create the datatype for the Gmsh Point Id's.
+--figure out how I will build up the shape.
+data BuilderMonadData = BuilderMonadData
+                         {_bmd_CPts :: Maybe [CPts.CornerPoints], 
+                          _bmd_GPts :: Maybe [Int] --need to create a datatype for the Gmsh Point Id's.
+                         }
 
 --needed for testing
 instance Show BuilderStateData where

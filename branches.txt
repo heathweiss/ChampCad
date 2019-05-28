@@ -16,9 +16,12 @@ GB.ExceptStackCornerPointsBuilder:
 -renamed GC.BuilderData to GC.BuilderStateData
 -commented out GL.insert as there will no longer be a need to insert that data in the BuilderStateData
  However, will still need to make the lines, and their id and points, so they can be printed out as gmsh script.
+ 
 
 -Need to replace the GB.ExceptStackCornerPointsBuilder [CornerPoints] with a datatype that contains not just the cornerpoints, but also and script info that needs to be printed.
+ This data structure has been started in GC.BuilderMonadData. There is a leftOff there thats stops compilation.
  This data includes the line.
+
 
 
 
