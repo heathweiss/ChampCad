@@ -20,14 +20,14 @@ import CornerPoints.Points(Point(..))
 import CornerPoints.CornerPoints(CornerPoints(..), (===), (|===|))
 
 import Control.Lens
-makeLenses ''GC.BuilderData
+makeLenses ''GC.BuilderStateData
 
 gmshLinesTestDo = do
   putStrLn "" 
   putStrLn "gmsh tests"
 
-  runBuildWithMonadTests
-  runBuilderTests 
+  --runBuildWithMonadTests
+  --runBuilderTests 
   runLinesTests
   --runWriterTests
 
@@ -68,7 +68,7 @@ runLinesTests = do
   
   runTestTT linesTestBackFace
   runTestTT linesTestFrontFace
-  
+  {-
   runTestTT insertBackTopLineIntoEmptyMap
   runTestTT insertBackTopLineIntoEmptyMapAndLookAtRemainingIds
   runTestTT insertBackTopLineIntoMap
@@ -78,7 +78,7 @@ runLinesTests = do
   runTestTT insertFrontTopLineIntoEmptyMap
   runTestTT insertFrontTopLineAndFrontLeftLineIntoEmptyMap
   runTestTT insertUnhandledCPointIntoEmptyMap
-  
+  -}
 ------------------------------------------------------------------------------------
 --ensure no missing pattern matches for the corners which can't be converted to lines
 -------------------------------------------------------------------------------------
@@ -169,6 +169,9 @@ linesTestFrontFace = TestCase $ assertEqual
 Insert CornerPoints into a hash map, without using the builder monad.
 -}
 -----------------------------------------------------------------------------------------
+{-
+got rid of GL.insert.
+
 insertBackTopLineIntoEmptyMap  = TestCase $ assertEqual
   "insert a BackTopLine into an empty map."
   (Right $ GC.newBuilderData
@@ -308,7 +311,7 @@ insertUnhandledCPointIntoEmptyMap  = TestCase $ assertEqual
    in
      GL.insert topFace GC.newBuilderData
   )
-
+-}
 ------------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------
@@ -322,6 +325,7 @@ Could change this once it can be built.
 
 ------------------------go back to this once GC.Changes is deleted to simplify.
 -}
+{-
 runBuilderTests = do
   runTestTT builderTest
   runTestTT builderTest2
@@ -331,7 +335,7 @@ runBuilderTests = do
 
 builderTest = TestCase $ assertEqual
   "Use execState to extract the current state."
-  (GB.BuilderData (HM.fromList [(2050866026447763449,1)])
+  (GB.BuilderStateData (HM.fromList [(2050866026447763449,1)])
                   (HM.fromList [(-6488834463732681909,GC.PointsBuilderData 2 (Point 11 11 11)),
                                 (3308183575658410827,GC.PointsBuilderData 1 (Point 1 1 1))])
     [] []
@@ -362,7 +366,7 @@ builderTest2 = TestCase $ assertEqual
 builderTest3 = TestCase $ assertEqual
   "Use runState to extract the current value/state from state."
   (Right $ [BackTopLine (Point 1 1 1) (Point 11 11 11)],
-            (GB.BuilderData (HM.fromList [(2050866026447763449,1)])
+            (GB.BuilderStateData (HM.fromList [(2050866026447763449,1)])
                             (HM.fromList [(-6488834463732681909, GC.PointsBuilderData 2 (Point 11 11 11)),
                                           (3308183575658410827, GC.PointsBuilderData 1 (Point 1 1 1))]
                             )
@@ -401,14 +405,14 @@ builderTest4 = TestCase $ assertEqual
    
   )
 
-
+-}
 -----------------------------------------------------------
 --work with a single [CornerPoints]
 -----------------------------------------------------------
-
+{-
 runBuildWithMonadTests = do
   runTestTT buildWithMonadTest
-  runTestTT buildWithMonadTestWithoutBuilder
+  --runTestTT buildWithMonadTestWithoutBuilder
   runTestTT buildWithMonadTest2
   runTestTT buildWithMonadTest3
   runTestTT buildWithMonadTest4
@@ -419,7 +423,7 @@ runBuildWithMonadTests = do
 --cx the Lines map to see it was inserted
 buildWithMonadTest = TestCase $ assertEqual
   "Use execState to extract the current state."
-  (GB.BuilderData (HM.fromList [(2050866026447763449,1)])
+  (GB.BuilderStateData (HM.fromList [(2050866026447763449,1)])
                   (HM.fromList [(-6488834463732681909,GC.PointsBuilderData 2 (Point 11 11 11)),(3308183575658410827,GC.PointsBuilderData 1 (Point 1 1 1))])
                   [] []
   )
@@ -435,10 +439,10 @@ buildWithMonadTest = TestCase $ assertEqual
    in
    ((SL.execState $ E.runExceptT builder ) GB.newBuilderData)
   )
-
+{-
 buildWithMonadTestWithoutBuilder = TestCase $ assertEqual
   "Use execState to extract the current state. Dont use Builder to see if that is where my error lies."
-  (Right $ GB.BuilderData (HM.fromList [(2050866026447763449,1)])
+  (Right $ GB.BuilderStateData (HM.fromList [(2050866026447763449,1)])
                           (HM.fromList [(-6488834463732681909,GC.PointsBuilderData 2 (Point 11 11 11)),
                                         (3308183575658410827,GC.PointsBuilderData 1 (Point 1 1 1))])
                           [] []
@@ -455,12 +459,12 @@ buildWithMonadTestWithoutBuilder = TestCase $ assertEqual
    in
    (GL.insert validPointToInsert GB.newBuilderData)
   )
-
+-}
 --try to insert CornerPointsError into the state that has no pre-existing lines.
 --cx the Lines map to see it was not inserted
 buildWithMonadTest2 = TestCase $ assertEqual
   "Use execState to extract the current state when inserting CornerPointsError"
-  (GB.BuilderData (HM.fromList []) (HM.fromList []) [] [])
+  (GB.BuilderStateData (HM.fromList []) (HM.fromList []) [] [])
   (let
       invalidPointToInsert = CornerPointsError "error"
 
@@ -481,7 +485,7 @@ It also has sequential gmsh line ID's starting at 1, which is req'd to pass test
 -}
 buildWithMonadTest3 = TestCase $ assertEqual
   "Use execState to extract the current state."
-  (GB.BuilderData
+  (GB.BuilderStateData
    (HM.fromList [(2050866026447763449,1),(-4228383307129817095,2)])
    (HM.fromList [(6408630444126286667,GC.PointsBuilderData 3 (Point 21 21 21)),
                  (-6488834463732681909,GC.PointsBuilderData 2 (Point 11 11 11)),
@@ -503,7 +507,7 @@ buildWithMonadTest3 = TestCase $ assertEqual
 
 buildWithMonadTest4 = TestCase $ assertEqual
   "Identical BackTopLine's. Only one gets inserted."
-  (GB.BuilderData (HM.fromList [(2050866026447763449,1)])
+  (GB.BuilderStateData (HM.fromList [(2050866026447763449,1)])
                   (HM.fromList [(-6488834463732681909,GC.PointsBuilderData 2 (Point 11 11 11)),
                                 (3308183575658410827,GC.PointsBuilderData 1 (Point 1 1 1))]) [] [])
   (let
@@ -524,7 +528,7 @@ Only one BackTopLine gets inserted into map, as B1 is not a line
 -}
 buildWithMonadTest5 = TestCase $ assertEqual
   "BackTopLine and a B1 Only BackTopLine gets inserted."
-  (GB.BuilderData (HM.fromList [(2050866026447763449,1)])
+  (GB.BuilderStateData (HM.fromList [(2050866026447763449,1)])
                   (HM.fromList [(-6488834463732681909,GC.PointsBuilderData 2 (Point 11 11 11)),
                                 (3308183575658410827,GC.PointsBuilderData 1 (Point 1 1 1))])
                   [] []
@@ -570,4 +574,4 @@ buildWithMonadTest6 = TestCase $ assertEqual
    ((SL.evalState $ E.runExceptT builder ) GB.newBuilderData)
   )
 
-
+-}

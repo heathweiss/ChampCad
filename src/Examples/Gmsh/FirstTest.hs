@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Examples.Gmsh.FirstTest() where
 {-
@@ -11,17 +12,19 @@ import qualified GMSH.Common as GC
 import qualified GMSH.Builder as GB
 import qualified GMSH.Writer as GW
 
-import CornerPoints.Points(Point(..))
-import CornerPoints.CornerPoints
+import qualified CornerPoints.Points as Pts
+import qualified CornerPoints.CornerPoints as CPts
 
 import qualified Control.Monad.State.Lazy as SL
 import qualified Control.Monad.Except as E
+import Control.Lens
+
 import qualified System.IO as SIO
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import qualified Data.ByteString as DB
 
-
+makeLenses ''GB.BuilderMonadData
 {-
 https://www.snoyman.com/blog/2016/12/beware-of-readfile
 Snoyman says safest and ~fastest way to write strings to file.
@@ -35,6 +38,8 @@ writeFileUtf8 handle t = DB.hPutStr handle $ TE.encodeUtf8 t
 writeFileUtf8_str :: SIO.Handle -> String -> IO ()
 writeFileUtf8_str handle t = DB.hPutStr handle $ TE.encodeUtf8 $ T.pack t
 
+
+
 {-
 Create a FrontFace using the Gmsh Builder.
 Used by runGenerateFrontFace.
@@ -43,14 +48,30 @@ Used by runGenerateFrontFace.
 --write the frontFace to a file using: replace SIO with https://www.snoyman.com/blog/2016/12/beware-of-readfile
 generateFrontFace :: GB.ExceptStackCornerPointsBuilder
 generateFrontFace = do
-  h <- E.liftIO $ SIO.openFile  "src/Data/test.txt" SIO.WriteMode
+  h <- E.liftIO $ SIO.openFile  "src/Data/gmeshScripts/test.txt" SIO.WriteMode
   frontFace <- GB.buildCubePointsListSingle "FrontFace"
-                 [FrontFace (Point 1 1 1) (Point 2 2 2) (Point 3 3 3) (Point 4 4 4),
-                  FrontFace (Point 11 11 11) (Point 12 12 12) (Point 13 13 13) (Point 14 14 14)
+                 [CPts.FrontFace (Pts.Point 1 1 1) (Pts.Point 2 2 2) (Pts.Point 3 3 3) (Pts.Point 4 4 4),
+                  CPts.FrontFace (Pts.Point 11 11 11) (Pts.Point 12 12 12) (Pts.Point 13 13 13) (Pts.Point 14 14 14)
                  ]
-  
-  E.liftIO $ writeFileUtf8_str h $ show frontFace
-  
+ 
+  points <-
+    --This can be wrapped up in a fx, so as not to have to do the case statement manually.
+    --Or is there a better way of dereferencing frontFace?
+    case frontFace of
+      GC.BuilderMonadData_CPoints(cpts) ->
+        GB.buildPointsList "FrontFace to Points" cpts
+      _ -> GB.buildPointsList "FrontFace to Points" [CPts.CornerPointsError "no front face"]
+  --this was used to print/look_at the frontFaces
+  {-
+  case frontFace of
+    GC.BuilderMonadData_CPoints(cpts) ->
+      E.liftIO $ writeFileUtf8_str h $ show cpts -- frontFace
+  -}
+
+  --print/look_at the points as extracted from frontFace
+  case points of
+    GC.BuilderMonadData_Points(pts) ->
+      E.liftIO $ writeFileUtf8_str h $ show pts 
   E.liftIO $  SIO.hClose h
   return frontFace
 
