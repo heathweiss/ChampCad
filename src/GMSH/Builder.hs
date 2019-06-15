@@ -1,5 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
-module GMSH.Builder(buildCubePointsList, buildCubePointsListSingle, buildPointsList,
+module GMSH.Builder(buildCubePointsList, buildCubePointsListSingle, buildPointsList, buildGPointsList,
                     GC.newBuilderData, GC.BuilderStateData(..),ExceptStackCornerPointsBuilder, GC.BuilderMonadData) where
 {- |
 Build up a shape from [CornerPoints]. But instead of saving the CornerPoints,
@@ -100,49 +100,6 @@ buildCubePointsListOrFail extraMsg cPoints cPoints' = do
 
     
 
-{-
-Building up the [CPts] no longer affects the state, as that is done using Points, or perhaps GPoints,
-so can be reduced. Only need to check for errors.
-
-buildCubePointsListOrFail extraMsg cPoints cPoints' = do
-  state' <- get
-  
-  
-  let
-    cubeList = cPoints |+++| cPoints'
-  case CPts.findCornerPointsError cubeList of
-        Nothing -> --has no CornerPointsError
-          let
-            builderData =  buildCubePointsListOrFail' cubeList state'
-          in
-          case builderData of
-            Right builderData' ->
-              let
-                --builder = \builderData -> (cubeList, builderData')
-                builder = \builderData -> (GC.BuilderMonadData_CPoints(cubeList), builderData')
-              in
-              lift $ state $ builder
-              --lift $ return cubeList
-            Left e -> TE.throwE $ extraMsg ++ ": " ++ e
-        Just (CPts.CornerPointsError err) -> --has a CornerPointsError
-          TE.throwE $ extraMsg ++ ": " ++ (err)
-
-    
---The recursive handling of [CornerPoints] for buildCubePointsListOrFail.
-buildCubePointsListOrFail' :: [CPts.CornerPoints] -> GC.BuilderStateData -> Either String GC.BuilderStateData
---end of the list. Return whatever has been built up in the BuilderData.
-buildCubePointsListOrFail' [] builderData = Right builderData
-buildCubePointsListOrFail' (cube:cubeList) builderData =
-  let
-    --newLinesHashmap = GL.insert cube (builderData ^. linesId) ( builderData ^. pointsId) ( builderData ^. linesMap)
-    --newLinesHashmap = GL.insert cube builderData
-    points = CPts.toPointsFromList (cube:cubeList)
-  in
-  case points of
-    Right points' ->
-      Right $ GP.insert points' builderData
-    Left e -> Left e
--}          
 -----------------------------------------------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------------------------------------------
@@ -197,3 +154,52 @@ buildPointsListOrFail' cubeList toPoints =
     Right points' ->
       Right $ points' 
     Left e -> Left e
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------ GPoints version of buildCubePointsList --------------------------------------------------------
+{- |
+Given:
+[CPts.Points]
+-}
+buildGPointsList :: String -> [Pts.Point] -> ExceptStackCornerPointsBuilder 
+buildGPointsList extraMsg points = 
+  (buildGPointsListOrFail  extraMsg points) `catchError` errorHandler
+
+{- |
+Task:
+
+-}
+buildGPointsListOrFail :: String -> [Pts.Point] ->
+                             ExceptStackCornerPointsBuilder
+--if an [] is passed in, nothing to do.
+buildGPointsListOrFail _ [] =  lift $ state $ \builderData -> (GC.BuilderMonadData_GPointIds([]), builderData)
+
+buildGPointsListOrFail extraMsg points = do
+  state' <- get
+  let
+    gpoints =  buildGPointsListOrFail' state' points 
+  case gpoints of
+    Right (state'',  gpoints') ->
+      let
+        --builder = \builderMonadData -> (GC.BuilderMonadData_GPointIds gpoints', state'')
+        builder = \builderMonadData -> (GC.BuilderMonadData_GPointIds gpoints', state'')
+      in
+        lift $ state $ builder
+    Left e -> TE.throwE $ extraMsg ++ ": " ++ e
+  
+    
+--The recursive handling of [CornerPoints] for buildCubePointsListOrFail.
+buildGPointsListOrFail' :: GC.BuilderStateData -> [Pts.Point] -> Either String (GC.BuilderStateData, [GC.PointsBuilderData])
+--end of the list. Return whatever has been built up in the BuilderData.
+
+buildGPointsListOrFail' state' points =
+  Right $ GP.insert2 points [] state'
+  
+--buildGPointsListOrFail' state' [] workingList = Right (state',reverse workingList)

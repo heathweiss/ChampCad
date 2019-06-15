@@ -1,10 +1,11 @@
 {-# LANGUAGE TemplateHaskell #-}
-module GMSH.Points({- H.hash, H.hashWithSalt,-} insert) where
+module GMSH.Points({- H.hash, H.hashWithSalt,-} insert, insert2, retrieve) where
 
 {- |
 Hash CornerPoints.Point so they can be stored in a hash map.
 
-Insert Points into a GC.BuilderData, for use with the GMSH.Builder Builder monad stack.
+Insert Points into a GC.BuilderStateData, for use with the GMSH.Builder Builder monad stack.
+All that gets inserted, is the ID. 
 -}
 
 import qualified Data.HashMap.Strict as HM
@@ -45,6 +46,9 @@ Given:
 
  value :: Int
  The value (gmsh point id) to store in the map.
+ Does the Point have to be stored, or just the ID of the gmsh point?
+ -Leave for now, but look at deleting it later, if not used.
+ Should the GPoint Id have it's own type instead of being just an Int?
 
 Task:
  Hash the point and see if it already exists in the map.
@@ -79,3 +83,29 @@ insert  (point:points) builderData   =
                     ) 
 
 
+retrieve ::  GC.BuilderStateData -> Point -> Maybe GC.PointsBuilderData
+retrieve  builderStateData point =
+  HM.lookup (H.hash point) (builderStateData ^. pointsMap)
+  
+  
+insert2 :: [Point] -> [GC.PointsBuilderData] -> GC.BuilderStateData -> (GC.BuilderStateData,[GC.PointsBuilderData])
+insert2 [] workingList builderStateData = (builderStateData,reverse workingList)
+insert2 (point:points) workingList builderStateData =
+  let
+    hashedPoint = H.hash point
+  in
+  case HM.member hashedPoint (builderStateData ^. pointsMap) of
+    True ->  
+      insert2 points workingList builderStateData
+    False ->
+      let
+        gpoint = (GC.PointsBuilderData (head $ builderStateData ^. pointsIdSupply) point) --(builderStateData ^. pointsMap)
+        mapWithCurrentPointInserted = (HM.insert hashedPoint  gpoint) (builderStateData ^. pointsMap)
+      in
+      insert2 points
+             (gpoint:workingList)
+             (builderStateData
+               {GC._pointsIdSupply = (tail $ (builderStateData ^. pointsIdSupply)),
+                GC._pointsMap = mapWithCurrentPointInserted
+               }
+             ) 

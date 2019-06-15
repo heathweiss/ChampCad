@@ -55,8 +55,8 @@ data BuilderMonadData = BuilderMonadData
 data BuilderMonadData = 
   -- | A list of gmsh points ID's.
   -- | Need to create a datatype for the Gmsh Point Id's, instead of just using an Int.
-  BuilderMonadData_gmshPoints
-    {_bmd_gmshPts :: [Int]}
+  BuilderMonadData_GPointIds --BuilderMonadData_gmshPoints
+    {_bmd_gmshPts :: [PointsBuilderData]}
   |
   -- | Uses to build up CPts like the original Builder monad.
   BuilderMonadData_CPoints

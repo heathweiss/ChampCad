@@ -69,10 +69,17 @@ generateFrontFace = do
   -}
 
   --print/look_at the points as extracted from frontFace
+  {-
   case points of
     GC.BuilderMonadData_Points(pts) ->
-      E.liftIO $ writeFileUtf8_str h $ show pts 
+      E.liftIO $ writeFileUtf8_str h $ show pts
   E.liftIO $  SIO.hClose h
+-}
+  gpoints <-
+    --let
+    --  state' = SL.get
+    --GP.insert2 points [] (SL.get)
+    GB.buildGPointsList "do the gpoints" (points ^. bmdPts)
   return frontFace
 
 

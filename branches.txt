@@ -1,45 +1,31 @@
-master: has gmsh merged up to and including break up of tests.
+
 
 master/gmsh:
-Now prints out gmsh Points script.
-Next:
-Print out the gmsh Lines script:
-Save the Point at each end of the line,
-which can then be used to retrieve the Point id's.
 
-master/gmsh2:
-Purpose:
-Add IO to the gmsh builder so the gmesh script can be written to file as the monad proceeds.
-
-Added IO to the GB.ExceptStackCornerPointsBuilder.
-Add a handle and try to  print gmsh script to a file as the monad is run.
-Should run in a try catch to ensure handle is closed.
-
-
-master/gmsh2/g2_changeData
-GB.ExceptStackCornerPointsBuilder:
--renamed GC.BuilderData to GC.BuilderStateData
--commented out GL.insert as there will no longer be a need to insert that data in the BuilderStateData.
- However, will still need to make the lines, and their id and points, so they can be printed out as gmsh script, so don't delete yet.
+Commented out GL.insert as there will no longer be a need to insert that data in the BuilderStateData.
+However, will still need to make the lines, and their id and points, so they can be printed out as gmsh script, so don't delete yet.
 
 Commented out a lot of tests, as GB.ExceptStackCornerPointsBuilder now has IO at the btm. Will need to rewrite these tests using the underlying
 fx's, without the monad stack, or figure out how to write tests in IO monad.
  
 
-Replaced the GB.ExceptStackCornerPointsBuilder return type: [CornerPoints], with a datatype that contains not just the cornerpoints,
-but datatypes for the gmsh script info that needs to be printed.
-This data structure has been started in GC.BuilderMonadData.
+GB.ExceptStackCornerPointsBuilder return type  is now GC.BuilderMonadData
 It has a separate constructor for each type of data, so far:(the alternative is a single constructor with Maybe values).
 BuilderMonadData_CPoints: allow to build up [CPts]
-BuilderMonadData_gmshPoints: allow to build up a [] of gmsh point id's.
+BuilderMonadData_GPoints: allow to build up a [] of gmsh point id's.
 BuilderMonadData_Points: extract target Pts.Points from the CPts, so they can be converted into gmsh points.
 
 
 Added the ability to extract Points from CPts, and return as BuilderMonadData_Points.
 Need to clean this up. See firstTest.
 
+master->gmsh->gmsh_gpoints
 Next:
-Create the gmsh points from the [Point], and save them to state, as well as the current BuilderMonadData value.
+done:Create the gmsh points from the [Point], and save them to state, as well as the current BuilderMonadData value.
+commit: 'can create gpoints from points'
+-can: git reset --hard HEAD 
+ or   
+      git reset --hard 'can create gpoints from points'
 -Create a GPointId type, to have a [GPointId] for the current value.
  This will be inside of the GPoint, eg GPoint {Point, GPointId}
 
