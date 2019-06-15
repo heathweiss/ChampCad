@@ -13,7 +13,7 @@ import qualified GMSH.Points as GP
 import Control.Lens
 import qualified Data.HashMap.Strict as HM
 
-makeLenses ''GC.PointsBuilderData
+makeLenses ''GC.GPointsStateData
 makeLenses ''GC.BuilderStateData
 
 
@@ -23,22 +23,22 @@ Should be abel to get rid of this once new system to write to file during the Bu
 ------------------------------------------------------------------------------------
 
 Task:
-Create GMSH Points script from the hashmap of GC.PointsBuilderData contained in a GC.BuilderData.
+Create GMSH Points script from the hashmap of GC.GPointsStateData contained in a GC.BuilderData.
 
 Return:
-A single String with each GC.PointsBuilderData output as a gmsh script. eg: \nPoint(3) = {3.0,3.0,3.0};
+A single String with each GC.GPointsStateData output as a gmsh script. eg: \nPoint(3) = {3.0,3.0,3.0};
 
 Known uses:
 Once a GMESH Builder is run, extract the GC.BuilderData from State, and write gmsh Points string to a .geo file.
 -}
 toGmshPoints :: GC.BuilderStateData -> String
 toGmshPoints builderData =
-  --Needs to traverse the hashmap, creating a string containing all GC.PointsBuilderData values as gmesh Points.
+  --Needs to traverse the hashmap, creating a string containing all GC.GPointsStateData values as gmesh Points.
   --All Points are preceded with a \n to make it more readable in the gmsh .geo file.
 
   let
-    --create a gmsh string from a Point and Id in the GC.PointsBuilderData
-    buildGmshString :: GC.PointsBuilderData -> String
+    --create a gmsh string from a Point and Id in the GC.GPointsStateData
+    buildGmshString :: GC.GPointsStateData -> String
     buildGmshString pointsBuilderData =
       "\nPoint(" ++
       (show (pointsBuilderData ^. pointsId)) ++ ") = {"  ++
@@ -51,7 +51,7 @@ toGmshPoints builderData =
 
 {- |
 Task::
-Get the GPointId from the GC.PointsBuilderData, of the CornerPoints.Point.
+Get the GPointId from the GC.GPointsStateData, of the CornerPoints.Point.
 Build a gmsh script string from it.
 
 Given::
@@ -64,7 +64,7 @@ If the point did not exist, give an error string.
 toGmshPoint :: GC.BuilderStateData -> Point -> String
 toGmshPoint bldrStateData point =
   let
-    toGmshPoint' :: GC.PointsBuilderData -> Point -> String
+    toGmshPoint' :: GC.GPointsStateData -> Point -> String
     toGmshPoint' builderData (Point x y z) =
       "\nPoint(" ++
       (show (builderData ^. pointsId)) ++ ") = {"  ++

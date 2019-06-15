@@ -31,4 +31,7 @@ commit: 'can create gpoints from points'
  Change the BuilderStateData [point id] from int to GPointId
 commit: 'GPointId done'
 
+rename GC.PointsBuilderData to show that is is part of state, and it includes both GPointId and Pts.Point info.
+will be GPointsStateData
+commit: 'PointsBuilderData renamed to GPointsStateData'
 

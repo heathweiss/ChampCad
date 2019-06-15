@@ -1,5 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
-module GMSH.Common(BuilderStateData(..), BuilderMonadData(..), newBuilderData, PointsBuilderData(..), GPointId(..)) where
+module GMSH.Common(BuilderStateData(..), BuilderMonadData(..), newBuilderData, GPointsStateData(..), GPointId(..)) where
 {- |
 Contains common datatypes, functions, etc. that are required by multiple modules, which otherwise would cause circular references.
 -}
@@ -17,7 +17,12 @@ import qualified CornerPoints.Points as Pts
 newtype GPointId = GPointId {_gPointId :: Int}
  deriving (Show, Eq)
 
-data PointsBuilderData = PointsBuilderData
+{- |
+Know uses:
+Combines the gmsh id, and the x y z point info and keeps it in state in the BuilderStateData.
+Used to make sure that there are no duplicate points in gmsh, when inserting a Pts.Point.
+-}
+data GPointsStateData = GPointsStateData
   { -- _pointsId :: Int,
    _pointsId :: GPointId,
    _point :: Point
@@ -35,7 +40,7 @@ data PointsBuilderData = PointsBuilderData
 data BuilderStateData = BuilderStateData
                      {
                        _linesMap::HM.HashMap Int Int,
-                       _pointsMap::HM.HashMap Int PointsBuilderData,
+                       _pointsMap::HM.HashMap Int GPointsStateData,
                        _linesId :: [Int],
                      --  _pointsIdSupply :: [Int]
                        _pointsIdSupply :: [GPointId]
