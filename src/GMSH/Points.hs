@@ -1,11 +1,13 @@
 {-# LANGUAGE TemplateHaskell #-}
-module GMSH.Points({- H.hash, H.hashWithSalt,-} insert, insert2, retrieve) where
+module GMSH.Points({- H.hash, H.hashWithSalt, insert,-} insert2, retrieve) where
 
 {- |
 Hash CornerPoints.Point so they can be stored in a hash map.
 
 Insert Points into a GC.BuilderStateData, for use with the GMSH.Builder Builder monad stack.
-All that gets inserted, is the ID. 
+All that gets inserted, is the ID.
+
+Note that all Data types for Points, are kept in GMSH.Common.
 -}
 
 import qualified Data.HashMap.Strict as HM
@@ -21,6 +23,7 @@ import qualified GMSH.Common as GC
 --import qualified GMSH.Builder as GB
 
 makeLenses ''GC.BuilderStateData
+makeLenses ''GC.PointsBuilderData
 
 type ID = Int
 
@@ -63,6 +66,7 @@ Return:
  The original map, unchanged.
 -}
 --insert ::  [Point] -> [ID] -> HM.HashMap Int Int -> (HM.HashMap Int Int,[ID])
+{- Can I delete this instead of fixing for use of GC.GPointsId
 insert ::  [Point] -> GC.BuilderStateData -> GC.BuilderStateData
 insert [] builderData = builderData
 insert  (point:points) builderData   = 
@@ -81,13 +85,53 @@ insert  (point:points) builderData   =
                       GC._pointsMap = mapWithCurrentPointInserted
                      }
                     ) 
-
+-}
 
 retrieve ::  GC.BuilderStateData -> Point -> Maybe GC.PointsBuilderData
 retrieve  builderStateData point =
   HM.lookup (H.hash point) (builderStateData ^. pointsMap)
   
-  
+{- |
+Task:
+Convert a [Pts.Point] to [GC.PointsBuilderData]. This will be changed to [GC.GPointsId]
+Return:
+(Curent state,BuilderMonadData_GPointIds )
+-}  
+--insert2 :: [Point] -> [GC.PointsBuilderData] -> GC.BuilderStateData -> (GC.BuilderStateData,[GC.PointsBuilderData])
+--replace return type to use the new [GC.GPointsId]
+--change working list to use the new [GC.GPointsId]
+insert2 :: [Point] -> [GC.GPointId] -> GC.BuilderStateData -> (GC.BuilderStateData,[GC.GPointId])
+insert2 [] workingList builderStateData = (builderStateData,reverse workingList)
+insert2 (point:points) workingList builderStateData =
+  let
+    --replace with maybe_gpoint
+    --hashedPoint = H.hash point
+    --get the PointsBuilderData if it exsits
+    maybe_gpoint = retrieve builderStateData point
+  in
+  --case HM.member hashedPoint (builderStateData ^. pointsMap) of
+  case maybe_gpoint of
+    --True ->
+    Just gpoint -> 
+      --insert2 points workingList builderStateData
+      --extract the GPointId from the PointsBuilderData
+      insert2 points ((gpoint ^. pointsId):workingList) builderStateData
+    --False ->
+    Nothing -> 
+      let
+        gpoint = (GC.PointsBuilderData (head $ builderStateData ^. pointsIdSupply) point)
+        --mapWithCurrentPointInserted = (HM.insert hashedPoint  gpoint) (builderStateData ^. pointsMap)
+        mapWithCurrentPointInserted = (HM.insert (H.hash point)  gpoint) (builderStateData ^. pointsMap)
+      in
+      insert2 points
+             --use nte new GPointsId
+             ((gpoint ^. pointsId):workingList)
+             (builderStateData
+               {GC._pointsIdSupply = (tail $ (builderStateData ^. pointsIdSupply)),
+                GC._pointsMap = mapWithCurrentPointInserted
+               }
+             ) 
+{-Before changes to use GC.GPointsId instead of GC.PointsBuilderData
 insert2 :: [Point] -> [GC.PointsBuilderData] -> GC.BuilderStateData -> (GC.BuilderStateData,[GC.PointsBuilderData])
 insert2 [] workingList builderStateData = (builderStateData,reverse workingList)
 insert2 (point:points) workingList builderStateData =
@@ -99,7 +143,7 @@ insert2 (point:points) workingList builderStateData =
       insert2 points workingList builderStateData
     False ->
       let
-        gpoint = (GC.PointsBuilderData (head $ builderStateData ^. pointsIdSupply) point) --(builderStateData ^. pointsMap)
+        gpoint = (GC.PointsBuilderData (head $ builderStateData ^. pointsIdSupply) point)
         mapWithCurrentPointInserted = (HM.insert hashedPoint  gpoint) (builderStateData ^. pointsMap)
       in
       insert2 points
@@ -109,3 +153,5 @@ insert2 (point:points) workingList builderStateData =
                 GC._pointsMap = mapWithCurrentPointInserted
                }
              ) 
+
+-}

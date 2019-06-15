@@ -26,9 +26,9 @@ commit: 'can create gpoints from points'
 -can: git reset --hard HEAD 
  or   
       git reset --hard 'can create gpoints from points'
--Create a GPointId type, to have a [GPointId] for the current value.
- This will be inside of the GPoint, eg GPoint {Point, GPointId}
-
-
+-done:Create a GPointId type, to have a [GPointId] for the current builder monad value.
+ It is a newtype wrapper around the current Int value required by gmsh.
+ Change the BuilderStateData [point id] from int to GPointId
+commit: 'GPointId done'
 
 

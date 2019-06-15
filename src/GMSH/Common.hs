@@ -1,5 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
-module GMSH.Common(BuilderStateData(..), BuilderMonadData(..), newBuilderData, PointsBuilderData(..)) where
+module GMSH.Common(BuilderStateData(..), BuilderMonadData(..), newBuilderData, PointsBuilderData(..), GPointId(..)) where
 {- |
 Contains common datatypes, functions, etc. that are required by multiple modules, which otherwise would cause circular references.
 -}
@@ -14,26 +14,38 @@ import CornerPoints.Points(Point(..))
 import qualified CornerPoints.CornerPoints as CPts
 import qualified CornerPoints.Points as Pts
 
+newtype GPointId = GPointId {_gPointId :: Int}
+ deriving (Show, Eq)
 
+data PointsBuilderData = PointsBuilderData
+  { -- _pointsId :: Int,
+   _pointsId :: GPointId,
+   _point :: Point
+  }
+  deriving (Show, Eq)
+{-need to change _pointsId to a newtype.
 data PointsBuilderData = PointsBuilderData
   {_pointsId :: Int,
    _point :: Point
   }
   deriving (Show, Eq)
 
+-}
+
 data BuilderStateData = BuilderStateData
                      {
                        _linesMap::HM.HashMap Int Int,
                        _pointsMap::HM.HashMap Int PointsBuilderData,
                        _linesId :: [Int],
-                       _pointsIdSupply :: [Int]
+                     --  _pointsIdSupply :: [Int]
+                       _pointsIdSupply :: [GPointId]
                      }
 
 makeLenses ''BuilderStateData
 
 -- | Initialize the empty BuilderStateData for running the Builder monad stack.
 newBuilderData :: BuilderStateData
-newBuilderData = BuilderStateData (HM.fromList []) (HM.fromList []) [1..] [1..]
+newBuilderData = BuilderStateData (HM.fromList []) (HM.fromList []) [1..] (map GPointId [1..])
 
 {- |
 The datatype that the GB.ExceptStackCornerPointsBuilder monad stack returns.
@@ -56,7 +68,8 @@ data BuilderMonadData =
   -- | A list of gmsh points ID's.
   -- | Need to create a datatype for the Gmsh Point Id's, instead of just using an Int.
   BuilderMonadData_GPointIds --BuilderMonadData_gmshPoints
-    {_bmd_gmshPts :: [PointsBuilderData]}
+    --{_bmd_gmshPts :: [PointsBuilderData]}
+    {_bmd_gmshPts :: [GPointId]}
   |
   -- | Uses to build up CPts like the original Builder monad.
   BuilderMonadData_CPoints
@@ -83,17 +96,3 @@ instance Eq BuilderStateData where
 
 
 
-{- 
-Wrap 'a' to show if it has been changed form its original state.
-toDo:
-Extract this to a higher level module, as it probably will be used by 'Lines' and other Gmsh modules.
-
-Known uses:
-No longer used. Get rid of it when gmsh modules are done, if never used.
-
-data Changes a =
-  Changed a
-  |
-  UnChanged a
-  deriving (Eq, Show)
--}

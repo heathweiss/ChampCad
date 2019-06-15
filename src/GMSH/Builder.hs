@@ -196,10 +196,38 @@ buildGPointsListOrFail extraMsg points = do
   
     
 --The recursive handling of [CornerPoints] for buildCubePointsListOrFail.
-buildGPointsListOrFail' :: GC.BuilderStateData -> [Pts.Point] -> Either String (GC.BuilderStateData, [GC.PointsBuilderData])
+--buildGPointsListOrFail' :: GC.BuilderStateData -> [Pts.Point] -> Either String (GC.BuilderStateData, [GC.PointsBuilderData])
+buildGPointsListOrFail' :: GC.BuilderStateData -> [Pts.Point] -> Either String (GC.BuilderStateData, [GC.GPointId])
 --end of the list. Return whatever has been built up in the BuilderData.
 
 buildGPointsListOrFail' state' points =
   Right $ GP.insert2 points [] state'
   
 --buildGPointsListOrFail' state' [] workingList = Right (state',reverse workingList)
+{-
+buildGPointsListOrFail :: String -> [Pts.Point] ->
+                             ExceptStackCornerPointsBuilder
+--if an [] is passed in, nothing to do.
+buildGPointsListOrFail _ [] =  lift $ state $ \builderData -> (GC.BuilderMonadData_GPointIds([]), builderData)
+
+buildGPointsListOrFail extraMsg points = do
+  state' <- get
+  let
+    gpoints =  buildGPointsListOrFail' state' points 
+  case gpoints of
+    Right (state'',  gpoints') ->
+      let
+        --builder = \builderMonadData -> (GC.BuilderMonadData_GPointIds gpoints', state'')
+        builder = \builderMonadData -> (GC.BuilderMonadData_GPointIds gpoints', state'')
+      in
+        lift $ state $ builder
+    Left e -> TE.throwE $ extraMsg ++ ": " ++ e
+  
+    
+--The recursive handling of [CornerPoints] for buildCubePointsListOrFail.
+buildGPointsListOrFail' :: GC.BuilderStateData -> [Pts.Point] -> Either String (GC.BuilderStateData, [GC.PointsBuilderData])
+--end of the list. Return whatever has been built up in the BuilderData.
+
+buildGPointsListOrFail' state' points =
+  Right $ GP.insert2 points [] state'
+-}
