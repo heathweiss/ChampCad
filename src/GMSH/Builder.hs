@@ -195,7 +195,7 @@ buildGPointsListOrFail extraMsg points handle = do
   let
     --gpoints =  buildGPointsListOrFail' state' points
     --it is in insert2, that the gmsh GPoint script needs to be written.
-    gpoints =  Right $ GP.insertWithOvrLap points state'
+    gpoints =  Right $ GP.insertWithOvrLap handle points state'
   case gpoints of
     Right (state'',  gpoints') ->
       let

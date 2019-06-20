@@ -40,6 +40,9 @@ I need them at a point, where exist prior to being inserted into GC.BuilderState
 so that I can only write the ones which do not already exist.
 This is in GMSH.Points marked with a 'leftOff'.
 Added GP.insert<with/without>overlapping.
-Next is to write the points which will require a handle.
-commit 'can overlap. Ready to write.'
 
+Next: is to write the points which will require a handle.
+commit 'can overlap. Ready to write.'
+Did this, but can't perform IO inside if GP.insert<...>
+Do a commit so can look at while at work.
+commit -m 'cannot perform io in GP.insert'

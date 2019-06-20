@@ -69,7 +69,7 @@ generateFrontFace = do
 
 
 {-
-Run generateFrontFace using SL.execState $ E.runExceptT and an empty GB.BuilderData
+ generateFrontFace using SL.execState $ E.runExceptT and an empty GB.BuilderData
 -}
 
 runGenerateFrontFace :: IO()

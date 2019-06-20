@@ -15,6 +15,8 @@ import qualified Data.HashMap.Strict as HM
 import qualified Data.Hashable as H
 import GHC.Generics (Generic)
 import qualified Data.Text as T
+import qualified System.IO as SIO
+import qualified Control.Monad.Except as E
 
 import Control.Lens
 
@@ -22,6 +24,7 @@ import qualified CornerPoints.Points as Pts
 import CornerPoints.CornerPoints(CornerPoints(..))
 import qualified CornerPoints.CornerPoints as CPts
 import qualified GMSH.Common as GC
+import qualified Helpers.FileWriter as FW
 
 import qualified Helpers.FileWriter as FW
 
@@ -109,21 +112,21 @@ The GC.BuilderMonadData as: [GC.BuilderMonadData_GPointIds] that were created, i
 This will only be applicable if the [Pts.Point] has overlaping Points.
 -}  
 
-insertWithOvrLap :: [Pts.Point] -> GC.BuilderStateData -> (GC.BuilderStateData,[GC.GPointId])
-insertWithOvrLap points builderStateData = insertBase (:) points builderStateData
+insertWithOvrLap ::  SIO.Handle -> [Pts.Point] -> GC.BuilderStateData -> (GC.BuilderStateData,[GC.GPointId])
+insertWithOvrLap h points builderStateData = insertBase h (:) points builderStateData
 
 -- | Same as insertWithOvrLap, but without overlapping points.
 -- | This will only be applicable if the [Pts.Point] has overlaping Points.
-insertNoOvrLap :: [Pts.Point] -> GC.BuilderStateData -> (GC.BuilderStateData,[GC.GPointId])
-insertNoOvrLap points builderStateData = insertBase (\gPoint gPoints -> gPoints) points builderStateData
+insertNoOvrLap ::  SIO.Handle -> [Pts.Point] -> GC.BuilderStateData -> (GC.BuilderStateData,[GC.GPointId])
+insertNoOvrLap h points builderStateData = insertBase h (\gPoint gPoints -> gPoints) points builderStateData
 
 {-
 Implemets <insertWithOvrLap/insertNoOvrLap> by calling insertBase with the applicable fx for overlapper paramenter,
 and supplies the empty working list of [GC.GPointId].
 -}
-insertBase :: (GC.GPointId -> [GC.GPointId] -> [GC.GPointId]) -> [Pts.Point] -> GC.BuilderStateData -> (GC.BuilderStateData,[GC.GPointId])
-insertBase _ [] builderStateData = (builderStateData,[])
-insertBase overlapper points builderStateData = insertBase' overlapper points [] builderStateData
+insertBase :: SIO.Handle -> (GC.GPointId -> [GC.GPointId] -> [GC.GPointId]) -> [Pts.Point] -> GC.BuilderStateData -> (GC.BuilderStateData,[GC.GPointId])
+insertBase h _ [] builderStateData = (builderStateData,[])
+insertBase h overlapper points builderStateData = insertBase' h overlapper points [] builderStateData
 {-
 Given:
 Same as insertBase, but additionaly with the workingList of [GC.GPointId] as they are created, and optionaly inserted, printed.
@@ -133,20 +136,24 @@ Return:
 Same as insertBase.
 -}
 
-insertBase' :: (GC.GPointId -> [GC.GPointId] -> [GC.GPointId]) -> [Pts.Point] -> [GC.GPointId] -> GC.BuilderStateData -> (GC.BuilderStateData,[GC.GPointId])
-insertBase' _ [] workingList builderStateData = (builderStateData,reverse workingList)
-insertBase' overlapper (point:points) workingList builderStateData =
+insertBase' :: SIO.Handle -> (GC.GPointId -> [GC.GPointId] -> [GC.GPointId]) -> [Pts.Point] -> [GC.GPointId] -> GC.BuilderStateData -> (GC.BuilderStateData,[GC.GPointId])
+insertBase' h _ [] workingList builderStateData = (builderStateData,reverse workingList)
+insertBase' h overlapper (point:points) workingList builderStateData =
   let
     --get the GPointsStateData if it exsits in state.
     gpoint_InState = retrieve builderStateData point
   in
   --case HM.member hashedPoint (builderStateData ^. pointsMap) of
   case gpoint_InState of
-    Just gpoint -> 
+    Just gpoint -> do
       --extract the GPointId from the GPointsStateData, and add to working list if overlapping is used.
       -- write the gpoint to file using FW.writeFileUtf8_str is overlapping is used. Still need to add a handle to insertBase, and insertBase'.
+      leftOff
+      --how do I perform IO here? Do I need to return a ExceptStackCornerPointsBuilder and change the way
+      --that GB.buildGPointsListOrFail calls this by have this do the: lift $ state $ builder
+      E.liftIO $ writeGScriptToFile h gpoint
       --insertBase' points ((gpoint ^. pointsId):workingList) builderStateData
-      insertBase' overlapper points (overlapper (gpoint ^. pointsId) workingList) builderStateData
+      insertBase' h overlapper points (overlapper (gpoint ^. pointsId) workingList) builderStateData
     --False ->
     Nothing -> 
       let
@@ -156,7 +163,7 @@ insertBase' overlapper (point:points) workingList builderStateData =
       in
       --leftOff
       -- write the gpoint here using FW.writeFileUtf8_str, and a fx still to be written for generating gmsh script from a GPointId.
-      insertBase' overlapper points
+      insertBase' h overlapper points
              --add the new GPointsId to the workingList.
              --This should be a passed in fx, so adding overlapping gpnts can be optional.
              --((gpoint ^. pointsId):workingList)
@@ -211,4 +218,8 @@ toGScript (GC.GPointsStateData id (Pts.Point x y z)) =
       (show x) ++ "," ++
       (show y) ++ "," ++
       (show z) ++ "};"
-  
+
+
+writeGScriptToFile :: SIO.Handle -> GC.GPointsStateData -> IO ()
+writeGScriptToFile h gPointsStateData = 
+  FW.writeFileUtf8 h $ toGScript gPointsStateData
