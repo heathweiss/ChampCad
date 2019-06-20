@@ -20,25 +20,8 @@ import qualified Control.Monad.Except as E
 import Control.Lens
 
 import qualified System.IO as SIO
-import qualified Data.Text as T
-import qualified Data.Text.Encoding as TE
-import qualified Data.ByteString as DB
 
 makeLenses ''GB.BuilderMonadData
-{-
-https://www.snoyman.com/blog/2016/12/beware-of-readfile
-Snoyman says safest and ~fastest way to write strings to file.
-Make a version for Text and String.
-Known uses:
-Write the gmsh script to file in generateFrontFace.
--}
-writeFileUtf8 :: SIO.Handle -> T.Text -> IO ()
-writeFileUtf8 handle t = DB.hPutStr handle $ TE.encodeUtf8 t
-
-writeFileUtf8_str :: SIO.Handle -> String -> IO ()
-writeFileUtf8_str handle t = DB.hPutStr handle $ TE.encodeUtf8 $ T.pack t
-
-
 
 {-
 Create a FrontFace using the Gmsh Builder.
@@ -79,7 +62,8 @@ generateFrontFace = do
     --let
     --  state' = SL.get
     --GP.insert2 points [] (SL.get)
-    GB.buildGPointsList "do the gpoints" (points ^. bmdPts)
+    GB.buildGPointsList "do the gpoints" (points ^. bmdPts) h
+  testIO <- GB.writeGPnts "test msg" 
   return frontFace
 
 

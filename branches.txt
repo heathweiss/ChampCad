@@ -20,7 +20,6 @@ Added the ability to extract Points from CPts, and return as BuilderMonadData_Po
 Need to clean this up. See firstTest.
 
 master->gmsh->gmsh_gpoints
-Next:
 done:Create the gmsh points from the [Point], and save them to state, as well as the current BuilderMonadData value.
 commit: 'can create gpoints from points'
 -can: git reset --hard HEAD 
@@ -34,4 +33,13 @@ commit: 'GPointId done'
 rename GC.PointsBuilderData to show that is is part of state, and it includes both GPointId and Pts.Point info.
 will be GPointsStateData
 commit: 'PointsBuilderData renamed to GPointsStateData'
+
+next:
+Figure out when I will write the GPoints to file.
+I need them at a point, where exist prior to being inserted into GC.BuilderStateData.GPointsStateData,
+so that I can only write the ones which do not already exist.
+This is in GMSH.Points marked with a 'leftOff'.
+Added GP.insert<with/without>overlapping.
+Next is to write the points which will require a handle.
+commit 'can overlap. Ready to write.'
 

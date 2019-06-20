@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module GMSH.Writer({-gmshPointString, pntsBldrDataScriptStr,-} toGmshPoints, toGmshPoint) where
+module GMSH.Writer() where
 {- |
 Convert ChampCad Points/Lines/etc to gmsh scripts and print to .geo file.
 -}
@@ -12,6 +12,7 @@ import qualified GMSH.Points as GP
 
 import Control.Lens
 import qualified Data.HashMap.Strict as HM
+
 
 makeLenses ''GC.GPointsStateData
 makeLenses ''GC.BuilderStateData
@@ -31,6 +32,7 @@ A single String with each GC.GPointsStateData output as a gmsh script. eg: \nPoi
 Known uses:
 Once a GMESH Builder is run, extract the GC.BuilderData from State, and write gmsh Points string to a .geo file.
 -}
+{-Keep around as a reference, then delete once gpoints can be insert and written from CornerPoints and Points.
 toGmshPoints :: GC.BuilderStateData -> String
 toGmshPoints builderData =
   --Needs to traverse the hashmap, creating a string containing all GC.GPointsStateData values as gmesh Points.
@@ -77,5 +79,5 @@ toGmshPoint bldrStateData point =
   case maybe_pointsBuilderData of
     Nothing -> "No GPoint exists for: " ++ (show point)
     Just pointsBuilderData -> toGmshPoint' pointsBuilderData point
-       
+ -}      
 

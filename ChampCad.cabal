@@ -43,7 +43,7 @@ library
                        --stl
                        Stl.StlBase, Stl.StlCornerPoints, Stl.StlFileWriter, Stl.StlCornerPointsWithDegrees
                        --helpers
-                       Helpers.List, Helpers.DSL, Helpers.Applicative
+                       Helpers.List, Helpers.DSL, Helpers.Applicative, Helpers.FileWriter
                        Helpers.Symmetrical.Sequence, Helpers.Symmetrical.List
                        --database
                        Persistable.Mapping

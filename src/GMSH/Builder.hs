@@ -1,5 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
-module GMSH.Builder(buildCubePointsList, buildCubePointsListSingle, buildPointsList, buildGPointsList,
+module GMSH.Builder(buildCubePointsList, buildCubePointsListSingle, buildPointsList, buildGPointsList, writeGPnts,
                     GC.newBuilderData, GC.BuilderStateData(..),ExceptStackCornerPointsBuilder, GC.BuilderMonadData) where
 {- |
 Build up a shape from [CornerPoints]. But instead of saving the CornerPoints,
@@ -17,7 +17,7 @@ import qualified CornerPoints.Points as Pts
 import qualified GMSH.Lines as GL
 import qualified GMSH.Common as GC
 import qualified GMSH.Points as GP
-
+import qualified GMSH.Writer as GW
 
 import qualified Data.HashMap.Strict as HM
 import qualified Data.Hashable as H
@@ -27,6 +27,7 @@ import qualified Control.Monad.Trans.Except as TE
 import Control.Monad.State.Lazy
 import Control.Monad.Except
 import Control.Monad.Writer (Writer, tell, execWriter)
+import qualified System.IO as SIO
 
 import Control.Lens
 
@@ -166,8 +167,61 @@ buildPointsListOrFail' cubeList toPoints =
 ------------------------------------------------ GPoints version of buildCubePointsList --------------------------------------------------------
 {- |
 Given:
-[CPts.Points]
+extraMsg: error messsage for exceptions.
+points: from which the GPoints will be generated.
+handle: IO file handle for writing the gmsh GPoints script
+
+Task:
+Generate the GPoints from the Points.
+If no error, write the gmsh GPoints script to file pointed to by handle.
+
+
 -}
+buildGPointsList :: String -> [Pts.Point] -> SIO.Handle ->  ExceptStackCornerPointsBuilder 
+buildGPointsList extraMsg points handle = 
+  (buildGPointsListOrFail  extraMsg points handle) `catchError` errorHandler
+
+{- |
+Task:
+Fulfill the Task of buildGPointsList with standard ExceptT error handling.
+-}
+buildGPointsListOrFail :: String -> [Pts.Point] -> SIO.Handle ->
+                             ExceptStackCornerPointsBuilder
+--if an [] is passed in, nothing to do.
+buildGPointsListOrFail _ [] _ =  lift $ state $ \builderData -> (GC.BuilderMonadData_GPointIds([]), builderData)
+
+buildGPointsListOrFail extraMsg points handle = do
+  state' <- get
+  let
+    --gpoints =  buildGPointsListOrFail' state' points
+    --it is in insert2, that the gmsh GPoint script needs to be written.
+    gpoints =  Right $ GP.insertWithOvrLap points state'
+  case gpoints of
+    Right (state'',  gpoints') ->
+      let
+        builder = \builderMonadData -> (GC.BuilderMonadData_GPointIds gpoints', state'')
+      in
+        do
+          -- leave the writing of the GPoints script to GP.insert2 as it knows whether the gpoint already exists.
+          --liftIO $ GW.writeFileUtf8_str handle $ show gpoints'
+          lift $ state $ builder
+    Left e -> TE.throwE $ extraMsg ++ ": " ++ e
+  
+{-Don't need this as GP.insert2 does the traversal of the [Pts.Point]    
+--The recursive handling of [CornerPoints] for buildCubePointsListOrFail.
+--buildGPointsListOrFail' :: GC.BuilderStateData -> [Pts.Point] -> Either String (GC.BuilderStateData, [GC.PointsBuilderData])
+buildGPointsListOrFail' :: GC.BuilderStateData -> [Pts.Point] -> Either String (GC.BuilderStateData, [GC.GPointId])
+--end of the list. Return whatever has been built up in the BuilderData.
+
+buildGPointsListOrFail' state' points =
+  Right $ GP.insert2 points [] state'
+-}
+
+
+
+
+
+{-
 buildGPointsList :: String -> [Pts.Point] -> ExceptStackCornerPointsBuilder 
 buildGPointsList extraMsg points = 
   (buildGPointsListOrFail  extraMsg points) `catchError` errorHandler
@@ -202,32 +256,34 @@ buildGPointsListOrFail' :: GC.BuilderStateData -> [Pts.Point] -> Either String (
 
 buildGPointsListOrFail' state' points =
   Right $ GP.insert2 points [] state'
-  
---buildGPointsListOrFail' state' [] workingList = Right (state',reverse workingList)
+
+-}  
+------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------
+--write the gpoints test
+
+writeGPnts :: String -> ExceptStackCornerPointsBuilder
+writeGPnts extraMsg = (writeGPntsOrFail "writeGPnts msg") `catchError` writeGPntsOrFail
+
+writeGPntsOrFail :: String -> ExceptStackCornerPointsBuilder
+writeGPntsOrFail extraMsg = do
+                              state' <- get
+                              let
+                                builder = \builderMonadData -> (GC.BuilderMonadData_CPoints [CPts.B1 $ Pts.Point 1 2 3], state')
+                              liftIO $ putStrLn "test of writeGPnts"
+                              lift $ state $ \builderData -> (GC.BuilderMonadData_GPointIds([]), builderData) 
 {-
-buildGPointsListOrFail :: String -> [Pts.Point] ->
-                             ExceptStackCornerPointsBuilder
---if an [] is passed in, nothing to do.
-buildGPointsListOrFail _ [] =  lift $ state $ \builderData -> (GC.BuilderMonadData_GPointIds([]), builderData)
+writeGPnts :: String -> ExceptStackCornerPointsBuilder
+writeGPnts extraMsg = (writeGPntsOrFail "writeGPnts msg") `catchError` writeGPntsOrFail
 
-buildGPointsListOrFail extraMsg points = do
-  state' <- get
-  let
-    gpoints =  buildGPointsListOrFail' state' points 
-  case gpoints of
-    Right (state'',  gpoints') ->
-      let
-        --builder = \builderMonadData -> (GC.BuilderMonadData_GPointIds gpoints', state'')
-        builder = \builderMonadData -> (GC.BuilderMonadData_GPointIds gpoints', state'')
-      in
-        lift $ state $ builder
-    Left e -> TE.throwE $ extraMsg ++ ": " ++ e
-  
-    
---The recursive handling of [CornerPoints] for buildCubePointsListOrFail.
-buildGPointsListOrFail' :: GC.BuilderStateData -> [Pts.Point] -> Either String (GC.BuilderStateData, [GC.PointsBuilderData])
---end of the list. Return whatever has been built up in the BuilderData.
-
-buildGPointsListOrFail' state' points =
-  Right $ GP.insert2 points [] state'
+writeGPntsOrFail :: String -> ExceptStackCornerPointsBuilder
+writeGPntsOrFail extraMsg = do
+                              state' <- get
+                              let
+                                builder = \builderMonadData -> (GC.BuilderMonadData_CPoints [CPts.B1 $ Pts.Point 1 2 3], state')
+                              liftIO $ putStrLn "test of writeGPnts"
+                              lift $ state $ \builderData -> (GC.BuilderMonadData_GPointIds([]), builderData) 
 -}
