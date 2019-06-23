@@ -46,3 +46,7 @@ commit 'can overlap. Ready to write.'
 Did this, but can't perform IO inside if GP.insert<...>
 Do a commit so can look at while at work.
 commit -m 'cannot perform io in GP.insert'
+
+Can now write the gpoints to file, from a [FrontFace].
+Need a lot of clean up and testing.
+commit: 'can write gpoints to file'

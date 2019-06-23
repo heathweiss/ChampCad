@@ -28,6 +28,8 @@ data GPointsStateData = GPointsStateData
    _point :: Point
   }
   deriving (Show, Eq)
+
+makeLenses ''GPointsStateData
 {-need to change _pointsId to a newtype.
 data PointsBuilderData = PointsBuilderData
   {_pointsId :: Int,

@@ -1,6 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 module GMSH.Builder(buildCubePointsList, buildCubePointsListSingle, buildPointsList, buildGPointsList, writeGPnts,
-                    GC.newBuilderData, GC.BuilderStateData(..),ExceptStackCornerPointsBuilder, GC.BuilderMonadData) where
+                    GC.newBuilderData, GC.BuilderStateData(..),ExceptStackCornerPointsBuilder, GC.BuilderMonadData,
+                    insert2WithOvrLap, insert2NoOvrLap) where
 {- |
 Build up a shape from [CornerPoints]. But instead of saving the CornerPoints,
 save the gmsh points, lines, etc along with an ID, within hash maps.
@@ -19,6 +20,8 @@ import qualified GMSH.Common as GC
 import qualified GMSH.Points as GP
 import qualified GMSH.Writer as GW
 
+import qualified Helpers.FileWriter as FW
+
 import qualified Data.HashMap.Strict as HM
 import qualified Data.Hashable as H
 import GHC.Generics (Generic)
@@ -32,7 +35,7 @@ import qualified System.IO as SIO
 import Control.Lens
 
 makeLenses ''GC.BuilderStateData
-
+makeLenses ''GC.GPointsStateData
 
 
 -- | The ExceptT State Builder for building up shapes, and convertering to gmsh Lines and points.
@@ -287,3 +290,94 @@ writeGPntsOrFail extraMsg = do
                               liftIO $ putStrLn "test of writeGPnts"
                               lift $ state $ \builderData -> (GC.BuilderMonadData_GPointIds([]), builderData) 
 -}
+
+
+-------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------
+--create new insert version that returns ExceptStackCornerPointsBuilder so I can do IO
+
+insert2WithOvrLap ::  SIO.Handle -> [Pts.Point] -> ExceptStackCornerPointsBuilder
+insert2WithOvrLap h points = insert2Base h (:) points 
+
+-- | Same as insert2WithOvrLap, but without overlapping points.
+-- | This will only be applicable if the [Pts.Point] has overlaping Points.
+insert2NoOvrLap ::  SIO.Handle -> [Pts.Point] -> ExceptStackCornerPointsBuilder
+insert2NoOvrLap h points  = insert2Base h (\gPoint gPoints -> gPoints) points 
+
+{-
+Implemets <insert2WithOvrLap/insert2NoOvrLap> by calling insert2Base with the applicable fx for overlapper paramenter,
+and supplies the empty working list of [GC.GPointId].
+-}
+insert2Base :: SIO.Handle -> (GC.GPointId -> [GC.GPointId] -> [GC.GPointId]) -> [Pts.Point] -> ExceptStackCornerPointsBuilder
+insert2Base h _ [] = do
+  state' <- get
+  let
+    builder = \builderMonadData -> (GC.BuilderMonadData_Points([]), state')
+  lift $ state $ builder
+
+insert2Base h overlapper points = insert2Base' h overlapper points [] 
+{-
+Given:
+Same as insert2Base, but additionaly with the workingList of [GC.GPointId] as they are created, and optionaly insert2ed, printed.
+Task:
+Implement insert2Base, with the extra workingList param.
+Return:
+Same as insert2Base.
+-}
+
+insert2Base' :: SIO.Handle -> (GC.GPointId -> [GC.GPointId] -> [GC.GPointId]) -> [Pts.Point] -> [GC.GPointId] -> ExceptStackCornerPointsBuilder
+insert2Base' h _ [] workingList  = do
+  state' <- get
+  let
+    builder = \builderMonadData -> (GC.BuilderMonadData_GPointIds(reverse workingList), state')
+  lift $ state $ builder
+
+
+insert2Base' h overlapper (point:points) workingList = do
+  state' <- get
+  let
+    --get the GPointsStateData if it exsits in state.
+    gpoint_InState = GP.retrieve state' point
+  
+  --case HM.member hashedPoint (builderStateData ^. pointsMap) of
+  case gpoint_InState of
+    Just gpoint -> do
+      --extract the GPointId from the GPointsStateData, and add to working list if overlapping is used.
+      -- write the gpoint to file using FW.writeFileUtf8_str is overlapping is used. Still need to add a handle to insert2Base, and insert2Base'.
+      --leftOff
+      --how do I perform IO here? Do I need to return a ExceptStackCornerPointsBuilder and change the way
+      --that GB.buildGPointsListOrFail calls this by have this do the: lift $ state $ builder
+      --E.liftIO $ writeGScriptToFile h gpoint
+      --insert2Base' points ((gpoint ^. pointsId):workingList) builderStateData
+      --insert2Base' h overlapper points (overlapper (gpoint ^. GC.pointsId) workingList)
+      insert2Base' h overlapper points (overlapper (GC._pointsId gpoint ) workingList) 
+    --False ->
+    Nothing -> do 
+      let
+        gpoint = (GC.GPointsStateData (head $ state' ^. pointsIdSupply) point)
+        --mapWithCurrentPointInserted = (HM.insert hashedPoint  gpoint) (builderStateData ^. pointsMap)
+        mapWithCurrentPointInserted = (HM.insert (H.hash point)  gpoint) (state' ^. pointsMap)
+        builder = \builderMonadData ->
+          (GC.BuilderMonadData_GPointIds(overlapper (gpoint ^. pointsId) workingList),
+           state'{GC._pointsMap = mapWithCurrentPointInserted,
+                  GC._pointsIdSupply = tail (state' ^. pointsIdSupply)
+                 }
+          )
+      
+      --leftOff
+      -- write the gpoint here using FW.writeFileUtf8_str, and a fx still to be written for generating gmsh script from a GPointId.
+      liftIO $ GP.writeGScriptToFile h gpoint
+      state'' <- lift $ state $ builder
+      insert2Base'
+             
+             h overlapper points
+             (overlapper (gpoint ^. pointsId) workingList)
+      
+      
+
+

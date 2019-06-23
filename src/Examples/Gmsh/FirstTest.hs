@@ -58,12 +58,14 @@ generateFrontFace = do
       E.liftIO $ writeFileUtf8_str h $ show pts
   E.liftIO $  SIO.hClose h
 -}
+{-
   gpoints <-
     --let
     --  state' = SL.get
     --GP.insert2 points [] (SL.get)
     GB.buildGPointsList "do the gpoints" (points ^. bmdPts) h
-  testIO <- GB.writeGPnts "test msg" 
+  testIO <- GB.writeGPnts "test msg" -}
+  gpoints <- GB.insert2NoOvrLap h (points ^. bmdPts)
   return frontFace
 
 

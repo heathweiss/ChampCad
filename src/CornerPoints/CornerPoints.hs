@@ -999,9 +999,23 @@ toPointsFromList cpts  = toPointsFromList' cpts (Right [])
 toPointsFromList' :: [CornerPoints] -> (Either String [Point]) -> Either String [Point]
 toPointsFromList' (cpt:[]) (Right pointsSoFar) =
   case (toPoints cpt) of
-    Right points -> Right $ points ++ pointsSoFar
+    Right points -> Right (pointsSoFar ++ points)
+    Left e -> Left e
+toPointsFromList' (cpt:cpts) (Right pointsSoFar) =
+  case (toPoints cpt) of
+    Right points -> toPointsFromList' cpts $ Right $ pointsSoFar ++ points
+    Left e -> Left e
+{-
+toPointsFromList :: [CornerPoints] -> Either String [Point]
+toPointsFromList [] = Right []
+toPointsFromList cpts  = toPointsFromList' cpts (Right [])
+toPointsFromList' :: [CornerPoints] -> (Either String [Point]) -> Either String [Point]
+toPointsFromList' (cpt:[]) (Right pointsSoFar) =
+  case (toPoints cpt) of
+    Right points -> Right (points ++ pointsSoFar)
     Left e -> Left e
 toPointsFromList' (cpt:cpts) (Right pointsSoFar) =
   case (toPoints cpt) of
     Right points -> toPointsFromList' cpts $ Right $ points ++ pointsSoFar
     Left e -> Left e
+-}
