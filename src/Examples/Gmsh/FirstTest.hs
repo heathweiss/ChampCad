@@ -31,7 +31,7 @@ Used by runGenerateFrontFace.
 --write the frontFace to a file using: replace SIO with https://www.snoyman.com/blog/2016/12/beware-of-readfile
 generateFrontFace :: GB.ExceptStackCornerPointsBuilder
 generateFrontFace = do
-  h <- E.liftIO $ SIO.openFile  "src/Data/gmeshScripts/test.txt" SIO.WriteMode
+  h <- E.liftIO $ SIO.openFile  "src/Data/gmeshScripts/test.geo" SIO.WriteMode
   frontFace <- GB.buildCubePointsListSingle "FrontFace"
                  [CPts.FrontFace (Pts.Point 1 1 1) (Pts.Point 2 2 2) (Pts.Point 3 3 3) (Pts.Point 4 4 4),
                   CPts.FrontFace (Pts.Point 11 11 11) (Pts.Point 12 12 12) (Pts.Point 13 13 13) (Pts.Point 14 14 14)
@@ -62,10 +62,10 @@ generateFrontFace = do
   gpoints <-
     --let
     --  state' = SL.get
-    --GP.insert2 points [] (SL.get)
+    --GP.insert points [] (SL.get)
     GB.buildGPointsList "do the gpoints" (points ^. bmdPts) h
   testIO <- GB.writeGPnts "test msg" -}
-  gpoints <- GB.insert2NoOvrLap h (points ^. bmdPts)
+  gpoints <- GB.insertNoOvrLap h (points ^. bmdPts)
   return frontFace
 
 

@@ -50,3 +50,30 @@ commit -m 'cannot perform io in GP.insert'
 Can now write the gpoints to file, from a [FrontFace].
 Need a lot of clean up and testing.
 commit: 'can write gpoints to file'
+
+doing:
+done:
+simplify the GPoints, as it only needs to be an id.
+So:
+-get rid of the GPointsStateData and replace with GPointId.
+next: clean up
+Got rid of the duplicate insert fx's that were in GMSH.<Points/Builder>.
+Just left if commented out so it can be pushed in it is needed later.
+commit: 'removed GMSH redundancies'
+
+next:
+reorganize GMSH.Builder so it has:
+Base
+CornerPoint
+Pts.Points
+GPoints
+
+next:
+print comments in gscript so the output can be matched up to the builder.
+
+next:
+make lines from the gpoints or points, whichever it is I will use..
+will need the idea of overlapping points.
+
+next:
+add a handle in GMSH.Writer to write to a standard file, and maybe one that takes a file name, but writes to standard directory.

@@ -14,7 +14,7 @@ import Control.Lens
 import qualified Data.HashMap.Strict as HM
 
 
-makeLenses ''GC.GPointsStateData
+--makeLenses ''GC.GPointsStateData
 makeLenses ''GC.BuilderStateData
 
 

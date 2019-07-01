@@ -1,5 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
-module GMSH.Common(BuilderStateData(..), BuilderMonadData(..), newBuilderData, GPointsStateData(..), GPointId(..)) where
+module GMSH.Common(BuilderStateData(..), BuilderMonadData(..), newBuilderData, {-GPointsStateData(..),-} GPointId(..)) where
 {- |
 Contains common datatypes, functions, etc. that are required by multiple modules, which otherwise would cause circular references.
 -}
@@ -22,14 +22,17 @@ Know uses:
 Combines the gmsh id, and the x y z point info and keeps it in state in the BuilderStateData.
 Used to make sure that there are no duplicate points in gmsh, when inserting a Pts.Point.
 -}
+{- replace with GPointId
 data GPointsStateData = GPointsStateData
   { -- _pointsId :: Int,
    _pointsId :: GPointId,
    _point :: Point
   }
   deriving (Show, Eq)
+-}
+--makeLenses ''GPointsStateData
 
-makeLenses ''GPointsStateData
+
 {-need to change _pointsId to a newtype.
 data PointsBuilderData = PointsBuilderData
   {_pointsId :: Int,
@@ -42,7 +45,7 @@ data PointsBuilderData = PointsBuilderData
 data BuilderStateData = BuilderStateData
                      {
                        _linesMap::HM.HashMap Int Int,
-                       _pointsMap::HM.HashMap Int GPointsStateData,
+                       _pointsMap::HM.HashMap Int GPointId, -- GPointsStateData,
                        _linesId :: [Int],
                      --  _pointsIdSupply :: [Int]
                        _pointsIdSupply :: [GPointId]
