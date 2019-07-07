@@ -1,7 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
-module GMSH.Builder(buildCubePointsList, buildCubePointsListSingle, buildPointsList, {-buildGPointsList, -}
+module GMSH.Builder.Base({-buildCubePointsList, buildCubePointsListSingle, buildPointsList,-} errorHandler,
                     GC.newBuilderData, GC.BuilderStateData(..),ExceptStackCornerPointsBuilder, GC.BuilderMonadData,
-                    insertWithOvrLap, insertNoOvrLap) where
+                    {-insertWithOvrLap, insertNoOvrLap-}) where
 {- |
 Build up a shape from [CornerPoints]. But instead of saving the CornerPoints,
 save the gmsh points, lines, etc along with an ID, within hash maps.
@@ -9,7 +9,9 @@ save the gmsh points, lines, etc along with an ID, within hash maps.
 
 Tests and example are in Tests.GmshTest
 -}
-
+leftOff
+--get rid of most of these imports.
+--can of GMSH.Common go here to simplify?
 import qualified CornerPoints.CornerPoints as CPts  --((|@+++#@|), (|+++|), CornerPoints(..), (+++), (+++>), cornerPointsError, findCornerPointsError, isCubePointsList)
 import CornerPoints.CornerPoints((|+++|), (+++), (+++>))
 import qualified CornerPoints.Points as Pts
@@ -59,50 +61,6 @@ errorHandler error = do
 
 
 
-{- |
-Task:
-Build a [CPts] by adding the 2 given [CPts].
-Return:
-If any of the [CornerPoints] that are CornerPointsError, then an error is thrown so the ExceptT short circuits.
-If no errors, return the list as current value of Builder, with the state unchanged.
--}
-
-buildCubePointsList :: String -> [CPts.CornerPoints] -> [CPts.CornerPoints] ->
-                       ExceptStackCornerPointsBuilder 
-buildCubePointsList extraMsg cPoints cPoints' = 
-  (buildCubePointsListOrFail  extraMsg cPoints cPoints') `catchError` errorHandler
-
--- | Runs buildCubePointsList when a single [CPts] is given.
-buildCubePointsListSingle :: String -> [CPts.CornerPoints] -> ExceptStackCornerPointsBuilder
-                       
-buildCubePointsListSingle extraMsg cPoints =
-  buildCubePointsList extraMsg [CPts.CornerPointsId | x <- [1..]] cPoints
-
--- | Executes buildCubePointsList as per standard ExceptT procedure in the MTL package.
-buildCubePointsListOrFail :: String -> [CPts.CornerPoints] -> [CPts.CornerPoints] ->
-                             ExceptStackCornerPointsBuilder
---if an [] is passed in, nothing to do.
---buildCubePointsListOrFail _ [] _ =  lift $ state $ \builderData -> ([], builderData)
-buildCubePointsListOrFail _ [] _ =  lift $ state $ \builderData -> (GC.BuilderMonadData_CPoints([]), builderData)
---buildCubePointsListOrFail _ _ [] =  lift $ state $ \builderData -> ([], builderData)
-buildCubePointsListOrFail _ _ [] =  lift $ state $ \builderData -> (GC.BuilderMonadData_CPoints([]), builderData)
-
-buildCubePointsListOrFail extraMsg cPoints cPoints' = do
-  state' <- get
-  
-  
-  let
-    cubeList = cPoints |+++| cPoints'
-  case CPts.findCornerPointsError cubeList of
-        Nothing -> --has no CornerPointsError
-          let
-            builder = \builderData -> (GC.BuilderMonadData_CPoints(cubeList), state')
-          in
-            lift $ state $ builder
-        Just (CPts.CornerPointsError err) -> --has a CornerPointsError
-          TE.throwE $ extraMsg ++ ": " ++ (err)
-
-    
 
 -----------------------------------------------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------------------------------------------
@@ -116,7 +74,7 @@ buildCubePointsListOrFail extraMsg cPoints cPoints' = do
 Given:
 [CPts.CornerPoints]
 The [Points] will be extracted from this list.
--}
+
 buildPointsList :: String -> [CPts.CornerPoints] -> ExceptStackCornerPointsBuilder 
 buildPointsList extraMsg cPoints = 
   (buildPointsListOrFail  extraMsg cPoints) `catchError` errorHandler
@@ -279,7 +237,7 @@ insertBase' h overlapper (point:points) workingList = do
              (overlapper gpoint workingList)
       
       
-
+-}
 -----------------------------------------------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------------------------------------------

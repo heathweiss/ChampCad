@@ -61,6 +61,10 @@ Got rid of the duplicate insert fx's that were in GMSH.<Points/Builder>.
 Just left if commented out so it can be pushed in it is needed later.
 commit: 'removed GMSH redundancies'
 
+done:
+merge gmsh_points into master and gmsh, and deleted.
+now on branch gmsh
+
 next:
 reorganize GMSH.Builder so it has:
 Base

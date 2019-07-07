@@ -9,8 +9,10 @@ Testing of the GMSH modules.
 import qualified GMSH.Points as GP
 import qualified GMSH.Lines as GL 
 import qualified GMSH.Common as GC
-import qualified GMSH.Builder as GB
 import qualified GMSH.Writer as GW
+import qualified GMSH.Builder.Base as GB
+import qualified GMSH.Builder.CornerPoints as GBC
+import qualified GMSH.Builder.Points as GBP
 
 import qualified CornerPoints.Points as Pts
 import qualified CornerPoints.CornerPoints as CPts
@@ -32,7 +34,7 @@ Used by runGenerateFrontFace.
 generateFrontFace :: GB.ExceptStackCornerPointsBuilder
 generateFrontFace = do
   h <- E.liftIO $ SIO.openFile  "src/Data/gmeshScripts/test.geo" SIO.WriteMode
-  frontFace <- GB.buildCubePointsListSingle "FrontFace"
+  frontFace <- GBC.buildCubePointsListSingle "FrontFace"
                  [CPts.FrontFace (Pts.Point 1 1 1) (Pts.Point 2 2 2) (Pts.Point 3 3 3) (Pts.Point 4 4 4),
                   CPts.FrontFace (Pts.Point 11 11 11) (Pts.Point 12 12 12) (Pts.Point 13 13 13) (Pts.Point 14 14 14)
                  ]
@@ -42,8 +44,8 @@ generateFrontFace = do
     --Or is there a better way of dereferencing frontFace?
     case frontFace of
       GC.BuilderMonadData_CPoints(cpts) ->
-        GB.buildPointsList "FrontFace to Points" cpts
-      _ -> GB.buildPointsList "FrontFace to Points" [CPts.CornerPointsError "no front face"]
+        GBP.buildPointsList "FrontFace to Points" cpts
+      _ -> GBP.buildPointsList "FrontFace to Points" [CPts.CornerPointsError "no front face"]
   --this was used to print/look_at the frontFaces
   {-
   case frontFace of
@@ -65,7 +67,7 @@ generateFrontFace = do
     --GP.insert points [] (SL.get)
     GB.buildGPointsList "do the gpoints" (points ^. bmdPts) h
   testIO <- GB.writeGPnts "test msg" -}
-  gpoints <- GB.insertNoOvrLap h (points ^. bmdPts)
+  gpoints <- GBP.insertNoOvrLap h (points ^. bmdPts)
   return frontFace
 
 
