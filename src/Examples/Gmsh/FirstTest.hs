@@ -23,7 +23,7 @@ import Control.Lens
 
 import qualified System.IO as SIO
 
-makeLenses ''GB.BuilderMonadData
+makeLenses ''GC.BuilderMonadData
 
 {-
 Create a FrontFace using the Gmsh Builder.
@@ -33,12 +33,14 @@ Used by runGenerateFrontFace.
 --write the frontFace to a file using: replace SIO with https://www.snoyman.com/blog/2016/12/beware-of-readfile
 generateFrontFace :: GB.ExceptStackCornerPointsBuilder
 generateFrontFace = do
-  h <- E.liftIO $ SIO.openFile  "src/Data/gmeshScripts/test.geo" SIO.WriteMode
+  --h <- E.liftIO $ SIO.openFile  "src/Data/gmshScripts/test.geo" SIO.WriteMode
+  h <- E.liftIO $ GW.openFile "test.geo" 
   frontFace <- GBC.buildCubePointsListSingle "FrontFace"
                  [CPts.FrontFace (Pts.Point 1 1 1) (Pts.Point 2 2 2) (Pts.Point 3 3 3) (Pts.Point 4 4 4),
                   CPts.FrontFace (Pts.Point 11 11 11) (Pts.Point 12 12 12) (Pts.Point 13 13 13) (Pts.Point 14 14 14)
                  ]
- 
+  E.liftIO $ GW.writeSeparator0 h
+  E.liftIO $ GW.writeComment h "All points from the [FrontFace]"
   points <-
     --This can be wrapped up in a fx, so as not to have to do the case statement manually.
     --Or is there a better way of dereferencing frontFace?
@@ -46,6 +48,8 @@ generateFrontFace = do
       GC.BuilderMonadData_CPoints(cpts) ->
         GBP.buildPointsList "FrontFace to Points" cpts
       _ -> GBP.buildPointsList "FrontFace to Points" [CPts.CornerPointsError "no front face"]
+
+
   --this was used to print/look_at the frontFaces
   {-
   case frontFace of
@@ -58,7 +62,7 @@ generateFrontFace = do
   case points of
     GC.BuilderMonadData_Points(pts) ->
       E.liftIO $ writeFileUtf8_str h $ show pts
-  E.liftIO $  SIO.hClose h
+  
 -}
 {-
   gpoints <-
@@ -68,6 +72,7 @@ generateFrontFace = do
     GB.buildGPointsList "do the gpoints" (points ^. bmdPts) h
   testIO <- GB.writeGPnts "test msg" -}
   gpoints <- GBP.insertNoOvrLap h (points ^. bmdPts)
+  E.liftIO $  SIO.hClose h
   return frontFace
 
 
@@ -79,7 +84,7 @@ generateFrontFace = do
 runGenerateFrontFace :: IO()
 runGenerateFrontFace = do
   --((SL.execStateT $ E.runExceptT generateFrontFace ) GB.newBuilderData)
-  io <- ((SL.execStateT $ E.runExceptT generateFrontFace ) GB.newBuilderData)
+  io <- ((SL.execStateT $ E.runExceptT generateFrontFace ) GC.newBuilderData)
 
   --Look at the 'return frontFace'
   --print $ show $ io

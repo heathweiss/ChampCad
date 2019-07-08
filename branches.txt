@@ -65,19 +65,33 @@ done:
 merge gmsh_points into master and gmsh, and deleted.
 now on branch gmsh
 
+
 next:
 reorganize GMSH.Builder so it has:
 Base
 CornerPoint
 Pts.Points
 GPoints
+had to format and install ubuntu 18.04
+did a commit push to test git.
+added new ssh key and pushed to github.
+See Dropbox/git.txt for more info.
+commit: 'test new git install'
+
 
 next:
-print comments in gscript so the output can be matched up to the builder.
+Print comments in gscript so the gmsh output can be matched up to the builder fx calls.
+Add a handle in GMSH.Writer to write to a standard file, and maybe one that takes a file name, but writes to standard directory.
+commit 'cleaned up Gmsh Builder. Can print gmsh comments. Have a Gmsh.Writer file handle to write to.'
+
+next:
+make Gmsh Builder data type a GADT.
 
 next:
 make lines from the gpoints or points, whichever it is I will use..
 will need the idea of overlapping points.
 
-next:
-add a handle in GMSH.Writer to write to a standard file, and maybe one that takes a file name, but writes to standard directory.
+
+
+
+

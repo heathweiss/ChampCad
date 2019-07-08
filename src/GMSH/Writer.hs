@@ -1,7 +1,8 @@
-{-# LANGUAGE OverloadedStrings #-}
+-- {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE ExtendedDefaultRules #-}
 
-module GMSH.Writer() where
+module GMSH.Writer(openFile, writeComment, writeSeparator0, writeSeparator1, writeSeparator2, writeSeparator3, writeSeparator4, ) where
 {- |
 Convert ChampCad Points/Lines/etc to gmsh scripts and print to .geo file.
 -}
@@ -10,74 +11,81 @@ import CornerPoints.Points(Point(..))
 import qualified GMSH.Common as GC
 import qualified GMSH.Points as GP
 
+import qualified System.IO as SIO
+import qualified Data.Text as T
+import qualified Helpers.FileWriter as FW
+
 import Control.Lens
-import qualified Data.HashMap.Strict as HM
 
+default (T.Text)
 
---makeLenses ''GC.GPointsStateData
 makeLenses ''GC.BuilderStateData
+{- |
+Given
+fileName: Name of the file to write.
+
+Task
+Open a handle to a file in "src/Data/gmshScripts/fileName"
+
+Return
+A handle in WriteMode.
+
+Known uses
+Write GMSH script files when using GMSH Builder monad stack.
+-}
+openFile :: String -> IO (SIO.Handle)
+openFile fileName = SIO.openFile  ("src/Data/gmshScripts/" ++ fileName ++ ".geo") SIO.WriteMode
+  
+
+{- |
+Given
+h: Handle to file.
+comment: The comment to write to gmsh script file.
+
+Task
+Write a gmsh style comment to the file.
+Prepend it with a newline.
+
+Return
+Side effect of comment written to the file.
+-}
+writeComment :: SIO.Handle -> String -> IO ()
+writeComment h comment =
+  FW.writeFileUtf8 h $ T.pack $ "\n//" ++ comment
+
 
 
 {- |
-------------------------------- old version ----------------------------------------
-Should be abel to get rid of this once new system to write to file during the Builder monad, is done.
-------------------------------------------------------------------------------------
+Given
+h: Handle to file.
 
-Task:
-Create GMSH Points script from the hashmap of GC.GPointsStateData contained in a GC.BuilderData.
+Task
+Write a gmsh style comment to the file that exists of a line of //'s.
+Prepend it with 5 newlines.
 
-Return:
-A single String with each GC.GPointsStateData output as a gmsh script. eg: \nPoint(3) = {3.0,3.0,3.0};
+Return
+Side effect of comment written to the file.
 
-Known uses:
-Once a GMESH Builder is run, extract the GC.BuilderData from State, and write gmsh Points string to a .geo file.
+Know uses
+Create a separator in a gmsh script file to break the file up into logical sections.
+Various versions will create various white space before as an effect of separation.
 -}
-{-Keep around as a reference, then delete once gpoints can be insert and written from CornerPoints and Points.
-toGmshPoints :: GC.BuilderStateData -> String
-toGmshPoints builderData =
-  --Needs to traverse the hashmap, creating a string containing all GC.GPointsStateData values as gmesh Points.
-  --All Points are preceded with a \n to make it more readable in the gmsh .geo file.
+writeSeparator0 :: SIO.Handle -> IO ()
+writeSeparator0 h =
+  FW.writeFileUtf8 h $ T.pack $ "/////////////////////////////////////////////////////////////////////////////"
 
-  let
-    --create a gmsh string from a Point and Id in the GC.GPointsStateData
-    buildGmshString :: GC.GPointsStateData -> String
-    buildGmshString pointsBuilderData =
-      "\nPoint(" ++
-      (show (pointsBuilderData ^. pointsId)) ++ ") = {"  ++
-      (show (x_axis (pointsBuilderData ^. point))) ++ "," ++
-      (show (y_axis (pointsBuilderData ^. point))) ++ "," ++
-      (show (z_axis (pointsBuilderData ^. point))) ++ "};"  
-    
-  in
-  concat $ map (buildGmshString) $ HM.elems (builderData ^. pointsMap)
+writeSeparator1 :: SIO.Handle -> IO ()
+writeSeparator1 h =
+  FW.writeFileUtf8 h $ T.pack $ "\n/////////////////////////////////////////////////////////////////////////////"
 
-{- |
-Task::
-Get the GPointId from the GC.GPointsStateData, of the CornerPoints.Point.
-Build a gmsh script string from it.
+writeSeparator2 :: SIO.Handle -> IO ()
+writeSeparator2 h =
+  FW.writeFileUtf8 h $ T.pack $ "\n\n/////////////////////////////////////////////////////////////////////////////"
 
-Given::
-Point: The CornerPoints.Point that the GPoint represents.
+writeSeparator3 :: SIO.Handle -> IO ()
+writeSeparator3 h =
+  FW.writeFileUtf8 h $ T.pack $ "\n\n\n/////////////////////////////////////////////////////////////////////////////"
 
-Return::
-The gmsh script string for the points.
-If the point did not exist, give an error string.
--}
-toGmshPoint :: GC.BuilderStateData -> Point -> String
-toGmshPoint bldrStateData point =
-  let
-    toGmshPoint' :: GC.GPointsStateData -> Point -> String
-    toGmshPoint' builderData (Point x y z) =
-      "\nPoint(" ++
-      (show (builderData ^. pointsId)) ++ ") = {"  ++
-      (show x) ++ "," ++
-      (show y) ++ "," ++
-      (show z) ++ "};"
-      
-    maybe_pointsBuilderData = GP.retrieve bldrStateData point
-  in
-  case maybe_pointsBuilderData of
-    Nothing -> "No GPoint exists for: " ++ (show point)
-    Just pointsBuilderData -> toGmshPoint' pointsBuilderData point
- -}      
-
+writeSeparator4 :: SIO.Handle -> IO ()
+writeSeparator4 h =
+  FW.writeFileUtf8 h $ T.pack $ "\n\n\n\n/////////////////////////////////////////////////////////////////////////////"
