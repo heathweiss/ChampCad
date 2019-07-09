@@ -79,10 +79,11 @@ See Dropbox/git.txt for more info.
 commit: 'test new git install'
 
 
-next:
+
 Print comments in gscript so the gmsh output can be matched up to the builder fx calls.
 Add a handle in GMSH.Writer to write to a standard file, and maybe one that takes a file name, but writes to standard directory.
 commit 'cleaned up Gmsh Builder. Can print gmsh comments. Have a Gmsh.Writer file handle to write to.'
+merged to master and pushed prior to GADT as that should be done on a branch that can be deleted.
 
 next:
 make Gmsh Builder data type a GADT.

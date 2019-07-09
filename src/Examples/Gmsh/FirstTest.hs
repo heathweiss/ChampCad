@@ -29,8 +29,6 @@ makeLenses ''GC.BuilderMonadData
 Create a FrontFace using the Gmsh Builder.
 Used by runGenerateFrontFace.
 -}
--- rewrite with IO at bottom of GB.ExceptStackCornerPointsBuilder
---write the frontFace to a file using: replace SIO with https://www.snoyman.com/blog/2016/12/beware-of-readfile
 generateFrontFace :: GB.ExceptStackCornerPointsBuilder
 generateFrontFace = do
   --h <- E.liftIO $ SIO.openFile  "src/Data/gmshScripts/test.geo" SIO.WriteMode
@@ -39,6 +37,7 @@ generateFrontFace = do
                  [CPts.FrontFace (Pts.Point 1 1 1) (Pts.Point 2 2 2) (Pts.Point 3 3 3) (Pts.Point 4 4 4),
                   CPts.FrontFace (Pts.Point 11 11 11) (Pts.Point 12 12 12) (Pts.Point 13 13 13) (Pts.Point 14 14 14)
                  ]
+                 
   E.liftIO $ GW.writeSeparator0 h
   E.liftIO $ GW.writeComment h "All points from the [FrontFace]"
   points <-
