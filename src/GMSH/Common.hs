@@ -18,37 +18,23 @@ newtype GPointId = GPointId {_gPointId :: Int}
  deriving (Show, Eq)
 
 {- |
+Supplies the state data for the GMSH.Builder.Base.ExceptStackCornerPointsBuilder.
 Know uses:
 Combines the gmsh id, and the x y z point info and keeps it in state in the BuilderStateData.
 Used to make sure that there are no duplicate points in gmsh, when inserting a Pts.Point.
 -}
-{- replace with GPointId
-data GPointsStateData = GPointsStateData
-  { -- _pointsId :: Int,
-   _pointsId :: GPointId,
-   _point :: Point
-  }
-  deriving (Show, Eq)
--}
---makeLenses ''GPointsStateData
-
-
-{-need to change _pointsId to a newtype.
-data PointsBuilderData = PointsBuilderData
-  {_pointsId :: Int,
-   _point :: Point
-  }
-  deriving (Show, Eq)
-
--}
-
 data BuilderStateData = BuilderStateData
-                     {
+                     { -- | Should be able to delete this, as lines will be written to file as they are created, and kept as the current value of state.
                        _linesMap::HM.HashMap Int Int,
-                       _pointsMap::HM.HashMap Int GPointId, -- GPointsStateData,
+                       -- | All gmsh points(GPointId) are kept here, keyed by the hashed x,y,z values.
+                       -- | Ensures there are not duplicates, by seeing if the hashed x,y,z value already exists.
+                       -- | If so, then retrieve the GPointId and use instead of creating a new gmsh point.
+                       _pointsMap::HM.HashMap Int GPointId,
+                       -- | Will supply id's for the gmsh lines once they are implemented.
                        _linesId :: [Int],
-                     --  _pointsIdSupply :: [Int]
+                       -- | Supply id's for the new GPointId's
                        _pointsIdSupply :: [GPointId]
+                       
                      }
 
 makeLenses ''BuilderStateData
@@ -59,34 +45,19 @@ newBuilderData = BuilderStateData (HM.fromList []) (HM.fromList []) [1..] (map G
 
 {- |
 The datatype that the GB.ExceptStackCornerPointsBuilder monad stack returns.
-This will replace the [CPts] that is currently uses, as will need to track gmsh: points, lines, planes, etc, for printing.
-All will be Maybe values, as all of them may not be needed for each step of the monad.
-Will still need the [CPts], for using the existing systems that I have developed and used before going to gmsh.
+Needs to track gmsh: points, lines, planes, etc, for printing.
 -}
---leftOff
---should first create the datatype for the Gmsh Point Id's.
---figure out how I will build up the shape.
---should I have a single contstructor like this, that contains all possible values as Maybe
-{-
-data BuilderMonadData = BuilderMonadData
-                         {_bmd_CPts :: Maybe [CPts.CornerPoints], 
-                          _bmd_GPts :: Maybe [Int] --need to create a datatype for the Gmsh Point Id's.
-                         }
--}
---or have a constructor for each type of data:
+
 data BuilderMonadData = 
-  -- | A list of gmsh points ID's.
-  -- | Need to create a datatype for the Gmsh Point Id's, instead of just using an Int.
-  BuilderMonadData_GPointIds --BuilderMonadData_gmshPoints
-    --{_bmd_gmshPts :: [PointsBuilderData]}
+  -- | Get generated when a insertWithOvrLap/insertNoOvrLap is used on [CPts.Points] to generate and insert GPoints.
+  BuilderMonadData_GPointIds 
     {_bmd_gmshPts :: [GPointId]}
   |
   -- | Uses to build up CPts like the original Builder monad.
   BuilderMonadData_CPoints
     {_bmdCPts :: [CPts.CornerPoints]}
   |
-  -- | [CPts.Points] that can be extracted from [CPts], and turned into gmsh points(GPts).
-  -- | Should this be the only pathway between CPts and gmsh points, or should CPts be converted directly into GPnts.
+  -- | [CPts.Points] that can be extracted from [CPts], or created directly, and turned into gmsh points, which are written to file as new ones are created.
   BuilderMonadData_Points
     {_bmdPts :: [Pts.Point]}
 
