@@ -87,6 +87,10 @@ merged to master and pushed prior to GADT as that should be done on a branch tha
 
 next: make Gmsh Builder data type a GADT.
 Cleaned up some haddock comments, etc. then commited prior to GADT conversion. commit 'clean up comments'
+Made the GADT version of GC.BuilderMonadData and all functions that needed to be modifed because of that.
+
+next:
+GBP.<insertWithOvrLap/insertNoOvrLap> need to have a version that uses catchError
 
 next:
 make lines from the gpoints or points, whichever it is I will use..

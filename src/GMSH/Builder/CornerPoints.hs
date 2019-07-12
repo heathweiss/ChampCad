@@ -24,19 +24,19 @@ If no errors, return the list as current value of Builder, with the state unchan
 -}
 
 buildCubePointsList :: String -> [CPts.CornerPoints] -> [CPts.CornerPoints] ->
-                       GBB.ExceptStackCornerPointsBuilder 
+                       GBB.ExceptStackCornerPointsBuilder [CPts.CornerPoints]
 buildCubePointsList extraMsg cPoints cPoints' = 
   (buildCubePointsListOrFail  extraMsg cPoints cPoints') `catchError` GBB.errorHandler
 
 -- | Runs buildCubePointsList when a single [CPts] is given.
-buildCubePointsListSingle :: String -> [CPts.CornerPoints] -> GBB.ExceptStackCornerPointsBuilder
+buildCubePointsListSingle :: String -> [CPts.CornerPoints] -> GBB.ExceptStackCornerPointsBuilder [CPts.CornerPoints]
                        
 buildCubePointsListSingle extraMsg cPoints =
   buildCubePointsList extraMsg [CPts.CornerPointsId | x <- [1..]] cPoints
 
 -- | Executes buildCubePointsList as per standard ExceptT procedure in the MTL package.
 buildCubePointsListOrFail :: String -> [CPts.CornerPoints] -> [CPts.CornerPoints] ->
-                             GBB.ExceptStackCornerPointsBuilder
+                             GBB.ExceptStackCornerPointsBuilder [CPts.CornerPoints]
 --if an [] is passed in, nothing to do.
 --buildCubePointsListOrFail _ [] _ =  lift $ state $ \builderData -> ([], builderData)
 buildCubePointsListOrFail _ [] _ =  lift $ state $ \builderData -> (GC.BuilderMonadData_CPoints([]), builderData)

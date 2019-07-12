@@ -1,5 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
-module GMSH.Builder.Points(buildPointsList, insertWithOvrLap, insertNoOvrLap) where
+module GMSH.Builder.Points(buildPointsList, insertWithOvrLap, insertNoOvrLap, {-buildPointsList_GADT-}) where
 {- |
 All GMSH Builder functions dealing with [CornerPoints.Points].
 -}
@@ -27,22 +27,28 @@ import Control.Lens
 makeLenses ''GC.BuilderStateData
 
 {- |
-Given:
-[CPts.CornerPoints]
-The [Points] will be extracted from this list.
--}
-buildPointsList :: String -> [CPts.CornerPoints] -> GBB.ExceptStackCornerPointsBuilder 
-buildPointsList extraMsg cPoints = 
-  (buildPointsListOrFail  extraMsg cPoints) `catchError` GBB.errorHandler
+Given
+GC.BuilderMonadData [CPts.CornerPoints]:
+ The [Points] will be extracted from the [CPts.CornerPoints].
 
-{- |
+Return
+[Pts.Point].
+Need to wrap these up in a ADT to signify if the points are overlapped.
+
+-}
+buildPointsList :: String -> GC.BuilderMonadData [CPts.CornerPoints] -> GBB.ExceptStackCornerPointsBuilder [Pts.Point]
+--buildPointsList_GADT extraMsg cPoints = buildPointsList extraMsg $ GC.eval cPoints
+buildPointsList extraMsg cPoints =
+  (buildPointsListOrFail  extraMsg (GC.eval cPoints)) `catchError` GBB.errorHandler 
+
+{-
 Task:
 Add CornerPoints Lines to the lines map if none of the elements are CornerPointsError.
 If any of the [CornerPoints] that are CornerPointsError, then an error is thrown so the ExceptT short circuits.
 -}
 buildPointsListOrFail :: String -> [CPts.CornerPoints] ->
-                             GBB.ExceptStackCornerPointsBuilder
---if an [] is passed in, nothing to do.
+                             GBB.ExceptStackCornerPointsBuilder [Pts.Point]
+--if an [] is passed in, just return an [].
 buildPointsListOrFail _ [] =  lift $ state $ \builderData -> (GC.BuilderMonadData_Points([]), builderData)
 
 buildPointsListOrFail extraMsg cPoints = do
@@ -104,7 +110,7 @@ All new GPointId written to the gmsh script file.
 
 Still need to handle the Closed/Open idea, where the first point may or may not have been duplicated at the end of the [GpointId] for creating a closed loop from the lines.
 -}
-insertWithOvrLap ::  SIO.Handle -> [Pts.Point] -> GBB.ExceptStackCornerPointsBuilder
+insertWithOvrLap ::  SIO.Handle -> [Pts.Point] -> GBB.ExceptStackCornerPointsBuilder [GC.GPointId]
 insertWithOvrLap h points = insertBase h (:) points 
 
 {- |
@@ -118,7 +124,7 @@ are shared by adjacent lines.
 
 Still need to handle the Closed/Open idea, where the first point may or may not have been duplicated at the end of the [GpointId] for creating a closed loop from the lines.
 -}
-insertNoOvrLap ::  SIO.Handle -> [Pts.Point] -> GBB.ExceptStackCornerPointsBuilder
+insertNoOvrLap ::  SIO.Handle -> [Pts.Point] -> GBB.ExceptStackCornerPointsBuilder [GC.GPointId]
 insertNoOvrLap h points  =
   let
     overlapper :: GC.GPointId -> [GC.GPointId] -> [GC.GPointId]
@@ -134,12 +140,12 @@ insertNoOvrLap h points  =
 Implements <insertWithOvrLap/insertNoOvrLap> by calling insertBase', supplying the empty [GC.GPointId] working list.
 Also handles empty [Pts.Point]
 -}
-insertBase :: SIO.Handle -> (GC.GPointId -> [GC.GPointId] -> [GC.GPointId]) -> [Pts.Point] -> GBB.ExceptStackCornerPointsBuilder
+insertBase :: SIO.Handle -> (GC.GPointId -> [GC.GPointId] -> [GC.GPointId]) -> [Pts.Point] -> GBB.ExceptStackCornerPointsBuilder [GC.GPointId]
 
 insertBase h _ [] = do
   state' <- get
   let
-    builder = \builderMonadData -> (GC.BuilderMonadData_Points([]), state')
+    builder = \builderMonadData -> (GC.BuilderMonadData_GPointIds([]), state')
   lift $ state $ builder
 
   
@@ -153,7 +159,7 @@ Implement insertBase, with the extra workingList param.
 Return:
 Same as insertBase.
 -}
-insertBase' :: SIO.Handle -> (GC.GPointId -> [GC.GPointId] -> [GC.GPointId]) -> [Pts.Point] -> [GC.GPointId] -> GBB.ExceptStackCornerPointsBuilder
+insertBase' :: SIO.Handle -> (GC.GPointId -> [GC.GPointId] -> [GC.GPointId]) -> [Pts.Point] -> [GC.GPointId] -> GBB.ExceptStackCornerPointsBuilder [GC.GPointId]
 insertBase' h _ [] workingList  = do
   state' <- get
   let

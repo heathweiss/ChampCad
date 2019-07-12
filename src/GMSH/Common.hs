@@ -1,5 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
-module GMSH.Common(BuilderStateData(..), BuilderMonadData(..), newBuilderData, {-GPointsStateData(..),-} GPointId(..)) where
+{-# LANGUAGE GADTs #-}
+module GMSH.Common(BuilderStateData(..), BuilderMonadData(..), {-evalBuilderMonadData_GPointIds, evalBuilderMonadData_Points, evalBuilderMonadData_CPoints,-} newBuilderData,  GPointId(..), eval) where
 {- |
 Contains common datatypes, functions, etc. that are required by multiple modules, which otherwise would cause circular references.
 -}
@@ -47,7 +48,7 @@ newBuilderData = BuilderStateData (HM.fromList []) (HM.fromList []) [1..] (map G
 The datatype that the GB.ExceptStackCornerPointsBuilder monad stack returns.
 Needs to track gmsh: points, lines, planes, etc, for printing.
 -}
-
+{-
 data BuilderMonadData = 
   -- | Get generated when a insertWithOvrLap/insertNoOvrLap is used on [CPts.Points] to generate and insert GPoints.
   BuilderMonadData_GPointIds 
@@ -60,6 +61,81 @@ data BuilderMonadData =
   -- | [CPts.Points] that can be extracted from [CPts], or created directly, and turned into gmsh points, which are written to file as new ones are created.
   BuilderMonadData_Points
     {_bmdPts :: [Pts.Point]}
+-}
+{-
+evalBuilderMonadData_GPointIds :: BuilderMonadData -> Either String [GPointId]
+evalBuilderMonadData_GPointIds builderMonadData =
+  case builderMonadData of
+    BuilderMonadData_GPointIds gPointIds -> Right gPointIds
+    _                                    -> Left "Required BuilderMonadData_GPointIds constructor not supplied."
+
+evalBuilderMonadData_CPoints :: BuilderMonadData -> Either String [CPts.CornerPoints]
+evalBuilderMonadData_CPoints builderMonadData =
+  case builderMonadData of
+    BuilderMonadData_CPoints cPoints -> Right cPoints
+    _                                    -> Left "Required BuilderMonadData_CPoints constructor not supplied."
+
+evalBuilderMonadData_Points :: BuilderMonadData -> Either String [Pts.Point]
+evalBuilderMonadData_Points builderMonadData =
+  case builderMonadData of
+    BuilderMonadData_Points points -> Right points
+    _                                    -> Left "Required BuilderMonadData_Points constructor not supplied."
+-}
+--try the GADT
+{-
+data BuilderMonadData t where  
+  -- | Get generated when a insertWithOvrLap/insertNoOvrLap is used on [CPts.Points] to generate and insert GPoints.
+  BuilderMonadData_GPointIds :: [GPointId] ->  BuilderMonadData [GPointId]
+  BuilderMonadData_CPoints :: [CPts.CornerPoints] -> BuilderMonadData [CPts.CornerPoints]
+  BuilderMonadData_Points :: [Pts.Point] -> BuilderMonadData [Pts.Point]
+-}
+
+data BuilderMonadData t where  
+  -- | Get generated when a insertWithOvrLap/insertNoOvrLap is used on [CPts.Points] to generate and insert GPoints.
+  BuilderMonadData_GPointIds :: [GPointId] ->  BuilderMonadData [GPointId]
+  BuilderMonadData_CPoints :: [CPts.CornerPoints] -> BuilderMonadData [CPts.CornerPoints]
+  BuilderMonadData_Points :: [Pts.Point] -> BuilderMonadData [Pts.Point]
+
+
+eval :: BuilderMonadData t -> t 
+eval (BuilderMonadData_GPointIds gPointIds) = gPointIds
+eval (BuilderMonadData_Points points) = points
+eval (BuilderMonadData_CPoints cpts) = cpts
+
+{-
+eval :: BuilderMonadData_GADT t -> t -> Int
+eval (BuilderMonadData_GPointIds_GADT i) j = 3 -- length j
+
+runEval :: Int
+runEval =
+  eval  (BuilderMonadData_GPointIds_GADT []) [GPointId 3, GPointId 3]
+
+runEval2 :: Int
+runEval2 =
+  eval  (BuilderMonadData_CPoints_GADT []) [CPts.CornerPointsNothing]
+-}
+{-
+eval :: (BuilderMonadData_GADT t) -> t 
+eval (BuilderMonadData_CPoints_GADT cpts) = cpts
+eval (BuilderMonadData_Points_GADT pts) = pts
+-}
+{-
+--Compiles as it knows eval will return a [CPts.CornerPoints]
+runEval :: [CPts.CornerPoints]
+runEval = eval $ BuilderMonadData_CPoints_GADT  [CPts.CornerPointsNothing]
+
+--won't compile as it knows eval will return a [Pts.Point] 
+--runEval2 :: [CPts.CornerPoints]
+--runEval2 = eval $ BuilderMonadData_Points_GADT  [Pts.Point 1 2 3]
+
+
+runEval3 :: [CPts.CornerPoints] -> [CPts.CornerPoints]
+runEval3 cpts = cpts
+
+--Won't compile as it knows eval will return a [CPts.CornerPoints]
+--runEval4 = runEval3 $ eval $ BuilderMonadData_Points_GADT  [Pts.Point 1 2 3]
+
+-}
 
 --needed for testing
 instance Show BuilderStateData where

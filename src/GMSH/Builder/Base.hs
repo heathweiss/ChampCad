@@ -8,6 +8,7 @@ Tests and example are in Tests.GmshTest
 -}
 
 import qualified GMSH.Common as GC
+import qualified CornerPoints.CornerPoints as CPts
 
 import qualified Control.Monad.Trans.Except as TE
 import Control.Monad.State.Lazy
@@ -22,7 +23,7 @@ makeLenses ''GC.BuilderStateData
 
 
 -- | The ExceptT State Builder for building shapes, and convertering to gmsh <Points/Lines...>.
-type ExceptStackCornerPointsBuilder =  ExceptT String (StateT GC.BuilderStateData (IO)) GC.BuilderMonadData
+type ExceptStackCornerPointsBuilder t =  ExceptT String (StateT GC.BuilderStateData (IO)) (GC.BuilderMonadData t)
 
 
 {- |
@@ -30,7 +31,7 @@ Handles a CornerPoints error in ExceptT catchError calls.
 At this time, can be replaced with throwE in the code, as that is all it does.
 Suggest using it in case error handling changes.
 -}
-errorHandler :: String -> ExceptStackCornerPointsBuilder 
+errorHandler :: String -> ExceptStackCornerPointsBuilder t
 errorHandler error = do
   TE.throwE error
 
