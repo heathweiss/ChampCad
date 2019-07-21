@@ -5,10 +5,10 @@ description:         Please see README.md
 homepage:            http://github.com/githubuser/ChampCad#readme
 license:             BSD3
 license-file:        LICENSE
-author:              Author name here
-maintainer:          example@example.com
-copyright:           2016 Author Here
-category:            Web
+author:              Heath Weiss
+maintainer:          HeathWeiss@hotmail.com
+copyright:           Heath Weiss
+category:            3D Design
 build-type:          Simple
 -- extra-source-files:
 cabal-version:       >=1.10

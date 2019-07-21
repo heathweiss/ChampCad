@@ -88,6 +88,13 @@ merged to master and pushed prior to GADT as that should be done on a branch tha
 next: make Gmsh Builder data type a GADT.
 Cleaned up some haddock comments, etc. then commited prior to GADT conversion. commit 'clean up comments'
 Made the GADT version of GC.BuilderMonadData and all functions that needed to be modifed because of that.
+commit 'added version 1 of GADT' and pushed gmsh to origin.
+
+next:
+Make a newtype that represents the state that [Pts.Point] has to be in to be converted to a [GPoints].
+The state is: no overlap, closed.
+commit -m 'NonOverLappedClosedPoints created'
+Then replace <insertWithOvrLap/insertNoOvrLap> with a single fx that creates a non overlapped closed [GPoint]
 
 next:
 GBP.<insertWithOvrLap/insertNoOvrLap> need to have a version that uses catchError
