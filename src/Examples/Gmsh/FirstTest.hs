@@ -14,12 +14,15 @@ import qualified GMSH.Writer as GW
 import qualified GMSH.Builder.Base as GB
 import qualified GMSH.Builder.CornerPoints as GBC
 import qualified GMSH.Builder.Points as GBP
+import qualified GMSH.Builder.GPoints as GBGPts
 
 import qualified CornerPoints.Points as Pts
 import qualified CornerPoints.CornerPoints as CPts
 
 import qualified Control.Monad.State.Lazy as SL
 import qualified Control.Monad.Except as E
+
+
 import Control.Lens
 
 import qualified System.IO as SIO
@@ -33,21 +36,40 @@ Used by runGenerateFrontFace.
 generateFrontFace :: GB.ExceptStackCornerPointsBuilder [CPts.CornerPoints]
 generateFrontFace = do
   --h <- E.liftIO $ SIO.openFile  "src/Data/gmshScripts/test.geo" SIO.WriteMode
-  h <- E.liftIO $ GW.openFile "firstTest" 
-  frontFace <- GBC.buildCubePointsListSingle "FrontFace"
-                 [CPts.FrontFace (Pts.Point 1 1 1) (Pts.Point 2 2 2) (Pts.Point 3 3 3) (Pts.Point 4 4 4),
-                  CPts.FrontFace (Pts.Point 11 11 11) (Pts.Point 12 12 12) (Pts.Point 13 13 13) (Pts.Point 14 14 14)
+  h <- E.liftIO $ GW.openFile "firstTest"
+  let
+    cPtsErrorHandler = GB.errorHandler_h h
+    pointsErrorHandler = GB.errorHandler_h h
+    nonOverLappedClosedPoints_errorHandler = GB.errorHandler_h h
+    gPtsErrorHandler = GB.errorHandler_h h
+  {-
+  badDonkey <- (GBC.buildCubePointsListSingle  "badDonkey"
+                 [CPts.CornerPointsError "bad donkey error"
                  ]
-                 
-  E.liftIO $ GW.writeSeparator0 h
-  E.liftIO $ GW.writeComment h "All points from the [FrontFace]"
+               ) `E.catchError` errorHandler_h'-}
+                    
+  frontFace <- (GBC.buildCubePointsListSingle "frontFace <-"
+                 [CPts.FrontFace (Pts.Point 1 1 1) (Pts.Point 2 2 2) (Pts.Point 3 3 3) (Pts.Point 4 4 4)]
+               ) `E.catchError` cPtsErrorHandler
   
-  points <- GBP.buildPointsList "FrontFace to Points" frontFace
-    
-
+  topFrontLine <- (GBC.buildCubePointsListSingle "topFrontLine: " [CPts.B1 $ Pts.Point 1 2 3, CPts.B1 $ Pts.Point 11 12 13]) `E.catchError`  cPtsErrorHandler
+  
+  
+  E.liftIO $ GW.writeComment h "frontFace points" 
+  points <- (GBP.buildPointsList "points <- " frontFace) `E.catchError`  pointsErrorHandler
+  
+  
+  nonoverlapped_closed_points <-
+    (GBP.toNonOverlappingClosedPointsOrFail "nonoverlapped_closed_points <- " points)
+    `E.catchError`
+    nonOverLappedClosedPoints_errorHandler
   --need to create a insertNoOvrLap_GADT for gpoints, ensures points is a [Points].
-  gpoints <- GBP.insertNoOvrLap h $ GC.eval points -- (points ^. bmdPts)
-
+  --gpoints <- GBP.insertNoOvrLap h $ GC.eval points -- (points ^. bmdPts)
+  gpoints <-
+    (GBGPts.buildGPointsList_h h "gpoints" nonoverlapped_closed_points)
+    `E.catchError`
+    gPtsErrorHandler
+  E.liftIO $ GW.writeSeparator4 h
   E.liftIO $  SIO.hClose h
   return frontFace
 
@@ -61,8 +83,6 @@ runGenerateFrontFace :: IO()
 runGenerateFrontFace = do
   --((SL.execStateT $ E.runExceptT generateFrontFace ) GB.newBuilderData)
   io <- ((SL.execStateT $ E.runExceptT generateFrontFace ) GC.newBuilderData)
-
-  --Look at the 'return frontFace'
   --print $ show $ io
   
   putStrLn "done"

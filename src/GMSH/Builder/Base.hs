@@ -1,5 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
-module GMSH.Builder.Base(errorHandler, {-GC.newBuilderData, GC.BuilderStateData(..),-}ExceptStackCornerPointsBuilder{-, GC.BuilderMonadData,-}) where
+module GMSH.Builder.Base(errorHandler, errorHandler_h, ExceptStackCornerPointsBuilder) where
 {- |
 Build up a shape from [CornerPoints] and 
 save to file as gmsh points, lines, etc.
@@ -8,6 +8,7 @@ Tests and example are in Tests.GmshTest
 -}
 
 import qualified GMSH.Common as GC
+import qualified GMSH.Writer as GW
 import qualified CornerPoints.CornerPoints as CPts
 
 import qualified Control.Monad.Trans.Except as TE
@@ -35,4 +36,8 @@ errorHandler :: String -> ExceptStackCornerPointsBuilder t
 errorHandler error = do
   TE.throwE error
 
+errorHandler_h :: SIO.Handle -> String -> ExceptStackCornerPointsBuilder t
+errorHandler_h h error = do
+  (liftIO $ GW.writeComment h $ error )
+  TE.throwE error
 

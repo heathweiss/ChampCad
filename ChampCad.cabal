@@ -60,6 +60,7 @@ library
                        GMSH.Builder.Base
                        GMSH.Builder.CornerPoints
                        GMSH.Builder.Points
+                       GMSH.Builder.GPoints
                        GMSH.Writer
                        --Examples
                        Examples.ShoeLift.SnowBoardBoot

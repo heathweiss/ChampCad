@@ -94,14 +94,17 @@ next:
 Make a newtype that represents the state that [Pts.Point] has to be in to be converted to a [GPoints].
 The state is: no overlap, closed.
 commit -m 'NonOverLappedClosedPoints created'
-Then replace <insertWithOvrLap/insertNoOvrLap> with a single fx that creates a non overlapped closed [GPoint]
+Then replace <insertWithOvrLap/insertNoOvrLap> with a single fx that creates a non overlapped closed [GPoint].
+Use this fx in the usual builder fashion of `catch`.
+Do this in a new module GMSH.Builder.GPoints.
+Created new error handler that uses a handle so it can write errors to the .geo file.
+commit -m 'new error handler is built'
+
 
 next:
-GBP.<insertWithOvrLap/insertNoOvrLap> need to have a version that uses catchError
+make lines from the gpoints.
+Do I just return a [GPointId] or make a newtype the way I did with NonOverLappedClosedPoints?
 
-next:
-make lines from the gpoints or points, whichever it is I will use..
-will need the idea of overlapping points.
 
 
 

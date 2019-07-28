@@ -991,6 +991,7 @@ Break CPts down into points when working with gmsh scripts.
 -}
 toPoints :: CornerPoints -> Either String [Point]
 toPoints (FrontFace f1 f2 f3 f4) = Right [f1,f2,f3,f4]
+toPoints (B1 b1) = Right [b1]
 toPoints cpt = Left $ "CornerPoints.toPoints: unhandled or illegal patter match for: " ++ (cpointType cpt )
   
 toPointsFromList :: [CornerPoints] -> Either String [Point]
