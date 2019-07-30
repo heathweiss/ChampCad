@@ -15,11 +15,9 @@ import qualified System.IO as SIO
 import qualified Data.Text as T
 import qualified Helpers.FileWriter as FW
 
-import Control.Lens
-
 default (T.Text)
 
-makeLenses ''GC.BuilderStateData
+
 {- |
 Given
 fileName: Name of the file to write.

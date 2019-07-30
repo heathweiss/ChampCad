@@ -14,18 +14,12 @@ import CornerPoints.CornerPoints((|+++|), (+++), (+++>))
 import qualified CornerPoints.Points as Pts
 
 import qualified Control.Monad.Trans.Except as TE
-import Control.Monad.State.Lazy
-import Control.Monad.Except
-import Control.Monad.Writer (Writer, tell, execWriter)
+import qualified Control.Monad.State.Lazy as SL
+import qualified Control.Monad.Except as E
 import qualified System.IO as SIO
 
 import qualified Data.HashMap.Strict as HM
 import qualified Data.Hashable as H
-import GHC.Generics (Generic)
-
-import Control.Lens
-
-makeLenses ''GC.BuilderStateData
 
 {- |
 Given
@@ -35,19 +29,23 @@ GC.BuilderMonadData [CPts.CornerPoints]:
 h: a handle to the .geo file, that t
 
 Task
-Extract the [Point] from [CornerPoints]
+Extract the Either String [Point] from [CornerPoints]
 
 Return
-[Pts.Point].
+If Right [Point]
+GBB.ExceptStackCornerPointsBuilder [Pts.Point]
+otherwise throw the error msg.
+
 Known uses:
-Used by toNonOverlappingClosedPointsOrFail to ensure points are not overlapped and the [point] is closed.
+The resulting [Point] can be manipulated by fx's such as traspose<X/Y/Z> for creating shapes.
+In order to be converted into GPoints, must use "toNonOverlappingClosedPointsOrFail" to ensure points are not overlapped and the [point] is closed.
+Once converted to GPoints, they do not get used for creating gmsh script, only GPoints are used.
 
 
 -}
 buildPointsList :: String -> GC.BuilderMonadData [CPts.CornerPoints] -> GBB.ExceptStackCornerPointsBuilder [Pts.Point]
---buildPointsList_GADT extraMsg cPoints = buildPointsList extraMsg $ GC.eval cPoints
 buildPointsList extraMsg cPoints =
-  (buildPointsListOrFail extraMsg (GC.eval cPoints)) --  `catchError` GBB.errorHandler 
+  (buildPointsListOrFail ( extraMsg ++ ": GMSH.Builder.Points.buildPointsList") (GC.eval cPoints)) 
 
 {-
 Task:
@@ -56,89 +54,19 @@ If any of the [CornerPoints] that are CornerPointsError, then an error is thrown
 -}
 buildPointsListOrFail :: String -> [CPts.CornerPoints] ->
                              GBB.ExceptStackCornerPointsBuilder [Pts.Point]
---if an [] is passed in, just return an [].
-buildPointsListOrFail  _ [] =  lift $ state $ \builderData -> (GC.BuilderMonadData_Points([]), builderData)
+--If an [] is passed in, just return an [], and the fact that it is empty will be handled by toNonOverlappingClosedPointsOrFail,
+--at the point when they are to be converted into [GPoint]
+buildPointsListOrFail  _ [] =  E.lift $ SL.state $ \builderData -> (GC.BuilderMonadData_Points([]), builderData)
 
 buildPointsListOrFail extraMsg cPoints = do
-  --state' <- get
   let
-    points =  buildPointsListOrFail' cPoints (CPts.toPointsFromList)
+    points = CPts.toPointsFromList cPoints
   case points of
     Right points' ->
-      lift $ state $ \state' -> (GC.BuilderMonadData_Points(points'), state')
+      E.lift $ SL.state $ \state' -> (GC.BuilderMonadData_Points(points'), state')
     Left e ->
-      {-
-      (liftIO $ GW.writeComment h $ extraMsg ++ ": " ++ e)
-      >> (TE.throwE $ extraMsg ++ ": buildPointsListOrFail: " ++ e) -}
-      (TE.throwE $ extraMsg ++ ": buildPointsListOrFail: " ++ e)
+      (TE.throwE $ extraMsg ++ ".buildPointsListOrFail: " ++ e)
     
---The recursive handling of [CornerPoints] for buildCubePointsListOrFail.
-buildPointsListOrFail' :: [CPts.CornerPoints] -> ([CPts.CornerPoints] -> Either String [Pts.Point]) -> Either String [Pts.Point]
---end of the list. Return whatever has been built up in the BuilderData.
-buildPointsListOrFail' [] _ = Right []
-buildPointsListOrFail' cubeList toPoints =
-  let
-    --points = CPts.toPointsFromList (cube:cubeList)
-    points = toPoints cubeList
-    
-  in
-  case points of
-    Right points' ->
-      Right $ points' 
-    Left e -> Left e
-
-{-
-buildPointsList :: SIO.Handle -> String -> GC.BuilderMonadData [CPts.CornerPoints] -> GBB.ExceptStackCornerPointsBuilder [Pts.Point]
---buildPointsList_GADT extraMsg cPoints = buildPointsList extraMsg $ GC.eval cPoints
-buildPointsList h extraMsg cPoints =
-  (buildPointsListOrFail h extraMsg (GC.eval cPoints)) --  `catchError` GBB.errorHandler 
-
-{-
-Task:
-Add CornerPoints Lines to the lines map if none of the elements are CornerPointsError.
-If any of the [CornerPoints] that are CornerPointsError, then an error is thrown so the ExceptT short circuits.
--}
-buildPointsListOrFail :: SIO.Handle -> String -> [CPts.CornerPoints] ->
-                             GBB.ExceptStackCornerPointsBuilder [Pts.Point]
---if an [] is passed in, just return an [].
-buildPointsListOrFail _ _ [] =  lift $ state $ \builderData -> (GC.BuilderMonadData_Points([]), builderData)
-
-buildPointsListOrFail h extraMsg cPoints = do
-  --state' <- get
-  let
-    points =  buildPointsListOrFail' h cPoints (CPts.toPointsFromList)
-  case points of
-    Right points' ->
-      lift $ state $ \state' -> (GC.BuilderMonadData_Points(points'), state')
-    Left e -> 
-      (liftIO $ GW.writeComment h $ extraMsg ++ ": " ++ e)
-      >> (TE.throwE $ extraMsg ++ ": buildPointsListOrFail: " ++ e)
-  
-    
---The recursive handling of [CornerPoints] for buildCubePointsListOrFail.
-buildPointsListOrFail' :: SIO.Handle -> [CPts.CornerPoints] -> ([CPts.CornerPoints] -> Either String [Pts.Point]) -> Either String [Pts.Point]
---end of the list. Return whatever has been built up in the BuilderData.
-buildPointsListOrFail' _ [] _ = Right []
-buildPointsListOrFail' h cubeList toPoints =
-  let
-    --points = CPts.toPointsFromList (cube:cubeList)
-    points = toPoints cubeList
-    
-  in
-  case points of
-    Right points' ->
-      Right $ points' 
-    Left e -> Left e
-
--}
--------------------------------------------------------------------------------------------------------------------------------------
--------------------------------------------------------------------------------------------------------------------------------------
--------------------------------------------------------------------------------------------------------------------------------------
--------------------------------------------------------------------------------------------------------------------------------------
--------------------------------------------------------------------------------------------------------------------------------------
--------------------------------------------------------------------------------------------------------------------------------------
--------------------------------------------------------------------------------------------------------------------------------------
---create new insert version that returns ExceptStackCornerPointsBuilder so I can do IO
 
 {- |
 Given:::
@@ -153,7 +81,7 @@ If not: Left.
 -}
 toNonOverlappingClosedPointsOrFail :: String ->  GC.BuilderMonadData [Pts.Point] -> GBB.ExceptStackCornerPointsBuilder GC.NonOverLappedClosedPoints
 toNonOverlappingClosedPointsOrFail extraMsg points = do 
-  state' <- get
+  state' <- SL.get
   
   
   let
@@ -164,7 +92,7 @@ toNonOverlappingClosedPointsOrFail extraMsg points = do
           let
             bd = \builderMonadData -> (GC.BuilderMonadData_NonOverLappedClosedPoints(nonOverLappedClosedPoints'), state')
           
-          lift $ state $ bd
+          E.lift $ SL.state $ bd
           
         Left e -> TE.throwE $ extraMsg ++ e
   
