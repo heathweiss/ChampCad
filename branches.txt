@@ -100,10 +100,22 @@ Do this in a new module GMSH.Builder.GPoints.
 Created new error handler that uses a handle so it can write errors to the .geo file.
 commit -m 'new error handler is built'
 
-next:
+done:
 Clean up the imports to make sure everything is qualified in all modules.
 Clean up misc junk, comments, etc.
 commit -m 'qualifiy imports and clean up'
+
+done:
+Get rid of GMSH.Common.BuilderMonadData and use the fact that: >>= is (a  -> b) -> ma -> mb.
+This means that I can use do notation with any return value inside the mtl stack.
+Created <fileName>NGADT.hs files/modules for every file that needed changing to get rid of GMSH.Common.BuilderMonadData.
+commit -m 'NGADT module versions created'
+
+next:
+Get rid of all the orignal files that were replace with the <fileName>NGADT version.
+Should be able to get rid of GMSH.Common as well.
+
+next: The write to file functionality in Builder.Points needs to be moved to Builder.GPoints?
 
 next:
 make lines from the gpoints.

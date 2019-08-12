@@ -5,6 +5,9 @@ import TypeClasses.Transposable(TransposePoint, transposeX, transposeY, transpos
 import Data.Data
 import Data.Typeable
 
+import qualified Data.HashMap.Strict as HM
+import qualified Data.Hashable as H
+
 --import Math.Distance(Distance(..),Distant, calculateDistance, DistanceA(..),DistantA, calculateDistanceA)
 import Math.Equal(equal)
 
@@ -62,3 +65,16 @@ instance TransposePoint Point where
   transposeX f (Point x y z) = Point (f x) y z
   transposeY f (Point x y z) = Point x (f y) z
 
+
+
+-- | Make CornerPoints.Point an instance of Hashable so it can be  used with Data.HashMap.Strict
+-- Known uses:
+-- Associate CornerPoints.Point with an Id::Int for generating GMSH script.
+-- Only 'hash' is being used so far.
+instance H.Hashable Point where
+    hashWithSalt s (Point x y z) =
+        s `H.hashWithSalt`
+        x `H.hashWithSalt`
+        y `H.hashWithSalt` z
+    hash point =
+      1 `H.hashWithSalt` point

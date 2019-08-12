@@ -1,7 +1,8 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE ExtendedDefaultRules #-}
-module GMSH.Points({- H.hash, H.hashWithSalt, insert, insertWithOvrLap, insertNoOvrLap,-} retrieve, writeGScriptToFile) where
-
+{-# LANGUAGE PatternSynonyms #-}
+module GMSH.PointsNGADT(NonOverLappedClosedPoints(), pattern NonOverLappedClosedPoints', toNonOverlappingClosedPoints,
+                       writeGScriptToFile) where
 {- |
 
 GMSH functionality for CornerPoints.Points:
@@ -26,59 +27,22 @@ import Control.Lens
 import qualified CornerPoints.Points as Pts
 import CornerPoints.CornerPoints(CornerPoints(..))
 import qualified CornerPoints.CornerPoints as CPts
-import qualified GMSH.Common as GC
+import qualified GMSH.State as GST
+import qualified GMSH.GPointsNGADT as GGPts
 import qualified Helpers.FileWriter as FW
 
 import qualified Helpers.FileWriter as FW
 
 default (T.Text)
 
-makeLenses ''GC.BuilderStateData
---makeLenses ''GC.GPointsStateData
-makeLenses ''GC.GPointId
+makeLenses ''GST.BuilderStateData
+makeLenses ''GST.GPointId
 
 type ID = Int
 
 
--- | Make CornerPoints.Point an instance of Hashable so it can be  used with Data.HashMap.Strict
--- Known uses:
--- Associate CornerPoints.Point with an Id::Int for generating GMSH script.
--- Only 'hash' is being used so far.
-{-
---will be able to get rid of this, as it is now in CornerPoints.Points
-instance H.Hashable Pts.Point where
-    hashWithSalt s (Pts.Point x y z) =
-        s `H.hashWithSalt`
-        x `H.hashWithSalt`
-        y `H.hashWithSalt` z
-    hash point =
-      1 `H.hashWithSalt` point
--}
 
-
-
-retrieve ::  GC.BuilderStateData -> Pts.Point -> Maybe GC.GPointId
-retrieve  builderStateData point =
-  HM.lookup (H.hash point) (builderStateData ^. pointsMap)
   
-
-{-
-https://stackoverflow.com/questions/26778415/using-overloaded-strings
--}
-toGScript :: GC.GPointId -> Pts.Point -> T.Text
-toGScript (GC.GPointId id) (Pts.Point x y z) =
-  T.pack $
-    "\nPoint(" ++
-      (show (id)) ++ ") = {"  ++
-      --(show (id ^. pointsId ^. gPointId)) ++ ") = {"  ++
-      (show x) ++ "," ++
-      (show y) ++ "," ++
-      (show z) ++ "};"
-
-
-writeGScriptToFile :: SIO.Handle -> GC.GPointId -> Pts.Point -> IO ()
-writeGScriptToFile h gPointId point = 
-  FW.writeFileUtf8 h $ toGScript gPointId point
 
   
 
@@ -86,6 +50,8 @@ writeGScriptToFile h gPointId point =
 -- | The last Point will be the same as head.
 -- | Does not have the constructor exported, as the the fx: toNonOverlappingClosedPoints is the only way to get to this state.
 newtype NonOverLappedClosedPoints = NonOverLappedClosedPoints [Pts.Point]
+
+pattern NonOverLappedClosedPoints' a <- NonOverLappedClosedPoints a
 
 {- |
 definitions
@@ -164,17 +130,22 @@ toNonOverlappingClosedPoints' head' prevPoint (p:origPoints) workingPoints =
     True -> toNonOverlappingClosedPoints' head' p origPoints workingPoints
     False -> toNonOverlappingClosedPoints' head' p origPoints (p:workingPoints)
 
+
+
 {-
-toNonOverlappingClosedPoints' :: Pts.Point -> Pts.Point -> [Pts.Point] -> [Pts.Point] -> Either String [Pts.Point]
---Have hit the end of list. Ensure closed, then reverse the build up working list.
-toNonOverlappingClosedPoints' head' prevPoint [] workingPoints =
-  case head' == prevPoint of
-    True -> Right $ reverse workingPoints --Is closed.
-    False -> Right $ reverse $ head' : workingPoints --Not closed, so head' to the end of working list.
-toNonOverlappingClosedPoints' head' prevPoint (p:origPoints) workingPoints =
-  case p == prevPoint of
-    True -> toNonOverlappingClosedPoints' head' p origPoints workingPoints
-    False -> toNonOverlappingClosedPoints' head' p origPoints (p:workingPoints)
+https://stackoverflow.com/questions/26778415/using-overloaded-strings
 -}
+toGScript :: GST.GPointId -> Pts.Point -> T.Text
+toGScript (GST.GPointId' id) (Pts.Point x y z) =
+  T.pack $
+    "\nPoint(" ++
+      (show (id)) ++ ") = {"  ++
+      --(show (id ^. pointsId ^. gPointId)) ++ ") = {"  ++
+      (show x) ++ "," ++
+      (show y) ++ "," ++
+      (show z) ++ "};"
 
 
+writeGScriptToFile :: SIO.Handle -> GST.GPointId -> Pts.Point -> IO ()
+writeGScriptToFile h gPointId point = 
+  FW.writeFileUtf8 h $ toGScript gPointId point

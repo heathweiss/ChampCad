@@ -33,7 +33,7 @@ makeLenses ''GC.BuilderMonadData
 Create a FrontFace using the Gmsh Builder.
 Used by runGenerateFrontFace.
 -}
-generateFrontFace :: GB.ExceptStackCornerPointsBuilder [CPts.CornerPoints]
+generateFrontFace :: GB.ExceptStackCornerPointsBuilder [Pts.Point] -- [CPts.CornerPoints]
 generateFrontFace = do
   --h <- E.liftIO $ SIO.openFile  "src/Data/gmshScripts/test.geo" SIO.WriteMode
   h <- E.liftIO $ GW.openFile "firstTest"
@@ -71,7 +71,7 @@ generateFrontFace = do
     gPtsErrorHandler
   E.liftIO $ GW.writeSeparator4 h
   E.liftIO $  SIO.hClose h
-  return frontFace
+  return points --frontFace
 
 
 

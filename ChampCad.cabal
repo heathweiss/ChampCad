@@ -54,14 +54,15 @@ library
                        Persistable.Radial
 
                        --GMSH
-                       GMSH.Points
+                       GMSH.Points, GMSH.PointsNGADT
                        GMSH.Lines
                        GMSH.Common
-                       GMSH.Builder.Base
-                       GMSH.Builder.CornerPoints
-                       GMSH.Builder.Points
-                       GMSH.Builder.GPoints
-                       GMSH.Writer
+                       GMSH.Builder.Base, GMSH.Builder.BaseNGADT
+                       GMSH.Builder.CornerPoints, GMSH.Builder.CornerPointsNADT
+                       GMSH.Builder.Points, GMSH.Builder.PointsNGADT
+                       GMSH.Builder.GPoints, GMSH.GPointsNGADT, GMSH.Builder.GPointsNGADT
+                       GMSH.Writer,
+                       GMSH.State
                        --Examples
                        Examples.ShoeLift.SnowBoardBoot
                        Examples.ShoeLift.GeoxShoe,
@@ -121,7 +122,7 @@ library
                        Examples.LineScanner.LineScanner
 
                        Examples.Gmsh.Gate
-                       Examples.Gmsh.FirstTest            
+                       Examples.Gmsh.FirstTest, Examples.Gmsh.FirstTestNGADT           
                        --Shapes
                        Primitives.Cylindrical.Walled, Primitives.Cubical
                        Primitives.Cylindrical.Solid
