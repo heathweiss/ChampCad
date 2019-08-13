@@ -119,7 +119,13 @@ done:
 Got rid of GMSH.Common as well, though it is still referred to in tests.
 commit -m 'got rid of GMSH.Common'
 
-next: The write to file functionality in Builder.Points needs to be moved to Builder.GPoints?
+done:
+The write to file functionality in Builder.Points needs to be moved to GMSH.Writer..GPoints
+Create a GMSH.Writer folder to contain all write functionality. eg: GMSH.Writer.<GPoints/Lines/Base/etc>?
+commit -m 'GMSH.Writer folder created.'
+
+next:
+Figure out a folder name to contain all the gmesh modules aready not in something like Builder or Writer
 
 next:
 make lines from the gpoints.

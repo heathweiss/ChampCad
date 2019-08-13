@@ -1,7 +1,7 @@
 module Examples.Gmsh.FirstTest() where
 import qualified GMSH.Points as GP
 import qualified GMSH.Lines as GL 
-import qualified GMSH.Writer as GW
+import qualified GMSH.Writer.Base as GWB
 import qualified GMSH.Builder.Base as GB
 import qualified GMSH.Builder.CornerPoints as GBC
 import qualified GMSH.Builder.Points as GBP
@@ -19,7 +19,7 @@ import qualified System.IO as SIO
 
 generateFrontFace :: GB.ExceptStackCornerPointsBuilder [CPts.CornerPoints]
 generateFrontFace = do
-  h <- E.liftIO $ GW.openFile "firstTest"
+  h <- E.liftIO $ GWB.openFile "firstTest"
   let
     errorHandler = GB.errorHandler_h h
                     
@@ -30,7 +30,7 @@ generateFrontFace = do
   points <- (GBP.buildPointsList "points <- " frontFace) `E.catchError`  errorHandler
   closedNonOverlappedPoints <- (GBP.toNonOverlappingClosedPointsOrFail "closedNonOverlappedPoints <- " points) `E.catchError`  errorHandler
 
-  E.liftIO $ GW.writeComment h "frontFace points"  
+  E.liftIO $ GWB.writeComment h "frontFace points"  
   gpoints <-
     (GBGPts.buildGPointsList_h h "gpoints" closedNonOverlappedPoints) `E.catchError` errorHandler
   

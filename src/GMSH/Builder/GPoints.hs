@@ -10,7 +10,7 @@ import qualified System.IO as SIO
 import qualified GMSH.Builder.Base as GBB
 import qualified GMSH.State as GST
 import qualified GMSH.Points as GP
---import qualified GMSH.GPointsNGADT as GGPts
+import qualified GMSH.Writer.GPoints as GWGPts
 
 import qualified CornerPoints.Points as Pts
 
@@ -59,7 +59,7 @@ buildGPointsListOrFail_h' h (point:points) workingList = do
       let
         gpoint = head $ state' ^. pointsIdSupply
         
-      E.liftIO $ GP.writeGScriptToFile h gpoint point
+      E.liftIO $ GWGPts.writeGScriptToFile h gpoint point
       --reset the state with the new GPointId. The following recursive call to insertBase' will use it.
       --lift $ state $ builder
       E.lift $ SL.state $
@@ -73,4 +73,4 @@ buildGPointsListOrFail_h' h (point:points) workingList = do
       buildGPointsListOrFail_h' h points (gpoint : workingList)
 
 
---writeGScriptToFile
+

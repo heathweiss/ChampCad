@@ -1,8 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE ExtendedDefaultRules #-}
 {-# LANGUAGE PatternSynonyms #-}
-module GMSH.Points(NonOverLappedClosedPoints(), pattern NonOverLappedClosedPoints', toNonOverlappingClosedPoints,
-                       writeGScriptToFile) where
+module GMSH.Points(NonOverLappedClosedPoints(), pattern NonOverLappedClosedPoints', toNonOverlappingClosedPoints) where
 {- |
 
 GMSH functionality for CornerPoints.Points:
@@ -132,20 +131,3 @@ toNonOverlappingClosedPoints' head' prevPoint (p:origPoints) workingPoints =
 
 
 
-{-
-https://stackoverflow.com/questions/26778415/using-overloaded-strings
--}
-toGScript :: GST.GPointId -> Pts.Point -> T.Text
-toGScript (GST.GPointId' id) (Pts.Point x y z) =
-  T.pack $
-    "\nPoint(" ++
-      (show (id)) ++ ") = {"  ++
-      --(show (id ^. pointsId ^. gPointId)) ++ ") = {"  ++
-      (show x) ++ "," ++
-      (show y) ++ "," ++
-      (show z) ++ "};"
-
-
-writeGScriptToFile :: SIO.Handle -> GST.GPointId -> Pts.Point -> IO ()
-writeGScriptToFile h gPointId point = 
-  FW.writeFileUtf8 h $ toGScript gPointId point

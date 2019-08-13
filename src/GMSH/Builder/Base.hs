@@ -8,7 +8,7 @@ Tests and example are in Tests.GmshTest
 -}
 --import qualified GMSH.Common as GC
 import qualified GMSH.State as GST
-import qualified GMSH.Writer as GW
+import qualified GMSH.Writer.Base as GWB
 import qualified CornerPoints.CornerPoints as CPts
 
 import qualified Control.Monad.Trans.Except as TE
@@ -34,5 +34,5 @@ errorHandler error = do
 
 errorHandler_h :: SIO.Handle -> String -> ExceptStackCornerPointsBuilder t
 errorHandler_h h error = do
-  E.liftIO $ GW.writeComment h error 
+  E.liftIO $ GWB.writeComment h error 
   TE.throwE error

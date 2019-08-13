@@ -1,0 +1,1 @@
+All modules in the GMSH.Writer folder deal with writing gmsh script to the .geo file.
