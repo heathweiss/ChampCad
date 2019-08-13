@@ -56,7 +56,6 @@ library
                        --GMSH
                        GMSH.Points
                        GMSH.Lines
-                       GMSH.Common
                        GMSH.Builder.Base
                        GMSH.Builder.CornerPoints
                        GMSH.Builder.Points

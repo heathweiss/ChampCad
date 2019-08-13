@@ -115,8 +115,9 @@ done:
 Get rid of all the orignal files that were replace with the <fileName>NGADT version.
 commint -m 'NGADT files renamed'
 
-next:
-Should be able to get rid of GMSH.Common as well.
+done:
+Got rid of GMSH.Common as well, though it is still referred to in tests.
+commit -m 'got rid of GMSH.Common'
 
 next: The write to file functionality in Builder.Points needs to be moved to Builder.GPoints?
 
