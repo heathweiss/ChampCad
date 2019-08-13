@@ -9,7 +9,7 @@ Convert ChampCad Points/Lines/etc to gmsh scripts and print to .geo file.
 
 import CornerPoints.Points(Point(..))
 import qualified GMSH.Common as GC
-import qualified GMSH.Points as GP
+--import qualified GMSH.Points as GP
 
 import qualified System.IO as SIO
 import qualified Data.Text as T

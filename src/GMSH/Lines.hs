@@ -1,5 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
-module GMSH.Lines(toLines, {-toPoints,-}{- insert-}) where
+module GMSH.Lines({-toLines, toPoints,-}{- insert-}) where
 {- |
 Hash and insert Lines into the GMSH.Common.BuilderData datatype.
 Gets a unique ID for each line inserted.
@@ -18,7 +18,7 @@ CubePoints and Faces get broken down into their constituent Lines.
 
 Tests: GmshLinesTest
 -}
-
+{-
 import CornerPoints.CornerPoints(CornerPoints(..), cpointType)
 import qualified CornerPoints.FaceExtraction as FE
 import CornerPoints.Points (Point(..))
@@ -89,7 +89,7 @@ A grep search shows no actual calls, so could it be deleted. Tests also run with
 toPoints :: CornerPoints -> Either String [Point]
 toPoints (BackFace b1 b2 b3 b4) = Right [b1, b2, b3, b4]
 
-
+-}
 ---------------------------------------------------------------------------------------------------------------------------
 --------------------------------------------------hashable-----------------------------------------------------------------
 {- |

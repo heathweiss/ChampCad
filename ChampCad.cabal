@@ -54,13 +54,13 @@ library
                        Persistable.Radial
 
                        --GMSH
-                       GMSH.Points, GMSH.PointsNGADT
+                       GMSH.Points
                        GMSH.Lines
                        GMSH.Common
-                       GMSH.Builder.Base, GMSH.Builder.BaseNGADT
-                       GMSH.Builder.CornerPoints, GMSH.Builder.CornerPointsNADT
-                       GMSH.Builder.Points, GMSH.Builder.PointsNGADT
-                       GMSH.Builder.GPoints, GMSH.GPointsNGADT, GMSH.Builder.GPointsNGADT
+                       GMSH.Builder.Base
+                       GMSH.Builder.CornerPoints
+                       GMSH.Builder.Points
+                       GMSH.GPoints, GMSH.Builder.GPoints
                        GMSH.Writer,
                        GMSH.State
                        --Examples
@@ -122,7 +122,7 @@ library
                        Examples.LineScanner.LineScanner
 
                        Examples.Gmsh.Gate
-                       Examples.Gmsh.FirstTest, Examples.Gmsh.FirstTestNGADT           
+                       Examples.Gmsh.FirstTest           
                        --Shapes
                        Primitives.Cylindrical.Walled, Primitives.Cubical
                        Primitives.Cylindrical.Solid

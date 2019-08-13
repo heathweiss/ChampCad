@@ -1,6 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 
-module GMSH.GPointsNGADT() where
+module GMSH.GPoints() where
 {-
 All functionality for the GMSH.State.GPointId other than:
 It's use in the Builder monad transformer stack, which is in GMSH.Builder.GPoints.

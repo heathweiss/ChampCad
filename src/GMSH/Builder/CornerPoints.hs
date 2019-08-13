@@ -1,19 +1,17 @@
-{-# LANGUAGE TemplateHaskell #-}
-module GMSH.Builder.CornerPoints({-buildCubePointsList_h, buildCubePointsListSingle_h,-} buildCubePointsList, buildCubePointsListSingle) where
+module GMSH.Builder.CornerPoints(buildCubePointsList, buildCubePointsListSingle) where
+
 {- |
 Supply the Builder functions that deal with [CornerPoints.CornerPoints]
 -}
 import qualified CornerPoints.CornerPoints as CPts  
 
 import qualified GMSH.Builder.Base as GBB
-import qualified GMSH.Common as GC
-import qualified GMSH.Writer as GW
+import qualified GMSH.State as GS
 
 import qualified Control.Monad.Trans.Except as TE
 import qualified Control.Monad.State.Lazy as SL
 import qualified Control.Monad.Except as E
 import qualified System.IO as SIO
-
 
 {- |
 Given
@@ -44,8 +42,8 @@ and the whole concept of CornerPoints (vs Points) was to generate the stl mesh.
 buildCubePointsList :: String -> [CPts.CornerPoints] -> [CPts.CornerPoints] ->
                              GBB.ExceptStackCornerPointsBuilder [CPts.CornerPoints]
 --if an [] is passed in, nothing to do.
-buildCubePointsList _ [] _ =  E.lift $ SL.state $ \state' -> (GC.BuilderMonadData_CPoints([]), state')
-buildCubePointsList _ _ [] =  E.lift $ SL.state $ \state' -> (GC.BuilderMonadData_CPoints([]), state')
+buildCubePointsList _ [] _ =  E.lift $ SL.state $ \state' -> ([], state')
+buildCubePointsList _ _ [] =  E.lift $ SL.state $ \state' -> ([], state')
 --has 2 valid [CornerPoints], so process them.
 buildCubePointsList errMsg cPoints cPoints' = do
   let
@@ -53,7 +51,7 @@ buildCubePointsList errMsg cPoints cPoints' = do
   case CPts.findCornerPointsError cubeList of
         --has no CornerPointsError
         Nothing -> 
-          E.lift $ SL.state (\state' -> (GC.BuilderMonadData_CPoints(cubeList), state'))
+          E.lift $ SL.state (\state' -> (cubeList, state'))
         --has a CornerPointsError
         Just (CPts.CornerPointsError err) -> --has a CornerPointsError
           (TE.throwE $ errMsg ++ ": GMSH.Builder.CornerPoints.buildCubePointsList: " ++ (err))
@@ -62,4 +60,5 @@ buildCubePointsList errMsg cPoints cPoints' = do
 buildCubePointsListSingle :: String -> [CPts.CornerPoints] -> GBB.ExceptStackCornerPointsBuilder [CPts.CornerPoints]
 buildCubePointsListSingle errMsg cPoints =
   buildCubePointsList (errMsg ++ "GMSH.Builder.CornerPoints.buildCubePointsListSingle: ") [CPts.CornerPointsId | x <- [1..]] cPoints
+
 

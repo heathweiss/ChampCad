@@ -111,8 +111,11 @@ This means that I can use do notation with any return value inside the mtl stack
 Created <fileName>NGADT.hs files/modules for every file that needed changing to get rid of GMSH.Common.BuilderMonadData.
 commit -m 'NGADT module versions created'
 
-next:
+done:
 Get rid of all the orignal files that were replace with the <fileName>NGADT version.
+commint -m 'NGADT files renamed'
+
+next:
 Should be able to get rid of GMSH.Common as well.
 
 next: The write to file functionality in Builder.Points needs to be moved to Builder.GPoints?
