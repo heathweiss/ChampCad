@@ -1,6 +1,64 @@
 {-# LANGUAGE TemplateHaskell #-}
 module GMSH.Lines({-toLines, toPoints,-}{- insert-}) where
 {- |
+Lines, in gmsh, can be made in 2 different ways:
+1: from 2 points, which make up the 2 ends of the line.
+2: from 3 points, 2 are end points, and the 3rd is a point from which a curve is calculated between the 2 end points.
+
+This module will start by considering system 1. Perhaps the differences will require that a separate module be
+made for system 2.
+
+A [Line] will be generated from a [GPointId]. The [GPointId] was in turn gen'd from a NonOverLappedClosedPoints, which
+is a [Point] that is non-overlapped and closed. See GMSH.Point for the definition of that. Do I need to go through the step
+of ensuring the [GPointId] is still in that state? Or can I ensure//assume that it is?
+
+Assuming the [GPointId] is non-overlapped//closed:
+Traverse the [GPointId], getting an Id from State, and put it into a ADT along with the 2 GPointId's.
+
+-}
+
+import qualified GMSH.State as GST
+
+{- |
+Data for the 2 types of lines, as discussed in the opening docs to this module.
+-}
+data Line =
+  -- | A straight line made up of 2 end points used by gmsh.
+  StraightLine
+    {_sl_Id :: Int, --need to be a type from GMSH.State, the way GPointId is.
+     _sl_gPntIdStart :: GST.GPointId,
+     _sl_gPntIdEnd :: GST.GPointId
+    }
+  
+  |
+  -- | The 3 point curved line used by gmsh.
+  CurveLine
+    {_cl_Id :: Int --need to be a type from GMSH.State, the way GPointId is.
+
+    }
+    
+
+
+
+
+
+
+
+
+
+
+
+
+{-----------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------
+Everything below this was made prior to the completion of GPoints, and can be deleted. Wait till I make the new
+lines before doing so, in case I need any of this.
+
+
+
 Hash and insert Lines into the GMSH.Common.BuilderData datatype.
 Gets a unique ID for each line inserted.
 

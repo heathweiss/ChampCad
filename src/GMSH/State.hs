@@ -1,6 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE PatternSynonyms #-}
-module GMSH.State(BuilderStateData(), newBuilderData, GPointId(), pattern GPointId', retrieve, insertGPointId) where
+module GMSH.State(BuilderStateData(), newBuilderData, GPointId(), pattern GPointId', lookupGPointId, insertGPointId,
+                 newGPointId) where
 {- |
 Supply State functionality for the GMSH transformer stack.
 -}
@@ -35,6 +36,7 @@ data BuilderStateData = BuilderStateData
                        -- | All gmsh points(GPointId) are kept here, keyed by the hashed x,y,z values.
                        -- | Ensures there are not duplicates, by seeing if the hashed x,y,z value already exists.
                        -- | If so, then retrieve the GPointId and use instead of creating a new gmsh point.
+                       -- | The assoc'd points are not strored, as they are written to the .geo file when they are created.
                        _pointsMap::HM.HashMap Int GPointId,
                        -- | Will supply id's for the gmsh lines once they are implemented.
                        _linesId :: [Int],
@@ -49,6 +51,10 @@ makeLenses ''BuilderStateData
 newBuilderData :: BuilderStateData
 newBuilderData = BuilderStateData (HM.fromList []) (HM.fromList []) [1..] (map GPointId [1..])
 
+-- | Extract the next available GPointId.
+newGPointId :: BuilderStateData -> GPointId
+newGPointId builderStateData = head $ builderStateData ^. pointsIdSupply
+
 {- |
 Given
 builderStateData: A BuilderStateData which may contain the target GPointId in the pointsMap field.
@@ -60,8 +66,8 @@ Retrieve a GPointId from a BuilderStateData pointsMap.
 Return
 Nothing if not found, otherwise the Just GPointId
 -}
-retrieve ::  BuilderStateData -> Pts.Point -> Maybe GPointId
-retrieve  builderStateData point =
+lookupGPointId ::  BuilderStateData -> Pts.Point -> Maybe GPointId
+lookupGPointId  builderStateData point =
   HM.lookup (H.hash point) (builderStateData ^. pointsMap)
 
 

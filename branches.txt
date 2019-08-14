@@ -124,13 +124,16 @@ The write to file functionality in Builder.Points needs to be moved to GMSH.Writ
 Create a GMSH.Writer folder to contain all write functionality. eg: GMSH.Writer.<GPoints/Lines/Base/etc>?
 commit -m 'GMSH.Writer folder created.'
 
-next:
-Figure out a folder name to contain all the gmesh modules aready not in something like Builder or Writer
+done:
+Clean up some work between GMSH.State and GMSH.Builder.GPoints.
+commit -m 'clean up gpoints'
 
 next:
 make lines from the gpoints.
 Do I just return a [GPointId] or make a newtype the way I did with NonOverLappedClosedPoints?
 
+next:
+Figure out a folder name to contain all the gmesh modules aready not in something like Builder or Writer
 
 
 

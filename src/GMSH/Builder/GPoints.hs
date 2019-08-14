@@ -45,7 +45,7 @@ buildGPointsListOrFail_h' h (point:points) workingList = do
   state' <- SL.get
   let
     --get the Maybe GPointId from the BuilderStateData.pointsMap
-    maybe_gpoint = GST.retrieve state' point
+    maybe_gpoint = GST.lookupGPointId state' point
   
   case maybe_gpoint of
     Just gpoint -> do
@@ -53,22 +53,19 @@ buildGPointsListOrFail_h' h (point:points) workingList = do
       buildGPointsListOrFail_h' h points (gpoint : workingList) 
     Nothing -> do
       --GPoint doesn't yet exsist so:
-      --Create and append the new GPointId to the current State value of [GPointId], and add to the BuilderStateData.pointsMap.
+      --Extract the new GPointId from the State pointsIdSupply, and add to the BuilderStateData.pointsMap, along with the vertices.
       --Write the gpoint to the gmsh script file.
       
       let
-        gpoint = head $ state' ^. pointsIdSupply
+        --gpoint = head $ state' ^. pointsIdSupply
+        gpoint = GST.newGPointId state' 
         
       E.liftIO $ GWGPts.writeGScriptToFile h gpoint point
-      --reset the state with the new GPointId. The following recursive call to insertBase' will use it.
-      --lift $ state $ builder
+      --Add the new GPointId to the working list, and reset the state with the new GPointId.
       E.lift $ SL.state $
         \state'' ->
           (gpoint: workingList,
-           --state''{GST._pointsMap = (HM.insert (H.hash point)  gpoint) (state'' ^. pointsMap),
-           --        GST._pointsIdSupply = tail (state'' ^. pointsIdSupply) }
-           GST.insertGPointId state'' point gpoint
-                  
+           GST.insertGPointId state'' point gpoint 
           )
       buildGPointsListOrFail_h' h points (gpoint : workingList)
 
