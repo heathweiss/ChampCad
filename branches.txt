@@ -128,14 +128,26 @@ done:
 Clean up some work between GMSH.State and GMSH.Builder.GPoints.
 commit -m 'clean up gpoints'
 
+done:
+Make the GMSH.Points NonOverLappedClosedPoints [Point] into a [NonOverLappedClosedPoint point]
+commit -m 'NonOverLappedClosedPoint [point] is now a [NonOverLappedClosedPoint point]'
+
 next:
 make lines from the gpoints.
 Do I just return a [GPointId] or make a newtype the way I did with NonOverLappedClosedPoints?
 
+
+next:
+Make 2 types of Points to replace GMESH.Points.NonOverLappedClosedPoints newtype.
+Will need a EndPoint and a FocalPoint to indicate if it is a 2 point line, or a 3 point line for creating a curve.
+
+
+
 next:
 Figure out a folder name to contain all the gmesh modules aready not in something like Builder or Writer
 
-
+next:
+Refer to https://gist.github.com/seanhess/b17d4e3da88080c35542 on combing a ReaderT ExceptT to figure out how to better use the scanner db.
 
 
 

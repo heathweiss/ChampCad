@@ -1,7 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE PatternSynonyms #-}
 module GMSH.State(BuilderStateData(), newBuilderData, GPointId(), pattern GPointId', lookupGPointId, insertGPointId,
-                 newGPointId) where
+                 newGPointId, LineId()) where
 {- |
 Supply State functionality for the GMSH transformer stack.
 -}
@@ -24,6 +24,11 @@ newtype GPointId = GPointId {_gPointId :: Int}
 
 
 pattern GPointId' a <- GPointId a
+
+newtype LineId = LineId {_lineId :: Int}
+  deriving (Eq, Show)
+
+
 {- |
 Supplies the state data for the GMSH.Builder.Base.ExceptStackCornerPointsBuilder.
 Know uses:
@@ -31,15 +36,9 @@ Combines the gmsh id, and the x y z point info and keeps it in state in the Buil
 Used to make sure that there are no duplicate points in gmsh, when inserting a Pts.Point.
 -}
 data BuilderStateData = BuilderStateData
-                     { -- | Should be able to delete this, as lines will be written to file as they are created, and kept as the current value of state.
-                       _linesMap::HM.HashMap Int Int,
-                       -- | All gmsh points(GPointId) are kept here, keyed by the hashed x,y,z values.
-                       -- | Ensures there are not duplicates, by seeing if the hashed x,y,z value already exists.
-                       -- | If so, then retrieve the GPointId and use instead of creating a new gmsh point.
-                       -- | The assoc'd points are not strored, as they are written to the .geo file when they are created.
-                       _pointsMap::HM.HashMap Int GPointId,
+                     { _pointsMap::HM.HashMap Int GPointId,
                        -- | Will supply id's for the gmsh lines once they are implemented.
-                       _linesId :: [Int],
+                       _linesIdSupply :: [LineId],
                        -- | Supply id's for the new GPointId's
                        _pointsIdSupply :: [GPointId]
                        
@@ -49,11 +48,25 @@ makeLenses ''BuilderStateData
 
 -- | Initialize the empty BuilderStateData for running the Builder monad stack.
 newBuilderData :: BuilderStateData
-newBuilderData = BuilderStateData (HM.fromList []) (HM.fromList []) [1..] (map GPointId [1..])
+newBuilderData = BuilderStateData (HM.fromList []) (map LineId [1..]) (map GPointId [1..])
+
+--needed for testing
+instance Show BuilderStateData where
+  --show (BuilderData linesMap _) = show linesMap
+  show builderData = show $ builderData ^. pointsMap
+  
+--only needed for testing
+instance Eq BuilderStateData where
+  --(BuilderData linesMap _) == (BuilderData linesMap' _) = linesMap == linesMap'
+  builderData == builderData' = (builderData ^. pointsMap) == (builderData' ^. pointsMap)
+
+
+
 
 -- | Extract the next available GPointId.
 newGPointId :: BuilderStateData -> GPointId
 newGPointId builderStateData = head $ builderStateData ^. pointsIdSupply
+
 
 {- |
 Given
@@ -90,16 +103,28 @@ insertGPointId builderStateData point gPoint =
     {_pointsMap = (HM.insert (H.hash point)  gPoint) (builderStateData ^. pointsMap),
      _pointsIdSupply = tail (builderStateData ^. pointsIdSupply)
     }
+-----------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------
+------------------------------------------ Line -----------------------------------------------
 
---needed for testing
-instance Show BuilderStateData where
-  --show (BuilderData linesMap _) = show linesMap
-  show builderData = show $ (builderData ^. linesMap,builderData ^. pointsMap)
-  
---only needed for testing
-instance Eq BuilderStateData where
-  --(BuilderData linesMap _) == (BuilderData linesMap' _) = linesMap == linesMap'
-  builderData == builderData' = ((builderData ^. linesMap) == (builderData' ^. linesMap))
-                                &&
-                                ((builderData ^. pointsMap) == (builderData' ^. pointsMap))
 
+
+
+
+-- | Get the next available LineId from the BuilderStateData.
+-- Remove the next available LineId from the BuilderStateData.
+-- Returns: (next available LineId, BuilderStateData with the next available LineId removed)
+newLineId :: BuilderStateData -> (LineId, BuilderStateData)
+newLineId builderStateData =
+  let
+    getLineId :: BuilderStateData -> LineId
+    getLineId builderStateData = head $ builderStateData ^. linesIdSupply
+
+    removeLineId :: BuilderStateData -> BuilderStateData
+    removeLineId builderStateData =
+      builderStateData {_linesIdSupply = tail $ (builderStateData ^. linesIdSupply)}
+    
+  in
+  (getLineId builderStateData, removeLineId builderStateData)

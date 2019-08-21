@@ -48,7 +48,8 @@ type ID = Int
 -- | A [Pts.Point] in which the points have no overlap, so to make line, will need to reuse each point(except head and last) for making 2 lines.
 -- | The last Point will be the same as head.
 -- | Does not have the constructor exported, as the the fx: toNonOverlappingClosedPoints is the only way to get to this state.
-newtype NonOverLappedClosedPoints = NonOverLappedClosedPoints [Pts.Point]
+--newtype NonOverLappedClosedPoints = NonOverLappedClosedPoints [Pts.Point]
+newtype NonOverLappedClosedPoints = NonOverLappedClosedPoints Pts.Point
 
 pattern NonOverLappedClosedPoints' a <- NonOverLappedClosedPoints a
 
@@ -79,7 +80,7 @@ This is the only way to create a NonOverLappedClosedPoints, as the constructor i
 This creates a State in the BuilderMonadData, where a [GPoints] can be generated from a NonOverLappedClosedPoints, which is a closed nonoverlapped [Points].
 The NonOverLappedClosedPoints will be turned into a nonoverlapped closed [GPoints].
 -}
-toNonOverlappingClosedPoints :: [Pts.Point] -> Either String NonOverLappedClosedPoints
+toNonOverlappingClosedPoints :: [Pts.Point] -> Either String [NonOverLappedClosedPoints]
 toNonOverlappingClosedPoints [] = do
   Left "toNonOverlappingClosedPoints has [] passed in. Length must be at least 3 for a well formed surface"
 
@@ -89,11 +90,11 @@ toNonOverlappingClosedPoints points =
   let
     nonOverlappingClosedPoints = toNonOverlappingClosedPoints' (head points) (head points) points []
     --ensure that the resulting [] length >= 3.
-    has3 :: NonOverLappedClosedPoints -> Bool
-    has3 (NonOverLappedClosedPoints []) = False
-    has3 (NonOverLappedClosedPoints (a:[])) = False
-    has3 (NonOverLappedClosedPoints (a:b:[])) = False
-    has3 (NonOverLappedClosedPoints (a:b:c:[])) = False
+    has3 :: [a] -> Bool
+    has3 [] = False
+    has3 (a:[]) = False
+    has3 (a:b:[]) = False
+    has3 (a:b:c:[]) = False
     has3 _ = True
     
   in
@@ -101,10 +102,9 @@ toNonOverlappingClosedPoints points =
     True -> Right nonOverlappingClosedPoints
     False -> Left $ "toNonOverlappingClosedPoints: length of resulting [Point] < 3" 
 
-
 {-
 Given
-head': The head of orignal [Point]. When the end of points is reached, it is used to see if list is closed.
+head': The head of original [Point]. When the end of points is reached, it is used to see if list is closed.
 
 prevPoint: Compared to the current point to see if they are overlapped.
 
@@ -118,16 +118,15 @@ Work through the orignal [Point], ensuring no overlap, and that it is closed.
 Return
 Closed and nonoverlapped [Point]
 -}
-toNonOverlappingClosedPoints' :: Pts.Point -> Pts.Point -> [Pts.Point] -> [Pts.Point] -> NonOverLappedClosedPoints
+toNonOverlappingClosedPoints' :: Pts.Point -> Pts.Point -> [Pts.Point] -> [NonOverLappedClosedPoints] -> [NonOverLappedClosedPoints]
 --Have hit the end of list. Ensure closed, then reverse the build up working list.
 toNonOverlappingClosedPoints' head' prevPoint [] workingPoints =
   case head' == prevPoint of
-    True ->  NonOverLappedClosedPoints $ reverse workingPoints --Is closed.
-    False ->  NonOverLappedClosedPoints $ reverse $ head' : workingPoints --Not closed, so head' to the end of working list.
+    True ->  reverse workingPoints --Is closed.
+    False ->  reverse $ NonOverLappedClosedPoints head' : workingPoints --Not closed, so head' to the end of working list.
 toNonOverlappingClosedPoints' head' prevPoint (p:origPoints) workingPoints =
   case p == prevPoint of
     True -> toNonOverlappingClosedPoints' head' p origPoints workingPoints
-    False -> toNonOverlappingClosedPoints' head' p origPoints (p:workingPoints)
-
+    False -> toNonOverlappingClosedPoints' head' p origPoints (NonOverLappedClosedPoints p:workingPoints)
 
 

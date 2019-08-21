@@ -69,7 +69,7 @@ If the [Points] can be turned into a NonOverLappedClosedPoints: GBB.ExceptStackC
 If not: Left.
 -}
 
-toNonOverlappingClosedPointsOrFail :: String ->  [Pts.Point] -> GBB.ExceptStackCornerPointsBuilder GPts.NonOverLappedClosedPoints
+toNonOverlappingClosedPointsOrFail :: String ->  [Pts.Point] -> GBB.ExceptStackCornerPointsBuilder [GPts.NonOverLappedClosedPoints]
 toNonOverlappingClosedPointsOrFail extraMsg points = do 
   state' <- SL.get
   

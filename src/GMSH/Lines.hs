@@ -2,8 +2,11 @@
 module GMSH.Lines({-toLines, toPoints,-}{- insert-}) where
 {- |
 Lines, in gmsh, can be made in 2 different ways:
-1: from 2 points, which make up the 2 ends of the line.
-2: from 3 points, 2 are end points, and the 3rd is a point from which a curve is calculated between the 2 end points.
+1: Line: from 2 points, which make up the 2 ends of the line.
+2: Circle: from 3 points, 2 are end points, and the 3rd is a point from which a curve is calculated between the 2 end points.
+Each should be a constructor of the same ADT, so that as a [GPointId] is processed, it can decide how to handle the current point.
+A Line point would be combined with the prev point and made into a gmsh 'Line'.
+A Circle point would be combined with the prev and next point and made into a gmsh 'Circle'
 
 This module will start by considering system 1. Perhaps the differences will require that a separate module be
 made for system 2.
@@ -20,32 +23,33 @@ Traverse the [GPointId], getting an Id from State, and put it into a ADT along w
 import qualified GMSH.State as GST
 
 {- |
-Data for the 2 types of lines, as discussed in the opening docs to this module.
+Data for  gmsh lines and circles.
 -}
 data Line =
-  -- | A straight line made up of 2 end points used by gmsh.
-  StraightLine
-    {_sl_Id :: Int, --need to be a type from GMSH.State, the way GPointId is.
-     _sl_gPntIdStart :: GST.GPointId,
-     _sl_gPntIdEnd :: GST.GPointId
+  -- | A straight line made up of 2 end points used by gmsh. Corresponds to 'Line'.
+  Line
+    {_line_Id :: GST.LineId, --need to be a type from GMSH.State, the way GPointId is.
+     _line_gPointStart :: GST.GPointId,
+     _line_gPointEnd :: GST.GPointId
     }
-  
-  |
-  -- | The 3 point curved line used by gmsh.
-  CurveLine
-    {_cl_Id :: Int --need to be a type from GMSH.State, the way GPointId is.
+    |
+    Circle
+    {_circle_Id :: Int, --need to be a type from GMSH.State, the way GPointId is.
+     _circle_gPointStart :: GST.GPointId,
+     _circle_gPointEnd :: GST.GPointId,
+     _circle_gPointCurve :: GST.GPointId
+    }
 
-    }
     
 
-
-
-
-
-
-
-
-
+{- |
+Given
+gPointIds: The [gPointId] to be converted into [Line].
+  This must be nonoverlapped and closed. Should have a type for this, which only can be supplied via the
+  GMSH.Builder.GPoints.buildGPointsList_h fx.
+-}
+gpointIdsToLines :: [GST.GPointId] -> GST.BuilderStateData -> ([Line], GST.BuilderStateData)
+gpointIdsToLines [] builderStateData = ([], builderStateData)
 
 
 
