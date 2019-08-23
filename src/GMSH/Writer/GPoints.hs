@@ -8,17 +8,21 @@ import qualified Helpers.FileWriter as FW
 {-
 https://stackoverflow.com/questions/26778415/using-overloaded-strings
 -}
-toGScript :: GST.GPointId -> Pts.Point -> T.Text
-toGScript (GST.GPointId' id) (Pts.Point x y z) =
-  T.pack $
-    "\nPoint(" ++
-      (show (id)) ++ ") = {"  ++
-      --(show (id ^. pointsId ^. gPointId)) ++ ") = {"  ++
-      (show x) ++ "," ++
-      (show y) ++ "," ++
-      (show z) ++ "};"
 
 
 writeGScriptToFile :: SIO.Handle -> GST.GPointId -> Pts.Point -> IO ()
-writeGScriptToFile h gPointId point = 
+writeGScriptToFile h gPointId point =
+  let
+    toGScript :: GST.GPointId -> Pts.Point -> T.Text
+    toGScript (GST.GPointId' id) (Pts.Point x y z) =
+      T.pack $
+        "\nPoint(" ++
+          (show (id)) ++ ") = {"  ++
+          (show x) ++ "," ++
+          (show y) ++ "," ++
+          (show z) ++ "};"
+
+  in
   FW.writeFileUtf8 h $ toGScript gPointId point
+
+

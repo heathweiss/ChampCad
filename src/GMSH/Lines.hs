@@ -1,5 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
-module GMSH.Lines({-toLines, toPoints,-}{- insert-}) where
+{-# LANGUAGE PatternSynonyms #-}
+module GMSH.Lines(gPointIdsToLines, Line(), pattern Line', pattern Circle') where
 {- |
 Lines, in gmsh, can be made in 2 different ways:
 1: Line: from 2 points, which make up the 2 ends of the line.
@@ -23,7 +24,9 @@ Traverse the [GPointId], getting an Id from State, and put it into a ADT along w
 import qualified GMSH.State as GST
 
 {- |
-Data for  gmsh lines and circles.
+Data for  gmsh curves which includes: Line, Circle, Bezier ...
+So far only Line has been handled.
+ToDo: Change this into Curves, which is how gmsh categorizes them.
 -}
 data Line =
   -- | A straight line made up of 2 end points used by gmsh. Corresponds to 'Line'.
@@ -40,18 +43,36 @@ data Line =
      _circle_gPointCurve :: GST.GPointId
     }
 
-    
+pattern Line' a b c <- Line a b c
+pattern Circle' a b c d <- Circle a b c d
 
 {- |
 Given
 gPointIds: The [gPointId] to be converted into [Line].
   This must be nonoverlapped and closed. Should have a type for this, which only can be supplied via the
   GMSH.Builder.GPoints.buildGPointsList_h fx.
+
+Task
+Convert the [GPointId] to [Line].
+
+Return
+Left if:
+  Initial GPointId 
 -}
-gpointIdsToLines :: [GST.GPointId] -> GST.BuilderStateData -> ([Line], GST.BuilderStateData)
-gpointIdsToLines [] builderStateData = ([], builderStateData)
+gPointIdsToLines :: [GST.GPointId] -> GST.BuilderStateData -> ([Line], GST.BuilderStateData)
+gPointIdsToLines [] builderStateData = ([], builderStateData)
+gPointIdsToLines (g:[]) builderStateData = ([], builderStateData)
+gPointIdsToLines (g:gPoints) builderStateData = gPointIdsToLines' gPoints builderStateData g []
 
-
+gPointIdsToLines' :: [GST.GPointId] -> GST.BuilderStateData -> GST.GPointId -> [Line] -> ([Line], GST.BuilderStateData)
+gPointIdsToLines' [] builderStateData _ workingList = (reverse workingList, builderStateData) 
+gPointIdsToLines' (g:gPointIds) builderStateData prevGPointId workingList =
+  let
+    (lineId, builderStateData' ) = GST.getRemoveId builderStateData
+    line = Line lineId prevGPointId g 
+  in
+  gPointIdsToLines' gPointIds builderStateData' g (line : workingList) 
+  
 
 {-----------------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------------

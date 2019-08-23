@@ -1,19 +1,22 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE PatternSynonyms #-}
 module GMSH.State(BuilderStateData(), newBuilderData, GPointId(), pattern GPointId', lookupGPointId, insertGPointId,
-                 newGPointId, LineId()) where
+                 getId, removeId, getRemoveId, LineId(), pattern LineId', Id) where
 {- |
 Supply State functionality for the GMSH transformer stack.
 -}
 import qualified Data.HashMap.Strict as HM
 import qualified Data.Hashable as H
 import GHC.Generics (Generic)
+import qualified Control.Monad.State.Lazy as SL
 
 import Control.Lens
 
 import CornerPoints.Points(Point(..))
 import qualified CornerPoints.CornerPoints as CPts
 import qualified CornerPoints.Points as Pts
+
+
 
 {- |
 The ID that identifies each GPointId.
@@ -27,6 +30,8 @@ pattern GPointId' a <- GPointId a
 
 newtype LineId = LineId {_lineId :: Int}
   deriving (Eq, Show)
+
+pattern LineId' a <- LineId a
 
 
 {- |
@@ -62,10 +67,37 @@ instance Eq BuilderStateData where
 
 
 
+{- |
+For getting the next available Id from BuilderStateData.
+-}
+class Id a where
+  getId :: BuilderStateData -> a
+  -- | get the next available Id
+  removeId :: a -> BuilderStateData -> BuilderStateData
+  -- | remove the next available Id
+  getRemoveId :: BuilderStateData -> (a, BuilderStateData)
+  getRemoveId builderStateData =
+    let
+      a = getId builderStateData
+      builderStateData' = removeId a builderStateData
+    in
+    (a, builderStateData')
+  -- | Perform both getId and removeId in a single step. Requires getId and removeId to be implemented.
+  -- Not to be used for GPointId, as GPointId's are kept in a map, along with a Point, to keep them unique.
+  -- Instead use insertGPointId, which also takes a Point.
+
+instance Id GPointId where
+  getId builderStateData = head $ builderStateData ^. pointsIdSupply
+  removeId id builderStateData = builderStateData {_pointsIdSupply = (tail $ builderStateData ^. pointsIdSupply)}
+  
+instance Id LineId where
+  getId builderStateData = head $ builderStateData ^. linesIdSupply
+  removeId id builderStateData = builderStateData {_linesIdSupply = (tail $ builderStateData ^. linesIdSupply)}
 
 -- | Extract the next available GPointId.
-newGPointId :: BuilderStateData -> GPointId
-newGPointId builderStateData = head $ builderStateData ^. pointsIdSupply
+--newGPointId :: BuilderStateData -> GPointId
+--newGPointId builderStateData = head $ builderStateData ^. pointsIdSupply
+--replaced with getId from Id class
 
 
 {- |
@@ -97,34 +129,15 @@ Adjust the gpointId supply to remove the new Id.
 Return
 The builderStateData with the GPointId inserted into the map, and the supply with the new Id removed.
 -}
-insertGPointId :: BuilderStateData -> Pts.Point -> GPointId -> BuilderStateData
-insertGPointId builderStateData point gPoint =
-  builderStateData
-    {_pointsMap = (HM.insert (H.hash point)  gPoint) (builderStateData ^. pointsMap),
-     _pointsIdSupply = tail (builderStateData ^. pointsIdSupply)
-    }
------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------
------------------------------------------- Line -----------------------------------------------
-
-
-
-
-
--- | Get the next available LineId from the BuilderStateData.
--- Remove the next available LineId from the BuilderStateData.
--- Returns: (next available LineId, BuilderStateData with the next available LineId removed)
-newLineId :: BuilderStateData -> (LineId, BuilderStateData)
-newLineId builderStateData =
+insertGPointId :: BuilderStateData -> Pts.Point -> BuilderStateData
+insertGPointId builderStateData point =
+  
   let
-    getLineId :: BuilderStateData -> LineId
-    getLineId builderStateData = head $ builderStateData ^. linesIdSupply
-
-    removeLineId :: BuilderStateData -> BuilderStateData
-    removeLineId builderStateData =
-      builderStateData {_linesIdSupply = tail $ (builderStateData ^. linesIdSupply)}
-    
+    gPoint = getId builderStateData
   in
-  (getLineId builderStateData, removeLineId builderStateData)
+  removeId gPoint $ 
+  builderStateData
+    {_pointsMap = (HM.insert (H.hash point) gPoint ) (builderStateData ^. pointsMap)
+     
+    }
+  

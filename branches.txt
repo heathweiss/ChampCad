@@ -132,9 +132,14 @@ done:
 Make the GMSH.Points NonOverLappedClosedPoints [Point] into a [NonOverLappedClosedPoint point]
 commit -m 'NonOverLappedClosedPoint [point] is now a [NonOverLappedClosedPoint point]'
 
-next:
+done:
 make lines from the gpoints.
-Do I just return a [GPointId] or make a newtype the way I did with NonOverLappedClosedPoints?
+commit -m 'can create lines from gpoints'
+
+next:
+rename GMSH.Lines.Line to Curves, to match how gmsh the group of related items such as Line, Circle, Bezier ..., which share a common Id system and can be used
+within Curve Loop.
+Should also remane in BulderStateData.
 
 
 next:
