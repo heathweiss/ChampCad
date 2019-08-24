@@ -1,150 +1,35 @@
-
-
-master/gmsh:
-
-Commented out GL.insert as there will no longer be a need to insert that data in the BuilderStateData.
-However, will still need to make the lines, and their id and points, so they can be printed out as gmsh script, so don't delete yet.
-
-Commented out a lot of tests, as GB.ExceptStackCornerPointsBuilder now has IO at the btm. Will need to rewrite these tests using the underlying
-fx's, without the monad stack, or figure out how to write tests in IO monad.
- 
-
-GB.ExceptStackCornerPointsBuilder return type  is now GC.BuilderMonadData
-It has a separate constructor for each type of data, so far:(the alternative is a single constructor with Maybe values).
-BuilderMonadData_CPoints: allow to build up [CPts]
-BuilderMonadData_GPoints: allow to build up a [] of gmsh point id's.
-BuilderMonadData_Points: extract target Pts.Points from the CPts, so they can be converted into gmsh points.
-
-
-Added the ability to extract Points from CPts, and return as BuilderMonadData_Points.
-Need to clean this up. See firstTest.
-
-master->gmsh->gmsh_gpoints
-done:Create the gmsh points from the [Point], and save them to state, as well as the current BuilderMonadData value.
-commit: 'can create gpoints from points'
 -can: git reset --hard HEAD 
  or   
       git reset --hard 'can create gpoints from points'
--done:Create a GPointId type, to have a [GPointId] for the current builder monad value.
- It is a newtype wrapper around the current Int value required by gmsh.
- Change the BuilderStateData [point id] from int to GPointId
-commit: 'GPointId done'
 
-rename GC.PointsBuilderData to show that is is part of state, and it includes both GPointId and Pts.Point info.
-will be GPointsStateData
-commit: 'PointsBuilderData renamed to GPointsStateData'
+master/gmsh:
 
-next:
-Figure out when I will write the GPoints to file.
-I need them at a point, where exist prior to being inserted into GC.BuilderStateData.GPointsStateData,
-so that I can only write the ones which do not already exist.
-This is in GMSH.Points marked with a 'leftOff'.
-Added GP.insert<with/without>overlapping.
 
-Next: is to write the points which will require a handle.
-commit 'can overlap. Ready to write.'
-Did this, but can't perform IO inside if GP.insert<...>
-Do a commit so can look at while at work.
-commit -m 'cannot perform io in GP.insert'
-
-Can now write the gpoints to file, from a [FrontFace].
-Need a lot of clean up and testing.
-commit: 'can write gpoints to file'
-
-doing:
-done:
-simplify the GPoints, as it only needs to be an id.
-So:
--get rid of the GPointsStateData and replace with GPointId.
-next: clean up
-Got rid of the duplicate insert fx's that were in GMSH.<Points/Builder>.
-Just left if commented out so it can be pushed in it is needed later.
-commit: 'removed GMSH redundancies'
 
 done:
-merge gmsh_points into master and gmsh, and deleted.
-now on branch gmsh
+The  GMESH.Points.NonOverLappedClosedPoints newtype should go back to being a NonOverLappedClosedPoints [Pts]
+instead of a [NonOverLappedClosedPoints], as it is a state of a list, rather than a list of states.
+commit -m 'back to NonOverLappedClosedPoints [Pts]'
+pushed to gmsh
 
 
 next:
-reorganize GMSH.Builder so it has:
-Base
-CornerPoint
-Pts.Points
-GPoints
-had to format and install ubuntu 18.04
-did a commit push to test git.
-added new ssh key and pushed to github.
-See Dropbox/git.txt for more info.
-commit: 'test new git install'
+Create a GADT that uses NonOverLappedClosed<Points/GPoints/...> so I can pass along the NonOverLappedClosed State.
 
-
-
-Print comments in gscript so the gmsh output can be matched up to the builder fx calls.
-Add a handle in GMSH.Writer to write to a standard file, and maybe one that takes a file name, but writes to standard directory.
-commit 'cleaned up Gmsh Builder. Can print gmsh comments. Have a Gmsh.Writer file handle to write to.'
-merged to master and pushed prior to GADT as that should be done on a branch that can be deleted.
-
-next: make Gmsh Builder data type a GADT.
-Cleaned up some haddock comments, etc. then commited prior to GADT conversion. commit 'clean up comments'
-Made the GADT version of GC.BuilderMonadData and all functions that needed to be modifed because of that.
-commit 'added version 1 of GADT' and pushed gmsh to origin.
-
-done:
-Make a newtype that represents the state that [Pts.Point] has to be in to be converted to a [GPoints].
-The state is: no overlap, closed.
-commit -m 'NonOverLappedClosedPoints created'
-Then replace <insertWithOvrLap/insertNoOvrLap> with a single fx that creates a non overlapped closed [GPoint].
-Use this fx in the usual builder fashion of `catch`.
-Do this in a new module GMSH.Builder.GPoints.
-Created new error handler that uses a handle so it can write errors to the .geo file.
-commit -m 'new error handler is built'
-
-done:
-Clean up the imports to make sure everything is qualified in all modules.
-Clean up misc junk, comments, etc.
-commit -m 'qualifiy imports and clean up'
-
-done:
-Get rid of GMSH.Common.BuilderMonadData and use the fact that: >>= is (a  -> b) -> ma -> mb.
-This means that I can use do notation with any return value inside the mtl stack.
-Created <fileName>NGADT.hs files/modules for every file that needed changing to get rid of GMSH.Common.BuilderMonadData.
-commit -m 'NGADT module versions created'
-
-done:
-Get rid of all the orignal files that were replace with the <fileName>NGADT version.
-commint -m 'NGADT files renamed'
-
-done:
-Got rid of GMSH.Common as well, though it is still referred to in tests.
-commit -m 'got rid of GMSH.Common'
-
-done:
-The write to file functionality in Builder.Points needs to be moved to GMSH.Writer..GPoints
-Create a GMSH.Writer folder to contain all write functionality. eg: GMSH.Writer.<GPoints/Lines/Base/etc>?
-commit -m 'GMSH.Writer folder created.'
-
-done:
-Clean up some work between GMSH.State and GMSH.Builder.GPoints.
-commit -m 'clean up gpoints'
-
-done:
-Make the GMSH.Points NonOverLappedClosedPoints [Point] into a [NonOverLappedClosedPoint point]
-commit -m 'NonOverLappedClosedPoint [point] is now a [NonOverLappedClosedPoint point]'
-
-done:
-make lines from the gpoints.
-commit -m 'can create lines from gpoints'
 
 next:
 rename GMSH.Lines.Line to Curves, to match how gmsh the group of related items such as Line, Circle, Bezier ..., which share a common Id system and can be used
 within Curve Loop.
-Should also remane in BulderStateData.
+Should also rename in BulderStateData for their id.
 
 
 next:
-Make 2 types of Points to replace GMESH.Points.NonOverLappedClosedPoints newtype.
-Will need a EndPoint and a FocalPoint to indicate if it is a 2 point line, or a 3 point line for creating a curve.
+Create GPoints which contain a GPointId, and a set of (GADT?) constructors to indicate what they are.
+eg: End points for a gmsh Line. Control point for a gmsh Circle.
+Have a set of fx's that can convert the CPts.Pts into the target GPoint type.
+Could then have a [GPoint] such as [EndPoint, EndpPoint, CircleCenter, EndPoint, EndPoint].
+This would create a Line, Circle, Line. when converted to a Curve Loop.
+
 
 
 

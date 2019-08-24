@@ -25,7 +25,7 @@ generateFrontFace = do
     errorHandler = GB.errorHandler_h h
                     
   frontFace <- (GBC.buildCubePointsListSingle "frontFace <-"
-                 [CPts.FrontFace (Pts.Point 1 1 1) (Pts.Point 2 2 2) (Pts.Point 3 3 3) (Pts.Point 4 4 4)]
+                 [CPts.FrontFace (Pts.Point 0 0 1) (Pts.Point 0 1 1) (Pts.Point 1 1 1) (Pts.Point 1 0 1)]
                ) `E.catchError` errorHandler
 
   points <- (GBP.buildPointsList "points <- " frontFace) `E.catchError`  errorHandler

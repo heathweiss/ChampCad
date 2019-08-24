@@ -27,10 +27,7 @@ buildLines h errMsg gpoints = buildLines' h errMsg gpoints
 
 buildLines' :: SIO.Handle -> String -> [GST.GPointId] ->  GBB.ExceptStackCornerPointsBuilder [GL.Line]
 buildLines' h errMsg [] = do --should throw an error here instead.
-  {-
-  let
-    builder = \state' -> (reverse workingList, state')
-  E.lift $ SL.state $ builder -}
+  
   (TE.throwE $ errMsg ++ "Builder.Lines.buildPointsListOrFail: empty [GPointId] passed in.")
 buildLines' h errMsg gpoints = do
   state' <- SL.get
