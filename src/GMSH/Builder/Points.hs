@@ -86,3 +86,4 @@ toNonOverlappingClosedPointsOrFail extraMsg points = do
           
         Left e -> TE.throwE $ extraMsg ++ e
   
+

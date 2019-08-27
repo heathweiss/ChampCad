@@ -1,5 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 module GMSH.State(BuilderStateData(), newBuilderData, GPointId(), pattern GPointId', lookupGPointId, insertGPointId,
                  getId, removeId, getRemoveId, LineId(), pattern LineId', Id) where
 {- |
@@ -11,6 +12,8 @@ import GHC.Generics (Generic)
 import qualified Control.Monad.State.Lazy as SL
 
 import Control.Lens
+import  Data.Data
+import  Data.Typeable
 
 import CornerPoints.Points(Point(..))
 import qualified CornerPoints.CornerPoints as CPts
@@ -23,7 +26,7 @@ The ID that identifies each GPointId.
 The constructor does not get exported, to ensure that the gPointId only gets generated through State module.
 -}
 newtype GPointId = GPointId {_gPointId :: Int}
- deriving (Show, Eq)
+ deriving (Show, Eq, Typeable, Data)
 
 
 pattern GPointId' a <- GPointId a

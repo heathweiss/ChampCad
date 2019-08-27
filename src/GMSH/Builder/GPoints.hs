@@ -1,6 +1,8 @@
 {-# LANGUAGE TemplateHaskell #-}
-module GMSH.Builder.GPoints(buildGPointsList) where
+{-# LANGUAGE PatternSynonyms #-}
+module GMSH.Builder.GPoints(buildGPointIdsList, buildCurveList, NonOverLappedClosedGPoints(), pattern NonOverLappedClosedGPoints') where
 
+import qualified Control.Monad.Trans.Except as TE
 import qualified Control.Monad.State.Lazy as SL
 import qualified Control.Monad.Except as E
 import qualified System.IO as SIO
@@ -8,6 +10,7 @@ import qualified System.IO as SIO
 import qualified GMSH.Builder.Base as GBB
 import qualified GMSH.State as GST
 import qualified GMSH.Points as GP
+import qualified GMSH.GPoints as GGPts
 import qualified GMSH.Writer.GPoints as GWGPts
 import qualified CornerPoints.Points as Pts
 
@@ -39,19 +42,19 @@ BuilderStateData: All new GPointIds added to the GPointId map.
 All new GPointId's written to the .geo file.
 
 -}
-buildGPointsList :: SIO.Handle -> String -> GP.NonOverLappedClosedPoints -> GBB.ExceptStackCornerPointsBuilder [GST.GPointId]
-buildGPointsList h extraMsg (GP.NonOverLappedClosedPoints' points) = 
-  buildGPointsList' h points []
+buildGPointIdsList :: SIO.Handle -> String -> GP.NonOverLappedClosedPoints -> GBB.ExceptStackCornerPointsBuilder [GST.GPointId]
+buildGPointIdsList h extraMsg (GP.NonOverLappedClosedPoints' points) = 
+  buildGPointIdsList' h points []
 
 --Add the empty workingList of GPointId's, and recursively process the [GP.NonOverLappedClosedPoints] to create and write to file, the GPointId's.
-buildGPointsList' :: SIO.Handle -> [Pts.Point] -> [GST.GPointId] -> GBB.ExceptStackCornerPointsBuilder [GST.GPointId]
-buildGPointsList' h [] workingList = do
+buildGPointIdsList' :: SIO.Handle -> [Pts.Point] -> [GST.GPointId] -> GBB.ExceptStackCornerPointsBuilder [GST.GPointId]
+buildGPointIdsList' h [] workingList = do
   let
     builder = \state' -> (reverse workingList, state')
   E.lift $ SL.state $ builder
   
 
-buildGPointsList' h (noc_point:noc_points) workingList = do
+buildGPointIdsList' h (noc_point:noc_points) workingList = do
   state' <- SL.get
   let
     --get the Maybe GPointId from the BuilderStateData.pointsMap
@@ -60,7 +63,7 @@ buildGPointsList' h (noc_point:noc_points) workingList = do
   case maybe_gpoint of
     Just gpoint -> do
       --pass the GPointId to the overlapper fx to be added to the current State value of [GPointId] as per rules of the overlapping fx.
-      buildGPointsList' h noc_points (gpoint : workingList) 
+      buildGPointIdsList' h noc_points (gpoint : workingList) 
     Nothing -> do
       --GPoint doesn't yet exsist so:
       --Extract the new GPointId from the State pointsIdSupply, and add to the BuilderStateData.pointsMap, along with the vertices.
@@ -77,7 +80,73 @@ buildGPointsList' h (noc_point:noc_points) workingList = do
           (newWorkingList,
            GST.insertGPointId state'' noc_point  
           )
-      buildGPointsList' h noc_points newWorkingList
+      buildGPointIdsList' h noc_points newWorkingList
 
 
+-----------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------
+-------------------------- now build a version that returns [GMSH.GPoints.Curve] instead of [GST.GPointId]-------------------
+newtype NonOverLappedClosedGPoints  = NonOverLappedClosedGPoints [GGPts.GPoints]
 
+pattern NonOverLappedClosedGPoints' a = NonOverLappedClosedGPoints a
+
+
+buildCurveList :: SIO.Handle
+               -> String
+               -> GP.NonOverLappedClosedPoints
+               -> [(GST.GPointId -> Pts.Point -> GGPts.GPoints)]
+               -> GBB.ExceptStackCornerPointsBuilder NonOverLappedClosedGPoints
+buildCurveList _ errMsg (GP.NonOverLappedClosedPoints' []) _ =
+  TE.throwE $ errMsg ++ " GMSH.Builder.GPoints.buildCurveList: empty NonOverLappedClosedPoints [] passed in."
+buildCurveList _ errMsg _ [] =
+  TE.throwE $ errMsg ++ " GMSH.Builder.GPoints.buildCurveList: empty  [Curve constructor] passed in."
+buildCurveList h errMsg (GP.NonOverLappedClosedPoints' points) constructors =
+  buildCurveList' h errMsg points constructors []
+
+--leftOff 
+--implement buildCurveList'
+buildCurveList' :: SIO.Handle
+               -> String -> [Pts.Point]
+               -> [(GST.GPointId -> Pts.Point -> GGPts.GPoints)]
+               -> [GGPts.GPoints]
+               -> GBB.ExceptStackCornerPointsBuilder NonOverLappedClosedGPoints
+
+buildCurveList' _ _ [] _ workingList = do
+  let
+    builder = \state' -> (NonOverLappedClosedGPoints $ reverse workingList, state')
+  E.lift $ SL.state $ builder
+
+buildCurveList' _ errMsg _ [] _ = do
+  TE.throwE $ errMsg ++ " GMSH.Builder.GPoints.buildCurveList': empty  [Curve constructor] passed in."
+
+buildCurveList' h errMsg (p:points) (c:constructors) workingList = do
+  state' <- SL.get
+  let
+    --get the Maybe GPointId from the BuilderStateData.pointsMap
+    maybe_gpoint = GST.lookupGPointId state' p
+  case maybe_gpoint of
+    Just gpoint -> do
+      --pass the GPointId to the overlapper fx to be added to the current State value of [GPointId] as per rules of the overlapping fx.
+      buildCurveList' h errMsg points constructors ((c gpoint p) : workingList) 
+    
+    Nothing -> do
+      --GPoint doesn't yet exsist so:
+      --Extract the new GPointId from the State pointsIdSupply, and add to the BuilderStateData.pointsMap, along with the vertices.
+      --Write the gpoint to the gmsh script file.
+      
+      let
+        newGPoint = GST.getId state'
+        newWorkingList = (c newGPoint p) : workingList
+
+      E.liftIO $ GWGPts.writeGScriptToFile h newGPoint p
+      --Add the new GPointId to the working list, and reset the state with the new GPointId.
+      E.lift $ SL.state $
+        \state'' ->
+          (newWorkingList,
+           GST.insertGPointId state'' p 
+          )
+      buildCurveList' h errMsg points constructors newWorkingList
