@@ -53,9 +53,10 @@ library
                        Persistable.Mapping
                        Persistable.Radial
 
-                       --GMSH
+  --GMSH
                        GMSH.Points
-                       GMSH.Lines, GMSH.Builder.Lines, GMSH.Writer.Lines
+                       --GMSH.Lines, GMSH.Builder.Lines, GMSH.Writer.Lines
+                       GMSH.Curve
                        GMSH.Builder.Base
                        GMSH.Builder.CornerPoints
                        GMSH.Builder.Points

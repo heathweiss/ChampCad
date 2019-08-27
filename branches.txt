@@ -13,7 +13,7 @@ commit -m 'back to NonOverLappedClosedPoints [Pts]'
 pushed to gmsh
 
 
-next:
+done:
 Create GPoints which contain a GPointId, and a set of (GADT?) constructors to indicate what they are.
 eg: End points for a gmsh Line. Control point for a gmsh Circle.
 Have a set of fx's that can convert the CPts.Pts into the target GPoint type.
@@ -23,11 +23,15 @@ This would create a Line, Circle, Line. when converted to a Curve Loop.
 --need to get rid of the GMSH.Builder.buildGPointIdLines as there should be no need for it.
 commit -m 'Lines are now created from GPoints'
 
-next:
-Combine GMESH.Lines and GMESH.Builder.Lines into GMESH.Curves
+done:
+Combine GMESH.Lines and GMESH.Builder.Lines, GMSH.Writer.Lines into GMESH.Curves.
+Rename functions and ADT to reflect the name change.
+Deleted the orignal <GMESH/Builder/Writer>Lines modules.
+commit -m 'created GMESH.Curves.'
 
 next:
-Rename Lines ADT and modules to Curves, and combine into a single module instead of Builder/Writer.
+Think of a better name for GPoints, to better reflect what they do.
+eg: CurvePoints
 
 next:
 create a Curve Loop, Wire, and Physical Curve, which should be separate from Curve, in that they hold [Curve]. eg: Curve Loop (1) = [Line 1, Line 2...].
