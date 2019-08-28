@@ -44,8 +44,11 @@ commit -m 'Created CurvePoints'
 merged/pushed to master
 
 
-next:
-Merge Points and CornerPoints into a single file: GMSH.CornerPoints
+done:
+Merged <GMSH/Builder/Writer> Points and CornerPoints into a single file: GMSH.CornerPoints.
+Renamed some functions.
+Deleted the old modules.
+commit -m 'combine Points and CornerPoints into new module'
 
 next:
 Think of a better name for GPointId.

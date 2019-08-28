@@ -42,27 +42,23 @@ library
                        Joiners.DelaunayViewer, Joiners.Advancer, Joiners.AdvanceComposable
                        Joiners.AdvanceBase, Joiners.AdvanceSupport, Joiners.AdvanceToHeadOfPerimeters
                        Joiners.RadialLines
-                       --math
+--math
                        Math.Trigonometry, Math.Distance, Math.Equal, Math.Doubles
                        
-                       --stl
+--stl
                        Stl.StlBase, Stl.StlCornerPoints, Stl.StlFileWriter, Stl.StlCornerPointsWithDegrees
-                       --helpers
+--helpers
                        Helpers.List, Helpers.DSL, Helpers.Applicative, Helpers.FileWriter
                        Helpers.Symmetrical.Sequence, Helpers.Symmetrical.List
                        --database
                        Persistable.Mapping
                        Persistable.Radial
 
---GMSH
-                       GMSH.Points
-                       --GMSH.Lines, GMSH.Builder.Lines, GMSH.Writer.Lines
+--GMSH                 
+                       GMSH.CornerPoints
                        GMSH.Curve
                        GMSH.CurvePoints
                        GMSH.Builder.Base
-                       GMSH.Builder.CornerPoints
-                       GMSH.Builder.Points
-                       --GMSH.GPoints, GMSH.Builder.GPoints, GMSH.Writer.GPoints
                        GMSH.Writer.Base
                        GMSH.State
                        GMSH.Base

@@ -15,7 +15,7 @@ import qualified TypeClasses.Showable as TS
 import qualified CornerPoints.Points as Pts
 import qualified Helpers.FileWriter as FW
 import qualified GMSH.Builder.Base as GBB
-import qualified GMSH.Points as GP
+import qualified GMSH.CornerPoints as GmeshCPts
 import qualified GMSH.Base as GB
 
 import  Data.Data
@@ -63,7 +63,7 @@ writeGScriptToFile h gPointId point =
 
 buildCurveList :: SIO.Handle
                -> String
-               -> GP.NonOverLappedClosedPoints
+               -> GmeshCPts.NonOverLappedClosedPoints
                -> [(GST.GPointId -> Pts.Point -> CurvePoint)]
                -> GBB.ExceptStackCornerPointsBuilder NonOverLappedClosedCurvePoints
 buildCurveList _ errMsg (GB.NonOverLappedClosed []) _ =
