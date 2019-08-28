@@ -1,7 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE ExtendedDefaultRules #-}
 {-# LANGUAGE PatternSynonyms #-}
-module GMSH.Points(NonOverLappedClosedPoints(), pattern NonOverLappedClosedPoints', toNonOverlappingClosedPoints) where
+module GMSH.Points(NonOverLappedClosedPoints(), {-pattern NonOverLappedClosedPoints',-} toNonOverlappingClosedPoints) where
 {- |
 
 GMSH functionality for CornerPoints.Points:
@@ -27,10 +27,8 @@ import qualified CornerPoints.Points as Pts
 import CornerPoints.CornerPoints(CornerPoints(..))
 import qualified CornerPoints.CornerPoints as CPts
 import qualified GMSH.State as GST
-import qualified GMSH.GPoints as GGPts
 import qualified Helpers.FileWriter as FW
-
-import qualified Helpers.FileWriter as FW
+import qualified GMSH.Base as GB
 
 default (T.Text)
 
@@ -51,10 +49,13 @@ type ID = Int
 --newtype NonOverLappedClosedPoints = NonOverLappedClosedPoints [Pts.Point]
 --newtype NonOverLappedClosedPoints = NonOverLappedClosedPoints Pts.Point
 --newtype NonOverLappedClosedPoints = NonOverLappedClosedPoints [Pts.Point]
+{-
 newtype NonOverLappedClosedPoints  = NonOverLappedClosedPoints [Pts.Point]
 
 pattern NonOverLappedClosedPoints' a <- NonOverLappedClosedPoints a
 
+-}
+type NonOverLappedClosedPoints = GB.NonOverLappedClosed [Pts.Point]
 {- |
 definitions
 closed:
@@ -90,7 +91,66 @@ toNonOverlappingClosedPoints (p:[]) = Left "toNonOverlappingClosedPoints has (p:
 toNonOverlappingClosedPoints (p:p1:[]) = Left "toNonOverlappingClosedPoints has (p:p1:[]) passed in. Length must be at least 3 for a well formed surface"
 toNonOverlappingClosedPoints (p:points) =
   let
-    nonOverlappingClosedPoints = toNonOverlappingClosedPoints' p p points (NonOverLappedClosedPoints [p])
+    --nonOverlappingClosedPoints = toNonOverlappingClosedPoints' p p points (NonOverLappedClosedPoints [p])
+    nonOverlappingClosedPoints = toNonOverlappingClosedPoints' p p points (GB.NonOverLappedClosed [p])
+    --with p: set as head, set as previous point, add to working list.
+    
+    --ensure that the resulting [NonOverLappedClosedPoints] length >= 3,
+    --as a surface needs at least 3 points to have a surface area, otherwise it is just a pair of lines.
+    has3 :: NonOverLappedClosedPoints  -> Bool
+    has3 (GB.NonOverLappedClosed []) = False
+    has3 (GB.NonOverLappedClosed (a:[])) = False
+    has3 (GB.NonOverLappedClosed (a:b:[])) = False
+    has3 (GB.NonOverLappedClosed (a:b:c:[])) = False
+    has3 _ = True
+    
+  in
+  case has3 nonOverlappingClosedPoints of
+    True -> Right nonOverlappingClosedPoints
+    False -> Left $ "toNonOverlappingClosedPoints: length of resulting [Point] < 3" 
+
+{-
+Given
+head': The head of original [Point]. When the end of points is reached, it is used to see if list is closed.
+
+prevPoint: Compared to the current point to see if they are overlapped.
+
+origPoints: The orignal [Point] that is being checked for overlap and closure.
+
+workingPoints: The [Point] being created that is not overlapped and is closed.
+
+Task
+Work through the orignal [Point], ensuring no overlap, and that it is closed.
+
+Return
+Closed and nonoverlapped [Point]
+-}
+toNonOverlappingClosedPoints' :: Pts.Point -> Pts.Point -> [Pts.Point] -> NonOverLappedClosedPoints -> NonOverLappedClosedPoints 
+--Have hit the end of list. Ensure closed, then reverse the build up working list.
+toNonOverlappingClosedPoints' head' prevPoint [] (GB.NonOverLappedClosed workingPoints) =
+  case head' == prevPoint of
+    True ->  GB.NonOverLappedClosed $ reverse workingPoints --Is closed.
+    False ->  GB.NonOverLappedClosed $ reverse $ ( head' : workingPoints) --Not closed, so head' to the end of working list.
+    --False -> fmap (reverse) $ fmap (head' :)  (NonOverLappedClosedPoints workingPoints)
+    --False -> {-fmap (reverse) $-} fmap (head' :)  (NonOverLappedClosedPoints workingPoints)
+toNonOverlappingClosedPoints' head' prevPoint (p:origPoints) (GB.NonOverLappedClosed workingPoints) =
+  case p == prevPoint of
+    True -> toNonOverlappingClosedPoints' head' p origPoints $ GB.NonOverLappedClosed workingPoints
+    --False -> toNonOverlappingClosedPoints' head' p origPoints (GB.NonOverLappedClosed (p:workingPoints))
+    False -> toNonOverlappingClosedPoints' head' p origPoints  $
+                (GB.NonOverLappedClosed (p:workingPoints) )
+
+{-
+toNonOverlappingClosedPoints :: [Pts.Point] -> Either String NonOverLappedClosedPoints 
+toNonOverlappingClosedPoints [] = do
+  Left "toNonOverlappingClosedPoints has [] passed in. Length must be at least 3 for a well formed surface"
+
+toNonOverlappingClosedPoints (p:[]) = Left "toNonOverlappingClosedPoints has (p:[]) passed in. Length must be at least 3 for a well formed surface"
+toNonOverlappingClosedPoints (p:p1:[]) = Left "toNonOverlappingClosedPoints has (p:p1:[]) passed in. Length must be at least 3 for a well formed surface"
+toNonOverlappingClosedPoints (p:points) =
+  let
+    --nonOverlappingClosedPoints = toNonOverlappingClosedPoints' p p points (NonOverLappedClosedPoints [p])
+    nonOverlappingClosedPoints = toNonOverlappingClosedPoints' p p points (GB.NonOverLappedClosed [p])
     --with p: set as head, set as previous point, add to working list.
     
     --ensure that the resulting [NonOverLappedClosedPoints] length >= 3,
@@ -138,3 +198,4 @@ toNonOverlappingClosedPoints' head' prevPoint (p:origPoints) (NonOverLappedClose
     False -> toNonOverlappingClosedPoints' head' p origPoints  $
                 (NonOverLappedClosedPoints (p:workingPoints) )
 
+-}

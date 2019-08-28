@@ -37,9 +37,24 @@ Note the use of Data<Data/Typeable> {-# LANGUAGE DeriveDataTypeable #-} and the 
 commit -m 'created Showable class'
 merged to master and pushed
 
+done:
+Renamed GPoints to CurvePoints, to  better reflect what they do.
+Merged all CurvePoints into single module, and deleted all the old GPoints modules
+commit -m 'Created CurvePoints'
+merged/pushed to master
+
+
 next:
-Think of a better name for GPoints, to better reflect what they do.
-eg: CurvePoints
+Merge Points and CornerPoints into a single file: GMSH.CornerPoints
+
+next:
+Think of a better name for GPointId.
+Should be a CurvePointId
+Should exist inside GMSH.CurvePoint instead of inside State module?
+
+next:
+Think of a better name for GMSH.State so it is not confused with haskell state monad.
+eg: GMSHState, GState
 
 next:
 create a Curve Loop, Wire, and Physical Curve, which should be separate from Curve, in that they hold [Curve]. eg: Curve Loop (1) = [Line 1, Line 2...].
@@ -50,11 +65,13 @@ rename GMSH.Lines.Line to Curves, to match how gmsh the group of related items s
 within Curve Loop.
 Should also rename in BulderStateData for their id.
 
-
+next:
+move Builder.Base into the new GMSH.Base module?
 
 next:
 Look at combining the modules from GMSH, Builder, and Writer.
 eg: GMSH.GPoints, GMSH.Builder.GPoints, and GMSH.Writer.GPoints could all be in the same module to save confusion of being all spread out.
+
 
 
 next:

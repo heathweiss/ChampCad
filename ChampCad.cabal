@@ -58,12 +58,14 @@ library
                        GMSH.Points
                        --GMSH.Lines, GMSH.Builder.Lines, GMSH.Writer.Lines
                        GMSH.Curve
+                       GMSH.CurvePoints
                        GMSH.Builder.Base
                        GMSH.Builder.CornerPoints
                        GMSH.Builder.Points
-                       GMSH.GPoints, GMSH.Builder.GPoints
-                       GMSH.Writer.Base, GMSH.Writer.GPoints
+                       --GMSH.GPoints, GMSH.Builder.GPoints, GMSH.Writer.GPoints
+                       GMSH.Writer.Base
                        GMSH.State
+                       GMSH.Base
 --Examples
                        Examples.ShoeLift.SnowBoardBoot
                        Examples.ShoeLift.GeoxShoe,

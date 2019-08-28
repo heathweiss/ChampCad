@@ -1,15 +1,11 @@
 module Examples.Gmsh.FirstTest() where
-import qualified GMSH.Points as GP
---import qualified GMSH.Lines as GL
-import qualified GMSH.GPoints as GGPts
---import qualified GMSH.Builder.Lines as GBL
 import qualified GMSH.Writer.Base as GWB
 import qualified GMSH.Builder.Base as GB
 import qualified GMSH.Builder.CornerPoints as GBC
 import qualified GMSH.Builder.Points as GBP
-import qualified GMSH.Builder.GPoints as GBGPts
 import qualified GMSH.State as GST
-import qualified GMSH.Curve as GC
+import qualified GMSH.Curve as Curve
+import qualified GMSH.CurvePoints as CurvePoints
 
 import qualified CornerPoints.Points as Pts
 import qualified CornerPoints.CornerPoints as CPts
@@ -38,11 +34,11 @@ generateFrontFace = do
   E.liftIO $ GWB.writeComment h "frontFace points"
   
   let
-    constructors = (GGPts.EndPoint : GGPts.CircleArcPoint : [GGPts.EndPoint | a <- [1..]])
-    --constructors = [GGPts.EndPoint | a <- [1..]]
-  curves <- GBGPts.buildCurveList h "curves" closedNonOverlappedPoints constructors   `E.catchError` errorHandler
+    failingConstructors = (CurvePoints.EndPoint : CurvePoints.CircleArcPoint : [CurvePoints.EndPoint | a <- [1..]])
+    passingConstructors = [CurvePoints.EndPoint | a <- [1..]]
+  curves <- CurvePoints.buildCurveList h "curves" closedNonOverlappedPoints passingConstructors   `E.catchError` errorHandler
 
-  lines <- GC.buildCurves h "lines" curves  `E.catchError` errorHandler
+  lines <- Curve.buildCurves h "lines" curves  `E.catchError` errorHandler
   
   E.liftIO $  SIO.hClose h
   return ()
@@ -50,8 +46,6 @@ generateFrontFace = do
 
 runGenerateFrontFace :: IO()
 runGenerateFrontFace = do
-  --((SL.execStateT $ E.runExceptT generateFrontFace ) GB.newBuilderData)
   io <- ((SL.execStateT $ E.runExceptT generateFrontFace ) GST.newBuilderData)
-  --print $ show $ io
   
   putStrLn "done"
