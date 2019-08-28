@@ -29,8 +29,9 @@ library
                        CornerPoints.FaceConversionsWithDegrees
                        CornerPoints.Degree, CornerPoints.MeshGeneration, CornerPoints.Slicer,
                        CornerPoints.Slope,
-                       --TypeClasses
+--TypeClasses
                        TypeClasses.Transposable
+                       TypeClasses.Showable
                        --Cubical
                        Cubical.Cubical
 --Builder
@@ -53,7 +54,7 @@ library
                        Persistable.Mapping
                        Persistable.Radial
 
-  --GMSH
+--GMSH
                        GMSH.Points
                        --GMSH.Lines, GMSH.Builder.Lines, GMSH.Writer.Lines
                        GMSH.Curve
@@ -63,7 +64,7 @@ library
                        GMSH.GPoints, GMSH.Builder.GPoints
                        GMSH.Writer.Base, GMSH.Writer.GPoints
                        GMSH.State
-                       --Examples
+--Examples
                        Examples.ShoeLift.SnowBoardBoot
                        Examples.ShoeLift.GeoxShoe,
                        Examples.ShoeLift.SandalsAFO,

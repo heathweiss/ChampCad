@@ -29,6 +29,7 @@ import qualified GMSH.Builder.Base as GBB
 import qualified GMSH.Builder.GPoints as GBGPts
 import qualified Helpers.FileWriter as FW
 import qualified GMSH.Writer.GPoints as GWGPts
+import qualified TypeClasses.Showable as TS
 
 
 import qualified Control.Monad.Except as E
@@ -126,7 +127,8 @@ gPointsToCurves' errMsg ((GGPts.EndPoint currGPointId currPoint):gpoints) builde
     ((Line lineId prevGPointId currGPointId) : workingList)
 
 gPointsToCurves' errMsg (unMatchedCurrentGPointConstructor:gpoints) _ unMatchedPrevGPointConstructor _ =
-  Left $ errMsg ++ " GMSH.Curves.gPointsToCurves' has unhandled pattern match for current: " ++ (GGPts.getType unMatchedCurrentGPointConstructor)
+  --Left $ errMsg ++ " GMSH.Curves.gPointsToCurves' has unhandled pattern match for current: " ++ (GGPts.getType unMatchedCurrentGPointConstructor)
+  Left $ errMsg ++ " GMSH.Curves.gPointsToCurves' has unhandled pattern match for current: " ++ (TS.showConstructor unMatchedCurrentGPointConstructor)
                 ++ " previous: "
                 ++ (GGPts.getType unMatchedPrevGPointConstructor)
 

@@ -38,8 +38,8 @@ generateFrontFace = do
   E.liftIO $ GWB.writeComment h "frontFace points"
   
   let
-    --constructors = (GGPts.EndPoint : GGPts.CircleArcPoint : [GGPts.EndPoint | a <- [1..]])
-    constructors = [GGPts.EndPoint | a <- [1..]]
+    constructors = (GGPts.EndPoint : GGPts.CircleArcPoint : [GGPts.EndPoint | a <- [1..]])
+    --constructors = [GGPts.EndPoint | a <- [1..]]
   curves <- GBGPts.buildCurveList h "curves" closedNonOverlappedPoints constructors   `E.catchError` errorHandler
 
   lines <- GC.buildCurves h "lines" curves  `E.catchError` errorHandler

@@ -16,12 +16,13 @@ module Geometry.Intercept(getChangeInX, getChangeInY, yIntercept, lineIntersecti
                           perimetersContainLegalIntersections, segmentIntersection,
                           closestPointOnLineParamGloss) where
 
-import CornerPoints.CornerPoints(CornerPoints(..), cpointType, (+++))
+import CornerPoints.CornerPoints(CornerPoints(..), (+++))
 import CornerPoints.Points (Point(..))
 
 import Math.Distance(DistanceA(..), calculateDistanceA, calculateXYDistance, getOrderingA, center, (<-|->), fromDistance)
 
 import Helpers.Applicative(extractE, extractMaybe)
+import qualified TypeClasses.Showable as TS
 
 import Control.Monad.Trans.Except
 import Control.Monad.Trans.Maybe
@@ -64,7 +65,7 @@ lineIntersection (BottomRightLine b4 f4) (BackBottomLine b1 b4') =
   Right $ lineIntersection' b4 f4 b1 b4'
 
 lineIntersection c1 c2 =
-  Left $ "Geometry.Intercept.lineIntersection missing pattern match for " ++ (cpointType c1) ++ " and " ++ (cpointType c2)
+  Left $ "Geometry.Intercept.lineIntersection missing pattern match for " ++ (TS.showConstructor c1) ++ " and " ++ (TS.showConstructor c2)
 
 lineIntersection'
         :: Point        -- ^ `P1`
@@ -110,7 +111,7 @@ segmentIntersection (TopLeftLine p2a p2b) (BackTopLine p1a p1b) =
   segmentIntersection (BackTopLine p1a p1b) (TopLeftLine p2a p2b) 
   
 segmentIntersection c1 c2 =
-  Left $ "segmentIntersection: missing pattern match for: " ++ (cpointType c1) ++ " and " ++ (cpointType c2)
+  Left $ "segmentIntersection: missing pattern match for: " ++ (TS.showConstructor c1) ++ " and " ++ (TS.showConstructor c2)
 
 
 --rewrote it but still give wrong answer
@@ -207,7 +208,7 @@ legalIntersection (BackTopLine p1 p2) (TopLeftLine p3 p4) =
   
 
 legalIntersection advancingCpoint perimeter =
-  Left $ "Geometry.Intercept.legalIntersection has missing or illegal pattern match for advancingCpoint: " ++ (cpointType advancingCpoint) ++ " and  perimeter: " ++ (cpointType perimeter)
+  Left $ "Geometry.Intercept.legalIntersection has missing or illegal pattern match for advancingCpoint: " ++ (TS.showConstructor advancingCpoint) ++ " and  perimeter: " ++ (TS.showConstructor perimeter)
 
 -- create a generic fx for lines for legalIntersection.
 legalIntersectionGenericForLines ::
@@ -331,7 +332,7 @@ getChangeInX (BackBottomLine b1 b4) =
   Right $ DistanceA $ (x_axis b1) - (x_axis b4)
 
 getChangeInX cpoint =
-  Left $ "Geometry.Intercept.getChangeInX: illegal or missing pattern match for " ++ (cpointType cpoint)
+  Left $ "Geometry.Intercept.getChangeInX: illegal or missing pattern match for " ++ (TS.showConstructor cpoint)
 
 getChangeInY :: CornerPoints -> Either String DistanceA
 getChangeInY (BottomLeftLine b1 f1) =
@@ -341,7 +342,7 @@ getChangeInY (BackBottomLine b1 b4) =
   Right $ DistanceA $ (y_axis b1) - (y_axis b4)
 
 getChangeInY cpoint =
-  Left $ "Geometry.Intercept.getChangeInY: illegal or missing pattern match for " ++ (cpointType cpoint)
+  Left $ "Geometry.Intercept.getChangeInY: illegal or missing pattern match for " ++ (TS.showConstructor cpoint)
 
 divDistanceA :: DistanceA -> DistanceA -> DistanceA 
 divDistanceA (DistanceA d1) (DistanceA d2) =  DistanceA $ d1 / d2

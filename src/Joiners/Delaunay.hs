@@ -8,7 +8,7 @@ module Joiners.Delaunay(delaunayBCurried, delaunayB, orderedInnerPerims', advanc
 
 import Data.Typeable
 
-import CornerPoints.CornerPoints(CornerPoints(..),(+++),(++++), cpointType)
+import CornerPoints.CornerPoints(CornerPoints(..),(+++),(++++))
 import CornerPoints.FaceExtraction(extractB1,extractFrontLeftLine, extractF1, extractBackLeftLine, contains )
 import CornerPoints.FaceConversions(toLeftFace, raisedTo, toBottomLeftLine)
 
@@ -17,7 +17,7 @@ import Math.Distance(Distance(..), Distant, calculateDistance, DistanceA(..), Di
 
 import Helpers.List(removeEmpty, safeTail, safeHead)
 import Helpers.Applicative(extractE)
-
+import qualified TypeClasses.Showable as TS
 import Data.List(filter, sortOn)
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------

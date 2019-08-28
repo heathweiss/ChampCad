@@ -17,9 +17,9 @@ module CornerPoints.FaceExtraction (
  extractB1, extractB2, extractB3, extractB4,
  contains
  ) where
-import CornerPoints.CornerPoints(CornerPoints(..), cpointType, (===))
+import CornerPoints.CornerPoints(CornerPoints(..), (===))
 import CornerPoints.Points(Point(..))
-
+import qualified TypeClasses.Showable as TS
 import Helpers.Applicative(extractE)
 
 extractBottomFace :: CornerPoints -> CornerPoints
@@ -59,7 +59,7 @@ extractBackBottomLine (BackFace b1 b2 b3 b4) = BackBottomLine b1 b4
 extractBackLeftLine (BackFace b1 b2 b3 b4) = BackLeftLine b1 b2
 extractBackLeftLine (CubePoints f1 f2 f3 f4 b1 b2 b3 b4) = BackLeftLine b1 b2
 extractBackLeftLine (LeftFace b1 b2 f1 f2) = BackLeftLine b1 b2
-extractBackLeftLine unmatchedOrIllegal = CornerPointsError $ "unmatched or illegal extractBackLeftLine: " ++ ( cpointType unmatchedOrIllegal)
+extractBackLeftLine unmatchedOrIllegal = CornerPointsError $ "unmatched or illegal extractBackLeftLine: " ++ ( TS.showConstructor unmatchedOrIllegal)
 
 extractBackFace :: CornerPoints -> CornerPoints
 extractBackFace (CubePoints f1 f2 f3 f4 b1 b2 b3 b4) = BackFace b1 b2 b3 b4
@@ -68,7 +68,7 @@ extractFrontLeftLine :: CornerPoints -> CornerPoints
 extractFrontLeftLine (CubePoints f1 f2 f3 f4 b1 b2 b3 b4) = FrontLeftLine f1 f2
 extractFrontLeftLine (FrontFace f1 f2 f3 f4) = FrontLeftLine f1 f2
 extractFrontLeftLine (LeftFace b1 b2 f1 f2) =  FrontLeftLine f1 f2
-extractFrontLeftLine unmatchedOrIllegal = CornerPointsError $ "unmatched or illegal extractFrontLeftLine: " ++ ( cpointType unmatchedOrIllegal)
+extractFrontLeftLine unmatchedOrIllegal = CornerPointsError $ "unmatched or illegal extractFrontLeftLine: " ++ ( TS.showConstructor unmatchedOrIllegal)
 
 extractBackRightLine :: CornerPoints -> CornerPoints
 extractBackRightLine (CubePoints f1 f2 f3 f4 b1 b2 b3 b4) = BackRightLine b3 b4
@@ -77,7 +77,7 @@ extractBackRightLine (BackFace b1 b2 b3 b4) = BackRightLine b3 b4
 extractFrontRightLine :: CornerPoints -> CornerPoints
 extractFrontRightLine (CubePoints f1 f2 f3 f4 b1 b2 b3 b4) = FrontRightLine f3 f4
 extractFrontRightLine (FrontFace f1 f2 f3 f4) = FrontRightLine f3 f4
-extractFrontRightLine unmatchedOrIllegal = CornerPointsError $ "unmatched or illegal extractFrontRightLine: " ++ ( cpointType unmatchedOrIllegal)
+extractFrontRightLine unmatchedOrIllegal = CornerPointsError $ "unmatched or illegal extractFrontRightLine: " ++ ( TS.showConstructor unmatchedOrIllegal)
 
 extractLeftFace :: CornerPoints -> CornerPoints
 extractLeftFace (CubePoints f1 f2 f3 f4 b1 b2 b3 b4) = LeftFace b1 b2 f1 f2
@@ -232,7 +232,7 @@ contains  (LeftFace b1 b2 f1 f2) (BackRightLine b3 b4) =
     False -> Right False
 
 contains a b =
-  Left $ "CornerPoints.FaceExtraction.contains: illegal or unhandled pattern match for: " ++ (cpointType a) ++ " and " ++ (cpointType b)
+  Left $ "CornerPoints.FaceExtraction.contains: illegal or unhandled pattern match for: " ++ (TS.showConstructor a) ++ " and " ++ (TS.showConstructor b)
 
 {-
 contains  (BottomLeftLine b1 f1) (F1 f1') =

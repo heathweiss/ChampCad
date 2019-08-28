@@ -28,6 +28,14 @@ Combine GMESH.Lines and GMESH.Builder.Lines, GMSH.Writer.Lines into GMESH.Curves
 Rename functions and ADT to reflect the name change.
 Deleted the orignal <GMESH/Builder/Writer>Lines modules.
 commit -m 'created GMESH.Curves.'
+merged to master and pushed
+
+done:
+create a typeclass for showing the constructor as a string.
+This will replace the CornerPoints.cpointType and GPoints.getType.
+Note the use of Data<Data/Typeable> {-# LANGUAGE DeriveDataTypeable #-} and the deriving clauses.
+commit -m 'created Showable class'
+merged to master and pushed
 
 next:
 Think of a better name for GPoints, to better reflect what they do.
@@ -42,10 +50,7 @@ rename GMSH.Lines.Line to Curves, to match how gmsh the group of related items s
 within Curve Loop.
 Should also rename in BulderStateData for their id.
 
-next:
-create a typeclass for showing the constructor as a string.
-This will replace the CornerPoints.cpointType and GPoints.getType.
-Note the use of Data<Data/Typeable> {-# LANGUAGE DeriveDataTypeable #-} and the deriving clauses.
+
 
 next:
 Look at combining the modules from GMSH, Builder, and Writer.

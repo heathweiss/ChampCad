@@ -3,9 +3,9 @@ module Math.Distance(Distance(..), Distant, calculateDistance, getOrdering, from
 
 import Math.Equal(equal)
 
-import CornerPoints.CornerPoints(CornerPoints(..), cpointType)
+import CornerPoints.CornerPoints(CornerPoints(..))
 import CornerPoints.Points(Point(..))
-
+import qualified TypeClasses.Showable as TS
 import Helpers.Applicative(extractE)
 
 
@@ -206,7 +206,7 @@ instance DistantA CornerPoints where
     calculateDistanceA (BackRightLine b3 b4) (FrontRightLine  f3 f4)
   
   calculateDistanceA  cpoint1 cpoint2 =
-    Left $ "CornerPoints.calculateDistanceA: missing pattern match for: " ++ (cpointType cpoint1) ++  " and "  ++ (cpointType cpoint2)
+    Left $ "CornerPoints.calculateDistanceA: missing pattern match for: " ++ (TS.showConstructor cpoint1) ++  " and "  ++ (TS.showConstructor cpoint2)
 
   
    
@@ -342,7 +342,7 @@ instance CenterA CornerPoints where
           Right p' ->
             p <-||-> p'
   centerA cpoint =
-    Left $ "Math.Distance.centerA(Cornerpoints) has missing pattern match for: " ++ (cpointType cpoint)
+    Left $ "Math.Distance.centerA(Cornerpoints) has missing pattern match for: " ++ (TS.showConstructor cpoint)
   
 {-
   centerA (Right (RightFace b3 b4 f3 f4)) = ((Right b3) <-||-> (Right b4)) <-||-> ((Right f3) <-||-> (Right f4))

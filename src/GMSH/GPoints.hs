@@ -8,7 +8,7 @@ Should be able to get rid of this module.
 -}
 
 import qualified GMSH.State as GST
---import qualified GMSH.Point as GPts
+import qualified TypeClasses.Showable as TS
 import qualified CornerPoints.Points as Pts
 
 import  Data.Data
@@ -29,4 +29,8 @@ data GPoints = EndPoint {_endPoint_id :: GST.GPointId, endPoint_point :: Pts.Poi
   deriving(Typeable, Data)
 
 getType ::  GPoints  -> String
-getType gpoint = showConstr . toConstr $ gpoint
+getType gpoint = --showConstr . toConstr $ gpoint
+  TS.showConstructor gpoint
+
+
+instance TS.Showable GPoints 

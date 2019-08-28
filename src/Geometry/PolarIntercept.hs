@@ -1,9 +1,9 @@
 module Geometry.PolarIntercept(lineIntersectionXY,
                                runPolarIntersect, lineIntersectionXYT, lineIntersectionViaSlopeLineXYT) where
 
-import CornerPoints.CornerPoints(CornerPoints(..), cpointType, (+++))
+import CornerPoints.CornerPoints(CornerPoints(..), (+++))
 import CornerPoints.Points (Point(..))
-
+import qualified TypeClasses.Showable as TS
 import Geometry.Rotation(rotatePointAroundZAxis, rotateCornerPointAroundZAxis)
 import Geometry.Angle(Angle(..), rotateAngle, getQuadrantAngle, RotateFactor(..), getXYAngle, getQuadrant, Quadrant(..))
 
@@ -30,7 +30,7 @@ lineIntersectionXY (BottomRightLine b4 f4 ) (BackBottomLine b1 b4') =
   lineIntersectionForGenericLineXY b4 f4 b1 b4'
 
 lineIntersection line1 line2 =
-  Left $ "Geometry.Intercept.lineIntersection has missing pattern match for: " ++ (cpointType line1) ++ " and " ++ (cpointType line2)
+  Left $ "Geometry.Intercept.lineIntersection has missing pattern match for: " ++ (TS.showConstructor line1) ++ " and " ++ (TS.showConstructor line2)
 
 --all <backBottom/BackTop/...>lines are made of the same amount of points so make them generic.
 --currently returns Nothing in Quad 4 for lines that should intercept

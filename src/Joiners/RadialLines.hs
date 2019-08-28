@@ -19,7 +19,7 @@ module Joiners.RadialLines(getMinY, getMaxY, extractYaxis,
 
 import Test.HUnit
 
-import CornerPoints.CornerPoints(CornerPoints(..), cpointType, (+++), (+++>), (##+++#), (+++#))
+import CornerPoints.CornerPoints(CornerPoints(..), (+++), (+++>), (##+++#), (+++#))
 import CornerPoints.HorizontalFaces(createTopFacesVariableHeight, createBottomFacesVariableHeight)
 import CornerPoints.Radius (Radius(..))
 import Geometry.Angle(Angle(..))
@@ -28,7 +28,7 @@ import CornerPoints.FaceExtraction(extractFrontTopLine,  extractBottomFrontLine,
 import CornerPoints.FaceConversions(toF3)
 
 import Data.List(find)
-
+import qualified TypeClasses.Showable as TS
 import Helpers.Applicative(extractE, removeMaybe, appendE)
 
 radialShapeAsTopFrontPoints =
@@ -418,8 +418,8 @@ buildLeftRightLineFromGridAndLeadingTrailingCPointsBase
       (B3 $ Point leadingX leadingY leadingZ) +++# (B2 $ Point trailingX trailingY trailingZ) `appendE` []
 
 buildLeftRightLineFromGridAndLeadingTrailingCPointsBase _ (leadingCPoint:leadingCPoints) (trailingCPoint:trailingCPoints) =
-  Left $ "buildLeftRightLineFromGridAndLeadingTrailingCPointsBase: " ++ "missing or illegal pattern match for leading: " ++ (cpointType leadingCPoint)
-                                                                     ++ " and trailing : " ++ (cpointType trailingCPoint)
+  Left $ "buildLeftRightLineFromGridAndLeadingTrailingCPointsBase: " ++ "missing or illegal pattern match for leading: " ++ (TS.showConstructor leadingCPoint)
+                                                                     ++ " and trailing : " ++ (TS.showConstructor trailingCPoint)
 {-
 Child recur function:
 Given:
@@ -685,16 +685,16 @@ adjustCornerPoint cPointsConstructor targetValue Nothing (Just (F3 (Point  trail
   Right $ Just $ cPointsConstructor $ Point  trailingX trailingY trailingZ
 
 adjustCornerPoint cPointsConstructor targetValue Nothing (Just unhandled)  =
-  Left $ "adjustCornerPoint5: illegal or unhandled leadingCPoint: Nothing " ++ " and trailingCPoint: " ++ (cpointType unhandled)
+  Left $ "adjustCornerPoint5: illegal or unhandled leadingCPoint: Nothing " ++ " and trailingCPoint: " ++ (TS.showConstructor unhandled)
 
 adjustCornerPoint cPointsConstructor targetValue (Just unhandled) Nothing   =
-  Left $ "adjustCornerPoint6: illegal or unhandled leadingCPoint: " ++ (cpointType unhandled) ++ " and trailingCPoint: Nothing" 
+  Left $ "adjustCornerPoint6: illegal or unhandled leadingCPoint: " ++ (TS.showConstructor unhandled) ++ " and trailingCPoint: Nothing" 
 
 
 adjustCornerPoint cPointsConstructor targetValue Nothing Nothing  =
   Right $ Nothing
 
 adjustCornerPoint _ _ (Just leadingCPoint) (Just trailingCPoint) =
-  Left $ "adjustCornerPoint: illegal or unhandled leadingCPoint: " ++ (cpointType leadingCPoint) ++ " and trailingCPoint: " ++ (cpointType trailingCPoint)
+  Left $ "adjustCornerPoint: illegal or unhandled leadingCPoint: " ++ (TS.showConstructor leadingCPoint) ++ " and trailingCPoint: " ++ (TS.showConstructor trailingCPoint)
 
 

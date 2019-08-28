@@ -33,8 +33,8 @@ module CornerPoints.FaceConversions(
   toTopRightLine,
   raisedTo,
 ) where
-import CornerPoints.CornerPoints (CornerPoints(..), (+++), cpointType)
-
+import CornerPoints.CornerPoints (CornerPoints(..), (+++))
+import qualified TypeClasses.Showable as TS
 
 {- |
 Convert faces of cube. Tests are in Tests.FaceConversionsTest and Tests.FaceExtractAndConvertTest.
@@ -203,11 +203,11 @@ toBottomFrontLine (FrontLeftLine f1 f2)   = BottomFrontLine f2 f1
 toBottomFrontLine (BottomFrontLine f1 f4) = BottomFrontLine f1 f4
 toBottomFrontLine (B2 b2)                 = BottomFrontLine b2 b2
 toBottomFrontLine (BackBottomLine b1 b4)  = BottomFrontLine b1 b4
-toBottomFrontLine cpoint = CornerPointsError $ "FaceConversions.toBottomFrontLine: unhandled or illegal pattern match for " ++ (cpointType cpoint)
+toBottomFrontLine cpoint = CornerPointsError $ "FaceConversions.toBottomFrontLine: unhandled or illegal pattern match for " ++ (TS.showConstructor cpoint)
 
 toBottomLeftLine :: CornerPoints -> CornerPoints
 toBottomLeftLine (BottomRightLine b4 f4) = BottomLeftLine b4 f4
-toBottomLeftLine cpoint = CornerPointsError $ "FaceConversions.toBottomLeftLine: unhandled or illegal pattern match for "  ++ (cpointType cpoint)
+toBottomLeftLine cpoint = CornerPointsError $ "FaceConversions.toBottomLeftLine: unhandled or illegal pattern match for "  ++ (TS.showConstructor cpoint)
 
 
 -- ToDo: Finish pattern matches. Test
@@ -359,8 +359,8 @@ raisedTo (B4 b4') (BottomRightLine b4 f4) =
 --It must be for the initial line, and so gives a RightFace
 raisedTo (BackRightLine b3 b4) (FrontRightLine f3 f4) = Right $ RightFace b3 b4 f3 f4
 
-raisedTo a (CornerPointsError msg) = Left $ "FaceConversions.raisedTo: illegal or missing pattern match for " ++ (cpointType a) ++ " and CornerPointsError msg: " ++ msg
+raisedTo a (CornerPointsError msg) = Left $ "FaceConversions.raisedTo: illegal or missing pattern match for " ++ (TS.showConstructor a) ++ " and CornerPointsError msg: " ++ msg
   
 raisedTo a b =
-  Left $ "FaceConversions.raisedTo: illegal or missing pattern match for " ++ (cpointType a) ++ " and " ++ (cpointType b)
+  Left $ "FaceConversions.raisedTo: illegal or missing pattern match for " ++ (TS.showConstructor a) ++ " and " ++ (TS.showConstructor b)
  

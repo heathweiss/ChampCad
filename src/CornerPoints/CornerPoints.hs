@@ -20,7 +20,7 @@ CornerPointsBuilder(..),
 cornerPointsError, findCornerPointsError,
 isCubePoints, isCubePointsList,
 getCornerPointsWithIndex,
-cpointType,
+--cpointType,
 toPoints, toPointsFromList
 ) where
 
@@ -34,6 +34,7 @@ import CornerPoints.Points (Point(..))
 import    Control.Applicative
 
 import Data.List(find)
+import qualified TypeClasses.Showable as TS
 
 
 -- import Math.Distance(Distance(..),Distant, calculateDistance, DistanceA(..),DistantA, calculateDistanceA)
@@ -229,6 +230,8 @@ data CornerPoints =
         deriving (Show, Typeable, Data)
 
 
+instance TS.Showable CornerPoints
+
 {-
 True if CornerPointsError otherwise false.
 CornerPointsError is the CornerPoints constructor for an error message.
@@ -263,6 +266,8 @@ isCubePointsList cpoints =
   case find (isNotCubePoints) cpoints of
     Nothing -> True
     Just _  -> False
+
+
 
 --------------------------------------------------- Equal-----------------------------------------------------------
 {- |
@@ -518,7 +523,7 @@ CornerPointsError errMessage' === CornerPointsError errMessage'' =
 (_) === CornerPointsNothing = Right False
 
 (===) anyThingElse isFalseOrNeedsAPatterMatch = Left $ "CornerPoints.CornerPoints === has missing or illegal pattern match for: " ++
-                                                         (cpointType anyThingElse) ++ " and " ++ (cpointType isFalseOrNeedsAPatterMatch)
+                                                         (TS.showConstructor anyThingElse) ++ " and " ++ (TS.showConstructor isFalseOrNeedsAPatterMatch)
 
 
 ------------------------------------- now on a list-----------------------------------------------------------------
@@ -866,7 +871,7 @@ anyCornerPoint +++ (CornerPointsId) = anyCornerPoint
 (CornerPointsNothing) +++ _ = CornerPointsNothing
 _ +++ (CornerPointsNothing) = CornerPointsNothing
 
-anythingElseIsIllegal +++ orNotPatternMatched = CornerPointsError $ "unmatched or illegal +++ operation of " ++ (cpointType anythingElseIsIllegal) ++ " " ++ (cpointType orNotPatternMatched)
+anythingElseIsIllegal +++ orNotPatternMatched = CornerPointsError $ "unmatched or illegal +++ operation of " ++ (TS.showConstructor anythingElseIsIllegal) ++ " " ++ (TS.showConstructor orNotPatternMatched)
 
 {------------------------------------------------------------ ++++ --------------------------------------------------
 Add together CornerPoints with using Either.
@@ -948,7 +953,8 @@ getCornerPointsWithIndex errMsg cutterFaces index =
 -- Used by +++ to get the types involved for the catchall pattern of:
 --unmatched or illegal +++ operation of: <cpoint1> <cpoint2>
 cpointType :: CornerPoints -> String
-cpointType cpoint = showConstr . toConstr $ cpoint
+--cpointType cpoint = showConstr . toConstr $ cpoint
+cpointType cpoint = TS.showConstructor cpoint
 
 -- | Add together 2 Either CornerPoints and return a Left if a CornerPointsError, else return Right result.
 (##+++#) :: Either String CornerPoints -> Either String CornerPoints -> Either String CornerPoints
@@ -992,7 +998,7 @@ Break CPts down into points when working with gmsh scripts.
 toPoints :: CornerPoints -> Either String [Point]
 toPoints (FrontFace f1 f2 f3 f4) = Right [f1,f2,f3,f4]
 toPoints (B1 b1) = Right [b1]
-toPoints cpt = Left $ "CornerPoints.toPoints: unhandled or illegal patter match for: " ++ (cpointType cpt )
+toPoints cpt = Left $ "CornerPoints.toPoints: unhandled or illegal patter match for: " ++ (TS.showConstructor cpt )
   
 toPointsFromList :: [CornerPoints] -> Either String [Point]
 toPointsFromList [] = Right []
