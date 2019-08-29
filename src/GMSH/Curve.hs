@@ -52,7 +52,7 @@ ToDo: Change this into Curves, which is how gmsh categorizes them.
 data Curve =
   -- | A straight line made up of 2 end points used by gmsh. Corresponds to 'Line'.
   Line
-    {_line_Id :: GST.LineId, --need to be a type from GMSH.State, the way GPointId is.
+    {_line_Id :: GST.CurveId, --need to be a type from GMSH.State, the way GPointId is.
      _line_gPointIdStart :: GST.GPointId,
      _line_gPointIdEnd :: GST.GPointId
     }
@@ -149,7 +149,7 @@ writeGScriptToFile :: SIO.Handle -> Curve -> IO ()
 writeGScriptToFile h line =
   let
     toGScript :: Curve -> T.Text
-    toGScript (Line (GST.LineId' id) (GST.GPointId' idStart) (GST.GPointId' idEnd))  =
+    toGScript (Line (GST.CurveId' id) (GST.GPointId' idStart) (GST.GPointId' idEnd))  =
       T.pack $
         "\nLine("  ++
           (show (id)) ++ ") = {"  ++

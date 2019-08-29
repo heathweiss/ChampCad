@@ -50,6 +50,11 @@ Renamed some functions.
 Deleted the old modules.
 commit -m 'combine Points and CornerPoints into new module'
 
+in progress:
+rename LineId in BuilderStateData to CurveId
+commited and pushed to master
+git commit -m 'LineId is now CurverId'
+
 next:
 Think of a better name for GPointId.
 Should be a CurvePointId
@@ -63,10 +68,6 @@ next:
 create a Curve Loop, Wire, and Physical Curve, which should be separate from Curve, in that they hold [Curve]. eg: Curve Loop (1) = [Line 1, Line 2...].
 Think of a name to describe these common ADT's: CurveCollection? CurveHolder? CurvePath?
 
-next:
-rename GMSH.Lines.Line to Curves, to match how gmsh the group of related items such as Line, Circle, Bezier ..., which share a common Id system and can be used
-within Curve Loop.
-Should also rename in BulderStateData for their id.
 
 next:
 move Builder.Base into the new GMSH.Base module?

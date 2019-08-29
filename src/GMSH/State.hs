@@ -2,7 +2,7 @@
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 module GMSH.State(BuilderStateData(), newBuilderData, GPointId(), pattern GPointId', lookupGPointId, insertGPointId,
-                 getId, removeId, getRemoveId, LineId(), pattern LineId', Id) where
+                 getId, removeId, getRemoveId, CurveId(), pattern CurveId', Id) where
 {- |
 Supply State functionality for the GMSH transformer stack.
 -}
@@ -31,10 +31,10 @@ newtype GPointId = GPointId {_gPointId :: Int}
 
 pattern GPointId' a <- GPointId a
 
-newtype LineId = LineId {_lineId :: Int}
+newtype CurveId = CurveId {_lineId :: Int}
   deriving (Eq, Show)
 
-pattern LineId' a <- LineId a
+pattern CurveId' a <- CurveId a
 
 
 {- |
@@ -46,17 +46,26 @@ Used to make sure that there are no duplicate points in gmsh, when inserting a P
 data BuilderStateData = BuilderStateData
                      { _pointsMap::HM.HashMap Int GPointId,
                        -- | Will supply id's for the gmsh lines once they are implemented.
+                       _curveIdSupply :: [CurveId],
+                       -- | Supply id's for the new GPointId's
+                       _pointsIdSupply :: [GPointId]
+                       
+                     }
+{-
+data BuilderStateData = BuilderStateData
+                     { _pointsMap::HM.HashMap Int GPointId,
+                       -- | Will supply id's for the gmsh lines once they are implemented.
                        _linesIdSupply :: [LineId],
                        -- | Supply id's for the new GPointId's
                        _pointsIdSupply :: [GPointId]
                        
                      }
-
+-}
 makeLenses ''BuilderStateData
 
 -- | Initialize the empty BuilderStateData for running the Builder monad stack.
 newBuilderData :: BuilderStateData
-newBuilderData = BuilderStateData (HM.fromList []) (map LineId [1..]) (map GPointId [1..])
+newBuilderData = BuilderStateData (HM.fromList []) (map CurveId [1..]) (map GPointId [1..])
 
 --needed for testing
 instance Show BuilderStateData where
@@ -93,9 +102,14 @@ instance Id GPointId where
   getId builderStateData = head $ builderStateData ^. pointsIdSupply
   removeId id builderStateData = builderStateData {_pointsIdSupply = (tail $ builderStateData ^. pointsIdSupply)}
   
+instance Id CurveId where
+  getId builderStateData = head $ builderStateData ^. curveIdSupply
+  removeId id builderStateData = builderStateData {_curveIdSupply = (tail $ builderStateData ^. curveIdSupply)}
+{-
 instance Id LineId where
   getId builderStateData = head $ builderStateData ^. linesIdSupply
   removeId id builderStateData = builderStateData {_linesIdSupply = (tail $ builderStateData ^. linesIdSupply)}
+-}
 
 -- | Extract the next available GPointId.
 --newGPointId :: BuilderStateData -> GPointId
