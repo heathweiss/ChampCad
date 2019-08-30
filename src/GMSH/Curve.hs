@@ -24,7 +24,7 @@ Traverse the [GPointId], getting an Id from State, and put it into a ADT along w
 -}
 
 import qualified GMSH.State as GST
-import qualified GMSH.Builder.Base as GBB
+--import qualified GMSH.Builder.Base as GBB
 import qualified Helpers.FileWriter as FW
 import qualified TypeClasses.Showable as TS
 import qualified GMSH.CurvePoints as CurvePoints
@@ -132,7 +132,7 @@ gPointsToCurves' errMsg (unMatchedCurrentGPointConstructor:gpoints) _ unMatchedP
 
 -- | Implements gPointsToCurves within the ExceptStackCornerPointsBuilder <whatever type> transformer stack.
 -- | See gPointsToCurves for details.
-buildCurves :: SIO.Handle -> String -> CurvePoints.NonOverLappedClosedCurvePoints  -> GBB.ExceptStackCornerPointsBuilder [Curve]
+buildCurves :: SIO.Handle -> String -> CurvePoints.NonOverLappedClosedCurvePoints  -> GB.ExceptStackCornerPointsBuilder [Curve]
 buildCurves h errMsg (GB.NonOverLappedClosed []) = do
   TE.throwE $ errMsg ++ " GMSH.Builder.Curves.buildCurves: empty [NonOverLappedClosedGPoints] passed in."
 buildCurves h errMsg (GB.NonOverLappedClosed gpoints) = do 

@@ -41,7 +41,7 @@ done:
 Renamed GPoints to CurvePoints, to  better reflect what they do.
 Merged all CurvePoints into single module, and deleted all the old GPoints modules
 commit -m 'Created CurvePoints'
-merged/pushed to master
+pushed got origin gmsh
 
 
 done:
@@ -50,10 +50,16 @@ Renamed some functions.
 Deleted the old modules.
 commit -m 'combine Points and CornerPoints into new module'
 
-in progress:
+done:
 rename LineId in BuilderStateData to CurveId
 commited and pushed to master
 git commit -m 'LineId is now CurverId'
+
+current:
+move Builder.Base into the new GMSH.Base module?
+move Builder.Writer.Base into the GMSH.Writer module.
+git commit -m '<Writer/Builder>.Base move up to GMSH.<Writer/Base> modules'
+commit and push to master
 
 next:
 Think of a better name for GPointId.
@@ -69,8 +75,7 @@ create a Curve Loop, Wire, and Physical Curve, which should be separate from Cur
 Think of a name to describe these common ADT's: CurveCollection? CurveHolder? CurvePath?
 
 
-next:
-move Builder.Base into the new GMSH.Base module?
+
 
 next:
 Look at combining the modules from GMSH, Builder, and Writer.

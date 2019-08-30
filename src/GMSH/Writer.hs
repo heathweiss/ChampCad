@@ -1,8 +1,7 @@
--- {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE ExtendedDefaultRules #-}
 
-module GMSH.Writer.Base(openFile, writeComment, writeSeparator0, writeSeparator1, writeSeparator2, writeSeparator3, writeSeparator4, ) where
+module GMSH.Writer(openFile, writeComment, writeSeparator0, writeSeparator1, writeSeparator2, writeSeparator3, writeSeparator4, ) where
 {- |
 Convert ChampCad Points/Lines/etc to gmsh scripts and print to .geo file.
 -}

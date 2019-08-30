@@ -58,8 +58,7 @@ library
                        GMSH.CornerPoints
                        GMSH.Curve
                        GMSH.CurvePoints
-                       GMSH.Builder.Base
-                       GMSH.Writer.Base
+                       GMSH.Writer
                        GMSH.State
                        GMSH.Base
 --Examples

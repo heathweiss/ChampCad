@@ -1,6 +1,6 @@
 module Examples.Gmsh.FirstTest() where
-import qualified GMSH.Writer.Base as GWB
-import qualified GMSH.Builder.Base as GB
+import qualified GMSH.Writer as GWB
+import qualified GMSH.Base as GB
 import qualified GMSH.State as GST
 import qualified GMSH.Curve as Curve
 import qualified GMSH.CurvePoints as CurvePoints

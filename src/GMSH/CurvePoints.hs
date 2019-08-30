@@ -14,7 +14,7 @@ import qualified GMSH.State as GST
 import qualified TypeClasses.Showable as TS
 import qualified CornerPoints.Points as Pts
 import qualified Helpers.FileWriter as FW
-import qualified GMSH.Builder.Base as GBB
+--import qualified GMSH.Builder.Base as GBB
 import qualified GMSH.CornerPoints as GmeshCPts
 import qualified GMSH.Base as GB
 
@@ -65,7 +65,7 @@ buildCurveList :: SIO.Handle
                -> String
                -> GmeshCPts.NonOverLappedClosedPoints
                -> [(GST.GPointId -> Pts.Point -> CurvePoint)]
-               -> GBB.ExceptStackCornerPointsBuilder NonOverLappedClosedCurvePoints
+               -> GB.ExceptStackCornerPointsBuilder NonOverLappedClosedCurvePoints
 buildCurveList _ errMsg (GB.NonOverLappedClosed []) _ =
   TE.throwE $ errMsg ++ " GMSH.Builder.GPoints.buildCurveList: empty NonOverLappedClosedPoints [] passed in."
 buildCurveList _ errMsg _ [] =
@@ -78,7 +78,7 @@ buildCurveList' :: SIO.Handle
                -> String -> [Pts.Point]
                -> [(GST.GPointId -> Pts.Point -> CurvePoint)]
                -> [CurvePoint]
-               -> GBB.ExceptStackCornerPointsBuilder NonOverLappedClosedCurvePoints
+               -> GB.ExceptStackCornerPointsBuilder NonOverLappedClosedCurvePoints
 
 buildCurveList' _ _ [] _ workingList = do
   let

@@ -9,7 +9,7 @@ Bring [CornerPoints.CornerPoints] into the ExceptStackCornerPointsBuilder transf
 import qualified CornerPoints.CornerPoints as CPts
 import qualified CornerPoints.Points as Pts
 
-import qualified GMSH.Builder.Base as GBB
+--import qualified GMSH.Builder.Base as GBB
 import qualified GMSH.State as GS
 import qualified GMSH.State as GST
 import qualified GMSH.Base as GB
@@ -63,7 +63,7 @@ Perhaps this should be removed, and only use Points in the future, as GMSH takes
 and the whole concept of CornerPoints (vs Points) was to generate the stl mesh.
 -}
 buildCornerPoints :: String -> [CPts.CornerPoints] -> [CPts.CornerPoints] ->
-                             GBB.ExceptStackCornerPointsBuilder [CPts.CornerPoints]
+                             GB.ExceptStackCornerPointsBuilder [CPts.CornerPoints]
 --if an [] is passed in, nothing to do.
 buildCornerPoints _ [] _ =  E.lift $ SL.state $ \state' -> ([], state')
 buildCornerPoints _ _ [] =  E.lift $ SL.state $ \state' -> ([], state')
@@ -80,7 +80,7 @@ buildCornerPoints errMsg cPoints cPoints' = do
           (TE.throwE $ errMsg ++ ": GMSH.Builder.CornerPoints.buildCornerPoints: " ++ (err))
 
 -- | Runs buildCornerPoints when a single [CPts] is given.
-buildCornerPointsSingle :: String -> [CPts.CornerPoints] -> GBB.ExceptStackCornerPointsBuilder [CPts.CornerPoints]
+buildCornerPointsSingle :: String -> [CPts.CornerPoints] -> GB.ExceptStackCornerPointsBuilder [CPts.CornerPoints]
 buildCornerPointsSingle errMsg cPoints =
   buildCornerPoints (errMsg ++ "GMSH.Builder.CornerPoints.buildCornerPointsSingle: ") [CPts.CornerPointsId | x <- [1..]] cPoints
 
@@ -183,7 +183,7 @@ Extract the Either String [Point] from [CornerPoints]
 
 Return
 If Right [Point]
-GBB.ExceptStackCornerPointsBuilder [Pts.Point]
+GB.ExceptStackCornerPointsBuilder [Pts.Point]
 otherwise throw the error msg.
 
 Known uses:
@@ -192,7 +192,7 @@ In order to be converted into GPoints, must use "buildNoOverlapClosedPoints" to 
 Once converted to GPoints, they do not get used for creating gmsh script, only GPoints are used.
 -}
 buildPoints :: String -> [CPts.CornerPoints] ->
-                             GBB.ExceptStackCornerPointsBuilder [Pts.Point]
+                             GB.ExceptStackCornerPointsBuilder [Pts.Point]
 --If an [] is passed in, just return an [], and the fact that it is empty will be handled by buildNoOverlapClosedPoints,
 --at the point when they are to be converted into [GPoint]
 buildPoints  _ [] =  E.lift $ SL.state $ \builderData -> ([], builderData)
@@ -214,11 +214,11 @@ points:
 [Points] which is to be converted into a NonOverLappedClosedPoints
 
 return:::
-If the [Points] can be turned into a NonOverLappedClosedPoints: GBB.ExceptStackCornerPointsBuilder GC.NonOverLappedClosedPoints
+If the [Points] can be turned into a NonOverLappedClosedPoints: GB.ExceptStackCornerPointsBuilder GC.NonOverLappedClosedPoints
 If not: Left error message.
 -}
 
-buildNoOverlapClosedPoints :: String ->  [Pts.Point] -> GBB.ExceptStackCornerPointsBuilder NonOverLappedClosedPoints
+buildNoOverlapClosedPoints :: String ->  [Pts.Point] -> GB.ExceptStackCornerPointsBuilder NonOverLappedClosedPoints
 buildNoOverlapClosedPoints extraMsg points = do 
   state' <- SL.get
   
