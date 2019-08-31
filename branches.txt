@@ -55,16 +55,19 @@ rename LineId in BuilderStateData to CurveId
 commited and pushed to master
 git commit -m 'LineId is now CurverId'
 
-current:
+done:
 move Builder.Base into the new GMSH.Base module?
 move Builder.Writer.Base into the GMSH.Writer module.
 git commit -m '<Writer/Builder>.Base move up to GMSH.<Writer/Base> modules'
 commit and push to master
 
+done:
+Renamed GPointId to CurvePointId, along with all related fx names.
+git commit -m 'GPointId is now CurvePointId'
+
 next:
-Think of a better name for GPointId.
-Should be a CurvePointId
-Should exist inside GMSH.CurvePoint instead of inside State module?
+Change GMSH.CurverPoints.writeGScriptToFile to take a CurvePoint instead of a CurvePointId and a Point.
+Create a class for writeGScriptToFile which takes a single type, such as CurvePoint and implement for CurvePointId and a Point.
 
 next:
 Think of a better name for GMSH.State so it is not confused with haskell state monad.
@@ -73,19 +76,6 @@ eg: GMSHState, GState
 next:
 create a Curve Loop, Wire, and Physical Curve, which should be separate from Curve, in that they hold [Curve]. eg: Curve Loop (1) = [Line 1, Line 2...].
 Think of a name to describe these common ADT's: CurveCollection? CurveHolder? CurvePath?
-
-
-
-
-next:
-Look at combining the modules from GMSH, Builder, and Writer.
-eg: GMSH.GPoints, GMSH.Builder.GPoints, and GMSH.Writer.GPoints could all be in the same module to save confusion of being all spread out.
-
-
-
-next:
-Figure out a folder name to contain all the gmesh modules aready not in something like Builder or Writer.
-If I get rid of Builder/Writer folders by combining modules, will not have to do this.
 
 next:
 Refer to https://gist.github.com/seanhess/b17d4e3da88080c35542 on combing a ReaderT ExceptT to figure out how to better use the scanner db.

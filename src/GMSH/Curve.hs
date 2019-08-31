@@ -14,12 +14,12 @@ A Circle point would be combined with the prev and next point and made into a gm
 This module will start by considering system 1. Perhaps the differences will require that a separate module be
 made for system 2.
 
-A [Curve] will be generated from a [GPointId]. The [GPointId] was in turn gen'd from a NonOverLappedClosedPoints, which
+A [Curve] will be generated from a [CurvePointId]. The [CurvePointId] was in turn gen'd from a NonOverLappedClosedPoints, which
 is a [Point] that is non-overlapped and closed. See GMSH.Point for the definition of that. Do I need to go through the step
-of ensuring the [GPointId] is still in that state? Or can I ensure//assume that it is?
+of ensuring the [CurvePointId] is still in that state? Or can I ensure//assume that it is?
 
-Assuming the [GPointId] is non-overlapped//closed:
-Traverse the [GPointId], getting an Id from State, and put it into a ADT along with the 2 GPointId's.
+Assuming the [CurvePointId] is non-overlapped//closed:
+Traverse the [CurvePointId], getting an Id from State, and put it into a ADT along with the 2 CurvePointId's.
 
 -}
 
@@ -52,16 +52,16 @@ ToDo: Change this into Curves, which is how gmsh categorizes them.
 data Curve =
   -- | A straight line made up of 2 end points used by gmsh. Corresponds to 'Line'.
   Line
-    {_line_Id :: GST.CurveId, --need to be a type from GMSH.State, the way GPointId is.
-     _line_gPointIdStart :: GST.GPointId,
-     _line_gPointIdEnd :: GST.GPointId
+    {_line_Id :: GST.CurveId, --need to be a type from GMSH.State, the way CurvePointId is.
+     _line_curvePointIdStart :: GST.CurvePointId,
+     _line_curvePointIdEnd :: GST.CurvePointId
     }
     |
     Circle
-    {_circle_Id :: Int, --need to be a type from GMSH.State, the way GPointId is.
-     _circle_gPointIdStart :: GST.GPointId,
-     _circle_gPointIdEnd :: GST.GPointId,
-     _circle_gPointIdCurve :: GST.GPointId
+    {_circle_Id :: Int, --need to be a type from GMSH.State, the way CurvePointId is.
+     _circle_curvePointIdStart :: GST.CurvePointId,
+     _circle_curvePointIdEnd :: GST.CurvePointId,
+     _circle_curvePointIdCurve :: GST.CurvePointId
     }
 
 
@@ -88,56 +88,56 @@ The initial Curve was a CircleArcPoint, but gmsh requires it to be preceded by a
 
 The [GPoints] is empty.
 -}
-gPointsToCurves :: String ->  [CurvePoints.CurvePoint] -> GST.BuilderStateData -> Either String ([Curve], GST.BuilderStateData)
-gPointsToCurves errMsg [] _ = --Right ([], builderStateData)
-  Left $ errMsg ++ " GMSH.Curves.gPointsToCurves: empty [GPoints.GPoints] passed in."
-gPointsToCurves errMsg ((CurvePoints.CircleArcPoint _ _):gpoints) _ =
-  Left $ errMsg ++ " GMSH.Curves.gPointsToCurves: initial [GPoints.GPoints] passed in was a CircleArcPoint. CircleArcPoint must be preceded by an EndPoint"
-gPointsToCurves errMsg (gpoint:gpoints) builderStateData =
-  gPointsToCurves' errMsg gpoints builderStateData gpoint []
+curvePointsToCurves :: String ->  [CurvePoints.CurvePoint] -> GST.BuilderStateData -> Either String ([Curve], GST.BuilderStateData)
+curvePointsToCurves errMsg [] _ = --Right ([], builderStateData)
+  Left $ errMsg ++ " GMSH.Curves.curvePointsToCurves: empty [GPoints.GPoints] passed in."
+curvePointsToCurves errMsg ((CurvePoints.CircleArcPoint _ _):gpoints) _ =
+  Left $ errMsg ++ " GMSH.Curves.curvePointsToCurves: initial [GPoints.GPoints] passed in was a CircleArcPoint. CircleArcPoint must be preceded by an EndPoint"
+curvePointsToCurves errMsg (gpoint:gpoints) builderStateData =
+  curvePointsToCurves' errMsg gpoints builderStateData gpoint []
 
 
 {-
-Implements gPointsToCurves with the added parameters of:
+Implements curvePointsToCurves with the added parameters of:
 previousGPoint :: GPoints
 Used to build a Curve which is always made of > 1 GPoint.
 
 workingList :: [Curve]
 The [Curve] being gen'd from the [GPoint]
 -}
-gPointsToCurves' :: String -> [CurvePoints.CurvePoint] -> GST.BuilderStateData -> CurvePoints.CurvePoint ->  [Curve]
+curvePointsToCurves' :: String -> [CurvePoints.CurvePoint] -> GST.BuilderStateData -> CurvePoints.CurvePoint ->  [Curve]
                 -> Either String ([Curve], GST.BuilderStateData)
 
 --end of [gpoints] so reverse the working list and return along with BuilderStateData 
-gPointsToCurves' _ [] builderStateData _ workingList = Right $ (reverse workingList, builderStateData)
+curvePointsToCurves' _ [] builderStateData _ workingList = Right $ (reverse workingList, builderStateData)
 
 --current and previous are both EndPoints so make a line.
-gPointsToCurves' errMsg ((CurvePoints.EndPoint currGPointId currPoint):gpoints) builderStateData
-                (CurvePoints.EndPoint prevGPointId prevPoint) workingList =
+curvePointsToCurves' errMsg ((CurvePoints.EndPoint currCurvePointId currPoint):gpoints) builderStateData
+                (CurvePoints.EndPoint prevCurvePointId prevPoint) workingList =
   let
     (lineId, builderStateData') = GST.getRemoveId builderStateData
   in
-  gPointsToCurves'
+  curvePointsToCurves'
     errMsg
     gpoints
     builderStateData'
-    (CurvePoints.EndPoint currGPointId currPoint) 
-    ((Line lineId prevGPointId currGPointId) : workingList)
+    (CurvePoints.EndPoint currCurvePointId currPoint) 
+    ((Line lineId prevCurvePointId currCurvePointId) : workingList)
 
-gPointsToCurves' errMsg (unMatchedCurrentGPointConstructor:gpoints) _ unMatchedPrevGPointConstructor _ =
-  --Left $ errMsg ++ " GMSH.Curves.gPointsToCurves' has unhandled pattern match for current: " ++ (GPoints.getType unMatchedCurrentGPointConstructor)
-  Left $ errMsg ++ " GMSH.Curves.gPointsToCurves' has unhandled pattern match for current: " ++ (TS.showConstructor unMatchedCurrentGPointConstructor)
+curvePointsToCurves' errMsg (unMatchedCurrentGPointConstructor:gpoints) _ unMatchedPrevGPointConstructor _ =
+  --Left $ errMsg ++ " GMSH.Curves.curvePointsToCurves' has unhandled pattern match for current: " ++ (GPoints.getType unMatchedCurrentGPointConstructor)
+  Left $ errMsg ++ " GMSH.Curves.curvePointsToCurves' has unhandled pattern match for current: " ++ (TS.showConstructor unMatchedCurrentGPointConstructor)
                 ++ " previous: "
                 ++ (TS.showConstructor unMatchedPrevGPointConstructor)
 
--- | Implements gPointsToCurves within the ExceptStackCornerPointsBuilder <whatever type> transformer stack.
--- | See gPointsToCurves for details.
+-- | Implements curvePointsToCurves within the ExceptStackCornerPointsBuilder <whatever type> transformer stack.
+-- | See curvePointsToCurves for details.
 buildCurves :: SIO.Handle -> String -> CurvePoints.NonOverLappedClosedCurvePoints  -> GB.ExceptStackCornerPointsBuilder [Curve]
 buildCurves h errMsg (GB.NonOverLappedClosed []) = do
   TE.throwE $ errMsg ++ " GMSH.Builder.Curves.buildCurves: empty [NonOverLappedClosedGPoints] passed in."
 buildCurves h errMsg (GB.NonOverLappedClosed gpoints) = do 
   state' <- SL.get
-  let maybeLines = gPointsToCurves errMsg gpoints state'
+  let maybeLines = curvePointsToCurves errMsg gpoints state'
   case maybeLines of
     Right (lines, builderStateData) -> do
       E.liftIO $ writeGScriptsToFile h lines
@@ -149,7 +149,7 @@ writeGScriptToFile :: SIO.Handle -> Curve -> IO ()
 writeGScriptToFile h line =
   let
     toGScript :: Curve -> T.Text
-    toGScript (Line (GST.CurveId' id) (GST.GPointId' idStart) (GST.GPointId' idEnd))  =
+    toGScript (Line (GST.CurveId' id) (GST.CurvePointId' idStart) (GST.CurvePointId' idEnd))  =
       T.pack $
         "\nLine("  ++
           (show (id)) ++ ") = {"  ++

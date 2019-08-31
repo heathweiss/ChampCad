@@ -29,10 +29,7 @@ import Control.Lens
 --default (T.Text)
 --Won't compile with this. It was used in GMSH.Points, but causes probs with fx from GMSH.Builder.CornerPoints
 
-makeLenses ''GST.BuilderStateData
-makeLenses ''GST.GPointId
 
-type ID = Int
 type NonOverLappedClosedPoints = GB.NonOverLappedClosed [Pts.Point]
 
 
