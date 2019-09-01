@@ -1,7 +1,8 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE ExtendedDefaultRules #-}
 
-module GMSH.Writer(openFile, writeComment, writeSeparator0, writeSeparator1, writeSeparator2, writeSeparator3, writeSeparator4, ) where
+module GMSH.Writer(openFile, writeComment, writeSeparator0, writeSeparator1, writeSeparator2, writeSeparator3, writeSeparator4,
+                   Scriptable, writeScript, writeScripts, showId) where
 {- |
 Convert ChampCad Points/Lines/etc to gmsh scripts and print to .geo file.
 -}
@@ -86,3 +87,15 @@ writeSeparator3 h =
 writeSeparator4 :: SIO.Handle -> IO ()
 writeSeparator4 h =
   FW.writeFileUtf8 h $ T.pack $ "\n\n\n\n/////////////////////////////////////////////////////////////////////////////"
+
+{- |
+For writing GMSH ADT's to a file as gmsh script.
+Known Instances: CurvePoints, Curves
+
+-}
+class Scriptable a where
+  writeScript :: SIO.Handle -> a -> IO ()
+  writeScripts :: SIO.Handle -> [a] -> IO ()
+  writeScripts h as = mapM_ (writeScript h) as
+  showId :: a -> String
+  -- | Show the Id of a GMSH types including Curve, CurvePoint...

@@ -14,4 +14,6 @@ class Showable a where
   -- | Show the constructor of a ADT.
   -- | Known uses. Have a default pattern match that will supply an error string instead of a failing pattern match.
   -- | It will be able to show which constructor it was that did not have a pattern match.
-  
+  --showId :: a -> String
+  -- -- | Show the Id of a GMSH type.
+

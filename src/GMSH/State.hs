@@ -18,6 +18,7 @@ import  Data.Typeable
 import CornerPoints.Points(Point(..))
 import qualified CornerPoints.CornerPoints as CPts
 import qualified CornerPoints.Points as Pts
+import qualified TypeClasses.Showable as Showable
 
 
 
@@ -28,11 +29,18 @@ The constructor does not get exported, to ensure that the gPointId only gets gen
 newtype CurvePointId = CurvePointId {_gPointId :: Int}
  deriving (Show, Eq, Typeable, Data)
 
+instance Showable.Showable CurvePointId  --where
+  --showId (CurvePointId id) = show id
 
+{-
+newtype CurvePointId = CurvePointId {_gPointId :: Int}
+ deriving (Show, Eq, Typeable, Data)
+
+-}
 pattern CurvePointId' a <- CurvePointId a
 
 newtype CurveId = CurveId {_lineId :: Int}
-  deriving (Eq, Show)
+  deriving (Eq, Show, Typeable, Data)
 
 pattern CurveId' a <- CurveId a
 

@@ -2,25 +2,19 @@
 {-# LANGUAGE TemplateHaskell #-}
 module GMSH.CurvePoints(buildCurveList, CurvePoint(..),NonOverLappedClosedCurvePoints(..)) where
 {- |
-A CurvePoint represents a gmsh point used by Curves.
-eg: Line uses 2 endpoints.
-    Circle uses 2 endpoints and a point for the size of the arc.
-
-In order to build a [Curve] we need not only the points, but to have various types of points to correspond to endpoints, arcpoints...
-This allows a [CurvePoint] to be converted into a [Curves].
+Supply a CurvePoint ADT, and Builder function.
 -}
 
 import qualified GMSH.State as GST
-import qualified TypeClasses.Showable as TS
+import qualified TypeClasses.Showable as Showable
 import qualified CornerPoints.Points as Pts
 import qualified Helpers.FileWriter as FW
---import qualified GMSH.Builder.Base as GBB
+import qualified GMSH.Writer as Writer
 import qualified GMSH.CornerPoints as GmeshCPts
 import qualified GMSH.Base as GB
 
 import  Data.Data
 import  Data.Typeable
-import qualified TypeClasses.Showable as TS
 
 import qualified System.IO as SIO
 import qualified Data.Text as T
@@ -33,32 +27,44 @@ import Control.Lens
 
 makeLenses ''GST.BuilderStateData
 
+
+{- |
+A CurvePoint represents a gmsh point used by Curves.
+eg: Line uses 2 endpoints.
+    Circle uses 2 endpoints and a point for the size of the arc.
+
+In order to build a [Curve] we need not only the points, but to have various types of points to correspond to endpoints, arcpoints...
+This allows a [various CurvePoint constructors] to be converted into a [various Curves such as Line or Circle].
+-}
 data CurvePoint = EndPoint {_endPoint_id :: GST.CurvePointId, endPoint_point :: Pts.Point}
              -- | End points for Line. Start and end points for Circle.  
              | CircleArcPoint   {_cap_id :: GST.CurvePointId, cap_point :: Pts.Point}
              -- | Center point for the arc of a Circle.
-  deriving(Typeable, Data)
+  deriving(Show, Typeable, Data)
 
-instance TS.Showable CurvePoint
+instance Showable.Showable CurvePoint
 
-
-type NonOverLappedClosedCurvePoints = GB.NonOverLappedClosed [CurvePoint]
-
-
-writeGScriptToFile :: SIO.Handle -> GST.CurvePointId -> Pts.Point -> IO ()
-writeGScriptToFile h gPointId point =
-  let
+instance Writer.Scriptable CurvePoint where
+  showId (EndPoint (GST.CurvePointId' id) _) = show id
+  showId (CircleArcPoint (GST.CurvePointId' id) _) = show id
+  writeScript h (EndPoint endPoint_id endPoint_point) =
+    let
     toGScript :: GST.CurvePointId -> Pts.Point -> T.Text
-    toGScript (GST.CurvePointId' id) (Pts.Point x y z) =
+    toGScript endPoint_id (Pts.Point x y z) =
       T.pack $
         "\nPoint(" ++
-          (show (id)) ++ ") = {"  ++
+          (Writer.showId (EndPoint endPoint_id endPoint_point)) ++ ") = {"  ++
           (show x) ++ "," ++
           (show y) ++ "," ++
           (show z) ++ "};"
+    
+    in
+    FW.writeFileUtf8 h $ toGScript endPoint_id endPoint_point
+  
+  writeScript h unhandled =
+    FW.writeFileUtf8 h $ T.pack $ "GMSH.CurverPoints.writeScript: unhandled " ++ (Showable.showConstructor unhandled)  
 
-  in
-  FW.writeFileUtf8 h $ toGScript gPointId point
+type NonOverLappedClosedCurvePoints = GB.NonOverLappedClosed [CurvePoint]
 
 
 buildCurveList :: SIO.Handle
@@ -104,10 +110,10 @@ buildCurveList' h errMsg (p:points) (curvePntConstructor:constructors) workingLi
       --Write the gpoint to the gmsh script file.
       
       let
-        newGPoint = GST.getId state'
-        newWorkingList = (curvePntConstructor newGPoint p) : workingList
+        newEndPoint = curvePntConstructor (GST.getId state') p
+        newWorkingList = newEndPoint : workingList
 
-      E.liftIO $ writeGScriptToFile h newGPoint p
+      E.liftIO $ Writer.writeScript h newEndPoint
       --Add the new CurvePointId to the working list, and reset the state with the new CurvePointId.
       E.lift $ SL.state $
         \state'' ->

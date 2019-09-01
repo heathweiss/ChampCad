@@ -24,9 +24,9 @@ Traverse the [CurvePointId], getting an Id from State, and put it into a ADT alo
 -}
 
 import qualified GMSH.State as GST
---import qualified GMSH.Builder.Base as GBB
+import qualified GMSH.Writer as Writer
 import qualified Helpers.FileWriter as FW
-import qualified TypeClasses.Showable as TS
+import qualified TypeClasses.Showable as Showable
 import qualified GMSH.CurvePoints as CurvePoints
 import qualified GMSH.Base as GB
 
@@ -63,8 +63,28 @@ data Curve =
      _circle_curvePointIdEnd :: GST.CurvePointId,
      _circle_curvePointIdCurve :: GST.CurvePointId
     }
+  deriving(Show, Typeable, Data)
 
+instance Showable.Showable Curve 
 
+instance Writer.Scriptable Curve where
+  showId (Line (GST.CurveId' id) _ _) = show id 
+  writeScript h (Line id curvePointIdStart curvePointIdEnd) =
+    --writeGScriptToFile h (Line id curvePointIdStart curvePointIdEnd)
+    let
+      toGScript :: Curve -> T.Text
+      toGScript (Line (GST.CurveId' id) (GST.CurvePointId' idStart) (GST.CurvePointId' idEnd))  =
+        T.pack $
+          "\nLine("  ++
+            (show (id)) ++ ") = {"  ++
+            (show idStart) ++ "," ++
+            (show idEnd) ++
+            "};"
+    in
+    FW.writeFileUtf8 h $ toGScript (Line id curvePointIdStart curvePointIdEnd)
+    
+  writeScript h unhandled =
+    FW.writeFileUtf8 h $ T.pack $ "GMSH.Curves.writeScript: unhandled " ++ (Showable.showConstructor unhandled)  
 
 {- |
 -----Given-----
@@ -126,9 +146,9 @@ curvePointsToCurves' errMsg ((CurvePoints.EndPoint currCurvePointId currPoint):g
 
 curvePointsToCurves' errMsg (unMatchedCurrentGPointConstructor:gpoints) _ unMatchedPrevGPointConstructor _ =
   --Left $ errMsg ++ " GMSH.Curves.curvePointsToCurves' has unhandled pattern match for current: " ++ (GPoints.getType unMatchedCurrentGPointConstructor)
-  Left $ errMsg ++ " GMSH.Curves.curvePointsToCurves' has unhandled pattern match for current: " ++ (TS.showConstructor unMatchedCurrentGPointConstructor)
+  Left $ errMsg ++ " GMSH.Curves.curvePointsToCurves' has unhandled pattern match for current: " ++ (Showable.showConstructor unMatchedCurrentGPointConstructor)
                 ++ " previous: "
-                ++ (TS.showConstructor unMatchedPrevGPointConstructor)
+                ++ (Showable.showConstructor unMatchedPrevGPointConstructor)
 
 -- | Implements curvePointsToCurves within the ExceptStackCornerPointsBuilder <whatever type> transformer stack.
 -- | See curvePointsToCurves for details.
@@ -140,27 +160,8 @@ buildCurves h errMsg (GB.NonOverLappedClosed gpoints) = do
   let maybeLines = curvePointsToCurves errMsg gpoints state'
   case maybeLines of
     Right (lines, builderStateData) -> do
-      E.liftIO $ writeGScriptsToFile h lines
+      E.liftIO $ Writer.writeScripts h lines
       E.lift $ SL.state $ \_ -> (lines, builderStateData)
     Left e -> TE.throwE e
   
 
-writeGScriptToFile :: SIO.Handle -> Curve -> IO ()
-writeGScriptToFile h line =
-  let
-    toGScript :: Curve -> T.Text
-    toGScript (Line (GST.CurveId' id) (GST.CurvePointId' idStart) (GST.CurvePointId' idEnd))  =
-      T.pack $
-        "\nLine("  ++
-          (show (id)) ++ ") = {"  ++
-          (show idStart) ++ "," ++
-          (show idEnd) ++
-          "};"
-  
-  in
-  FW.writeFileUtf8 h $ toGScript line
-
-
-writeGScriptsToFile :: SIO.Handle -> [Curve] -> IO ()
-writeGScriptsToFile h lines =
-  mapM_ (writeGScriptToFile h) lines

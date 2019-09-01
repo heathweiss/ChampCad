@@ -65,9 +65,16 @@ done:
 Renamed GPointId to CurvePointId, along with all related fx names.
 git commit -m 'GPointId is now CurvePointId'
 
+done:
+Created Scriptable class which supply writeScript<s> which replaces writeGScript<s>ToFile functions in Curve and CurvePoints.
+git commit -m 'created GMSH.Scriptable class'
+merged to master and pushed.
+
 next:
-Change GMSH.CurverPoints.writeGScriptToFile to take a CurvePoint instead of a CurvePointId and a Point.
-Create a class for writeGScriptToFile which takes a single type, such as CurvePoint and implement for CurvePointId and a Point.
+Create 2 showable classes.
+1: TypeClasses.Showable should be renamed to ShowErorr and have things like showConstructor.
+   ShowId is not applicable to things like CornerPoints.
+2: Create GMSH.Show.ShowScript for things like showId.
 
 next:
 Think of a better name for GMSH.State so it is not confused with haskell state monad.
