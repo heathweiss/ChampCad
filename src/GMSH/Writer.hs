@@ -1,11 +1,11 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE ExtendedDefaultRules #-}
-
-module GMSH.Writer(openFile, writeComment, writeSeparator0, writeSeparator1, writeSeparator2, writeSeparator3, writeSeparator4,
-                   Scriptable, writeScript, writeScripts, showId) where
 {- |
 Convert ChampCad Points/Lines/etc to gmsh scripts and print to .geo file.
 -}
+
+module GMSH.Writer(openFile, writeComment, writeSeparator0, writeSeparator1, writeSeparator2, writeSeparator3, writeSeparator4,
+                   Scriptable, writeScript, writeScripts, showId) where
 
 import CornerPoints.Points(Point(..))
 --import qualified GMSH.Common as GC

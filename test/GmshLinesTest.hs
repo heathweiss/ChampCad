@@ -1,11 +1,12 @@
 {-# LANGUAGE TemplateHaskell #-}
 module GmshLinesTest(gmshLinesTestDo) where
 
-import qualified GMSH.Points as GP 
-import qualified GMSH.Lines as GL 
-import qualified GMSH.Common as GC
-import qualified GMSH.Builder as GB
+--import qualified GMSH.Points as GP 
+--import qualified GMSH.Lines as GL 
+--import qualified GMSH.Common as GC
+--import qualified GMSH.Builder as GB
 import qualified  GMSH.Writer as GW
+import qualified  GMSH.State as GST
 
 import Test.HUnit
 import qualified Data.HashMap.Strict as HM
@@ -20,7 +21,7 @@ import CornerPoints.Points(Point(..))
 import CornerPoints.CornerPoints(CornerPoints(..), (===), (|===|))
 
 import Control.Lens
-makeLenses ''GC.BuilderStateData
+makeLenses ''GST.BuilderStateData
 
 gmshLinesTestDo = do
   putStrLn "" 
@@ -28,7 +29,7 @@ gmshLinesTestDo = do
 
   --runBuildWithMonadTests
   --runBuilderTests 
-  runLinesTests
+  --runLinesTests
   --runWriterTests
 
 ------------------------------------------------------------------------------------------------------------------------------
@@ -55,6 +56,7 @@ writePointsTest = TestCase $ assertEqual
 ------------------------------------------------------------------------------------------------------------------------------
 ----------------------------------------------- GMSH.Lines ---------------------------------------------------------
 {- Run all the test for hashing and inserting points into a hash map.-}
+{-
 runLinesTests = do
   
   runTestTT linesTestB1
@@ -574,4 +576,5 @@ buildWithMonadTest6 = TestCase $ assertEqual
    ((SL.evalState $ E.runExceptT builder ) GB.newBuilderData)
   )
 
+-}
 -}

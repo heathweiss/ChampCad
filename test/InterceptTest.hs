@@ -8,7 +8,7 @@ import Geometry.Intercept(getChangeInX, getChangeInY, yIntercept, {-topCoderAreT
                           {-segmentIntersectionT, runSegmentIntersectionT,-} closestPointOnLineParamGloss)
 import Geometry.Angle(Angle(..))
 
-import CornerPoints.CornerPoints(CornerPoints(..), cpointType, (+++))
+import CornerPoints.CornerPoints(CornerPoints(..), (+++))
 import CornerPoints.Points (Point(..))
 import CornerPoints.Radius(Radius(..))
 import CornerPoints.FaceExtraction(extractB1, extractB4, extractF1, extractF4, extractBackLeftLine, extractBackRightLine,

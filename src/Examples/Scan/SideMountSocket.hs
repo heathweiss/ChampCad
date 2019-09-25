@@ -1,4 +1,3 @@
-module Examples.Scan.SideMountSocket() where
 {- |
 Build a socket from the original scan.
 Add a piece off the side into which the quick release inserts.
@@ -7,6 +6,8 @@ Instead us a simple Gaurd, in conjuction with Take/Drop, to manipulate the SDR.
 
 Have a system of adjusting the scan for growth.
 -}
+module Examples.Scan.SideMountSocket() where
+
 
 import Builder.Monad(BuilderError(..), cornerPointsErrorHandler, buildCubePointsList,
                      CpointsStack, CpointsList, buildCubePointsListWithAdd, buildCubePointsListSingle)

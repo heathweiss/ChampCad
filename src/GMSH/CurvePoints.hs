@@ -1,9 +1,10 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE TemplateHaskell #-}
-module GMSH.CurvePoints(buildCurveList, CurvePoint(..),NonOverLappedClosedCurvePoints(..)) where
 {- |
 Supply a CurvePoint ADT, and Builder function.
 -}
+module GMSH.CurvePoints(buildCurveList, CurvePoint(..),NonOverLappedClosedCurvePoints(..)) where
+
 
 import qualified GMSH.State as GST
 import qualified TypeClasses.Showable as Showable
@@ -36,10 +37,12 @@ eg: Line uses 2 endpoints.
 In order to build a [Curve] we need not only the points, but to have various types of points to correspond to endpoints, arcpoints...
 This allows a [various CurvePoint constructors] to be converted into a [various Curves such as Line or Circle].
 -}
-data CurvePoint = EndPoint {_endPoint_id :: GST.CurvePointId, endPoint_point :: Pts.Point}
-             -- | End points for Line. Start and end points for Circle.  
-             | CircleArcPoint   {_cap_id :: GST.CurvePointId, cap_point :: Pts.Point}
-             -- | Center point for the arc of a Circle.
+data CurvePoint =
+  -- | End points for Line. Start and end points for Circle.  
+  EndPoint {_endPoint_id :: GST.CurvePointId, endPoint_point :: Pts.Point}
+  -- | Center point for the arc of a Circle.
+  | CircleArcPoint   {_cap_id :: GST.CurvePointId, cap_point :: Pts.Point}
+             
   deriving(Show, Typeable, Data)
 
 instance Showable.Showable CurvePoint

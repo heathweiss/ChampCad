@@ -116,10 +116,10 @@ orderInnerPerimsByDistanceFromHeadRecurNM
     case ((previousDistance < ) <$> distanceToCurrInnerPerim )  of
      Left e -> Left e
      Right (True) ->
-       orderInnerPerimsByDistanceFromHeadRecurNM ({-justifyPerimeters $-} InnerPerimeters {-$ removeEmpty-} innerPerimeters) (AdvancingCPoint distanceFromThisCpoint)
+       orderInnerPerimsByDistanceFromHeadRecurNM (InnerPerimeters  innerPerimeters) (AdvancingCPoint distanceFromThisCpoint)
                                   (InnerPerimeters $ sortedInnerPerimeter:innerPerimeter:sortedInnerPerimeters) previousDistance
      Right (False) ->
-       extractE $ (orderInnerPerimsByDistanceFromHeadRecurNM ({-justifyPerimeters $-} InnerPerimeters {- $ removeEmpty-} innerPerimeters) (AdvancingCPoint distanceFromThisCpoint) 
+       extractE $ (orderInnerPerimsByDistanceFromHeadRecurNM (InnerPerimeters  innerPerimeters) (AdvancingCPoint distanceFromThisCpoint) 
                                        (InnerPerimeters $ innerPerimeter:sortedInnerPerimeter:sortedInnerPerimeters)) <$> distanceToCurrInnerPerim
 
 orderInnerPerimsByDistanceFromHeadRecurNM (InnerPerimeters []) _  sortedInnerPerimeters _ = Right sortedInnerPerimeters

@@ -74,10 +74,10 @@ makeLenses ''Advancer
 -- The output datatype of the function which creates a new AdvancingCPoint using InnerPerimeters and current AdvancingCPoint.
 data InnerAdvancerOutput =
   InnerAdvancerOutput
-    {_innerPerimetersI  :: Maybe InnerPerimeters, -- | The remaining InnerPerimeters, after possibly removing the CornerPoint from which the just built AdvancintCPoint was made from.
-     _advancingCPointI  :: Maybe AdvancingCPoint, -- | The new AdvancingCPoint, which may have been built from the previous AdvancingCPoint and InnerPerimeters.
-     _usedCPointI       :: Maybe CornerPoints,    -- | The perimeter CornerPoint, which was used to build the current  AdvancingCPoint,.
-     _advancingCPointsI :: AdvancingCPoints       -- | The [AdvancingCPoint] which may or may not have a new AdvancingCPoint appended onto it.
+    {_innerPerimetersI  :: Maybe InnerPerimeters, -- ^ The remaining InnerPerimeters, after possibly removing the CornerPoint from which the just built AdvancintCPoint was made from.
+     _advancingCPointI  :: Maybe AdvancingCPoint, -- ^ The new AdvancingCPoint, which may have been built from the previous AdvancingCPoint and InnerPerimeters.
+     _usedCPointI       :: Maybe CornerPoints,    -- ^ The perimeter CornerPoint, which was used to build the current  AdvancingCPoint,.
+     _advancingCPointsI :: AdvancingCPoints       -- ^ The [AdvancingCPoint] which may or may not have a new AdvancingCPoint appended onto it.
     }
   deriving (Eq)
 
@@ -103,10 +103,10 @@ instance Show InnerAdvancerOutput where
 -- The output datatype of the function which creates a new AdvancingCPoint using OuterPerimeter and current AdvancingCPoint.
 data OuterAdvancerOutput =
   OuterAdvancerOutput
-    {_outerPerimeterO   :: Maybe  OuterPerimeter, -- | The remaining OuterPerimeter, after removing the CornerPoint from which the just built AdvancintCPoint was made from.
-     _advancingCPointO  :: Maybe AdvancingCPoint, -- | The new AdvancingCPoint, which was built from the previous AdvancingCPoint and OuterPerimeter.
-     _usedCPointO  :: Maybe AdvancingCPoint, -- | The CPoint, which was use to build the new advancingCPoint.
-     _advancingCPointsO :: AdvancingCPoints -- | The [AdvancingCPoint] which may or may not have a new AdvancingCPoint appended onto it.
+    {_outerPerimeterO   :: Maybe  OuterPerimeter, -- ^ The remaining OuterPerimeter, after removing the CornerPoint from which the just built AdvancintCPoint was made from.
+     _advancingCPointO  :: Maybe AdvancingCPoint, -- ^ The new AdvancingCPoint, which was built from the previous AdvancingCPoint and OuterPerimeter.
+     _usedCPointO  :: Maybe AdvancingCPoint, -- ^ The CPoint, which was use to build the new advancingCPoint.
+     _advancingCPointsO :: AdvancingCPoints -- ^ The [AdvancingCPoint] which may or may not have a new AdvancingCPoint appended onto it.
     }
     deriving (Eq)
 

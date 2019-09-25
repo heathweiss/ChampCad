@@ -1,8 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE DeriveDataTypeable #-}
-
-module GMSH.Curve(buildCurves) where
 {- |
 Lines, in gmsh, can be made in various different ways including:
 1: Line: from 2 points, which make up the 2 ends of the line.
@@ -22,6 +20,8 @@ Assuming the [CurvePointId] is non-overlapped//closed:
 Traverse the [CurvePointId], getting an Id from State, and put it into a ADT along with the 2 CurvePointId's.
 
 -}
+module GMSH.Curve(buildCurves) where
+
 
 import qualified GMSH.State as GST
 import qualified GMSH.Writer as Writer

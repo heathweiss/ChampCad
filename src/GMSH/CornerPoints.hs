@@ -1,11 +1,12 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE ExtendedDefaultRules #-}
 {-# LANGUAGE PatternSynonyms #-}
-module GMSH.CornerPoints(buildCornerPointsSingle, buildCornerPoints, buildPoints, buildNoOverlapClosedPoints, NonOverLappedClosedPoints(..)) where
 {- |
 Bring [CornerPoints.CornerPoints] into the ExceptStackCornerPointsBuilder transformer stack.
 
 -}
+module GMSH.CornerPoints(buildCornerPointsSingle, buildCornerPoints, buildPoints, buildNoOverlapClosedPoints, NonOverLappedClosedPoints(..)) where
+
 import qualified CornerPoints.CornerPoints as CPts
 import qualified CornerPoints.Points as Pts
 
