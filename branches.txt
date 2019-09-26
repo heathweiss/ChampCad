@@ -76,9 +76,9 @@ fix tests. GMSHPointsTest has had everthing moved inside of State, as BuilderSta
 fix haddock: got haddock compiling again.
 git commit -m 'tests and haddock fixed'
 
-
-next:
-implement RIO
+current:
+Implement the ReaderT pattern, as unable to add RIO as a dependency to this project.
+commit and extend gmsh branch with 'rio' to try and change yaml resolver: lts-5.3 to lts-14.4
 
 next:
 Create 2 showable classes.
@@ -100,4 +100,12 @@ Or look into Snoymans ReaderT pattern at: https://www.fpcomplete.com/blog/2017/0
 -Is it possibly part to the RIO pkg from FPComplete? According to: https://github.com/commercialhaskell/rio, it is.
 
 
-
+next:
+Implement RIO as a new project. Good chance to get rid of all the CornerPoints infrastructure I created for meshing, as gmsh will handle that now.
+Get rid of CornerPoints and all associated baggage, as should only need Points, which should be renamed to Vertex.
+Redo x/y plane to iso standards. Will need to change the quandrant system.
+Use the ReaderT pattern as per Snoyman tutorials.
+google: "fpcomplete readerT pattern" for some other takes on the ReaderT pattern such as:
+-https://www.tweag.io/posts/2018-10-04-capability.html
+Look at using nix instead of stack which is what the about tweag.io post uses.
+-https://maybevoid.com/posts/2019-01-27-getting-started-haskell-nix.html
