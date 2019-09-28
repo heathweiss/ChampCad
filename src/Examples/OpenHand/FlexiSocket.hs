@@ -108,6 +108,9 @@ import Control.Monad.IO.Class  (liftIO)
 import Database.Persist
 import Database.Persist.Sqlite
 import Database.Persist.TH
+import qualified Persistable.Base as PstB
+
+
 
 pixelsPerMM = 696/38
 type RowReductionFactor = Int
@@ -143,14 +146,14 @@ uniqueFlexDimensionName = UniqueFlexDimensionName
 
 -- | Initialize a new database with all tables. Will alter tables of existing db.
 initializeDatabase :: IO ()
-initializeDatabase = runSqlite commontDBName $ do
+initializeDatabase = runSqlite commontDBName . PstB.asSqlBackendReader $ do
        
     runMigration migrateAll
     liftIO $ putStrLn "flex socket db initialized"
 
 -- | Insert a new flex socket Dimensions into the database.
 insertFlexDimensions :: IO ()
-insertFlexDimensions     = runSqlite commontDBName $ do
+insertFlexDimensions     = runSqlite commontDBName . PstB.asSqlBackendReader $ do
   dimensionsId
             <- insert $ FlexDimensions
                "sharkfin" 
@@ -180,7 +183,7 @@ Should be based on the socket made for the openBionics.com socket: Examples.Open
 -}
 
 flexSocketWithRiserDbStlGenerator :: String -> IO ()
-flexSocketWithRiserDbStlGenerator dimensionsName  = runSqlite commontDBName $ do
+flexSocketWithRiserDbStlGenerator dimensionsName  = runSqlite commontDBName . PstB.asSqlBackendReader $ do
   maybeCommonDimensions <- getBy $ uniqueDimensionName dimensionsName
   maybeFlexDimensions <- getBy $ UniqueFlexDimensionName dimensionsName
   case maybeCommonDimensions of
@@ -320,7 +323,7 @@ flexSocketWithRiser innerSleeveSDR         outerSleeveSDR         rowReductionFa
 -- ==========================================================================================================================================
 
 flexBottomForSocketWithRiserDbStlGenerator :: String -> IO ()
-flexBottomForSocketWithRiserDbStlGenerator dimensionsName  = runSqlite commontDBName $ do
+flexBottomForSocketWithRiserDbStlGenerator dimensionsName  = runSqlite commontDBName . PstB.asSqlBackendReader $ do
   maybeCommonDimensions <- getBy $ uniqueDimensionName dimensionsName
   maybeFlexDimensions <- getBy $ UniqueFlexDimensionName dimensionsName
   case maybeCommonDimensions of
@@ -423,7 +426,7 @@ flexSocketPlainStlGenerator (CommonFactors innerTranspose outerTranspose drop' t
         putStrLn "File not decoded"
 
 flexSocketPlainStlGeneratorDbStlGeneretor :: String -> IO ()
-flexSocketPlainStlGeneratorDbStlGeneretor dimensionsName = runSqlite commontDBName $ do
+flexSocketPlainStlGeneratorDbStlGeneretor dimensionsName = runSqlite commontDBName . PstB.asSqlBackendReader $ do
   maybeDimensions <- getBy $ uniqueDimensionName dimensionsName
   case maybeDimensions of
         Nothing -> liftIO $ putStrLn "common dimensions not found"

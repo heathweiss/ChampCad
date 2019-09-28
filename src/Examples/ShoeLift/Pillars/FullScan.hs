@@ -18,6 +18,7 @@ import           Control.Monad.IO.Class  (liftIO)
 import           Database.Persist
 import           Database.Persist.Sqlite
 import           Database.Persist.TH
+import qualified Persistable.Base as PstB
 
 import CornerPoints.Points(Point(..))
 import CornerPoints.CornerPoints(CornerPoints(..), (+++),(+++>),(|+++|))
@@ -164,7 +165,7 @@ runFullBtmTreadStlGenerator =
   runTreadStlGeneratorBase (fullBtmBuilder) (layerNames^.btmLayer)
 
 runTreadStlGeneratorBase :: FullScanBuilder -> LayerName -> IO ()
-runTreadStlGeneratorBase fullScanBuilder layerName = runSqlite databaseName $ do
+runTreadStlGeneratorBase fullScanBuilder layerName = runSqlite databaseName . PstB.asSqlBackendReader $ do
   layerId <- getBy $ nameUnique' layerName
   angleHeightRadiusEntity <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId layerId)] []
   

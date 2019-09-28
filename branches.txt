@@ -76,7 +76,15 @@ fix tests. GMSHPointsTest has had everthing moved inside of State, as BuilderSta
 fix haddock: got haddock compiling again.
 git commit -m 'tests and haddock fixed'
 
-current:
+done:
+create rio branch
+change yaml resolver: lts-5.3 to lts-14.4
+added Persistable.Base.asSqlBackendReader and changed a lot of examples to use it, so runSqlite can figure out it's type.
+git commit -m 'upgraded to lts-14.4'
+Tested some stl output on a shoe lift then merged back to master.
+got rid of rio branch and back to working in gmsh branch
+
+next:
 Implement the ReaderT pattern, as unable to add RIO as a dependency to this project.
 commit and extend gmsh branch with 'rio' to try and change yaml resolver: lts-5.3 to lts-14.4
 

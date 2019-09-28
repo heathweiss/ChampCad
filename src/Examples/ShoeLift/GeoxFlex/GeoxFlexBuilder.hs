@@ -16,6 +16,7 @@ import Database.Persist
 import Database.Persist.Sqlite
 import Database.Persist.TH
 import Control.Monad.IO.Class (liftIO)
+import qualified Persistable.Base as PstB
 
 import Persistable.Radial (Layer(..), AngleHeightRadius(..), AnglesHeightsRadii(..), nameUnique', angleHeightRadius', layerId',
                            angleHeightRadiusLayerId', extractAnglesHeightsRadiiFromEntity, ExtractedAngleHeightRadius(..),
@@ -68,7 +69,7 @@ currentBuilder = btmTreadBuilderUsingRadialLinesGrid
                  --topTreadBuilderUsingLeftRightSidesButNoGrid
 
 showBuilderValue :: IO () 
-showBuilderValue = runSqlite "src/Examples/ShoeLift/GeoxFlex/lineScanner.db" $ do
+showBuilderValue = runSqlite "src/Examples/ShoeLift/GeoxFlex/lineScanner.db" . PstB.asSqlBackendReader $ do
   layerId <- getBy $ nameUnique' "tread"
   angleHeightRadiusEntity <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId layerId)] []
   
@@ -88,7 +89,7 @@ showBuilderValue = runSqlite "src/Examples/ShoeLift/GeoxFlex/lineScanner.db" $ d
 
 --make a riser to convert from pillars to german centers
 runBuilder :: IO () 
-runBuilder = runSqlite "src/Examples/ShoeLift/GeoxFlex/lineScanner.db" $ do
+runBuilder = runSqlite "src/Examples/ShoeLift/GeoxFlex/lineScanner.db" . PstB.asSqlBackendReader $ do
   pillarLayerId <- getBy $ nameUnique' "tread"
   geoxAngleHeightRadiusEntity <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId pillarLayerId)] []
 

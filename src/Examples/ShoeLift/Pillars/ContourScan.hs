@@ -25,6 +25,7 @@ import           Control.Monad.IO.Class  (liftIO)
 import           Database.Persist
 import           Database.Persist.Sqlite
 import           Database.Persist.TH
+import qualified Persistable.Base as PstB
 
 import CornerPoints.Points(Point(..))
 import CornerPoints.CornerPoints(CornerPoints(..), (+++),(+++>),(|+++|))
@@ -159,7 +160,7 @@ runBtmHeelStlGenerator =
 
 --genearte stl by running the <heel/center/toe> cpoints builder for <top/btm> layer
 singleSectionStlGenerator :: SectionData -> SectionBuilder -> FullScanBuilder -> LayerName -> IO ()
-singleSectionStlGenerator sectionDimensions sectionBuilder fullScanBuilder layerName = runSqlite (databaseName) $ do
+singleSectionStlGenerator sectionDimensions sectionBuilder fullScanBuilder layerName = runSqlite databaseName . PstB.asSqlBackendReader $ do
     
   layerId <- getBy $ nameUnique' $ layerName
   angleHeightRadiusEntity <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId layerId)] []
@@ -204,7 +205,7 @@ runBtmCenterToeStlGenerator =
 
 
 doubleSectionStlGenerator :: SectionData -> SectionBuilder -> SectionData -> SectionBuilder -> FullScanBuilder -> LayerName -> IO ()
-doubleSectionStlGenerator section1Dimensions section1Builder section2Dimensions section2Builder fullScanBuilder layerName = runSqlite (databaseName) $ do
+doubleSectionStlGenerator section1Dimensions section1Builder section2Dimensions section2Builder fullScanBuilder layerName = runSqlite databaseName . PstB.asSqlBackendReader $ do
   layerId <- getBy $ nameUnique' $ layerName
   angleHeightRadiusEntity <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId layerId)] []
 
@@ -241,7 +242,7 @@ doubleSectionStlGenerator section1Dimensions section1Builder section2Dimensions 
 --Return a [CornerPointsError] if there was an error in Builder.
 
 singleSectionCptsGenerator :: SectionData -> SectionBuilder -> FullScanBuilder -> LayerName -> IO ([CornerPoints])
-singleSectionCptsGenerator sectionDimensions sectionBuilder fullScanBuilder layerName = runSqlite (databaseName) $ do
+singleSectionCptsGenerator sectionDimensions sectionBuilder fullScanBuilder layerName = runSqlite databaseName . PstB.asSqlBackendReader $ do
     
   layerId <- getBy $ nameUnique' $ layerName
   angleHeightRadiusEntity <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId layerId)] []

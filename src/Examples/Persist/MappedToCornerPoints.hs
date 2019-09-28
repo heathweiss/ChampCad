@@ -15,6 +15,7 @@ import           Control.Monad.IO.Class  (liftIO)
 import           Database.Persist
 import           Database.Persist.Sqlite
 import           Database.Persist.TH
+import qualified Persistable.Base as PstB
 
 import CornerPoints.Points(Point(..))
 import CornerPoints.CornerPoints(CornerPoints(..), (+++),(+++>),(|+++|))
@@ -57,13 +58,13 @@ initializeDatabase = runSqlite databaseName $ do
     liftIO $ putStrLn "db initializes"
 -}
 initializeSurfaces :: IO ()
-initializeSurfaces  = runSqlite databaseName $ do
+initializeSurfaces  = runSqlite databaseName . PstB.asSqlBackendReader $ do
   insert $ Surface "top"
   insert $ Surface "bottom"
   liftIO $ putStrLn "surfaces initialized"
 
 insertTopLines :: IO ()
-insertTopLines = runSqlite databaseName $ do
+insertTopLines = runSqlite databaseName . PstB.asSqlBackendReader $ do
   topId <- getBy $ nameUnique' "top"
 
   insert $ BackTopLineP  0 0 1 1 0 1 $ extractSurfaceId topId
@@ -72,7 +73,7 @@ insertTopLines = runSqlite databaseName $ do
   liftIO $ putStrLn "top lines inserted"
 
 insertBottomLines :: IO ()
-insertBottomLines = runSqlite databaseName $ do
+insertBottomLines = runSqlite databaseName . PstB.asSqlBackendReader $ do
   bottomId <- getBy $ nameUnique' "bottom"
 
   insert $ BackBottomLineP 0 0 0 1 0 0 $ extractSurfaceId bottomId
@@ -81,7 +82,7 @@ insertBottomLines = runSqlite databaseName $ do
   liftIO $ putStrLn "bottom lines inserted"
 
 createBottomFaceFromDB :: IO (CpointsList)
-createBottomFaceFromDB  = runSqlite databaseName $ do
+createBottomFaceFromDB  = runSqlite databaseName . PstB.asSqlBackendReader $ do
   btmId <- getBy $ nameUnique' "bottom"
   listOfBackBtmPoints <- selectList [ backBottomLinePSurfaceId' ==. (extractSurfaceId btmId)] []
   listOfBtmFrontPoints <- selectList [ bottomFrontLinePSurfaceId' ==. (extractSurfaceId btmId)] []
@@ -90,7 +91,7 @@ createBottomFaceFromDB  = runSqlite databaseName $ do
   return btmFace
 
 createTopFaceFromDB :: IO (CpointsList)
-createTopFaceFromDB  = runSqlite databaseName $ do
+createTopFaceFromDB  = runSqlite databaseName . PstB.asSqlBackendReader $ do
   topId <- getBy $ nameUnique' "top"
   listOfBackTopPoints <- selectList [ backTopLinePSurfaceId' ==. (extractSurfaceId topId)] []
   listOfFrontTopPoints <- selectList [ frontTopLinePSurfaceId' ==. (extractSurfaceId topId)] []

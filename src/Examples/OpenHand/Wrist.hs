@@ -28,6 +28,7 @@ import Control.Monad.IO.Class  (liftIO)
 import Database.Persist
 import Database.Persist.Sqlite
 import Database.Persist.TH
+import qualified Persistable.Base as PstB
 
 import CornerPoints.Radius(MultiDegreeRadii(..), SingleDegreeRadii(..), Radius(..),extractSingle, extractList, rotateSDR, transposeMDRList,
                           {-transposeSDRList,-} extractSDRWithinRange, singleDegreeRadiiListToMap, transformSDRWithList, extractMaybeSDR,
@@ -148,7 +149,7 @@ initializeDatabase = runSqlite commontDBName $ do
 
 -- | Insert a new flex socket Dimensions into the database.
 insertWristDimensions :: IO ()
-insertWristDimensions     = runSqlite commontDBName $ do
+insertWristDimensions     = runSqlite commontDBName . PstB.asSqlBackendReader $ do
   dimensionsId
             <- insert $ WristDimensions
                "sharkfin" 
@@ -172,7 +173,7 @@ Use a round shaft for the riser, so that attachment to the socket is always the 
 
 -}
 wristWithRoundRiserDBGenerator :: String -> IO ()
-wristWithRoundRiserDBGenerator dimensionName = runSqlite commontDBName $ do
+wristWithRoundRiserDBGenerator dimensionName = runSqlite commontDBName . PstB.asSqlBackendReader $ do
   maybeCommonDimensions <- getBy $ uniqueDimensionName dimensionName
   maybeFlexDimensions <- getBy $ uniqueFlexDimensionName dimensionName
   maybeWristDimensions <- getBy $ UniqueWristDimensionName dimensionName

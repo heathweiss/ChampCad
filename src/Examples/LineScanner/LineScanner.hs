@@ -35,6 +35,7 @@ import Control.Monad.Except
 import Database.Persist
 import Database.Persist.Sqlite
 import Database.Persist.TH
+import qualified Persistable.Base as PstB
 import Control.Monad.IO.Class (liftIO)
 
 currentBuilder = rectangularBlockAttachingToAluminumPlaterBuilder
@@ -186,7 +187,7 @@ rectangularBlockOnTurntableBuilder ahr origin = do
 
 
 runCalibrationBuilder :: IO () 
-runCalibrationBuilder = runSqlite "src/Examples/LineScanner/lineScanner.db" $ do
+runCalibrationBuilder = runSqlite "src/Examples/LineScanner/lineScanner.db" . PstB.asSqlBackendReader $ do
   pillarLayerId <- getBy $ nameUnique' "layer1"
   geoxAngleHeightRadiusEntity <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId pillarLayerId)] []
 

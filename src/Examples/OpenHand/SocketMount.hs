@@ -107,6 +107,7 @@ import Control.Monad.IO.Class  (liftIO)
 import Database.Persist
 import Database.Persist.Sqlite
 import Database.Persist.TH
+import qualified Persistable.Base as PstB
 
 import Control.Lens
 
@@ -164,14 +165,14 @@ CurrentMount
 
 -- | Initialize a new database with all tables. Will alter tables of existing db.
 initializeDatabase :: IO ()
-initializeDatabase = runSqlite socketMountDatabaseConnStr $ do
+initializeDatabase = runSqlite socketMountDatabaseConnStr . PstB.asSqlBackendReader $ do
        
     runMigration migrateAll
     liftIO $ putStrLn "db initializes"
 
 -- | Insert a new Mount, FaceSlope, and FaceDimensions into the database. Sqlite browser will not do this.
 insertMount :: IO ()
-insertMount  = runSqlite socketMountDatabaseConnStr $ do
+insertMount  = runSqlite socketMountDatabaseConnStr . PstB.asSqlBackendReader $ do
   mountId <- insert $ Mount "mount 1" "fits upright motors with board over top"
   insert $ FaceSlope 7  1 (-2) mountId
   insert $ FaceDimensions 5 15 (-35) (-40) (-25) mountId
@@ -181,7 +182,7 @@ insertMount  = runSqlite socketMountDatabaseConnStr $ do
 -- | Set the current Mount in the database. Can be done directlly in sqlite browser.
 --ToDo: get rid of this and currentMount as I get it using a name String
 setCurrentMount :: IO ()
-setCurrentMount = runSqlite socketMountDatabaseConnStr $ do
+setCurrentMount = runSqlite socketMountDatabaseConnStr . PstB.asSqlBackendReader $ do
   maybeMount <- getBy $ UniqueName "mount 1"
   case maybeMount of
     Nothing -> liftIO $ putStrLn "mount not found"
@@ -191,7 +192,7 @@ setCurrentMount = runSqlite socketMountDatabaseConnStr $ do
 
 -- Have a look at the FaceDimensions from the db
 showFaceDimensions :: IO ()
-showFaceDimensions = runSqlite socketMountDatabaseConnStr $ do
+showFaceDimensions = runSqlite socketMountDatabaseConnStr . PstB.asSqlBackendReader $ do
   maybeMount <- getBy $ UniqueName "mount 1"
   case maybeMount of
     Nothing -> liftIO $ putStrLn "mount not found"
@@ -244,9 +245,9 @@ buildFrontFace    topZaxis       btmZaxis     leftXaxis        leftYaxis        
 -- Base function for generating the Stl or showing the cubes from state of the builder mtl.
 --Loads all the db values, and passed them into the stl/show function.
 generateSocketMountStlUsingDbValuesBase :: String -> (FaceDimensions -> FaceSlope -> CommonFactors -> IO ()) -> IO ()
-generateSocketMountStlUsingDbValuesBase commonDimensionsToUse processor  = runSqlite socketMountDatabaseConnStr $ do
+generateSocketMountStlUsingDbValuesBase commonDimensionsToUse processor  = runSqlite socketMountDatabaseConnStr . PstB.asSqlBackendReader $ do
   maybeMount <- getBy $ UniqueName "mount 1"
-  maybeCommonDimensions <- runSqlite commontDBName $ do
+  maybeCommonDimensions <- runSqlite commontDBName . PstB.asSqlBackendReader $ do
      getBy $ uniqueDimensionName commonDimensionsToUse
   case maybeMount of
     Nothing -> liftIO $ putStrLn "mount not found"

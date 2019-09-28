@@ -19,6 +19,7 @@ import Database.Persist
 import Database.Persist.Sqlite
 import Database.Persist.TH
 import Control.Monad.IO.Class (liftIO)
+import qualified Persistable.Base as PstB
 
 
 import Persistable.Radial (Layer(..), AngleHeightRadius(..), AnglesHeightsRadii(..), nameUnique', angleHeightRadius', layerId',
@@ -76,7 +77,7 @@ currentLiftBuilder = centerLiftBuilder
 
 --run the currentLiftBuilder, outputting the stl.
 runLiftBuilder :: IO () 
-runLiftBuilder = runSqlite "src/Examples/ShoeLift/MountainFlex/lineScanner.db" $ do
+runLiftBuilder = runSqlite "src/Examples/ShoeLift/MountainFlex/lineScanner.db" . PstB.asSqlBackendReader $ do
   pillarLayerId <- getBy $ nameUnique' "tread"
   geoxAngleHeightRadiusEntity <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId pillarLayerId)] []
 

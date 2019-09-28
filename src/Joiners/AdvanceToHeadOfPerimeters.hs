@@ -419,6 +419,45 @@ See which is closest base on advancingCpoint to the head cpoint, and build an  c
 -}
 advancingCpointFromDoublePerimsUsingDistanceToHeadOfPerimsCpointsNM :: Perimeters -> Perimeters -> [[CornerPoints]] -> AdvancingCPoint -> Either String AdvancingCPoint 
 advancingCpointFromDoublePerimsUsingDistanceToHeadOfPerimsCpointsNM innerPerimeters (OuterPerimeter(o:outerPerimeters)) rawInnerPerimeters (AdvancingCPoint advancingCpoint) = do
+  distanceToInnerCpoint <- do -- :: Either String DistanceA
+    --(InnerPerimeters(i:orderedInnerPerimeters)) <- orderInnerPerimsByDistanceFromHeadNM innerPerimeters (AdvancingCPoint advancingCpoint)
+    orderedInnerPerimeters <- orderInnerPerimsByDistanceFromHeadNM innerPerimeters (AdvancingCPoint advancingCpoint)
+    --calculateDistanceA advancingCpoint $ head i    -- :: Either String Perimeters
+    let deref :: Perimeters -> [CornerPoints]
+        deref (InnerPerimeters(i:orderedInnerPerimeters)) = i 
+    calculateDistanceA advancingCpoint $ head $ deref orderedInnerPerimeters   -- :: Either String Perimeters
+    -- :: Either String DistanceA
+
+  distanceToOuterCpoint <- calculateDistanceA advancingCpoint o
+
+  (AdvancingCPoint advancingInnerCpoint) <- advancingCpointFromHeadOfInnerPerimsNM innerPerimeters (AdvancingCPoint advancingCpoint)
+  isLegalInnerCpoint <- perimetersContainLegalIntersections rawInnerPerimeters  advancingInnerCpoint
+
+  (AdvancingCPoint advancingOuterCpoint) <- advancingCpointFromHeadOfOuterPerimsNM (OuterPerimeter(o:outerPerimeters)) (AdvancingCPoint advancingCpoint)
+  isLegalOuterCpoint <- perimetersContainLegalIntersections rawInnerPerimeters  advancingOuterCpoint
+
+  advancingCpointNew <- do
+    case distanceToInnerCpoint <= distanceToOuterCpoint of
+      True ->
+        case isLegalInnerCpoint of
+          True -> return $ AdvancingCPoint advancingInnerCpoint
+          False -> 
+            case isLegalOuterCpoint of
+              True -> return $ AdvancingCPoint advancingOuterCpoint
+              False -> Left "both inner and outer cpoint intersections were illegallllll"
+      False ->
+        case isLegalOuterCpoint of
+          True -> return $ AdvancingCPoint advancingOuterCpoint
+          False -> 
+            case isLegalInnerCpoint of
+              True -> return $ AdvancingCPoint advancingInnerCpoint
+              False -> Left "both inner and outer cpoint intersections were illegal"
+  
+  return $ advancingCpointNew
+ 
+{-
+advancingCpointFromDoublePerimsUsingDistanceToHeadOfPerimsCpointsNM :: Perimeters -> Perimeters -> [[CornerPoints]] -> AdvancingCPoint -> Either String AdvancingCPoint 
+advancingCpointFromDoublePerimsUsingDistanceToHeadOfPerimsCpointsNM innerPerimeters (OuterPerimeter(o:outerPerimeters)) rawInnerPerimeters (AdvancingCPoint advancingCpoint) = do
   distanceToInnerCpoint <- do
     (InnerPerimeters(i:orderedInnerPerimeters)) <- orderInnerPerimsByDistanceFromHeadNM innerPerimeters (AdvancingCPoint advancingCpoint)
     calculateDistanceA advancingCpoint $ head i
@@ -450,8 +489,8 @@ advancingCpointFromDoublePerimsUsingDistanceToHeadOfPerimsCpointsNM innerPerimet
               False -> Left "both inner and outer cpoint intersections were illegal"
   
   return $ advancingCpointNew
- 
 
+-}
 
 
 

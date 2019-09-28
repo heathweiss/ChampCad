@@ -19,6 +19,7 @@ import           Control.Monad.IO.Class  (liftIO)
 import           Database.Persist
 import           Database.Persist.Sqlite
 import           Database.Persist.TH
+import qualified Persistable.Base as PstB
 
 import Stl.StlBase(Triangle(..), newStlShape)
 import Stl.StlCornerPoints((|+++^|), Faces(..) )
@@ -80,28 +81,28 @@ Line
 persistBasicDB = "persistBasic.sql"
 
 initializeDatabase :: IO ()
-initializeDatabase = runSqlite persistBasicDB $ do
+initializeDatabase = runSqlite persistBasicDB . PstB.asSqlBackendReader $ do
        
     runMigration migrateAll
     liftIO $ putStrLn "db initializes"
 
 
 insertTopLines :: IO ()
-insertTopLines = runSqlite persistBasicDB $ do
+insertTopLines = runSqlite persistBasicDB . PstB.asSqlBackendReader $ do
   surfaceid <- insert $ Surface "top"
   backTopLine <- insert $ Line 0 0 1 1 0 1 surfaceid
   frontTopLine <- insert $ Line 0 1 1 1 1 1 surfaceid
   liftIO $ putStrLn "top lines inserted"
 
 insertBotomLines :: IO ()
-insertBotomLines = runSqlite persistBasicDB $ do
+insertBotomLines = runSqlite persistBasicDB . PstB.asSqlBackendReader $ do
   surfaceid <- insert $ Surface "bottom"
   backBtmLine <- insert $ Line  0 0 0 1 0 0 surfaceid
   btmFrontLine <- insert $ Line 0 1 1 1 1 0 surfaceid
   liftIO $ putStrLn "bottom lines inserted"  
   
 createStlWithoutBuilder :: IO ()
-createStlWithoutBuilder = runSqlite persistBasicDB $ do
+createStlWithoutBuilder = runSqlite persistBasicDB . PstB.asSqlBackendReader $ do
   btmId <- getBy $ NameUnique "bottom"
   topId <- getBy $ NameUnique "top"
   --listOfPoints <- selectList [ LineX1 ==. 0] []
@@ -131,7 +132,7 @@ buildCubePointsList' = buildCubePointsList (++)
 It does not have to be in IO ()-}
 --lookAtBtmId :: ReaderT SqlBackend (Except String) (Maybe (Entity Surface))
 lookAtBtmId :: IO (Maybe (Entity Surface))
-lookAtBtmId =  runSqlite persistBasicDB $ do
+lookAtBtmId =  runSqlite persistBasicDB . PstB.asSqlBackendReader $ do
   btmId <- getBy $ NameUnique "bottom"
   liftIO $ return btmId
 
@@ -157,7 +158,7 @@ extractSurfaceId (Just (Entity key val))  = key
 
 --testing...
 lookAtSurfaceId :: IO ()
-lookAtSurfaceId =  runSqlite persistBasicDB $ do
+lookAtSurfaceId =  runSqlite persistBasicDB . PstB.asSqlBackendReader $ do
   btmId <- getBy $ NameUnique "bottom"
   case btmId of
    (Just (Entity key val)) -> liftIO $ putStrLn "good key"
@@ -210,7 +211,7 @@ If I introduce errors that are caught by my Builder module, how do I look at the
 I have to rewrite/compile to show the state, instead of generating/writing stl.
 -}
 createStlWithBuilderInIOMOnad :: IO ()
-createStlWithBuilderInIOMOnad = runSqlite persistBasicDB $ do
+createStlWithBuilderInIOMOnad = runSqlite persistBasicDB . PstB.asSqlBackendReader $ do
   btmId <- getBy $ NameUnique "bottom"
   topId <- getBy $ NameUnique "top"
   listOfBtmPoints <- selectList [ LineSurfaceIddd ==. (extractSurfaceId btmId)] []
@@ -241,7 +242,7 @@ buildCubePointsListWithIOCpointsListBase' = buildCubePointsListWithIOCpointsList
 
 {-Convert the persist results into CPointsList.-}
 createBottomFacesFromDB :: IO (CpointsList)
-createBottomFacesFromDB  = runSqlite persistBasicDB $ do
+createBottomFacesFromDB  = runSqlite persistBasicDB . PstB.asSqlBackendReader $ do
   btmId <- getBy $ NameUnique "bottom"
   listOfBtmPoints <- selectList [ LineSurfaceIddd ==. (extractSurfaceId btmId)] []
   let btmFace = getBackBottomLine (head listOfBtmPoints)
@@ -250,7 +251,7 @@ createBottomFacesFromDB  = runSqlite persistBasicDB $ do
 
 {-Convert the persist results into CPointsList.-}
 createTopFacesFromDB :: IO (CpointsList)
-createTopFacesFromDB  = runSqlite persistBasicDB $ do
+createTopFacesFromDB  = runSqlite persistBasicDB . PstB.asSqlBackendReader $ do
   topId <- getBy $ NameUnique "top"
   listOfTopPoints <- selectList [ LineSurfaceIddd ==. (extractSurfaceId topId)] []
   let topFace = getBackTopLine (head listOfTopPoints)

@@ -1,5 +1,6 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE ParallelListComp #-}
+
 module CornerPoints.CornerPoints(
 CornerPoints(..),
 (+++),

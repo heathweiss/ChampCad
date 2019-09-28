@@ -23,6 +23,7 @@ import           Control.Monad.IO.Class  (liftIO)
 import           Database.Persist
 import           Database.Persist.Sqlite
 import           Database.Persist.TH
+import qualified Persistable.Base as PstB
 
 import CornerPoints.Points(Point(..))
 import CornerPoints.CornerPoints(CornerPoints(..), (+++),(+++>),(|+++|))
@@ -482,7 +483,7 @@ flatGolfSectionBuilder flatSectionBuilderData = do
   return cubes
 
 runSingleFlatSectionBuilder :: SingleFlatSectionBuilderRunData -> IO ()
-runSingleFlatSectionBuilder singleFlatSectionBuilderRunData = runSqlite databaseName $ do
+runSingleFlatSectionBuilder singleFlatSectionBuilderRunData = runSqlite databaseName . PstB.asSqlBackendReader $ do
   layerId <- getBy $ nameUnique' $ layerName' $ sectionRunDataFSBRD singleFlatSectionBuilderRunData  
   angleHeightRadiusEntity <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId layerId)] []
 
@@ -507,7 +508,7 @@ sectionBuilder: Builder.Monad fx that will generate the current section.
 
 
 runSingleSectionStlGenerator :: SectionRunData -> IO ()
-runSingleSectionStlGenerator sectionData = runSqlite databaseName $ do
+runSingleSectionStlGenerator sectionData = runSqlite databaseName . PstB.asSqlBackendReader $ do
   layerId <- getBy $ nameUnique' $ layerName' sectionData  
   angleHeightRadiusEntity <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId layerId)] []
   
@@ -536,7 +537,7 @@ runSingleSectionStlGenerator sectionData = runSqlite databaseName $ do
           liftIO $ putStrLn "stl should have been output"
 
 runDoubleSectionStlGenerator :: SectionRunData -> SectionRunData -> IO ()
-runDoubleSectionStlGenerator section1Data section2Data  = runSqlite databaseName $ do
+runDoubleSectionStlGenerator section1Data section2Data  = runSqlite databaseName . PstB.asSqlBackendReader $ do
   case ((layerName' section1Data) == (layerName' section2Data)) of
     False -> liftIO $ putStrLn "layerName of sectionData's do not match"
     True  -> do
@@ -746,7 +747,7 @@ runGeoxStlGenerator =
 --Checks for errors from the Builder and shows the error if applicable.
 --Otherwise it outputs the stl.
 entireTreadStlGeneratorBase :: (FullScanBuilderData -> ExceptT BuilderError (State CpointsStack) CpointsList) -> LayerName -> IO ()
-entireTreadStlGeneratorBase fullScanBuilder layerName = runSqlite databaseName $ do
+entireTreadStlGeneratorBase fullScanBuilder layerName = runSqlite databaseName . PstB.asSqlBackendReader $ do
   layerId <- getBy $ nameUnique' layerName --top or bottom as named in the db.
   angleHeightRadiusEntity <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId layerId)] []
   

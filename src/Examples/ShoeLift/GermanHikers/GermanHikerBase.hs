@@ -18,6 +18,7 @@ import Database.Persist
 import Database.Persist.Sqlite
 import Database.Persist.TH
 import Control.Monad.IO.Class (liftIO)
+import qualified Persistable.Base as PstB
 
 import Persistable.Radial (Layer(..), AngleHeightRadius(..), AnglesHeightsRadii(..), nameUnique', angleHeightRadius', layerId',
                            angleHeightRadiusLayerId', extractAnglesHeightsRadiiFromEntity, ExtractedAngleHeightRadius(..),
@@ -88,7 +89,7 @@ currentPillarBuilder = pillarsToGermanCenterRiserBuilder
 
 --make a riser to convert from pillars to german centers
 runPillarsToGermanCenterRiserBuilder :: IO () 
-runPillarsToGermanCenterRiserBuilder = runSqlite pillarDatabaseName $ do
+runPillarsToGermanCenterRiserBuilder = runSqlite pillarDatabaseName . PstB.asSqlBackendReader $ do
   pillarLayerId <- getBy $ nameUnique' pillarTreadScanLayer
   pillarAngleHeightRadiusEntity <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId pillarLayerId)] []
 
@@ -100,7 +101,7 @@ runPillarsToGermanCenterRiserBuilder = runSqlite pillarDatabaseName $ do
       liftIO $ putStrLn "pillar tread scan layer was found"
       
       let
-       runGermanDatabase = runSqlite germanDatabaseName $ do
+       runGermanDatabase = runSqlite germanDatabaseName . PstB.asSqlBackendReader $ do
         germanLayerId <- getBy $ nameUnique' germanTreadScanLayer
         germanAngleHeightRadiusEntity <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId germanLayerId)] []
         
@@ -124,7 +125,7 @@ runPillarsToGermanCenterRiserBuilder = runSqlite pillarDatabaseName $ do
       runGermanDatabase
 
 showPillarsToGermanCenterRiserBuilder :: IO () 
-showPillarsToGermanCenterRiserBuilder = runSqlite pillarDatabaseName $ do
+showPillarsToGermanCenterRiserBuilder = runSqlite pillarDatabaseName . PstB.asSqlBackendReader $ do
   pillarLayerId <- getBy $ nameUnique' pillarTreadScanLayer
   pillarAngleHeightRadiusEntity <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId pillarLayerId)] []
 
@@ -136,7 +137,7 @@ showPillarsToGermanCenterRiserBuilder = runSqlite pillarDatabaseName $ do
       liftIO $ putStrLn "pillar tread scan layer was found"
       
       let
-       runGermanDatabase = runSqlite germanDatabaseName $ do
+       runGermanDatabase = runSqlite germanDatabaseName . PstB.asSqlBackendReader $ do
         germanLayerId <- getBy $ nameUnique' germanTreadScanLayer
         germanAngleHeightRadiusEntity <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId germanLayerId)] []
         
@@ -294,7 +295,7 @@ currentGermanBuilder = heelRiserBuilder
 advCPointFromClosestInnerOuterUsedCPoint = advCPointFromClosestInnerOuterUsedCPointBase
 
 runGermanTreadScanBuilder :: IO () 
-runGermanTreadScanBuilder = runSqlite germanDatabaseName $ do
+runGermanTreadScanBuilder = runSqlite germanDatabaseName . PstB.asSqlBackendReader $ do
   layerId <- getBy $ nameUnique' germanTreadScanLayer
   angleHeightRadiusEntity <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId layerId)] []
   --angleHeightRadiusEntity <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId layerId), (angle angleHeightRadius') <=. 50] []
@@ -317,7 +318,7 @@ runGermanTreadScanBuilder = runSqlite germanDatabaseName $ do
 
 
 showGermanTreadScanBuilderValue :: IO () 
-showGermanTreadScanBuilderValue = runSqlite germanDatabaseName $ do
+showGermanTreadScanBuilderValue = runSqlite germanDatabaseName . PstB.asSqlBackendReader $ do
   layerId <- getBy $ nameUnique' germanTreadScanLayer
   angleHeightRadiusEntity <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId layerId)] []
   

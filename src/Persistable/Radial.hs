@@ -17,6 +17,7 @@ import Control.Monad.IO.Class  (liftIO)
 import Database.Persist
 import Database.Persist.Sqlite
 import Database.Persist.TH
+import qualified Persistable.Base as PstB
 
 import CornerPoints.Points(Point(..))
 import CornerPoints.CornerPoints(CornerPoints(..), (+++),(+++>),(|+++|))
@@ -94,7 +95,7 @@ initializeDatabase = runSqlite databaseName $ do
     liftIO $ putStrLn "db initializes"
 
 insertLayer :: String -> IO ()
-insertLayer layerName = runSqlite databaseName $ do
+insertLayer layerName = runSqlite databaseName . PstB.asSqlBackendReader $ do
   layerId
        <- insert $ Layer
           --"layer name"
@@ -106,7 +107,7 @@ insertLayer layerName = runSqlite databaseName $ do
 
 
 insertDegreeRadius :: String -> Double -> Double -> Double -> IO ()
-insertDegreeRadius layerName angle height radius  = runSqlite databaseName $ do
+insertDegreeRadius layerName angle height radius  = runSqlite databaseName . PstB.asSqlBackendReader $ do
   layerId <- getBy $ NameUnique layerName
   case layerId of
     (Just (Entity key val)) -> do
@@ -215,7 +216,7 @@ data ExtractedAngleHeightRadius = ExtractedAngleHeightRadius
 --will fail if layerName is not valid.
 --Thought monad would protect from that.
 loadAndExtractedAngleHeightRadiusFromDB :: String -> String -> IO (Maybe [ExtractedAngleHeightRadius])
-loadAndExtractedAngleHeightRadiusFromDB  layerName dbName = runSqlite ( T.pack dbName) $ do
+loadAndExtractedAngleHeightRadiusFromDB  layerName dbName = runSqlite ( T.pack dbName) . PstB.asSqlBackendReader $ do
   layerId <- getBy $ nameUnique' layerName 
   
 
@@ -293,8 +294,8 @@ Maybe use in conjunction with: "build a haskell web api example by: lettier.gith
 -}
 loadAndExtractedAngleHeightRadiusFromDbT :: String -> String -> MaybeT IO [ExtractedAngleHeightRadius]
 loadAndExtractedAngleHeightRadiusFromDbT  layerName dbName = do
-  n <-
-   runSqlite ( T.pack dbName) $ do
+  n <- liftIO $
+   runSqlite ( T.pack dbName) . PstB.asSqlBackendReader $ do
      layerId <- getBy $ nameUnique' layerName
   
   
@@ -324,7 +325,6 @@ loadAndExtractedAngleHeightRadiusFromDbT  layerName dbName = do
  
 
   return n
-
 
 runner = runMaybeT $  loadAndExtractedAngleHeightRadiusFromDbT "layer1" "src/Examples/ShoeLift/MountainFlex/ankleBrace.db"
 

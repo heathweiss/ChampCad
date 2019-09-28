@@ -24,6 +24,7 @@ import Database.Persist
 import Database.Persist.Sqlite
 import Database.Persist.TH
 import Data.Text.Internal
+import qualified Persistable.Base as PstB
 
 diamondDefaultDb :: Text
 diamondDefaultDb = "src/Primitives/DiamondDefaults.sql" 
@@ -77,7 +78,7 @@ insertDiamond dbName diamondName description (Diamond
                    _ _ _ _ topHorizontalOffset topVerticalOffset
                    _ _ _ _ rightHorizontalOffset rightVerticalOffset
                    _ _ _ _ bottomHorizontalOffset bottomVerticalOffset
-                   _ _ _ _ leftHorizontalOffset leftVerticalOffset _)    = runSqlite dbName $ do
+                   _ _ _ _ leftHorizontalOffset leftVerticalOffset _)    = runSqlite dbName . PstB.asSqlBackendReader  $ do
   diamondId 
     <- insert $
        DiamondDB

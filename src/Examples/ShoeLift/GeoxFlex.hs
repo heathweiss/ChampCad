@@ -37,6 +37,7 @@ import Control.Monad.IO.Class  (liftIO)
 import Database.Persist
 import Database.Persist.Sqlite
 import Database.Persist.TH
+import qualified Persistable.Base as PstB
 
 import Builder.Monad(BuilderError(..), cornerPointsErrorHandler, buildCubePointsList,
                      CpointsStack, CpointsList, buildCubePointsListWithAdd, buildCubePointsListSingle)
@@ -61,7 +62,7 @@ flexToeName = "flexToe"
 --Takes a function which uses the Builder monad to produce stl or show state. 
 --Supplies the db values for that function.
 runDatabaseBuilder :: String -> ([Measurement] -> IO ()) -> IO ()
-runDatabaseBuilder shapeName runScan = runSqlite databaseName $ do
+runDatabaseBuilder shapeName runScan = runSqlite databaseName . PstB.asSqlBackendReader $ do
   maybeScan <- getBy $ uniqueScanName shapeName
   
   case maybeScan of
@@ -74,7 +75,7 @@ runDatabaseBuilder shapeName runScan = runSqlite databaseName $ do
      liftIO $ putStrLn "stl has been output"
 
 runDatabaseDiamondBuilder :: String -> ([Measurement] -> DiamondBuilder -> IO ()) -> IO ()
-runDatabaseDiamondBuilder shapeName runScan = runSqlite databaseName $ do
+runDatabaseDiamondBuilder shapeName runScan = runSqlite databaseName . PstB.asSqlBackendReader $ do
   maybeScan <- getBy $ uniqueScanName shapeName
   
   case maybeScan of
@@ -82,7 +83,7 @@ runDatabaseDiamondBuilder shapeName runScan = runSqlite databaseName $ do
     Just (Entity scanId' scan) -> do 
      maybeMeasurements <- selectList [measurementScanId' ==. scanId'] [Asc degree'] -- :: [Entity Measurement]
      let measurements = map (extractMeasurement) maybeMeasurements
-     maybeDaimondBuilder <- runSqlite diamondDefaultDb $ do
+     maybeDaimondBuilder <- runSqlite diamondDefaultDb . PstB.asSqlBackendReader $ do
        getBy $ uniqueDiamondName "wideBottomNarrowTop"
      case maybeDaimondBuilder of
          Nothing -> liftIO $ putStrLn "diamond cutter not found"

@@ -40,6 +40,7 @@ import Control.Monad.IO.Class  (liftIO)
 import Database.Persist
 import Database.Persist.Sqlite
 import Database.Persist.TH
+import qualified Persistable.Base as PstB
 
 type HeightT = Double
 type RadiusT = Double
@@ -82,7 +83,7 @@ initializeDatabase = runSqlite dbName $ do
     liftIO $ putStrLn "db initializes"
 
 insertScan :: String -> String -> IO ()
-insertScan scanName description = runSqlite dbName $ do
+insertScan scanName description = runSqlite dbName . PstB.asSqlBackendReader $ do
   scanId
     <- insert $ LineScan
        scanName
@@ -90,7 +91,7 @@ insertScan scanName description = runSqlite dbName $ do
   liftIO $ putStrLn "scan inserted"
 
 insertMeasurement :: String -> Double -> Double -> Double -> IO ()
-insertMeasurement scanName degree height radius = runSqlite dbName $ do
+insertMeasurement scanName degree height radius = runSqlite dbName . PstB.asSqlBackendReader $ do
   maybeScan <- getBy $ UniqueScanName scanName
   case maybeScan of
    Nothing -> liftIO $ putStrLn "scan not found"

@@ -20,6 +20,7 @@ import Control.Monad.IO.Class  (liftIO)
 import Database.Persist
 import Database.Persist.Sqlite
 import Database.Persist.TH
+import qualified Persistable.Base as PstB
 
 import Builder.Monad(BuilderError(..), cornerPointsErrorHandler, buildCubePointsList,
                      CpointsStack, CpointsList, buildCubePointsListWithAdd, buildCubePointsListSingle)
@@ -101,14 +102,14 @@ share [mkPersist sqlSettings { mpsGenerateLenses = True }, mkMigrate "migrateAll
 
 -- | Initialize a new database with all tables. Will alter tables of existing db.
 initializeDatabase :: IO ()
-initializeDatabase = runSqlite databaseName $ do
+initializeDatabase = runSqlite databaseName . PstB.asSqlBackendReader $ do
        
     runMigration migrateAll
     liftIO $ putStrLn "db initializes"
 
 -- | Insert a new Mount, FaceSlope, and FaceDimensions into the database. Sqlite browser will not do this.
 insertMotorMount :: IO ()
-insertMotorMount  = runSqlite databaseName $ do
+insertMotorMount  = runSqlite databaseName . PstB.asSqlBackendReader $ do
   let stdXWidth = 2.5
       borderWidth = 2
       sealWidth = 2
@@ -157,7 +158,7 @@ insertMotorMount  = runSqlite databaseName $ do
   liftIO $ putStrLn "mount mount inserted"
 
 motorMountRunGeneratorFromDB :: String -> IO ()
-motorMountRunGeneratorFromDB mountName = runSqlite databaseName $ do
+motorMountRunGeneratorFromDB mountName = runSqlite databaseName . PstB.asSqlBackendReader $ do
   maybeMount <- getBy $ UniqueName mountName
   case maybeMount of
     Nothing -> liftIO $ putStrLn "Just kidding, not really there"

@@ -538,6 +538,81 @@ delaunayBaseNM removeAdvancingCPointFromPerimeters
                rawInnerPerimeters
                innerPerimeters outerPerimeter  =
   
+  let 
+    delaunayBaseNM'' = delaunayBaseNM'
+                         removeAdvancingCPointFromPerimeters
+                         createAdvancingCpointFromInnerPerimeters advancingCpointFromOuterPerims  doublePerimDecision rawInnerPerimeters 
+    process :: Either String [CornerPoints]
+    process = do
+      --As this is the very first advancingCpoint, build it from head outerPerimeters, and innerPerimeters
+      --(OuterPerimeter (o: justifiedOuterPerimeter)) <-
+      justifiedOuterPerimeter <-
+        case (length  outerPerimeter) == 0 of
+          True -> Left "empty outerPerimeters passed into delaunayBaseNM"
+          False -> Right $ OuterPerimeter outerPerimeter
+      let deref :: Perimeters -> [[CornerPoints]]
+          deref (InnerPerimeters(i:orderedInnerPerimeters)) = orderedInnerPerimeters
+          deref' :: Perimeters -> [CornerPoints]
+          deref' (OuterPerimeter outerPerimeters) = outerPerimeters
+      --(InnerPerimeters (i:innerPerimeters)) <-
+      innerPerimeters' <-
+        case (length $ removeEmpty innerPerimeters) == 0 of
+          True -> Left "deluanaBaseNM has empty InnerPerimeters"
+          False -> Right $ InnerPerimeters innerPerimeters
+      
+      --advancingCpoint <- createAdvancingCpointFromInnerPerimeters (InnerPerimeters (i:innerPerimeters)) (AdvancingCPoint o)
+      advancingCpoint <- createAdvancingCpointFromInnerPerimeters innerPerimeters' (AdvancingCPoint $ head $ deref' justifiedOuterPerimeter)
+     
+      perimsWithAdvancingCpointBldrRemoved <-
+        (removeAdvancingCPointFromPerimeters 
+            (Just innerPerimeters')  (Just $ OuterPerimeter outerPerimeter) advancingCpoint)
+      
+      appended <- Right $ appendAdvancingCpointToJoinedCpointsE advancingCpoint  []
+        
+      delaunay <-
+        delaunayBaseNM'' 
+        (fst perimsWithAdvancingCpointBldrRemoved)
+        (snd perimsWithAdvancingCpointBldrRemoved)
+        advancingCpoint 
+        appended
+      
+      return delaunay
+      
+  in
+  case process  of
+    Left e -> [CornerPointsError $ "Joiners.DeluanayB(Left e): " ++  e]
+    Right val -> val
+
+
+
+{-
+delaunayBaseNM ::  
+                 ((Maybe Perimeters) -> (Maybe Perimeters) -> AdvancingCPoint -> Either String (Maybe Perimeters, Maybe Perimeters)) ->
+                 --removeAdvancingCPointFromPerimeters
+
+                 (Perimeters -> AdvancingCPoint -> Either String AdvancingCPoint) ->
+                 --createAdvancingCpointFromInnerPerimeters
+
+                 (Perimeters -> AdvancingCPoint -> Either String AdvancingCPoint) ->
+                 --advancingCpointFromOuterPerims
+                   
+                 ((Perimeters) -> (Perimeters) -> [[CornerPoints]] -> AdvancingCPoint -> Either String AdvancingCPoint ) -> 
+                 --doublePerimDecision, both perims have cpoints in them, so decide which to make advancingCpoint from.
+
+                 [[CornerPoints]] -> --raw inner perims
+                 
+                 --end of curried functions.
+                 --start of actual data being passed.
+                 [[CornerPoints]] -> --inner perim cpoints
+                 [CornerPoints] -> --outer perim cpoints
+                 [CornerPoints]
+delaunayBaseNM removeAdvancingCPointFromPerimeters
+               createAdvancingCpointFromInnerPerimeters
+               advancingCpointFromOuterPerims
+               doublePerimDecision
+               rawInnerPerimeters
+               innerPerimeters outerPerimeter  =
+  
   let
     delaunayBaseNM'' = delaunayBaseNM'
                          removeAdvancingCPointFromPerimeters
@@ -578,8 +653,7 @@ delaunayBaseNM removeAdvancingCPointFromPerimeters
     Right val -> val
 
 
-
-
+-}
 
 
 

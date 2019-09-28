@@ -17,6 +17,7 @@ import Database.Persist
 import Database.Persist.Sqlite
 import Database.Persist.TH
 import Control.Monad.IO.Class (liftIO)
+import qualified Persistable.Base as PstB
 
 
 import Persistable.Radial (Layer(..), AngleHeightRadius(..), AnglesHeightsRadii(..), nameUnique', angleHeightRadius', layerId',
@@ -89,7 +90,7 @@ toeTrailingAngles ang = (ang > 181.0) && (ang < 213.0)
 
 --show return value from currentLiftBuilder
 showLiftBuilderValue :: IO () 
-showLiftBuilderValue = runSqlite "src/Examples/ShoeLift/MountainFlex/lineScanner.db" $ do
+showLiftBuilderValue = runSqlite "src/Examples/ShoeLift/MountainFlex/lineScanner.db" . PstB.asSqlBackendReader $ do
   layerId <- getBy $ nameUnique' "tread"
   angleHeightRadiusEntity <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId layerId)] []
   
@@ -109,7 +110,7 @@ showLiftBuilderValue = runSqlite "src/Examples/ShoeLift/MountainFlex/lineScanner
 
 --run the currentLiftBuilder, outputting the stl.
 runLiftBuilder :: IO () 
-runLiftBuilder = runSqlite "src/Examples/ShoeLift/MountainFlex/lineScanner.db" $ do
+runLiftBuilder = runSqlite "src/Examples/ShoeLift/MountainFlex/lineScanner.db" . PstB.asSqlBackendReader $ do
   pillarLayerId <- getBy $ nameUnique' "tread"
   geoxAngleHeightRadiusEntity <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId pillarLayerId)] []
 
@@ -1141,7 +1142,7 @@ buildLeadingFrontTopLinesFromAHR ahr splitter =
 --load all 12 layers of the scan.
 --show the current val of 1 of the 3 ankle brace builders
 showAnkleBraceBuilderValue :: IO () 
-showAnkleBraceBuilderValue = runSqlite "src/Examples/ShoeLift/MountainFlex/ankleBrace.db" $ do
+showAnkleBraceBuilderValue = runSqlite "src/Examples/ShoeLift/MountainFlex/ankleBrace.db" . PstB.asSqlBackendReader $ do
   layer1Id <- getBy $ nameUnique' "layer1"
   ahrEntity1 <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId layer1Id)] []
 
@@ -1208,7 +1209,7 @@ showAnkleBraceBuilderValue = runSqlite "src/Examples/ShoeLift/MountainFlex/ankle
 --load all 12 layers of the scan from db.
 --call 1 of 3 ankle brace builders.
 runAnkleBraceBuilder :: IO () 
-runAnkleBraceBuilder = runSqlite "src/Examples/ShoeLift/MountainFlex/ankleBrace.db" $ do
+runAnkleBraceBuilder = runSqlite "src/Examples/ShoeLift/MountainFlex/ankleBrace.db" . PstB.asSqlBackendReader $ do
   
   layer1Id <- getBy $ nameUnique' "layer1"
   ahrEntity1 <- selectList [ angleHeightRadiusLayerId' ==. (extractLayerId layer1Id)] []

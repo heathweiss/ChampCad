@@ -50,10 +50,10 @@ library
 --helpers
                        Helpers.List, Helpers.DSL, Helpers.Applicative, Helpers.FileWriter
                        Helpers.Symmetrical.Sequence, Helpers.Symmetrical.List
-                       --database
+--database
                        Persistable.Mapping
                        Persistable.Radial
-
+                       Persistable.Base
 --GMSH                 
                        GMSH.CornerPoints
                        GMSH.Curve
@@ -154,7 +154,6 @@ library
                      , text >= 1.1.0.0
                      , attoparsec >= 0.13.0.1
                      , JuicyPixels >= 3.2.6.1
-                     
                      , parallel >= 3.2.0.6
                      , containers >= 0.5.5.1
                      , lens >= 4.13
@@ -172,8 +171,8 @@ library
                      , esqueleto >= 2.4.3
                      , hashable >= 1.2.4.0
                      , unordered-containers >= 0.2.5.1
-
-
+                     , rio >=0.1.8.0
+                     , unliftio >= 0.2.12
 
 
                      
@@ -240,8 +239,11 @@ test-suite ChampCad-test
                      , aeson >= 0.9.0.0
                      , bytestring >= 0.10.4.0
                      , flow >= 1.0.2
-                     , persistent >= 2.2.4
-                     , persistent-sqlite >= 2.2
+                     --updata these to try and get resolver 14 working
+                     --, persistent >= 2.2.4
+                     , persistent >= 2.10.1
+                     --, persistent-sqlite >= 2.2
+                     , persistent-sqlite >= 2.10.5
                      , persistent-template >= 1.3.1.4
                      , hashable >= 1.2.4.0
                      , unordered-containers >= 0.2.5.1

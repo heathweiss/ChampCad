@@ -23,7 +23,12 @@ import Database.Persist
 import Database.Persist.Sqlite
 import Database.Persist.TH
 
+import qualified Persistable.Base as PstB
+
 import Control.Lens
+
+import Control.Monad.IO.Class
+import Control.Monad.Trans.Reader
 
 commontDBName = "src/Examples/OpenHand/Common.sql"
 
@@ -57,10 +62,13 @@ initializeDatabase = runSqlite commontDBName $ do
     runMigration migrateAll
     liftIO $ putStrLn "db initializes"
 
--- | Insert a new Dimensions into the database. Sqlite browser will not do this.
+-- mess with ghc to resolve the types. Used as: runSqlite commontDBName . asSqlBackendReader  $ do
+--asSqlBackendReader :: ReaderT SqlBackend m a -> ReaderT SqlBackend m a
+--asSqlBackendReader = id
 
+-- | Insert a new Dimensions into the database. Sqlite browser will not do this.
 insertDimensions :: IO ()
-insertDimensions     = runSqlite commontDBName $ do
+insertDimensions     = runSqlite commontDBName . PstB.asSqlBackendReader  $ do
   dimensionsId
             <- insert $ Dimensions
                "sharkfin" 
@@ -125,7 +133,7 @@ setWristCommonFactors (Dimensions _ _ flexInner flexThickness mountThickness wri
 -- testing: look at factors to see why flexi and mount overlap in xy plane
 -- It was because I tranpose the innerMDR instead of the raw MDR. Had to change the way I used transpose factors.
 seeCommonFactors :: IO ()
-seeCommonFactors = runSqlite commontDBName $ do
+seeCommonFactors = runSqlite commontDBName . PstB.asSqlBackendReader $ do
   maybeFactors <- getBy $ UniqueDimensionName "dimensions 1"
   case maybeFactors of
    Nothing -> liftIO $ putStrLn "common factors not found"
