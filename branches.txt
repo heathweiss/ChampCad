@@ -84,9 +84,17 @@ git commit -m 'upgraded to lts-14.4'
 Tested some stl output on a shoe lift then merged back to master.
 got rid of rio branch and back to working in gmsh branch
 
-next:
-Implement the ReaderT pattern, as unable to add RIO as a dependency to this project.
-commit and extend gmsh branch with 'rio' to try and change yaml resolver: lts-5.3 to lts-14.4
+
+=================================================== stop the presses ===========================================
+Was woring on the next item.
+Will now create a new project, HasMesh, in order to get rid of a ton of extra baggage that was
+created when I used CornerPoints to genertate my own meshes.
+
+
+current:
+Implement the ReaderT pattern via RIO:
+Making the RIO.State module which will re-create the original state.
+
 
 next:
 Create 2 showable classes.

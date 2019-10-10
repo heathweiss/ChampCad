@@ -61,7 +61,7 @@ library
                        GMSH.Writer
                        GMSH.State
                        GMSH.Base
-                       GMSH.ReaderT.State
+                       GMSH.RIO.State
 --Examples
                        Examples.ShoeLift.SnowBoardBoot
                        Examples.ShoeLift.GeoxShoe,
