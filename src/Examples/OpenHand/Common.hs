@@ -9,6 +9,13 @@
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TypeFamilies               #-}
 
+{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleInstances #-}
+
+
 {- |
 Common functions and database values used by any/all modules in OpenHand
 -}
@@ -25,12 +32,14 @@ import Database.Persist.TH
 
 import qualified Persistable.Base as PstB
 
+import Data.Text
+
 import Control.Lens
 
 import Control.Monad.IO.Class
 import Control.Monad.Trans.Reader
 
-commontDBName = "src/Examples/OpenHand/Common.sql"
+commontDBName = "src/Examples/OpenHand/Common.sql" :: Text
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 Dimensions

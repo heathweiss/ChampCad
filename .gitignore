@@ -33,3 +33,4 @@ README.md~
 *.sql-shm
 *.sql-wal
 *.txt~
+*.gcode

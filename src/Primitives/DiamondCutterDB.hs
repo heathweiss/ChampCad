@@ -9,6 +9,13 @@
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TypeFamilies               #-}
 
+{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleInstances #-}
+
+
 -- | Supply Persitence database functionality to DiamondCutter
 module Primitives.DiamondCutterDB(uniqueDiamondName, DiamondDB(..), diamondDbToDiamondCutter, diamondDefaultDb) where
 

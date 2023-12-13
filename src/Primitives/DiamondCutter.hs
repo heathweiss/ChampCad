@@ -1,3 +1,10 @@
+{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleInstances #-}
+
+
 module Primitives.DiamondCutter(DiamondBuilder(..), runDiamondBuilder, runFrontToBackDiamondBuilder, OffSet(..),
                                isTheFrontDiamondDone, isTheBackDiamondDone, defaultDiamondBuilder) where
 import CornerPoints.Points(Point(..))

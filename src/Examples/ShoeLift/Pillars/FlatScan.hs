@@ -78,8 +78,8 @@ import Control.Lens
 type FlatSectionBuilder = FlatSectionBuilderData -> ExceptT BuilderError (State CpointsStack) CpointsList
 
 type SectionTransposer = (Double) -> (Double)
-btmHeightTransposer = (+(-5))
-topHeightTransposer = (+10)
+btmHeightTransposer = (+(-5.0))
+topHeightTransposer = (+10.0)
 
 
 data FlatSectionBuilderData =

@@ -8,6 +8,13 @@
 {-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TypeFamilies               #-}
+
+{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleInstances #-}
+
 {- |
 The container into which the motors and board will be mounted.
 -}
@@ -21,6 +28,8 @@ import Database.Persist
 import Database.Persist.Sqlite
 import Database.Persist.TH
 import qualified Persistable.Base as PstB
+
+import Data.Text hiding (map)
 
 import Builder.Monad(BuilderError(..), cornerPointsErrorHandler, buildCubePointsList,
                      CpointsStack, CpointsList, buildCubePointsListWithAdd, buildCubePointsListSingle)
@@ -51,7 +60,7 @@ import Control.Lens
 -- ============================ database values motor mount==============================================================
 -- ======================================================================================================================
 -- ======================================================================================================================
-databaseName = "src/Examples/OpenHand/MotorMount.sql"
+databaseName = "src/Examples/OpenHand/MotorMount.sql" :: Text
 
 share [mkPersist sqlSettings { mpsGenerateLenses = True }, mkMigrate "migrateAll"] [persistLowerCase|
  MotorMount

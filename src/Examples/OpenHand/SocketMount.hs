@@ -9,6 +9,13 @@
 {-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TypeFamilies               #-}
+
+{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleInstances #-}
+
 {- |
 
 The section of the socket which will have platform to attach the motor mount to.
@@ -86,7 +93,7 @@ import qualified Data.Foldable as F
 import qualified Flow as Flw
 import Control.Lens
 
-
+import Data.Text hiding (map, transpose, concat, take, drop, head, tail)
 
 --import qualified Test.HUnit as T
 import Test.HUnit hiding (State)
@@ -126,7 +133,7 @@ type Yslope = Double
 type RightLineToFrontFaceCount = Int
 
 -- =================================== database =====================================================
-socketMountDatabaseConnStr = "src/Examples/OpenHand/SocketMount.sql"
+socketMountDatabaseConnStr = "src/Examples/OpenHand/SocketMount.sql" :: Text
 
 {-
 Added in zHeight manually to the db as got error trying to add it to exsiting db.

@@ -1,3 +1,19 @@
+================================================ dec13.23 ============================================
+Pulled from github and built for 1st time in 3-4 years.
+Had to update to the latest stack lts to build it.
+Had to fix errors assoc'd with the lts upgrade.
+Added *.gcode to to .gitignore
+
+
+
+
+
+
+
+
+
+
+
 -can: git reset --hard HEAD 
  or   
       git reset --hard 'can create gpoints from points'

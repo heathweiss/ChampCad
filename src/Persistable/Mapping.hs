@@ -5,6 +5,13 @@
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TypeFamilies               #-}
 
+{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleInstances #-}
+
+
 module Persistable.Mapping (Surface(..), BackBottomLineP(..), BackTopLineP(..), BottomFrontLineP(..), FrontTopLineP(..),
                             nameUnique', backBottomLinePSurfaceId', bottomFrontLinePSurfaceId', backTopLinePSurfaceId', frontTopLinePSurfaceId',
                             extractSurfaceId, getBackBottomLine, getBackTopLine, getBottomFrontLine, getFrontTopLine) where
