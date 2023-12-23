@@ -31,10 +31,8 @@ type Degree = Double
 Represents a radius of a circular shape, which is what all shapes in math polar are created from.
 -}
 data Radius = Radius {radius :: Double}
-              
    deriving (Show)
-
-
+ 
 -- | Reset value of a Radius if null.
 setRadiusIfNull :: Double -> Radius -> Radius
 setRadiusIfNull resetValue (Radius radius')
