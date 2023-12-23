@@ -10,6 +10,12 @@ Will use a rubber bootie for the bottom tread so it will be a match to the top t
 
 module Examples.ShoeLift.GeoxFlex.GeoxFlexBuilder() where
 
+import RIO
+import qualified RIO.Text as T
+
+import OpenSCad.ScriptBase(ToOpenScript(toScript), Name(..), Script(..))
+import OpenSCad.Polyhedron(Polyhedron(..))
+
 import Joiners.RadialLines(getMinY, getMaxY, extractYaxis, createYaxisGridFromTopFrontPoints, splitOnXaxis, buildLeftRightLineFromGridAndLeadingTrailingCPointsBase)
 
 import Database.Persist
@@ -84,8 +90,26 @@ showBuilderValue = runSqlite "src/Examples/ShoeLift/GeoxFlex/lineScanner.db" . P
       case valCpoints of
         (Left e) -> liftIO $ print $ e
         (Right a) -> do
-          liftIO $ print $ show a
-          liftIO $ writeFile "src/Data/temp.txt" $ show a
+          --print to console
+          --liftIO $ print $ show a
+
+          --this is where I need to convert to script
+          --below is the original.
+          --liftIO $ writeFile "src/Data/temp.txt" $ show a
+          --now I convert the CubePoints to PolyhedronScript
+          let
+            cubeScripts =  [PolyhedronScript $ PolyCPoints (Name ("cube" <> (display $ textDisplay x)) ) cube' 
+                          | x <- ([1..] :: [Int])
+                          | cube' <- a
+                    ]        
+            --cut out a central cylinder to showcase the use of OpenSCad difference command. Use a temporary cylinder script, as have not created a cylinder.
+            cutCylinder = map (Difference (RawUtf8 "cylinder(r=10,h=200, $fn=10);")) {-$ take 10 $ drop 120-} cubeScripts
+            --diff = Difference 
+          writeFileUtf8Builder 
+           "temp.txt" $ 
+            mconcat $ map toScript cutCylinder -- cubeScripts
+            
+
 
 --make a riser to convert from pillars to german centers
 runBuilder :: IO () 
