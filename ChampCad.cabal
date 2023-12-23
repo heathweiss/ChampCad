@@ -62,6 +62,16 @@ library
                        GMSH.State
                        GMSH.Base
                        GMSH.RIO.State
+
+--OpenSCad
+                       OpenSCad.ScriptBase
+                       OpenSCad.Polyhedron
+                       OpenSCad.PolyhedronExamples
+                       OpenSCad.Dimensions
+                       OpenSCad.Cubes
+                       OpenSCad.Cylinders
+                       OpenSCad.Exceptions
+                       OpenSCad.Common
 --Examples
                        Examples.ShoeLift.SnowBoardBoot
                        Examples.ShoeLift.GeoxShoe,
