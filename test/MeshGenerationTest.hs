@@ -12,8 +12,8 @@ import CornerPoints.FaceConversions(upperFaceFromLowerFace, toFrontTopLine, toBa
 import CornerPoints.MeshGeneration( doesOpposingFaceExistInList, doesSameFaceExistInList, hasSurfaceArea, extractFaces)
 
 meshGenerationTest = do
-  putStrLn "\n\n" 
-  putStrLn "meshGenerationTest tests"
+  putStrLn "" 
+  putStrLn "MeshGenerationTest"
   runTestTT opposingBottomFaceExistsInListTest
   runTestTT opposingTopFaceExistsInListTest
   --front

@@ -17,8 +17,8 @@ import Control.Lens
 makeLenses ''Distance
 
 geometryRadiusTestDo = do
-  putStrLn "\n\n" 
-  putStrLn "geometryRadiusTestDo tests"
+  putStrLn "" 
+  putStrLn "GeometryRadiusTest"
   runTestTT calculateXYDistanceAfterRotatingTest
   runTestTT lookAtXTestLength
   runTestTT lookAtXYRadiusTestLength

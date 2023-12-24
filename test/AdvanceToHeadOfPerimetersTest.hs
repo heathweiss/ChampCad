@@ -22,7 +22,7 @@ import Geometry.Angle(Angle(..))
 import Primitives.Cylindrical.Walled(cylinder)
 
 advanceToHeadOfPerimetersTestDo = do
-  putStrLn "\n\n\n\n\n advanceToHeadOfPerimetersTest"
+  putStrLn "\nAdvanceToHeadOfPerimetersTest"
   runTestTT seeInnerCylinderTest
   runTestTT seeOuterCylinderTest
   runTestTT removeContainedCPointFromHeadOfPerimsNMTest

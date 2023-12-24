@@ -103,7 +103,7 @@ showBuilderValue = runSqlite "src/Examples/ShoeLift/GeoxFlex/lineScanner.db" . P
                           | cube' <- a
                     ]        
             --cut out a central cylinder to showcase the use of OpenSCad difference command. Use a temporary cylinder script, as have not created a cylinder.
-            cutCylinder = map (Difference (RawUtf8 "cylinder(r=10,h=200, $fn=10);")) {-$ take 10 $ drop 120-} cubeScripts
+            cutCylinder = map (DiffScript (RawUtf8 "cylinder(r=10,h=200, $fn=10);")) {-$ take 10 $ drop 120-} cubeScripts
             --diff = Difference 
           writeFileUtf8Builder 
            "temp.txt" $ 

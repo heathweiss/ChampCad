@@ -34,10 +34,14 @@ import AdvanceToHeadOfPerimetersTest(advanceToHeadOfPerimetersTestDo)
 import RadialLinesTest(radialLinesTestDo)
 import GmshLinesTest(gmshLinesTestDo)
 import GmshPointsTest(gmshPointsMasterTestDo)
+import OpenSCadDimensionsTest(openSCadDimensionsTest)
+import OpenSCadScriptBaseTest(openSCadScriptBaseTest)
+import OpenSCadCubesTest(openSCadCubesTest)
+import OpenSCadCylindersTest(openSCadCylindersTest)
+import OpenSCadPolyhedronTests(openSCadPolyhedronTests)
 
 --main :: IO ()
 main = do
-  {-
   splicerTestDo
   builderMonadTest
   cornerPointsCreateTestDo
@@ -45,7 +49,7 @@ main = do
   cornerPointsTestDo
   cornerPointsWithDegreesTest
   cubicalTestDo
-  faceExtractAndConvertTestDo  
+  faceExtractAndConvertTestDo
   horizontalFacesTestDo
   jsonTestDo
   mathPolarTestDo
@@ -64,11 +68,41 @@ main = do
   lineScannerTestDo
   joinerTestDo
   distanceTestDo
+  --huge amount of errors: skip for now.
   polarInterceptTestDo
+  --several errors. Skip for now.
   advanceToHeadOfPerimetersTestDo
   listHelperTestDo
   interceptTestDo
   delaunayTestDo
-  radialLinesTestDo -}
+  radialLinesTestDo
   gmshLinesTestDo
   gmshPointsMasterTestDo
+  openSCadDimensionsTest
+  openSCadScriptBaseTest
+  openSCadCubesTest
+  openSCadCylindersTest
+  openSCadPolyhedronTests
+  return ()
+  {-
+    
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+   -}
+  --gmshLinesTestDo
+  --

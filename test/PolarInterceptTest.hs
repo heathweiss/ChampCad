@@ -10,8 +10,7 @@ import Geometry.Angle(Angle(..), rotateAngle, getQuadrantAngle, RotateFactor(..)
 import Geometry.Rotation(rotatePointAroundZAxis, rotateCornerPointAroundZAxis)
 
 polarInterceptTestDo = do
-  putStrLn "\n\n"
-  putStrLn "polar intercept Test"
+  putStrLn "\nPolarInterceptTest"
 
   runTestTT intersectTTest
   runTestTT intersectTTest2

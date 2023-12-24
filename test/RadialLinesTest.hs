@@ -11,10 +11,7 @@ import CornerPoints.FaceExtraction(extractFrontTopLine,  extractBottomFrontLine,
 import Data.List(find)
 
 radialLinesTestDo = do
-  putStrLn ""
-  putStrLn ""
-  putStrLn ""
-  putStrLn "RadialLinesTest"
+  putStrLn "\nRadialLinesTest"
   runTestTT seeMinYCpointOfLeadingRadialShapeAsTopFrontPointsTest
   runTestTT seeMinYCpointOfTrailingRadialShapeAsTopFrontPointsTest
   runTestTT seeMaxYCpointOfLeadingRadialShapeAsTopFrontPointsTest

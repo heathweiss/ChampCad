@@ -52,8 +52,8 @@ mathPolarTestDo = do
   -}
   
   {-Have a look at the bottom front right corner first, as this is the first corner gen'd.-}
-  putStrLn "\n\n"
-  putStrLn "createCornerPoint tests"
+  putStrLn ""
+  putStrLn "MathPolarTest"
   runTestTT createCornerPointTestR10PosX0PosY0XY10
   runTestTT createCornerPointTestR10PosX0PosY10XY10
   runTestTT createCornerPointTestR10PosX0PosY10XY80
@@ -76,11 +76,6 @@ mathPolarTestDo = do
   --runTestTT setQuadrant2YvalTest
   --runTestTT setQuadrant2Yval170Test
   --runTestTT setQuadrant3Xval190Test
-
-
-
-  putStrLn "\n\n" 
-  putStrLn "slopeForXYAngleAndYslopeTest tests"
 
   runTestTT slopeForXYAngleAndYslopeTestXPos10YPos1XY90
   runTestTT slopeForXYAngleAndYslopeTestX0Ypos0XY0

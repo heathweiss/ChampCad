@@ -12,8 +12,7 @@ import Joiners.Manual(Joiner(..),joiner)
 
 
 joinerTestDo = do
-  putStrLn "" 
-  putStrLn "joinerTestDo tests"
+  putStrLn "\nJoinerTest" 
   runTestTT test1
   runTestTT test2
   runTestTT test3

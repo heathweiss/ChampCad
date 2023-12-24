@@ -18,7 +18,7 @@ import Database.Persist.Sqlite
 import Database.Persist.TH
 
 lineScannerTestDo = do
-  putStrLn "\n\nlineScannerTestDo"
+  putStrLn "\nLineScannerTest"
   runTestTT tryToMakeAMeasurement
   runTestTT getMinHeightTest
   runTestTT adjustHeightTest

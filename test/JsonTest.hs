@@ -8,6 +8,9 @@ import qualified Data.ByteString.Lazy as BS
 
 
 jsonTestDo = do
+  putStrLn ""
+  putStrLn "JsonTest"
+  
   runTestTT radiusDecodeTest
   runTestTT radiusEncodeTest
   runTestTT degreeEncodeTest

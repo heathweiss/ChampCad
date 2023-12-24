@@ -3,7 +3,7 @@ import Test.HUnit
 import Helpers.List((++:), SplitAtT(..), splitAndReverseBackHalf, removeEmpty )
 
 listHelperTestDo = do
-  putStrLn "\n\nListHelpersTest"
+  putStrLn "\nListHelpersTest"
   runTestTT addTest
   runTestTT splitTest
 

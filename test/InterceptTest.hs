@@ -20,8 +20,7 @@ import Primitives.Cylindrical.Walled(cylinder)
 
 interceptTestDo = do
 
-  putStrLn "\n\n\n\n"
-  putStrLn "intercept TestDo"
+  putStrLn "\nInterceptTest"
 
   {- run these to have a look at working values
   runTestTT seeInitialAdvancingCpoint

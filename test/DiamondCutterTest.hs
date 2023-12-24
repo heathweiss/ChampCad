@@ -14,7 +14,7 @@ import CornerPoints.Transpose (transposeZ, transposeY, transposeX)
 
 diamondCutterTestDo = do
   putStrLn ""
-  putStrLn "DiamnondCutter tests"
+  putStrLn "DiamondCutterTest"
   runTestTT lookAtTopOfDiamondEmergent
   runTestTT topOfDiamondFront
   runTestTT btmOfDiamondCenterFrontPoint

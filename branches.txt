@@ -1,3 +1,9 @@
+================================================ dec24.23 ============================================
+Need to fix the tests, as they do not compile since I moved up to the latest lts stack.
+
+Fixed all tests so they compile.
+Removed local tests from src and created test files in test/
+
 ================================================ dec14.23 ============================================
 Created the new OpenSCad set of modules to create scripts. Did the initial commits.
 Tried them out on the Examples.ShoeLift.GeoxFlex.GeoxFlexBuilder.showBuilderValue fx.
@@ -8,14 +14,6 @@ Pulled from github and built for 1st time in 3-4 years.
 Had to update to the latest stack lts to build it.
 Had to fix errors assoc'd with the lts upgrade.
 Added *.gcode to to .gitignore
-
-
-
-
-
-
-
-
 
 
 

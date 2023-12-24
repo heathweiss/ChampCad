@@ -9,8 +9,7 @@ import Math.Distance(Distance(..), Distant, calculateDistance,
 import Test.HUnit
 
 distanceTestDo = do
-  putStrLn ""
-  putStrLn "distanceTestDo"
+  putStrLn "\nDistanceTest"
   runTestTT shouldBeEqual1
   runTestTT shouldBeEqual2
   runTestTT shouldBeEqual3

@@ -5,7 +5,7 @@ module GmshLinesTest(gmshLinesTestDo) where
 --import qualified GMSH.Lines as GL 
 --import qualified GMSH.Common as GC
 --import qualified GMSH.Builder as GB
-import qualified  GMSH.Writer as GW
+{-import qualified  GMSH.Writer as GW
 import qualified  GMSH.State as GST
 
 import Test.HUnit
@@ -22,10 +22,9 @@ import CornerPoints.CornerPoints(CornerPoints(..), (===), (|===|))
 
 import Control.Lens
 makeLenses ''GST.BuilderStateData
-
+-}
 gmshLinesTestDo = do
-  putStrLn "" 
-  putStrLn "gmsh tests"
+  putStrLn "\nGmshLinesTest" 
 
   --runBuildWithMonadTests
   --runBuilderTests 

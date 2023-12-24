@@ -10,6 +10,8 @@ import CornerPoints.Points(Point(..))
 import CornerPoints.CornerPoints(CornerPoints(..))
 
 cubicalTestDo = do
+  putStrLn ""
+  putStrLn "CubicalTest"
   --------------------------------------------- transpose -----------------------------------------------
   let transposeYPositiveTest = TestCase $ assertEqual
         "transposeYPositiveTest"

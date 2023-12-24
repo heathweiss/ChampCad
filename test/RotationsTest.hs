@@ -11,8 +11,8 @@ These tests are for Geometry.Rotation
 -}
 
 rotationsTestDo = do
-  putStrLn "\n\n" 
-  putStrLn "rotationsTestDo tests"
+  putStrLn "" 
+  putStrLn "RotationsTest"
   runTestTT rotatePointAroundZAxisQ1ToQ2Test
   runTestTT rotatePointAroundZAxisQ1ZeroDegreesTest
   runTestTT rotatePointAroundZAxisQ1ToQ1Test

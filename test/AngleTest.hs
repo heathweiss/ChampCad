@@ -7,7 +7,7 @@ import CornerPoints.Points(Point(..))
 
 angleTestDo = do
   putStrLn "" 
-  putStrLn "angleTestDo tests"
+  putStrLn "AngleTest"
   runTestTT quad1CenteredTest
   runTestTT quad1X1Y10Test
   runTestTT quad1X10Y100OffsetTest

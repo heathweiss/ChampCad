@@ -7,7 +7,8 @@ import CornerPoints.CornerPoints (CornerPoints(..),(+++))
 import CornerPoints.Points (Point(..))
 
 splicerTestDo = do
-
+  
+  putStrLn "SlicerTest"
   --have not cx'd to see if numbers are correct.
   let putTopOnCube = TestCase $ assertEqual
         "putTopOnCube"

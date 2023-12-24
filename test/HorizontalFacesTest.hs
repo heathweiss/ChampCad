@@ -14,8 +14,8 @@ import Geometry.Slope(Slope(..), flatXSlope, flatYSlope, slopeAdjustedForVertica
 
 horizontalFacesTestDo = do
     --------------------bottom/top faces------------------
-  putStrLn "\n\n" 
-  putStrLn "createBottom/TopFaces tests"
+  putStrLn "" 
+  putStrLn "HorizontalFacesTest"
   runTestTT createBottomFacesTest
   runTestTT createBottomFacesTest'
   runTestTT createBottomFacesWithVariableSlopeTest

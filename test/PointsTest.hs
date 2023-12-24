@@ -8,7 +8,7 @@ import Test.HUnit
 
 pointsTestDo = do
   putStrLn ""
-  putStrLn "pointsTestDo"
+  putStrLn "PointsTest"
   runTestTT onlyZDiffersTest
   runTestTT allAxisDifferTest
   runTestTT onlyZIsTheSameTest

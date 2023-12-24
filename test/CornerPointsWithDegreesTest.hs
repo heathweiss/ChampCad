@@ -30,7 +30,8 @@ testLeftFace =
            (LeftFace  (Point 0 0 0)  (Point 0 0 1)  (Point 0 1 0) (Point 0 1 1) )
            
 cornerPointsWithDegreesTest = do
-
+  putStrLn ""
+  putStrLn "CornerPointsWithDegreesTest"
   {-Try out the (@~+++#@) by adding a frontFace to a Cube-}
   let transposeACornerPointsWithDegreesUpwards = TestCase $ assertEqual
        "transposeACornerPointsWithDegreesUpwards"

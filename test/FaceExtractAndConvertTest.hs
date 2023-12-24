@@ -7,6 +7,9 @@ import CornerPoints.FaceExtraction(extractFrontFace, extractBackFace, extractRig
                                    contains)
 
 faceExtractAndConvertTestDo = do
+  putStrLn ""
+  putStrLn "FaceExtractAndConvertTest"
+
   let helloTest = TestCase $ assertEqual
        "helloTest"
        (CubePoints (Point 1 1 1) (Point 2 2 2) (Point 3 3 3) (Point 4 4 4) (Point 5 5 5) (Point 6 6 6) (Point 7 7 7) (Point 8 8 8))

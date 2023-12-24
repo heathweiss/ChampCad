@@ -31,8 +31,7 @@ import Geometry.Intercept(perimetersContainLegalIntersections)
 
 delaunayTestDo = do
 
-  putStrLn ""
-  putStrLn "delaunayTestDo"
+  putStrLn "\nDelaunayTest"
   
   runTestTT orderInnerPerimsByDistanceFromHeadTest
   runTestTT orderInnerPerimsByDistanceFromHeadTest1

@@ -7,7 +7,8 @@ import CornerPoints.Debug((+++^?), (++^?), CubeName(..), CubeDebug(..), CubeDebu
 
 
 cornerPointsDebugTestDo = do
-
+  putStrLn ""
+  putStrLn "CornerPointsDebugTest"
   --lines
   runTestTT backBottomLinePlusBackBottomLine
   runTestTT backBottomLinesPlusBackBottomLines

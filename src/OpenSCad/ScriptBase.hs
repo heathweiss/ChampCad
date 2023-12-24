@@ -8,7 +8,7 @@ Corresponds to ScriptBase in HasOpenSCAD project.
 Get the basic imports working.
 Then generate a cube from cube points
 -}
-module OpenSCad.ScriptBase(ToOpenScript(..), Name(..), Script(..)) where
+module OpenSCad.ScriptBase(ToOpenScript(..), Name(..), Script(..), fromScriptingError) where
 
 import RIO
 import qualified RIO.Text as T
@@ -37,7 +37,7 @@ data Script   = PolyhedronScript {polyScript :: Polyhedron}
               | CubeScript { cubeScript :: Cube} 
               | TransScripts { transcripts :: [Script], transcriptArrayy :: TranslationArray}
               | ScriptError { scriptError :: ScriptingError}
-              | Difference {subtractMe  :: Script , subtractFromMe :: Script}
+              | DiffScript {subtractMe  :: Script , subtractFromMe :: Script} -- ^ OpenSCad Difference fx.
               | RawUtf8 {rawUtf8 :: Utf8Builder}
 
 class ToOpenScript a where
@@ -92,12 +92,12 @@ instance ToOpenScript Script where
                                   <> "[7,6,5,4],  // back\n"
                                   <> "[4,5,1,0]]; // left\n"
     <> "polyhedron(" <> cPointsName <> "points, " <> cPointsName <> "faces, convexity=10 );"
-  toScript (Difference subtractMe subtractFromMe) =
-    "difference(){\n" <>
+  toScript (DiffScript subtractMe subtractFromMe) =
+    "difference(){" <>
           (toScript subtractFromMe) <>
        "\n" <>
          (toScript subtractMe) <>
-    "\n}\n"
+    "\n}"
   
   toScript (RawUtf8 rawUtf8) = rawUtf8
 
@@ -108,134 +108,10 @@ instance ToOpenScript ScriptingError where
   toScript ZeroYLen = "\nYLen is <= 0"
   toScript ZeroZHght = "\nZHght is <= 0"
 
---newXLength :: Double -> Either ScriptingError XLength 
+-- | Extract a 'ScriptingError' from 'Either' into a 'Script'
 fromScriptingError :: Either ScriptingError Script -> Script
 fromScriptingError (Right script) = script
 fromScriptingError (Left e) = ScriptError e 
 
 
 
---------------------------------------------------------------------------------------------------------------------------------------------------------
---------------------------------------------------------------------------------------------------------------------------------------------------------
---------------------------------------------------------------------------------------------------------------------------------------------------------
---------------------------------------------------------------------------------------------------------------------------------------------------------
----------------------------------------------------- local testing ------------------------------------------------------
-scriptBaseTest :: IO ()
-scriptBaseTest = do
- P.putStrLn "================================= OpenSCad ScriptBase ===================================================="
--------------------------------------------- XLength -------------------------------------------------------------
- let 
-  lookAtAnXLenthScript = TestCase 
-   (do
-     assertEqual "valid XLength show a double"
-      ("5.0") 
-      (textDisplay $ toScript $ XLen 5.0)
-    
-   )
- _ <- runTestTT lookAtAnXLenthScript
-
- let 
-  lookAtAXLenthErrorScript = TestCase 
-   (do
-     assertEqual "invalid XLength show an error msg as a script output"
-      ("\nXLen is <= 0") 
-      (case newXLength 0.0 of
-        Right xLength -> textDisplay $ toScript xLength
-        Left e        -> textDisplay $ toScript e
-      )
-   )
- _ <- runTestTT lookAtAXLenthErrorScript
-
--------------------------------------------- YLength -------------------------------------------------------------
- let 
-  lookAtAnYLenthScript = TestCase 
-   (do
-     assertEqual "valid YLength show a double"
-      ("5.0") 
-      (textDisplay $ toScript $ YLen 5.0)
-    
-   )
- _ <- runTestTT lookAtAnYLenthScript
-
- let 
-  lookAtAYLenthErrorScript = TestCase 
-   (do
-     assertEqual "invalid YLength show an error msg as a script output"
-      ("\nYLen is <= 0") 
-      (case newYLength 0.0 of
-        Right yLength -> textDisplay $ toScript yLength
-        Left e        -> textDisplay $ toScript e
-      )
-   )
- _ <- runTestTT lookAtAYLenthErrorScript
-
--------------------------------------------- ZHeight -------------------------------------------------------------
- let 
-  lookAtAnZHeightScript = TestCase 
-   (do
-     assertEqual "valid ZHeight show a double"
-      ("5.0") 
-      (textDisplay $ toScript $ ZHght 5.0)
-    
-   )
- _ <- runTestTT lookAtAnZHeightScript
-
- let 
-  lookAtAZHeightErrorScript = TestCase 
-   (do
-     assertEqual "invalid ZHeight show an error msg as a script output"
-      ("\nZHght is <= 0") 
-      (case newZHeight 0.0 of
-        Right zHeight -> textDisplay $ toScript zHeight
-        Left e        -> textDisplay $ toScript e
-      )
-   )
- _ <- runTestTT lookAtAZHeightErrorScript
-
-
--------------------------------------------- CubeScript -------------------------------------------------------------
- let 
-  lookAtAValidCubeScript = TestCase
-   (do
-     let
-      eitherCubes :: [Either ScriptingError Script]
-      eitherCubes = [CubeScript <$> ( Cube <$> (newXLength 1) <*> (newYLength 5) <*> (newZHeight 10)),
-                     (CubeScript <$> (Cube <$> (newXLength 50) <*> (newYLength 100) <*> (newZHeight 150)))
-                 ]
-      eitherCubesAsScript :: [Script]
-      eitherCubesAsScript = map fromScriptingError eitherCubes
-     assertEqual "script output of a valid cubescript"
-      "\n cube([1.0, 5.0, 10.0]);\n cube([50.0, 100.0, 150.0]);"
-      (mconcat $ map (textDisplay . toScript)  eitherCubesAsScript )
-   )
- _ <- runTestTT lookAtAValidCubeScript
-
- let 
-  lookAtAnInvalidCubeScript = TestCase
-   (do
-     let
-      eitherCubes :: [Either ScriptingError Script]
-      eitherCubes = [CubeScript <$> ( Cube <$> (newXLength 0) <*> (newYLength 5) <*> (newZHeight 10)),
-                     (CubeScript <$> (Cube <$> (newXLength 50) <*> (newYLength 100) <*> (newZHeight 150)))
-                 ]
-      eitherCubesAsScript :: [Script]
-      eitherCubesAsScript = map fromScriptingError eitherCubes
-     assertEqual "script output of an invalid cubescript"
-      "\nXLen is <= 0\n cube([50.0, 100.0, 150.0]);"
-      (mconcat $ map (textDisplay . toScript)  eitherCubesAsScript )
-   )
- _ <- runTestTT lookAtAnInvalidCubeScript
-
- let
-  cutHoleFromCube = TestCase 
-   (do
-     assertEqual "cut a cylinder from a cube"
-      "fjkdsl"
-      (textDisplay $ toScript $ 
-         Difference (RawUtf8 "cylinder(r=2,h=20); ") (CubeScript $ Cube (XLen 10)(YLen 10) (ZHght 10))  
-                     
-      )
-   )
- _ <- runTestTT cutHoleFromCube
- return ()
- 

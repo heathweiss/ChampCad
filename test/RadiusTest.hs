@@ -20,8 +20,8 @@ import Control.Lens
 
 
 radisuTestDo = do
- putStrLn "\n\n" 
- putStrLn "radisuTestDo tests"
+ putStrLn "" 
+ putStrLn "RadiusTest"
  runTestTT transposeListOfRadiusWithFlowTest
  runTestTT transposeSDRWithFlowTest
  runTestTT transposeMDRWithFlowTest

@@ -12,8 +12,8 @@ import CornerPoints.Radius(Radius(..))
 import CornerPoints.Points(Point(..))
 
 vertexTestDo = do
-  putStrLn "\n\n" 
-  putStrLn "vertexTestDo tests"
+  putStrLn "" 
+  putStrLn "VertexTest"
   runTestTT quad1XFromAngleTest
   runTestTT quad1XFromQuadAngleTest
   runTestTT quad2XFromAngleTest

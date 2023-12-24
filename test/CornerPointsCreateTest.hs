@@ -22,8 +22,8 @@ import Math.Trigonometry(sinDegrees, cosDegrees)
 
 
 cornerPointsCreateTestDo = do
-
-  
+  putStrLn ""
+  putStrLn "CornerPointsCreateTest"
 
   runTestTT adjustRadiusForSlopeTest
   

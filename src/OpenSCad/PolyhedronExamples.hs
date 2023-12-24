@@ -45,9 +45,9 @@ writeMyCubeToFile = do
  writeFileUtf8Builder "temp.txt" $ mconcat $ map  toScript cubeScripts 
 
 ---------------------------------------------------------------- tests -----------------------------------------------------------------------
-polyHedronTests :: IO ()
+{-polyHedronTests :: IO ()
 polyHedronTests = do
- P.putStrLn "======================================== polyhedron tests ================================================"
+ putStrLn ""
  let 
   printPointsAsArray = TestCase
    (do
@@ -77,4 +77,4 @@ polyHedronTests = do
    )
  _ <- runTestTT printPointsAsArray
 
- return ()
+ return ()-}

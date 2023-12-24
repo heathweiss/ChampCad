@@ -23,7 +23,7 @@ import Control.Lens
 makeLenses ''GST.BuilderStateData
 
 gmshPointsMasterTestDo = do
-  putStrLn("\n\nGmshPointsTest:")
+  putStrLn("\nGmshPointsTest")
   GST.runStateTests
   
 
