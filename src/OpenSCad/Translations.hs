@@ -17,5 +17,3 @@ import OpenSCad.Dimensions(XLength(..), YLength(..), ZHeight)
 -- All 3 dimensions have a smart constructor so 'TransArray' can be used with 'Either' 'ScriptingError'.
 data TranslationArray = TransArray {transX :: XLength, transY :: YLength, transZ :: ZHeight}
 
---Should be able to get rid of this
---data Translation = forall a. ToOpenScript a => Translation {transArray :: TranslationArray, translatees :: a}

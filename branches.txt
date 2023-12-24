@@ -1,5 +1,6 @@
 ================================================ dec14.23 ============================================
-Created the new OpenSCad set of modules to create scripts.
+Created the new OpenSCad set of modules to create scripts. Did the initial commits.
+Tried them out on the Examples.ShoeLift.GeoxFlex.GeoxFlexBuilder.showBuilderValue fx.
 
 /home/heath/haskell/ChampCad/.stack-work/install/x86_64-linux-tinfo6/b9fe1f97d1a4be9f8d4ebce0fb245e19d92a3e50c4ffc9627a886439feb65f2f/9.4.8/doc/index.html
 ================================================ dec13.23 ============================================

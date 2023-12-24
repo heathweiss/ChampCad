@@ -4,20 +4,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE ParallelListComp #-}
 {- |
-Create the OpenSCad polyhedron.
-
-So far, only have an 8 point polyhedron based on a 'CornerPoints.CornerPoints.CornerPoints'.
-The only instance is for the CornerPoints constructor.
-There is no actual Polyhedron ADT, just a 'OpenSCad.ScriptBase.Script' constructor,
-which in turn has pattern match for 'OpenSCad.ScriptBase.ToOpenScript'
-
-Todo:
-
-Need to make a general polyhedron that can take a list of points and faces.
-Will use existing ChampCad types as much as possible.
-See the exiting CornerPoints instance for an example.
-Maybe the CornerPoints -> polyhedron should be in a separate module from this work.
-
+Create the OpenSCad polyhedron. See 'OpenSCad.PolyhedronExamples' for examples of building polyhedrons.
 -}
 module OpenSCad.Polyhedron(Polyhedron(..)) where
 
@@ -36,7 +23,9 @@ import OpenSCad.Common(Name(..))
 
 
 {- |
-An OpenSCad polyhedron.
+An OpenSCad polyhedron. 
+
+Todo: Add more constructors, such as a ['CornerPoints.Points.Point'], where they are processed in groups of 4.
 -}
 data Polyhedron = PolyCPoints {polyCPointsName :: Name, polyCPoints :: CornerPoints} -- * From a 'CornerPoints.CornerPoints'
 

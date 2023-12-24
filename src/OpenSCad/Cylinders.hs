@@ -13,6 +13,8 @@ import Test.HUnit
 data Cylinder = Cylinder {cylHeight :: ZHeight, cylRadius :: Radius, cylSides :: Sides}
  deriving (Eq,Show)
 
+-- | Represents a OpenSCad cylinder. Have not yet created a script instance.
+-- Once I do, I can test it out with the geoflex shoe, in which I used a 'OpenSCad.ScriptBase.Script.RawUtf8' cylinder.
 data Sides = Sides {sides :: Int}
  deriving (Eq,Show)
 

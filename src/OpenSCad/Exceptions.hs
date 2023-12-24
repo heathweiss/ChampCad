@@ -14,9 +14,9 @@ import qualified Prelude as P
 import Test.HUnit
 
 -- | For OpenSCad script generation errors.
-data ScriptingError = ZeroXLen
-                    | ZeroYLen
-                    | ZeroZHght
-                    | LessThan3Sides
+data ScriptingError = ZeroXLen -- ^ Any shape with no y length would be a line. Could be possible, but maybe not allowed in certain situations.
+                    | ZeroYLen  -- ^ Any shape with no y length would be a line. Could be possible, but maybe not allowed in certain situations.
+                    | ZeroZHght -- ^ Any shape with <= 0 height will have no volume.
+                    | LessThan3Sides -- ^ Any shape witnh < 3 sides will have no volume.
                     | LessThanOrEqTo0Radius
  deriving (Eq,Show)
